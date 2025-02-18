@@ -1,0 +1,202 @@
+{
+  "apps/Lang": {
+    "root": [
+      "apps/Lang/project.json",
+      "nx/core/project-json"
+    ],
+    "sourceRoot": [
+      "apps/Lang/project.json",
+      "nx/core/project-json"
+    ],
+    "name": [
+      "apps/Lang/project.json",
+      "nx/core/project-json"
+    ],
+    "projectType": [
+      "apps/Lang/project.json",
+      "nx/core/project-json"
+    ],
+    "tags": [
+      "apps/Lang/package.json",
+      "nx/core/package-json"
+    ],
+    "tags.npm:private": [
+      "apps/Lang/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups": [
+      "apps/Lang/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups.NPM Scripts": [
+      "apps/Lang/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups.NPM Scripts.0": [
+      "apps/Lang/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.js": [
+      "apps/Lang/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.js.packageName": [
+      "apps/Lang/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.js.isInPackageManagerWorkspaces": [
+      "apps/Lang/package.json",
+      "nx/core/package-json"
+    ],
+    "targets": [
+      "apps/Lang/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.eas-build-post-install": [
+      "apps/Lang/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.eas-build-post-install.executor": [
+      "apps/Lang/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.eas-build-post-install.options": [
+      "apps/Lang/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.eas-build-post-install.metadata": [
+      "apps/Lang/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.eas-build-post-install.options.script": [
+      "apps/Lang/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.eas-build-post-install.metadata.scriptContent": [
+      "apps/Lang/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.eas-build-post-install.metadata.runCommand": [
+      "apps/Lang/package.json",
+      "nx/core/package-json"
+    ],
+    "$schema": [
+      "apps/Lang/project.json",
+      "nx/core/project-json"
+    ],
+    "// targets": [
+      "apps/Lang/project.json",
+      "nx/core/project-json"
+    ]
+  },
+  "apps/Lang-e2e": {
+    "root": [
+      "apps/Lang-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "name": [
+      "apps/Lang-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "$schema": [
+      "apps/Lang-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "projectType": [
+      "apps/Lang-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "sourceRoot": [
+      "apps/Lang-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "// targets": [
+      "apps/Lang-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "implicitDependencies": [
+      "apps/Lang-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "implicitDependencies.Lang": [
+      "apps/Lang-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "targets": [
+      "apps/Lang-e2e/project.json",
+      "nx/core/project-json"
+    ]
+  },
+  "apps/desktop": {
+    "root": [
+      "apps/desktop/project.json",
+      "nx/core/project-json"
+    ],
+    "name": [
+      "apps/desktop/project.json",
+      "nx/core/project-json"
+    ],
+    "$schema": [
+      "apps/desktop/project.json",
+      "nx/core/project-json"
+    ],
+    "sourceRoot": [
+      "apps/desktop/project.json",
+      "nx/core/project-json"
+    ],
+    "projectType": [
+      "apps/desktop/project.json",
+      "nx/core/project-json"
+    ],
+    "// targets": [
+      "apps/desktop/project.json",
+      "nx/core/project-json"
+    ],
+    "tags": [
+      "apps/desktop/project.json",
+      "nx/core/project-json"
+    ],
+    "targets": [
+      "apps/desktop/project.json",
+      "nx/core/project-json"
+    ]
+  },
+  "apps/desktop-e2e": {
+    "root": [
+      "apps/desktop-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "name": [
+      "apps/desktop-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "$schema": [
+      "apps/desktop-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "projectType": [
+      "apps/desktop-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "sourceRoot": [
+      "apps/desktop-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "// targets": [
+      "apps/desktop-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "implicitDependencies": [
+      "apps/desktop-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "implicitDependencies.desktop": [
+      "apps/desktop-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "targets": [
+      "apps/desktop-e2e/project.json",
+      "nx/core/project-json"
+    ]
+  }
+}
