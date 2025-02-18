@@ -1,9 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, Platform, ScrollView } from 'react-native';
-import { MotiView, AnimatePresence } from 'moti';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as wanakana from 'wanakana';
-import kuromoji from 'kuromoji';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, Platform, ScrollView, Animated } from 'react-native';
 
 interface TokenizedWord {
   word: string;
@@ -27,54 +23,30 @@ export default function SearchPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [autoConvert, setAutoConvert] = useState(true);
   const [clipboardMonitor, setClipboardMonitor] = useState(false);
-  const tokenizer = useRef<any>(null);
 
-  // Initialize kuromoji tokenizer
+  // Animation values
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const scaleAnim = React.useRef(new Animated.Value(0.9)).current;
+
   useEffect(() => {
-    kuromoji.builder({ dicPath: '/dict' }).build((err, _tokenizer) => {
-      if (err) {
-        console.error('Tokenizer error:', err);
-        return;
-      }
-      tokenizer.current = _tokenizer;
-    });
-
-    // Load history from storage
-    loadHistory();
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
   }, []);
 
-  const loadHistory = async () => {
-    try {
-      const savedHistory = await AsyncStorage.getItem('searchHistory');
-      if (savedHistory) {
-        setHistory(JSON.parse(savedHistory));
-      }
-    } catch (error) {
-      console.error('Error loading history:', error);
-    }
-  };
-
-  const saveHistory = async (newHistory: HistoryItem[]) => {
-    try {
-      await AsyncStorage.setItem('searchHistory', JSON.stringify(newHistory));
-    } catch (error) {
-      console.error('Error saving history:', error);
-    }
-  };
-
-  const handleInputChange = (text: string) => {
-    if (autoConvert && text) {
-      setInputText(wanakana.toKana(text, { IMEMode: true }));
-    } else {
-      setInputText(text);
-    }
-  };
-
   const handleAnalyze = async () => {
-    if (!inputText.trim() || !tokenizer.current) return;
-
+    if (!inputText.trim()) return;
     setIsAnalyzing(true);
-    
+
     // Add to history
     const newHistoryItem = {
       text: inputText,
@@ -82,21 +54,22 @@ export default function SearchPage() {
     };
     const newHistory = [newHistoryItem, ...history.slice(0, 19)];
     setHistory(newHistory);
-    saveHistory(newHistory);
 
-    // Tokenize the input
-    const tokens = tokenizer.current.tokenize(inputText);
-    const analyzed = tokens.map((token: any) => ({
-      word: token.surface_form,
-      reading: token.reading,
-      definitions: [token.pos, token.pos_detail_1].filter(Boolean),
-      pos: token.pos,
-      frequency: Math.random() * 100 // Mock frequency for demo
-    }));
+    // Mock tokenization
+    setTimeout(() => {
+      const words = inputText.split(/\s+/);
+      const analyzed: TokenizedWord[] = words.map(word => ({
+        word,
+        reading: word.length > 2 ? word.split('').join('・') : undefined,
+        definitions: ['Example definition', 'Alternative meaning'],
+        pos: ['Noun', 'Verb', 'Adjective'][Math.floor(Math.random() * 3)],
+        frequency: Math.random() * 100
+      }));
 
-    setTokenizedWords(analyzed);
-    setIsAnalyzing(false);
-    setShowHistory(false);
+      setTokenizedWords(analyzed);
+      setIsAnalyzing(false);
+      setShowHistory(false);
+    }, 500);
   };
 
   const clearInput = () => {
@@ -111,12 +84,13 @@ export default function SearchPage() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <MotiView
-        style={styles.searchContainer}
-        from={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: 'timing', duration: 300 }}
-      >
+      <Animated.View style={[
+        styles.searchContainer,
+        {
+          opacity: fadeAnim,
+          transform: [{ scale: scaleAnim }]
+        }
+      ]}>
         <View style={styles.searchHeader}>
           <View style={styles.optionsRow}>
             <TouchableOpacity
@@ -141,7 +115,7 @@ export default function SearchPage() {
             <TextInput
               style={styles.input}
               value={inputText}
-              onChangeText={handleInputChange}
+              onChangeText={setInputText}
               placeholder="文章を入力してください..."
               placeholderTextColor="#666"
               multiline
@@ -166,39 +140,40 @@ export default function SearchPage() {
           </TouchableOpacity>
         </View>
 
-        <AnimatePresence>
-          {showHistory && (
-            <MotiView
-              style={styles.historyContainer}
-              from={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-            >
-              {history.map((item) => (
-                <TouchableOpacity
-                  key={item.timestamp}
-                  style={styles.historyItem}
-                  onPress={() => loadFromHistory(item.text)}
-                >
-                  <Text style={styles.historyText}>{item.text}</Text>
-                  <Text style={styles.historyTime}>
-                    {new Date(item.timestamp).toLocaleTimeString()}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </MotiView>
-          )}
-        </AnimatePresence>
-      </MotiView>
+        {showHistory && (
+          <View style={styles.historyContainer}>
+            {history.map((item) => (
+              <TouchableOpacity
+                key={item.timestamp}
+                style={styles.historyItem}
+                onPress={() => loadFromHistory(item.text)}
+              >
+                <Text style={styles.historyText}>{item.text}</Text>
+                <Text style={styles.historyTime}>
+                  {new Date(item.timestamp).toLocaleTimeString()}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </Animated.View>
 
       <View style={styles.resultsContainer}>
         {tokenizedWords.map((word, index) => (
-          <MotiView
+          <Animated.View
             key={index}
-            style={styles.wordCard}
-            from={{ opacity: 0, translateY: 20 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ delay: index * 100 }}
+            style={[
+              styles.wordCard,
+              {
+                opacity: fadeAnim,
+                transform: [{
+                  translateY: fadeAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [20, 0]
+                  })
+                }]
+              }
+            ]}
           >
             <View style={styles.wordHeader}>
               <Text style={styles.wordText}>{word.word}</Text>
@@ -226,7 +201,7 @@ export default function SearchPage() {
                 </Text>
               ))}
             </View>
-          </MotiView>
+          </Animated.View>
         ))}
       </View>
     </ScrollView>
@@ -328,7 +303,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#e1e4e8',
-    overflow: 'hidden',
   },
   historyItem: {
     flexDirection: 'row',
@@ -405,4 +379,4 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 4,
   },
-}); 
+});

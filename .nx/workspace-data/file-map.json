@@ -60,164 +60,164 @@
   "fileMap": {
     "nonProjectFiles": [
       {
-        "file": ".vscode/extensions.json",
-        "hash": "9565762365755426734"
-      },
-      {
-        "file": "src/App.tsx",
-        "hash": "1359521473986418691"
-      },
-      {
-        "file": "apps/mobile/src/App.tsx",
-        "hash": "8901236361131362800"
-      },
-      {
-        "file": "apps/api/src/main.ts",
-        "hash": "3951545916181642533"
-      },
-      {
-        "file": "apps/api/src/app.service.ts",
-        "hash": "2644499817705405061"
-      },
-      {
-        "file": "README.md",
-        "hash": "7248635390711227712"
-      },
-      {
-        "file": ".prettierignore",
-        "hash": "14688272390704683536"
-      },
-      {
-        "file": "apps/api/src/app.module.ts",
-        "hash": "18207379682243777403"
-      },
-      {
-        "file": "package-lock.json",
-        "hash": "1504235959684384641"
-      },
-      {
-        "file": "nx.json",
-        "hash": "5796827883818482964"
-      },
-      {
-        "file": "apps/web/App.css",
-        "hash": "8777227346757138537"
-      },
-      {
-        "file": "jest.config.ts",
-        "hash": "3494843969422251966"
-      },
-      {
-        "file": "apps/web/src/App.tsx",
-        "hash": "7731518199482185334"
-      },
-      {
-        "file": "babel.config.json",
-        "hash": "5546405625092116747"
-      },
-      {
-        "file": "apps/web/main.tsx",
-        "hash": "1273238769989070047"
-      },
-      {
-        "file": "eslint.base.config.mjs",
-        "hash": "3462096019013144053"
-      },
-      {
-        "file": "src/App.css",
-        "hash": "8777227346757138537"
-      },
-      {
-        "file": "apps/web/index.html",
-        "hash": "2521600838771443021"
-      },
-      {
-        "file": "apps/web/vite-env.d.ts",
-        "hash": "12946363841406869089"
-      },
-      {
-        "file": "package.json",
-        "hash": "11976109619205502498"
-      },
-      {
-        "file": "eslint.config.mjs",
-        "hash": "3462096019013144053"
+        "file": "src/index.css",
+        "hash": "12603276808955194004"
       },
       {
         "file": "apps/web/src/main.tsx",
         "hash": "16715755541305274745"
       },
       {
-        "file": "jest.preset.js",
-        "hash": "9430166341120122740"
+        "file": ".prettierrc",
+        "hash": "16267754514737964994"
       },
       {
-        "file": "apps/api/src/app.controller.ts",
-        "hash": "17656408822552863299"
+        "file": "babel.config.json",
+        "hash": "5546405625092116747"
       },
       {
-        "file": "apps/web/src/pages/SettingsPage.tsx",
-        "hash": "2875525822764128229"
+        "file": "apps/api/src/app.service.ts",
+        "hash": "2644499817705405061"
       },
       {
-        "file": "apps/web/src/pages/SearchPage.tsx",
-        "hash": "13405919980424705311"
-      },
-      {
-        "file": "tsconfig.base.json",
-        "hash": "16936441711144470533"
-      },
-      {
-        "file": "src/main.tsx",
-        "hash": "1273238769989070047"
-      },
-      {
-        "file": "tools/scripts/eas-build-post-install.mjs",
-        "hash": "18390423807559123090"
+        "file": ".prettierignore",
+        "hash": "14688272390704683536"
       },
       {
         "file": "apps/web/App.tsx",
         "hash": "3244421341483603138"
       },
       {
-        "file": "apps/web/src/components/Navigation.tsx",
-        "hash": "3924755805056037249"
+        "file": "apps/web/index.html",
+        "hash": "2521600838771443021"
       },
       {
-        "file": "src/vite-env.d.ts",
+        "file": "nx.json",
+        "hash": "5796827883818482964"
+      },
+      {
+        "file": "apps/web/vite-env.d.ts",
         "hash": "12946363841406869089"
+      },
+      {
+        "file": "apps/web/App.css",
+        "hash": "8777227346757138537"
+      },
+      {
+        "file": "tools/scripts/eas-build-post-install.mjs",
+        "hash": "18390423807559123090"
+      },
+      {
+        "file": "src/main.tsx",
+        "hash": "1273238769989070047"
+      },
+      {
+        "file": "apps/api/src/app.module.ts",
+        "hash": "18207379682243777403"
+      },
+      {
+        "file": "apps/api/src/app.controller.ts",
+        "hash": "17656408822552863299"
+      },
+      {
+        "file": "apps/web/main.tsx",
+        "hash": "1273238769989070047"
       },
       {
         "file": "apps/mobile/app.config.ts",
         "hash": "1707938848367680529"
       },
       {
-        "file": ".prettierrc",
-        "hash": "16267754514737964994"
+        "file": "apps/mobile/src/App.tsx",
+        "hash": "8901236361131362800"
+      },
+      {
+        "file": "jest.preset.js",
+        "hash": "9430166341120122740"
+      },
+      {
+        "file": "src/vite-env.d.ts",
+        "hash": "12946363841406869089"
+      },
+      {
+        "file": "apps/api/src/main.ts",
+        "hash": "3951545916181642533"
+      },
+      {
+        "file": "apps/web/src/pages/SettingsPage.tsx",
+        "hash": "2875525822764128229"
+      },
+      {
+        "file": "package-lock.json",
+        "hash": "1504235959684384641"
+      },
+      {
+        "file": "tsconfig.base.json",
+        "hash": "16936441711144470533"
+      },
+      {
+        "file": "src/assets/react.svg",
+        "hash": "16069471864800376455"
       },
       {
         "file": "apps/web/index.css",
         "hash": "12603276808955194004"
       },
       {
-        "file": "src/index.css",
-        "hash": "12603276808955194004"
-      },
-      {
-        "file": ".gitignore",
-        "hash": "4080991656009176074"
-      },
-      {
-        "file": "apps/mobile/App.tsx",
-        "hash": "6756719537304052100"
+        "file": ".vscode/extensions.json",
+        "hash": "9565762365755426734"
       },
       {
         "file": "src/pages/index.tsx",
         "hash": "18164486227812464591"
       },
       {
-        "file": "src/assets/react.svg",
-        "hash": "16069471864800376455"
+        "file": "src/App.css",
+        "hash": "8777227346757138537"
+      },
+      {
+        "file": "apps/web/src/App.tsx",
+        "hash": "7731518199482185334"
+      },
+      {
+        "file": "apps/mobile/App.tsx",
+        "hash": "6756719537304052100"
+      },
+      {
+        "file": "README.md",
+        "hash": "7248635390711227712"
+      },
+      {
+        "file": "eslint.config.mjs",
+        "hash": "3462096019013144053"
+      },
+      {
+        "file": "apps/web/src/pages/SearchPage.tsx",
+        "hash": "14824674333521104580"
+      },
+      {
+        "file": "src/App.tsx",
+        "hash": "1359521473986418691"
+      },
+      {
+        "file": ".gitignore",
+        "hash": "4080991656009176074"
+      },
+      {
+        "file": "package.json",
+        "hash": "11976109619205502498"
+      },
+      {
+        "file": "jest.config.ts",
+        "hash": "3494843969422251966"
+      },
+      {
+        "file": "eslint.base.config.mjs",
+        "hash": "3462096019013144053"
+      },
+      {
+        "file": "apps/web/src/components/Navigation.tsx",
+        "hash": "3924755805056037249"
       }
     ],
     "projectFileMap": {
