@@ -1,28 +1,29 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useReducer } from 'react';
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, Platform, ScrollView, Animated } from 'react-native';
 import { SearchResults } from '../components/SearchResults';
 import { useApp } from '../context/AppContext';
-
-interface TokenizedWord {
-  word: string;
-  reading?: string;
-  definitions: string[];
-  translations?: string[];
-  pos?: string; // Part of speech
-  frequency?: number;
-}
+import { analyzeText } from '../services/IchiMoeService';
+import { searchReducer, initialSearchState } from '../reducers/searchReducer';
 
 export default function SearchPage() {
-  const [inputText, setInputText] = useState('');
-  const [results, setResults] = useState<TokenizedWord[]>([]);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
-  const [autoConvert, setAutoConvert] = useState(true);
-  const [clipboardMonitor, setClipboardMonitor] = useState(false);
+  const [state, dispatch] = useReducer(searchReducer, initialSearchState);
+  const { 
+    inputText, 
+    results, 
+    isAnalyzing, 
+    showHistory, 
+    autoConvert, 
+    clipboardMonitor, 
+    error 
+  } = state;
 
   // Animation values
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  const scaleAnim = React.useRef(new Animated.Value(0.9)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+
+  // Refs for DOM elements
+  const scrollViewRef = useRef<ScrollView>(null);
+  const inputRef = useRef<TextInput>(null);
 
   const { history, addToHistory } = useApp();
 
@@ -42,48 +43,45 @@ export default function SearchPage() {
   }, []);
 
   const handleInputChange = useCallback((text: string) => {
-    setInputText(text);
-    setShowHistory(text.length > 0);
+    dispatch({ type: 'SET_INPUT_TEXT', payload: text });
   }, []);
 
   const handleSearch = useCallback(async (text: string) => {
     if (!text.trim()) return;
     
-    setIsAnalyzing(true);
-    setShowHistory(false);
+    dispatch({ type: 'SET_ANALYZING', payload: true });
 
     try {
-      // Mock tokenization for now
-      const mockResults: TokenizedWord[] = text.split(/\s+/).map(word => ({
-        word,
-        reading: word,
-        definitions: [`Definition for ${word}`],
-        translations: [`Translation for ${word}`],
-        pos: 'noun',
-        frequency: Math.random() * 100,
-      }));
-
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      setResults(mockResults);
+      const ichiMoeResults = await analyzeText(text);
+      dispatch({ type: 'PROCESS_ICHI_MOE_RESULTS', payload: ichiMoeResults });
       addToHistory(text);
+
+      // Scroll to results
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+      }, 100);
     } catch (error) {
       console.error('Analysis failed:', error);
-      setResults([]);
-    } finally {
-      setIsAnalyzing(false);
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to analyze text. Please try again.' });
     }
   }, [addToHistory]);
 
   const handleHistorySelect = useCallback((text: string) => {
-    setInputText(text);
-    setShowHistory(false);
+    dispatch({ type: 'SET_INPUT_TEXT', payload: text });
+    dispatch({ type: 'SET_SHOW_HISTORY', payload: false });
     handleSearch(text);
   }, [handleSearch]);
 
+  const focusInput = useCallback(() => {
+    inputRef.current?.focus();
+  }, []);
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+    <ScrollView 
+      ref={scrollViewRef}
+      style={styles.container} 
+      contentContainerStyle={styles.contentContainer}
+    >
       <Animated.View style={[
         styles.searchContainer,
         {
@@ -95,7 +93,7 @@ export default function SearchPage() {
           <View style={styles.optionsRow}>
             <TouchableOpacity
               style={[styles.optionButton, autoConvert && styles.optionButtonActive]}
-              onPress={() => setAutoConvert(!autoConvert)}
+              onPress={() => dispatch({ type: 'TOGGLE_AUTO_CONVERT' })}
             >
               <Text style={[styles.optionText, autoConvert && styles.optionTextActive]}>
                 かな変換
@@ -103,7 +101,7 @@ export default function SearchPage() {
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.optionButton, clipboardMonitor && styles.optionButtonActive]}
-              onPress={() => setClipboardMonitor(!clipboardMonitor)}
+              onPress={() => dispatch({ type: 'TOGGLE_CLIPBOARD_MONITOR' })}
             >
               <Text style={[styles.optionText, clipboardMonitor && styles.optionTextActive]}>
                 クリップボード監視
@@ -113,6 +111,7 @@ export default function SearchPage() {
 
           <View style={styles.inputContainer}>
             <TextInput
+              ref={inputRef}
               style={styles.input}
               value={inputText}
               onChangeText={handleInputChange}
@@ -133,6 +132,10 @@ export default function SearchPage() {
               {isAnalyzing ? '解析中...' : '解析'}
             </Text>
           </TouchableOpacity>
+
+          {error && (
+            <Text style={styles.errorText}>{error}</Text>
+          )}
         </View>
 
         {showHistory && history.length > 0 && (
@@ -237,6 +240,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  errorText: {
+    color: '#ff6b6b',
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
   },
   historyContainer: {
     marginTop: 12,
