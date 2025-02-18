@@ -1,11 +1,13 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use std::env;
+
 fn main() {
-    // Set the environment variable before building the Tauri application
-    std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
+    let product_name = env!("PRODUCT_NAME");
+    let version = env!("VERSION");
     
-    tauri::Builder::default()
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+    println!("Starting {} v{}", product_name, version);
+    
+    tauri_app_lib::run();
 }

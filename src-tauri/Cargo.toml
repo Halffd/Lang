@@ -1,10 +1,8 @@
 [package]
-name = "lang"
+name = "Lang"
 version = "0.1.0"
-description = "A language learning utility"
-authors = ["you"]
-license = ""
-repository = ""
+description = "A Tauri App"
+authors = ["Half"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -13,20 +11,19 @@ edition = "2021"
 # The `_lib` suffix may seem redundant but it is necessary
 # to make the lib name unique and wouldn't conflict with the bin name.
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "lang_lib"
+name = "tauri_app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2.0.0", features = [] }
+# Remove tauri-build and add necessary build dependencies
+serde_json = "1"
 
 [dependencies]
-serde_json = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "2.0.0", features = [ "window-maximize", "window-hide", "window-unminimize", "shell-sidecar", "shell-open", "window-start-dragging", "window-show", "window-minimize", "shell-execute", "window-unmaximize", "window-close"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2.2.5", features = [] }
 tauri-plugin-opener = "2.2.5"
 
 [features]
-# this feature is used for production builds or when `devPath` points to the filesystem
-# DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
 
