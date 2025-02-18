@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import Navigation from './components/Navigation';
 import SearchPage from './pages/SearchPage';
 import SettingsPage from './pages/SettingsPage';
+import { AppProvider } from './context/AppContext';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('search');
@@ -20,16 +21,18 @@ export default function App() {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar style="light" />
-      <Navigation 
-        currentPage={currentPage}
-        onNavigate={setCurrentPage}
-      />
-      <View style={styles.content}>
-        {renderPage()}
+    <AppProvider>
+      <View style={styles.container}>
+        <StatusBar style="light" />
+        <Navigation 
+          currentPage={currentPage}
+          onNavigate={setCurrentPage}
+        />
+        <View style={styles.content}>
+          {renderPage()}
+        </View>
       </View>
-    </View>
+    </AppProvider>
   );
 }
 

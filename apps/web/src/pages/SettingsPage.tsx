@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, Switch, TouchableOpacity, Platform } from 'react-native';
+import { useApp } from '../context/AppContext';
 
 interface SettingsOption {
   id: string;
@@ -11,6 +12,7 @@ interface SettingsOption {
 }
 
 export default function SettingsPage() {
+  const { clearHistory } = useApp();
   const [settings, setSettings] = useState({
     darkMode: false,
     autoAnalyze: true,
@@ -52,8 +54,7 @@ export default function SettingsPage() {
       description: 'Clear all your search history',
       type: 'button',
       onPress: () => {
-        // TODO: Implement clear history functionality
-        console.log('Clearing history...');
+        clearHistory();
       },
     },
   ];
