@@ -167,28 +167,6 @@
           "hash": "18107275616570252607"
         }
       ],
-      "desktop-e2e": [
-        {
-          "file": "apps/desktop-e2e/eslint.config.mjs",
-          "hash": "13364302716925527983"
-        },
-        {
-          "file": "apps/desktop-e2e/playwright.config.ts",
-          "hash": "11586673279068914958"
-        },
-        {
-          "file": "apps/desktop-e2e/project.json",
-          "hash": "1892879620660811486"
-        },
-        {
-          "file": "apps/desktop-e2e/src/example.spec.ts",
-          "hash": "16019101014373124625"
-        },
-        {
-          "file": "apps/desktop-e2e/tsconfig.json",
-          "hash": "18107275616570252607"
-        }
-      ],
       "Lang": [
         {
           "file": "apps/Lang/.babelrc.js",
@@ -271,6 +249,28 @@
         {
           "file": "apps/Lang/tsconfig.spec.json",
           "hash": "15283316347733607234"
+        }
+      ],
+      "desktop-e2e": [
+        {
+          "file": "apps/desktop-e2e/eslint.config.mjs",
+          "hash": "13364302716925527983"
+        },
+        {
+          "file": "apps/desktop-e2e/playwright.config.ts",
+          "hash": "11586673279068914958"
+        },
+        {
+          "file": "apps/desktop-e2e/project.json",
+          "hash": "1892879620660811486"
+        },
+        {
+          "file": "apps/desktop-e2e/src/example.spec.ts",
+          "hash": "16019101014373124625"
+        },
+        {
+          "file": "apps/desktop-e2e/tsconfig.json",
+          "hash": "18107275616570252607"
         }
       ]
     },

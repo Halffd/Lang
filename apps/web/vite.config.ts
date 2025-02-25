@@ -30,6 +30,9 @@ export default defineConfig({
     extensions: ['.web.tsx', '.web.ts', '.web.jsx', '.web.js', '.tsx', '.ts', '.jsx', '.js'],
   },
 
+  // Specify public directory
+  publicDir: 'public',
+
   // Uncomment this if you are using workers.
   // worker: {
   //  plugins: [ nxViteTsPaths() ],
