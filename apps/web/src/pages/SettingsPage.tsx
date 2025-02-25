@@ -1,159 +1,125 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, Switch, TouchableOpacity, Platform } from 'react-native';
-import { useApp } from '../context/AppContext';
-
-interface SettingsOption {
-  id: string;
-  title: string;
-  description: string;
-  type: 'toggle' | 'button';
-  value?: boolean;
-  onPress?: () => void;
-}
+import { 
+  Box, 
+  VStack, 
+  Heading, 
+  Text, 
+  Switch, 
+  HStack, 
+  Divider, 
+  useColorMode, 
+  Button, 
+  ScrollView,
+  useColorModeValue
+} from 'native-base';
+import Card from '../components/Card';
 
 export default function SettingsPage() {
-  const { clearHistory } = useApp();
-  const [settings, setSettings] = useState({
-    darkMode: false,
-    autoAnalyze: true,
-    saveHistory: true,
-  });
-
-  const handleToggle = (key: keyof typeof settings) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
-  };
-
-  const settingsOptions: SettingsOption[] = [
-    {
-      id: 'darkMode',
-      title: 'Dark Mode',
-      description: 'Enable dark mode for better viewing in low light',
-      type: 'toggle',
-      value: settings.darkMode,
-    },
-    {
-      id: 'autoAnalyze',
-      title: 'Auto Analyze',
-      description: 'Automatically analyze text as you type',
-      type: 'toggle',
-      value: settings.autoAnalyze,
-    },
-    {
-      id: 'saveHistory',
-      title: 'Save History',
-      description: 'Save your search history',
-      type: 'toggle',
-      value: settings.saveHistory,
-    },
-    {
-      id: 'clearHistory',
-      title: 'Clear History',
-      description: 'Clear all your search history',
-      type: 'button',
-      onPress: () => {
-        clearHistory();
-      },
-    },
-  ];
-
+  const { colorMode, toggleColorMode } = useColorMode();
+  const [autoConvert, setAutoConvert] = useState(true);
+  const [clipboardMonitor, setClipboardMonitor] = useState(false);
+  const [showFurigana, setShowFurigana] = useState(true);
+  
+  // Use theme colors
+  const textColor = useColorModeValue('gray.800', 'gray.100');
+  const subtitleColor = useColorModeValue('gray.600', 'gray.400');
+  
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Settings</Text>
-      
-      <View style={styles.settingsList}>
-        {settingsOptions.map((option) => (
-          <View key={option.id} style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>{option.title}</Text>
-              <Text style={styles.settingDescription}>{option.description}</Text>
-            </View>
-            
-            {option.type === 'toggle' ? (
-              <Switch
-                value={option.value}
-                onValueChange={() => handleToggle(option.id as keyof typeof settings)}
-                trackColor={{ false: '#ddd', true: '#4a90e2' }}
-                thumbColor={Platform.OS === 'ios' ? undefined : '#fff'}
-              />
-            ) : (
-              <TouchableOpacity
-                style={styles.button}
-                onPress={option.onPress}
+    <ScrollView>
+      <Box p={4} flex={1}>
+        <VStack space={6} width="100%">
+          <Heading size="xl" mb={2}>
+            Settings
+          </Heading>
+          
+          <Card title="Display Settings">
+            <VStack space={4} mt={2}>
+              <HStack justifyContent="space-between" alignItems="center">
+                <VStack>
+                  <Text color={textColor} fontWeight="medium">Dark Mode</Text>
+                  <Text color={subtitleColor} fontSize="sm">
+                    Switch between light and dark theme
+                  </Text>
+                </VStack>
+                <Switch
+                  isChecked={colorMode === 'dark'}
+                  onToggle={toggleColorMode}
+                  colorScheme="primary"
+                />
+              </HStack>
+              
+              <Divider />
+              
+              <HStack justifyContent="space-between" alignItems="center">
+                <VStack>
+                  <Text color={textColor} fontWeight="medium">Show Furigana</Text>
+                  <Text color={subtitleColor} fontSize="sm">
+                    Display reading above kanji characters
+                  </Text>
+                </VStack>
+                <Switch
+                  isChecked={showFurigana}
+                  onToggle={() => setShowFurigana(!showFurigana)}
+                  colorScheme="primary"
+                />
+              </HStack>
+            </VStack>
+          </Card>
+          
+          <Card title="Input Settings">
+            <VStack space={4} mt={2}>
+              <HStack justifyContent="space-between" alignItems="center">
+                <VStack>
+                  <Text color={textColor} fontWeight="medium">Auto-convert Romaji</Text>
+                  <Text color={subtitleColor} fontSize="sm">
+                    Automatically convert romaji to hiragana
+                  </Text>
+                </VStack>
+                <Switch
+                  isChecked={autoConvert}
+                  onToggle={() => setAutoConvert(!autoConvert)}
+                  colorScheme="primary"
+                />
+              </HStack>
+              
+              <Divider />
+              
+              <HStack justifyContent="space-between" alignItems="center">
+                <VStack>
+                  <Text color={textColor} fontWeight="medium">Monitor Clipboard</Text>
+                  <Text color={subtitleColor} fontSize="sm">
+                    Automatically search for copied text
+                  </Text>
+                </VStack>
+                <Switch
+                  isChecked={clipboardMonitor}
+                  onToggle={() => setClipboardMonitor(!clipboardMonitor)}
+                  colorScheme="primary"
+                />
+              </HStack>
+            </VStack>
+          </Card>
+          
+          <Card title="Data Management">
+            <VStack space={4} mt={2}>
+              <Button 
+                colorScheme="primary" 
+                variant="outline"
+                onPress={() => console.log('Clear history')}
               >
-                <Text style={styles.buttonText}>Clear</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.footer}>
-        <Text style={styles.version}>Version 1.0.0</Text>
-      </View>
-    </View>
+                Clear Search History
+              </Button>
+              
+              <Button 
+                colorScheme="danger"
+                onPress={() => console.log('Reset all settings')}
+              >
+                Reset All Settings
+              </Button>
+            </VStack>
+          </Card>
+        </VStack>
+      </Box>
+    </ScrollView>
   );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#f5f6fa',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 24,
-    color: '#2c3e50',
-  },
-  settingsList: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  settingInfo: {
-    flex: 1,
-    marginRight: 16,
-  },
-  settingTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2c3e50',
-    marginBottom: 4,
-  },
-  settingDescription: {
-    fontSize: 14,
-    color: '#666',
-  },
-  button: {
-    backgroundColor: '#ff6b6b',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  footer: {
-    marginTop: 24,
-    alignItems: 'center',
-  },
-  version: {
-    fontSize: 14,
-    color: '#666',
-  },
-}); 
+} 

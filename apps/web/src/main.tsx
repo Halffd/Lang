@@ -1,24 +1,26 @@
-import React from 'react';
-import { createRoot } from 'react-dom/client';
 import { registerRootComponent } from 'expo';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 import { Platform } from 'react-native';
-import App from './App';
+
+// Import CSS for web only
 import './index.css';
 
-// Register the app for mobile platforms
-if (Platform.OS !== 'web') {
-  registerRootComponent(App);
-}
+import App from './App';
 
-// For web platform, use standard React DOM rendering
+// Use the appropriate entry point based on platform
 if (Platform.OS === 'web') {
   const rootElement = document.getElementById('root');
-  if (rootElement) {
-    const root = createRoot(rootElement);
-    root.render(
-      <React.StrictMode>
-        <App />
-      </React.StrictMode>
-    );
-  }
+  if (!rootElement) throw new Error('Failed to find the root element');
+  
+  const root = createRoot(rootElement);
+  
+  root.render(
+    <StrictMode>
+      <App />
+    </StrictMode>
+  );
+} else {
+  // For mobile platforms, use Expo's registerRootComponent
+  registerRootComponent(App);
 } 

@@ -1,83 +1,54 @@
-import { useReducer, useRef, useCallback } from 'react';
-import { useApp } from '../context/AppContext';
-import { analyzeText } from '../services/IchiMoeService';
-import { searchReducer, initialSearchState } from '../reducers/searchReducer';
-import { TokenizedWord } from '../types';
+import { useState } from 'react';
 
-export function useSearch() {
-  const [state, dispatch] = useReducer(searchReducer, initialSearchState);
-  const { 
-    inputText, 
-    results, 
-    isAnalyzing, 
-    showHistory, 
-    autoConvert, 
-    clipboardMonitor, 
-    error 
-  } = state;
-  
-  const { addToHistory } = useApp();
-  const abortControllerRef = useRef<AbortController | null>(null);
+// Define the result type
+export interface SearchResult {
+  id: string;
+  word: string;
+  reading: string;
+  meaning: string;
+}
 
-  const handleInputChange = useCallback((text: string) => {
-    dispatch({ type: 'SET_INPUT_TEXT', payload: text });
-    dispatch({ type: 'SET_SHOW_HISTORY', payload: text.length > 0 });
-  }, []);
+export const useSearch = () => {
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = useCallback(async (text: string) => {
-    // Cancel any ongoing request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
+  const search = async (query: string) => {
+    if (!query.trim()) {
+      return;
     }
 
-    // Create a new abort controller for this request
-    abortControllerRef.current = new AbortController();
-    
-    dispatch({ type: 'SET_IS_ANALYZING', payload: true });
-    dispatch({ type: 'SET_SHOW_HISTORY', payload: false });
-    dispatch({ type: 'SET_ERROR', payload: null });
+    setLoading(true);
+    setError(null);
 
     try {
-      const result = await analyzeText(text, abortControllerRef.current.signal);
-      dispatch({ type: 'SET_RESULTS', payload: result });
-      
-      // Update search history
-      if (text.trim()) {
-        addToHistory(text);
-      }
-    } catch (error) {
-      if (error.name !== 'AbortError') {
-        console.error('Analysis failed:', error);
-        dispatch({ type: 'SET_ERROR', payload: error.message || 'Analysis failed' });
-        dispatch({ type: 'SET_RESULTS', payload: [] });
-      }
+      // Simulate API call with timeout
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Mock results - in a real app, this would be an API call
+      const mockResults: SearchResult[] = [
+        { id: '1', word: '猫', reading: 'ねこ', meaning: 'cat' },
+        { id: '2', word: '犬', reading: 'いぬ', meaning: 'dog' },
+        { id: '3', word: '鳥', reading: 'とり', meaning: 'bird' },
+      ].filter(item => 
+        item.word.includes(query) || 
+        item.reading.includes(query) || 
+        item.meaning.includes(query)
+      );
+
+      setResults(mockResults);
+    } catch (err) {
+      setError('An error occurred while searching. Please try again.');
+      console.error('Search error:', err);
     } finally {
-      dispatch({ type: 'SET_IS_ANALYZING', payload: false });
-      abortControllerRef.current = null;
+      setLoading(false);
     }
-  }, [addToHistory]);
-
-  const handleHistorySelect = useCallback((text: string) => {
-    dispatch({ type: 'SET_INPUT_TEXT', payload: text });
-    dispatch({ type: 'SET_SHOW_HISTORY', payload: false });
-    handleSearch(text);
-  }, [handleSearch]);
-
-  const toggleAutoConvert = useCallback(() => {
-    dispatch({ type: 'SET_AUTO_CONVERT', payload: !autoConvert });
-  }, [autoConvert]);
-
-  const toggleClipboardMonitor = useCallback(() => {
-    dispatch({ type: 'SET_CLIPBOARD_MONITOR', payload: !clipboardMonitor });
-  }, [clipboardMonitor]);
+  };
 
   return {
-    state,
-    dispatch,
-    handleInputChange,
-    handleSearch,
-    handleHistorySelect,
-    toggleAutoConvert,
-    toggleClipboardMonitor
+    results,
+    loading,
+    error,
+    search,
   };
-} 
+}; 

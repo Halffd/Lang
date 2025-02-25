@@ -1,135 +1,111 @@
-import React, { useRef, useEffect, useMemo } from 'react';
-import { StyleSheet, View, ScrollView, Animated, Platform } from 'react-native';
-import { SearchBar } from '../components/SearchBar';
-import { SearchResults } from '../components/SearchResults';
-import { useApp } from '../context/AppContext';
+import React, { useState } from 'react';
+import { 
+  VStack, 
+  Input, 
+  Box, 
+  Text, 
+  Heading, 
+  HStack, 
+  Spinner, 
+  FlatList, 
+  useColorModeValue,
+  IconButton,
+  Center
+} from 'native-base';
+import { Platform } from 'react-native';
+import Card from '../components/Card';
+import Icon from '../components/CustomIcon';
 import { useSearch } from '../hooks/useSearch';
-import { useScrollMode } from '../hooks/useScrollMode';
 
-// Memoized animation configuration
-const ANIMATION_CONFIG = {
-  duration: 300,
-  useNativeDriver: true,
-};
+// Mock data for demonstration
+const SAMPLE_RESULTS = [
+  { id: '1', word: '猫', reading: 'ねこ', meaning: 'cat' },
+  { id: '2', word: '犬', reading: 'いぬ', meaning: 'dog' },
+  { id: '3', word: '鳥', reading: 'とり', meaning: 'bird' },
+];
 
 export default function SearchPage() {
-  // Get search functionality from custom hook
-  const { 
-    state, 
-    handleInputChange, 
-    handleSearch, 
-    handleHistorySelect 
-  } = useSearch();
+  const [query, setQuery] = useState('');
+  const { results, loading, error, search } = useSearch();
   
-  const { 
-    inputText, 
-    results, 
-    isAnalyzing, 
-    showHistory, 
-    error 
-  } = state;
-
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.9)).current;
-
-  // Refs for DOM elements
-  const scrollViewRef = useRef<ScrollView>(null);
-
-  // Get history from context
-  const { history } = useApp();
-
-  // Get scroll mode functionality
-  const { scrollMode, toggleScrollMode } = useScrollMode(scrollViewRef);
-
-  // Memoized animation sequence
-  const animationSequence = useMemo(() => 
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        ...ANIMATION_CONFIG,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        ...ANIMATION_CONFIG,
-      }),
-    ]),
-    [fadeAnim, scaleAnim]
-  );
-
-  // Run animation on mount
-  useEffect(() => {
-    animationSequence.start();
-  }, [animationSequence]);
-
+  // Use theme colors
+  const inputBgColor = useColorModeValue('white', 'gray.800');
+  const placeholderColor = useColorModeValue('gray.400', 'gray.500');
+  
+  const handleSearch = () => {
+    if (query.trim()) {
+      search(query);
+    }
+  };
+  
+  const handleKeyPress = (e: any) => {
+    if (Platform.OS === 'web' && e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+  
   return (
-    <Animated.View 
-      style={[
-        styles.container,
-        { 
-          opacity: fadeAnim,
-          transform: [{ scale: scaleAnim }]
-        }
-      ]}
-    >
-      <SearchBar
-        inputText={inputText}
-        onInputChange={handleInputChange}
-        onSearch={handleSearch}
-        onHistorySelect={handleHistorySelect}
-        history={history}
-        showHistory={showHistory}
-      />
-
-      <View style={styles.resultsContainer}>
-        <SearchResults
-          results={results}
-          isLoading={isAnalyzing}
-          error={error}
-          scrollViewRef={scrollViewRef}
-        />
-      </View>
-
-      {Platform.OS === 'web' && (
-        <View style={styles.scrollModeIndicator}>
-          <View 
-            style={[
-              styles.scrollModeIcon, 
-              scrollMode === 'CURSOR' && styles.scrollModeActive
-            ]} 
+    <Box p={4} flex={1}>
+      <VStack space={4} width="100%">
+        <Heading size="xl" mb={2}>
+          Japanese Dictionary
+        </Heading>
+        
+        <HStack width="100%" space={2}>
+          <Input
+            flex={1}
+            placeholder="Search for words in Japanese or English"
+            value={query}
+            onChangeText={setQuery}
+            onKeyPress={handleKeyPress}
+            bg={inputBgColor}
+            borderRadius="md"
+            fontSize="md"
+            py={Platform.OS === 'web' ? 3 : 2}
+            px={4}
+            _focus={{
+              borderColor: 'primary.500',
+            }}
+            placeholderTextColor={placeholderColor}
           />
-        </View>
-      )}
-    </Animated.View>
+          <IconButton
+            icon={<Icon name="search" size="md" color="white" />}
+            onPress={handleSearch}
+            bg="primary.500"
+            _hover={{ bg: 'primary.600' }}
+            _pressed={{ bg: 'primary.700' }}
+            borderRadius="md"
+          />
+        </HStack>
+        
+        {loading ? (
+          <Center flex={1} mt={10}>
+            <Spinner size="lg" color="primary.500" />
+            <Text mt={2}>Searching...</Text>
+          </Center>
+        ) : error ? (
+          <Center flex={1} mt={10}>
+            <Text color="error.500">{error}</Text>
+          </Center>
+        ) : (
+          <FlatList
+            data={results.length > 0 ? results : SAMPLE_RESULTS}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <Card
+                title={item.word}
+                description={`${item.reading} - ${item.meaning}`}
+                onPress={() => console.log('Selected:', item.word)}
+              />
+            )}
+            ListEmptyComponent={
+              <Center flex={1} mt={10}>
+                <Text>No results found. Try a different search term.</Text>
+              </Center>
+            }
+          />
+        )}
+      </VStack>
+    </Box>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  resultsContainer: {
-    flex: 1,
-  },
-  scrollModeIndicator: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  scrollModeIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#ccc',
-  },
-  scrollModeActive: {
-    backgroundColor: '#2196f3',
-  },
-});

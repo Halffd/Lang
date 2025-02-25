@@ -8,7 +8,1192 @@
               "targetsCache": {
                 "targetsCache": {
                   "targetsCache": {
-                    "6308528052571488461": {
+                    "targetsCache": {
+                      "targetsCache": {
+                        "targetsCache": {
+                          "targetsCache": {
+                            "targetsCache": {
+                              "targetsCache": {
+                                "targetsCache": {
+                                  "targetsCache": {
+                                    "targetsCache": {
+                                      "targetsCache": {
+                                        "targetsCache": {
+                                          "targetsCache": {
+                                            "targetsCache": {
+                                              "targetsCache": {
+                                                "targetsCache": {
+                                                  "6308528052571488461": {
+                                                    "start": {
+                                                      "executor": "@nx/expo:start"
+                                                    },
+                                                    "serve": {
+                                                      "command": "expo start --web",
+                                                      "options": {
+                                                        "cwd": "apps/Lang",
+                                                        "args": [
+                                                          "--clear"
+                                                        ]
+                                                      }
+                                                    },
+                                                    "run-ios": {
+                                                      "command": "expo run:ios",
+                                                      "options": {
+                                                        "cwd": "apps/Lang"
+                                                      }
+                                                    },
+                                                    "run-android": {
+                                                      "command": "expo run:android",
+                                                      "options": {
+                                                        "cwd": "apps/Lang"
+                                                      }
+                                                    },
+                                                    "export": {
+                                                      "command": "expo export",
+                                                      "options": {
+                                                        "cwd": "apps/Lang",
+                                                        "args": [
+                                                          "--clear"
+                                                        ]
+                                                      },
+                                                      "cache": true,
+                                                      "dependsOn": [
+                                                        "^export"
+                                                      ],
+                                                      "inputs": [
+                                                        "default",
+                                                        "^production",
+                                                        {
+                                                          "externalDependencies": [
+                                                            "expo"
+                                                          ]
+                                                        }
+                                                      ],
+                                                      "outputs": [
+                                                        "{workspaceRoot}/apps/Lang/dist"
+                                                      ]
+                                                    },
+                                                    "install": {
+                                                      "executor": "@nx/expo:install"
+                                                    },
+                                                    "prebuild": {
+                                                      "executor": "@nx/expo:prebuild"
+                                                    },
+                                                    "build": {
+                                                      "executor": "@nx/expo:build"
+                                                    },
+                                                    "submit": {
+                                                      "command": "eas submit",
+                                                      "options": {
+                                                        "cwd": "apps/Lang"
+                                                      }
+                                                    },
+                                                    "build-deps": {
+                                                      "dependsOn": [
+                                                        "^build"
+                                                      ]
+                                                    },
+                                                    "watch-deps": {
+                                                      "dependsOn": [
+                                                        "build-deps"
+                                                      ],
+                                                      "command": "npx nx watch --projects Lang --includeDependentProjects -- npx nx build-deps Lang"
+                                                    }
+                                                  }
+                                                },
+                                                "6308528052571488461": {
+                                                  "start": {
+                                                    "executor": "@nx/expo:start"
+                                                  },
+                                                  "serve": {
+                                                    "command": "expo start --web",
+                                                    "options": {
+                                                      "cwd": "apps/Lang",
+                                                      "args": [
+                                                        "--clear"
+                                                      ]
+                                                    }
+                                                  },
+                                                  "run-ios": {
+                                                    "command": "expo run:ios",
+                                                    "options": {
+                                                      "cwd": "apps/Lang"
+                                                    }
+                                                  },
+                                                  "run-android": {
+                                                    "command": "expo run:android",
+                                                    "options": {
+                                                      "cwd": "apps/Lang"
+                                                    }
+                                                  },
+                                                  "export": {
+                                                    "command": "expo export",
+                                                    "options": {
+                                                      "cwd": "apps/Lang",
+                                                      "args": [
+                                                        "--clear"
+                                                      ]
+                                                    },
+                                                    "cache": true,
+                                                    "dependsOn": [
+                                                      "^export"
+                                                    ],
+                                                    "inputs": [
+                                                      "default",
+                                                      "^production",
+                                                      {
+                                                        "externalDependencies": [
+                                                          "expo"
+                                                        ]
+                                                      }
+                                                    ],
+                                                    "outputs": [
+                                                      "{workspaceRoot}/apps/Lang/dist"
+                                                    ]
+                                                  },
+                                                  "install": {
+                                                    "executor": "@nx/expo:install"
+                                                  },
+                                                  "prebuild": {
+                                                    "executor": "@nx/expo:prebuild"
+                                                  },
+                                                  "build": {
+                                                    "executor": "@nx/expo:build"
+                                                  },
+                                                  "submit": {
+                                                    "command": "eas submit",
+                                                    "options": {
+                                                      "cwd": "apps/Lang"
+                                                    }
+                                                  },
+                                                  "build-deps": {
+                                                    "dependsOn": [
+                                                      "^build"
+                                                    ]
+                                                  },
+                                                  "watch-deps": {
+                                                    "dependsOn": [
+                                                      "build-deps"
+                                                    ],
+                                                    "command": "npx nx watch --projects Lang --includeDependentProjects -- npx nx build-deps Lang"
+                                                  }
+                                                }
+                                              },
+                                              "6308528052571488461": {
+                                                "start": {
+                                                  "executor": "@nx/expo:start"
+                                                },
+                                                "serve": {
+                                                  "command": "expo start --web",
+                                                  "options": {
+                                                    "cwd": "apps/Lang",
+                                                    "args": [
+                                                      "--clear"
+                                                    ]
+                                                  }
+                                                },
+                                                "run-ios": {
+                                                  "command": "expo run:ios",
+                                                  "options": {
+                                                    "cwd": "apps/Lang"
+                                                  }
+                                                },
+                                                "run-android": {
+                                                  "command": "expo run:android",
+                                                  "options": {
+                                                    "cwd": "apps/Lang"
+                                                  }
+                                                },
+                                                "export": {
+                                                  "command": "expo export",
+                                                  "options": {
+                                                    "cwd": "apps/Lang",
+                                                    "args": [
+                                                      "--clear"
+                                                    ]
+                                                  },
+                                                  "cache": true,
+                                                  "dependsOn": [
+                                                    "^export"
+                                                  ],
+                                                  "inputs": [
+                                                    "default",
+                                                    "^production",
+                                                    {
+                                                      "externalDependencies": [
+                                                        "expo"
+                                                      ]
+                                                    }
+                                                  ],
+                                                  "outputs": [
+                                                    "{workspaceRoot}/apps/Lang/dist"
+                                                  ]
+                                                },
+                                                "install": {
+                                                  "executor": "@nx/expo:install"
+                                                },
+                                                "prebuild": {
+                                                  "executor": "@nx/expo:prebuild"
+                                                },
+                                                "build": {
+                                                  "executor": "@nx/expo:build"
+                                                },
+                                                "submit": {
+                                                  "command": "eas submit",
+                                                  "options": {
+                                                    "cwd": "apps/Lang"
+                                                  }
+                                                },
+                                                "build-deps": {
+                                                  "dependsOn": [
+                                                    "^build"
+                                                  ]
+                                                },
+                                                "watch-deps": {
+                                                  "dependsOn": [
+                                                    "build-deps"
+                                                  ],
+                                                  "command": "npx nx watch --projects Lang --includeDependentProjects -- npx nx build-deps Lang"
+                                                }
+                                              }
+                                            },
+                                            "6308528052571488461": {
+                                              "start": {
+                                                "executor": "@nx/expo:start"
+                                              },
+                                              "serve": {
+                                                "command": "expo start --web",
+                                                "options": {
+                                                  "cwd": "apps/Lang",
+                                                  "args": [
+                                                    "--clear"
+                                                  ]
+                                                }
+                                              },
+                                              "run-ios": {
+                                                "command": "expo run:ios",
+                                                "options": {
+                                                  "cwd": "apps/Lang"
+                                                }
+                                              },
+                                              "run-android": {
+                                                "command": "expo run:android",
+                                                "options": {
+                                                  "cwd": "apps/Lang"
+                                                }
+                                              },
+                                              "export": {
+                                                "command": "expo export",
+                                                "options": {
+                                                  "cwd": "apps/Lang",
+                                                  "args": [
+                                                    "--clear"
+                                                  ]
+                                                },
+                                                "cache": true,
+                                                "dependsOn": [
+                                                  "^export"
+                                                ],
+                                                "inputs": [
+                                                  "default",
+                                                  "^production",
+                                                  {
+                                                    "externalDependencies": [
+                                                      "expo"
+                                                    ]
+                                                  }
+                                                ],
+                                                "outputs": [
+                                                  "{workspaceRoot}/apps/Lang/dist"
+                                                ]
+                                              },
+                                              "install": {
+                                                "executor": "@nx/expo:install"
+                                              },
+                                              "prebuild": {
+                                                "executor": "@nx/expo:prebuild"
+                                              },
+                                              "build": {
+                                                "executor": "@nx/expo:build"
+                                              },
+                                              "submit": {
+                                                "command": "eas submit",
+                                                "options": {
+                                                  "cwd": "apps/Lang"
+                                                }
+                                              },
+                                              "build-deps": {
+                                                "dependsOn": [
+                                                  "^build"
+                                                ]
+                                              },
+                                              "watch-deps": {
+                                                "dependsOn": [
+                                                  "build-deps"
+                                                ],
+                                                "command": "npx nx watch --projects Lang --includeDependentProjects -- npx nx build-deps Lang"
+                                              }
+                                            }
+                                          },
+                                          "6308528052571488461": {
+                                            "start": {
+                                              "executor": "@nx/expo:start"
+                                            },
+                                            "serve": {
+                                              "command": "expo start --web",
+                                              "options": {
+                                                "cwd": "apps/Lang",
+                                                "args": [
+                                                  "--clear"
+                                                ]
+                                              }
+                                            },
+                                            "run-ios": {
+                                              "command": "expo run:ios",
+                                              "options": {
+                                                "cwd": "apps/Lang"
+                                              }
+                                            },
+                                            "run-android": {
+                                              "command": "expo run:android",
+                                              "options": {
+                                                "cwd": "apps/Lang"
+                                              }
+                                            },
+                                            "export": {
+                                              "command": "expo export",
+                                              "options": {
+                                                "cwd": "apps/Lang",
+                                                "args": [
+                                                  "--clear"
+                                                ]
+                                              },
+                                              "cache": true,
+                                              "dependsOn": [
+                                                "^export"
+                                              ],
+                                              "inputs": [
+                                                "default",
+                                                "^production",
+                                                {
+                                                  "externalDependencies": [
+                                                    "expo"
+                                                  ]
+                                                }
+                                              ],
+                                              "outputs": [
+                                                "{workspaceRoot}/apps/Lang/dist"
+                                              ]
+                                            },
+                                            "install": {
+                                              "executor": "@nx/expo:install"
+                                            },
+                                            "prebuild": {
+                                              "executor": "@nx/expo:prebuild"
+                                            },
+                                            "build": {
+                                              "executor": "@nx/expo:build"
+                                            },
+                                            "submit": {
+                                              "command": "eas submit",
+                                              "options": {
+                                                "cwd": "apps/Lang"
+                                              }
+                                            },
+                                            "build-deps": {
+                                              "dependsOn": [
+                                                "^build"
+                                              ]
+                                            },
+                                            "watch-deps": {
+                                              "dependsOn": [
+                                                "build-deps"
+                                              ],
+                                              "command": "npx nx watch --projects Lang --includeDependentProjects -- npx nx build-deps Lang"
+                                            }
+                                          }
+                                        },
+                                        "6308528052571488461": {
+                                          "start": {
+                                            "executor": "@nx/expo:start"
+                                          },
+                                          "serve": {
+                                            "command": "expo start --web",
+                                            "options": {
+                                              "cwd": "apps/Lang",
+                                              "args": [
+                                                "--clear"
+                                              ]
+                                            }
+                                          },
+                                          "run-ios": {
+                                            "command": "expo run:ios",
+                                            "options": {
+                                              "cwd": "apps/Lang"
+                                            }
+                                          },
+                                          "run-android": {
+                                            "command": "expo run:android",
+                                            "options": {
+                                              "cwd": "apps/Lang"
+                                            }
+                                          },
+                                          "export": {
+                                            "command": "expo export",
+                                            "options": {
+                                              "cwd": "apps/Lang",
+                                              "args": [
+                                                "--clear"
+                                              ]
+                                            },
+                                            "cache": true,
+                                            "dependsOn": [
+                                              "^export"
+                                            ],
+                                            "inputs": [
+                                              "default",
+                                              "^production",
+                                              {
+                                                "externalDependencies": [
+                                                  "expo"
+                                                ]
+                                              }
+                                            ],
+                                            "outputs": [
+                                              "{workspaceRoot}/apps/Lang/dist"
+                                            ]
+                                          },
+                                          "install": {
+                                            "executor": "@nx/expo:install"
+                                          },
+                                          "prebuild": {
+                                            "executor": "@nx/expo:prebuild"
+                                          },
+                                          "build": {
+                                            "executor": "@nx/expo:build"
+                                          },
+                                          "submit": {
+                                            "command": "eas submit",
+                                            "options": {
+                                              "cwd": "apps/Lang"
+                                            }
+                                          },
+                                          "build-deps": {
+                                            "dependsOn": [
+                                              "^build"
+                                            ]
+                                          },
+                                          "watch-deps": {
+                                            "dependsOn": [
+                                              "build-deps"
+                                            ],
+                                            "command": "npx nx watch --projects Lang --includeDependentProjects -- npx nx build-deps Lang"
+                                          }
+                                        }
+                                      },
+                                      "6308528052571488461": {
+                                        "start": {
+                                          "executor": "@nx/expo:start"
+                                        },
+                                        "serve": {
+                                          "command": "expo start --web",
+                                          "options": {
+                                            "cwd": "apps/Lang",
+                                            "args": [
+                                              "--clear"
+                                            ]
+                                          }
+                                        },
+                                        "run-ios": {
+                                          "command": "expo run:ios",
+                                          "options": {
+                                            "cwd": "apps/Lang"
+                                          }
+                                        },
+                                        "run-android": {
+                                          "command": "expo run:android",
+                                          "options": {
+                                            "cwd": "apps/Lang"
+                                          }
+                                        },
+                                        "export": {
+                                          "command": "expo export",
+                                          "options": {
+                                            "cwd": "apps/Lang",
+                                            "args": [
+                                              "--clear"
+                                            ]
+                                          },
+                                          "cache": true,
+                                          "dependsOn": [
+                                            "^export"
+                                          ],
+                                          "inputs": [
+                                            "default",
+                                            "^production",
+                                            {
+                                              "externalDependencies": [
+                                                "expo"
+                                              ]
+                                            }
+                                          ],
+                                          "outputs": [
+                                            "{workspaceRoot}/apps/Lang/dist"
+                                          ]
+                                        },
+                                        "install": {
+                                          "executor": "@nx/expo:install"
+                                        },
+                                        "prebuild": {
+                                          "executor": "@nx/expo:prebuild"
+                                        },
+                                        "build": {
+                                          "executor": "@nx/expo:build"
+                                        },
+                                        "submit": {
+                                          "command": "eas submit",
+                                          "options": {
+                                            "cwd": "apps/Lang"
+                                          }
+                                        },
+                                        "build-deps": {
+                                          "dependsOn": [
+                                            "^build"
+                                          ]
+                                        },
+                                        "watch-deps": {
+                                          "dependsOn": [
+                                            "build-deps"
+                                          ],
+                                          "command": "npx nx watch --projects Lang --includeDependentProjects -- npx nx build-deps Lang"
+                                        }
+                                      }
+                                    },
+                                    "6308528052571488461": {
+                                      "start": {
+                                        "executor": "@nx/expo:start"
+                                      },
+                                      "serve": {
+                                        "command": "expo start --web",
+                                        "options": {
+                                          "cwd": "apps/Lang",
+                                          "args": [
+                                            "--clear"
+                                          ]
+                                        }
+                                      },
+                                      "run-ios": {
+                                        "command": "expo run:ios",
+                                        "options": {
+                                          "cwd": "apps/Lang"
+                                        }
+                                      },
+                                      "run-android": {
+                                        "command": "expo run:android",
+                                        "options": {
+                                          "cwd": "apps/Lang"
+                                        }
+                                      },
+                                      "export": {
+                                        "command": "expo export",
+                                        "options": {
+                                          "cwd": "apps/Lang",
+                                          "args": [
+                                            "--clear"
+                                          ]
+                                        },
+                                        "cache": true,
+                                        "dependsOn": [
+                                          "^export"
+                                        ],
+                                        "inputs": [
+                                          "default",
+                                          "^production",
+                                          {
+                                            "externalDependencies": [
+                                              "expo"
+                                            ]
+                                          }
+                                        ],
+                                        "outputs": [
+                                          "{workspaceRoot}/apps/Lang/dist"
+                                        ]
+                                      },
+                                      "install": {
+                                        "executor": "@nx/expo:install"
+                                      },
+                                      "prebuild": {
+                                        "executor": "@nx/expo:prebuild"
+                                      },
+                                      "build": {
+                                        "executor": "@nx/expo:build"
+                                      },
+                                      "submit": {
+                                        "command": "eas submit",
+                                        "options": {
+                                          "cwd": "apps/Lang"
+                                        }
+                                      },
+                                      "build-deps": {
+                                        "dependsOn": [
+                                          "^build"
+                                        ]
+                                      },
+                                      "watch-deps": {
+                                        "dependsOn": [
+                                          "build-deps"
+                                        ],
+                                        "command": "npx nx watch --projects Lang --includeDependentProjects -- npx nx build-deps Lang"
+                                      }
+                                    }
+                                  },
+                                  "6308528052571488461": {
+                                    "start": {
+                                      "executor": "@nx/expo:start"
+                                    },
+                                    "serve": {
+                                      "command": "expo start --web",
+                                      "options": {
+                                        "cwd": "apps/Lang",
+                                        "args": [
+                                          "--clear"
+                                        ]
+                                      }
+                                    },
+                                    "run-ios": {
+                                      "command": "expo run:ios",
+                                      "options": {
+                                        "cwd": "apps/Lang"
+                                      }
+                                    },
+                                    "run-android": {
+                                      "command": "expo run:android",
+                                      "options": {
+                                        "cwd": "apps/Lang"
+                                      }
+                                    },
+                                    "export": {
+                                      "command": "expo export",
+                                      "options": {
+                                        "cwd": "apps/Lang",
+                                        "args": [
+                                          "--clear"
+                                        ]
+                                      },
+                                      "cache": true,
+                                      "dependsOn": [
+                                        "^export"
+                                      ],
+                                      "inputs": [
+                                        "default",
+                                        "^production",
+                                        {
+                                          "externalDependencies": [
+                                            "expo"
+                                          ]
+                                        }
+                                      ],
+                                      "outputs": [
+                                        "{workspaceRoot}/apps/Lang/dist"
+                                      ]
+                                    },
+                                    "install": {
+                                      "executor": "@nx/expo:install"
+                                    },
+                                    "prebuild": {
+                                      "executor": "@nx/expo:prebuild"
+                                    },
+                                    "build": {
+                                      "executor": "@nx/expo:build"
+                                    },
+                                    "submit": {
+                                      "command": "eas submit",
+                                      "options": {
+                                        "cwd": "apps/Lang"
+                                      }
+                                    },
+                                    "build-deps": {
+                                      "dependsOn": [
+                                        "^build"
+                                      ]
+                                    },
+                                    "watch-deps": {
+                                      "dependsOn": [
+                                        "build-deps"
+                                      ],
+                                      "command": "npx nx watch --projects Lang --includeDependentProjects -- npx nx build-deps Lang"
+                                    }
+                                  }
+                                },
+                                "8938252561734071601": {
+                                  "start": {
+                                    "executor": "@nx/expo:start"
+                                  },
+                                  "serve": {
+                                    "command": "expo start --web",
+                                    "options": {
+                                      "cwd": "apps/Lang",
+                                      "args": [
+                                        "--clear"
+                                      ]
+                                    }
+                                  },
+                                  "run-ios": {
+                                    "command": "expo run:ios",
+                                    "options": {
+                                      "cwd": "apps/Lang"
+                                    }
+                                  },
+                                  "run-android": {
+                                    "command": "expo run:android",
+                                    "options": {
+                                      "cwd": "apps/Lang"
+                                    }
+                                  },
+                                  "export": {
+                                    "command": "expo export",
+                                    "options": {
+                                      "cwd": "apps/Lang",
+                                      "args": [
+                                        "--clear"
+                                      ]
+                                    },
+                                    "cache": true,
+                                    "dependsOn": [
+                                      "^export"
+                                    ],
+                                    "inputs": [
+                                      "default",
+                                      "^production",
+                                      {
+                                        "externalDependencies": [
+                                          "expo"
+                                        ]
+                                      }
+                                    ],
+                                    "outputs": [
+                                      "{workspaceRoot}/apps/Lang/dist"
+                                    ]
+                                  },
+                                  "install": {
+                                    "executor": "@nx/expo:install"
+                                  },
+                                  "prebuild": {
+                                    "executor": "@nx/expo:prebuild"
+                                  },
+                                  "build": {
+                                    "executor": "@nx/expo:build"
+                                  },
+                                  "submit": {
+                                    "command": "eas submit",
+                                    "options": {
+                                      "cwd": "apps/Lang"
+                                    }
+                                  },
+                                  "build-deps": {
+                                    "dependsOn": [
+                                      "^build"
+                                    ]
+                                  },
+                                  "watch-deps": {
+                                    "dependsOn": [
+                                      "build-deps"
+                                    ],
+                                    "command": "npx nx watch --projects Lang --includeDependentProjects -- npx nx build-deps Lang"
+                                  }
+                                }
+                              },
+                              "8938252561734071601": {
+                                "start": {
+                                  "executor": "@nx/expo:start"
+                                },
+                                "serve": {
+                                  "command": "expo start --web",
+                                  "options": {
+                                    "cwd": "apps/Lang",
+                                    "args": [
+                                      "--clear"
+                                    ]
+                                  }
+                                },
+                                "run-ios": {
+                                  "command": "expo run:ios",
+                                  "options": {
+                                    "cwd": "apps/Lang"
+                                  }
+                                },
+                                "run-android": {
+                                  "command": "expo run:android",
+                                  "options": {
+                                    "cwd": "apps/Lang"
+                                  }
+                                },
+                                "export": {
+                                  "command": "expo export",
+                                  "options": {
+                                    "cwd": "apps/Lang",
+                                    "args": [
+                                      "--clear"
+                                    ]
+                                  },
+                                  "cache": true,
+                                  "dependsOn": [
+                                    "^export"
+                                  ],
+                                  "inputs": [
+                                    "default",
+                                    "^production",
+                                    {
+                                      "externalDependencies": [
+                                        "expo"
+                                      ]
+                                    }
+                                  ],
+                                  "outputs": [
+                                    "{workspaceRoot}/apps/Lang/dist"
+                                  ]
+                                },
+                                "install": {
+                                  "executor": "@nx/expo:install"
+                                },
+                                "prebuild": {
+                                  "executor": "@nx/expo:prebuild"
+                                },
+                                "build": {
+                                  "executor": "@nx/expo:build"
+                                },
+                                "submit": {
+                                  "command": "eas submit",
+                                  "options": {
+                                    "cwd": "apps/Lang"
+                                  }
+                                },
+                                "build-deps": {
+                                  "dependsOn": [
+                                    "^build"
+                                  ]
+                                },
+                                "watch-deps": {
+                                  "dependsOn": [
+                                    "build-deps"
+                                  ],
+                                  "command": "npx nx watch --projects Lang --includeDependentProjects -- npx nx build-deps Lang"
+                                }
+                              }
+                            },
+                            "8938252561734071601": {
+                              "start": {
+                                "executor": "@nx/expo:start"
+                              },
+                              "serve": {
+                                "command": "expo start --web",
+                                "options": {
+                                  "cwd": "apps/Lang",
+                                  "args": [
+                                    "--clear"
+                                  ]
+                                }
+                              },
+                              "run-ios": {
+                                "command": "expo run:ios",
+                                "options": {
+                                  "cwd": "apps/Lang"
+                                }
+                              },
+                              "run-android": {
+                                "command": "expo run:android",
+                                "options": {
+                                  "cwd": "apps/Lang"
+                                }
+                              },
+                              "export": {
+                                "command": "expo export",
+                                "options": {
+                                  "cwd": "apps/Lang",
+                                  "args": [
+                                    "--clear"
+                                  ]
+                                },
+                                "cache": true,
+                                "dependsOn": [
+                                  "^export"
+                                ],
+                                "inputs": [
+                                  "default",
+                                  "^production",
+                                  {
+                                    "externalDependencies": [
+                                      "expo"
+                                    ]
+                                  }
+                                ],
+                                "outputs": [
+                                  "{workspaceRoot}/apps/Lang/dist"
+                                ]
+                              },
+                              "install": {
+                                "executor": "@nx/expo:install"
+                              },
+                              "prebuild": {
+                                "executor": "@nx/expo:prebuild"
+                              },
+                              "build": {
+                                "executor": "@nx/expo:build"
+                              },
+                              "submit": {
+                                "command": "eas submit",
+                                "options": {
+                                  "cwd": "apps/Lang"
+                                }
+                              },
+                              "build-deps": {
+                                "dependsOn": [
+                                  "^build"
+                                ]
+                              },
+                              "watch-deps": {
+                                "dependsOn": [
+                                  "build-deps"
+                                ],
+                                "command": "npx nx watch --projects Lang --includeDependentProjects -- npx nx build-deps Lang"
+                              }
+                            }
+                          },
+                          "8938252561734071601": {
+                            "start": {
+                              "executor": "@nx/expo:start"
+                            },
+                            "serve": {
+                              "command": "expo start --web",
+                              "options": {
+                                "cwd": "apps/Lang",
+                                "args": [
+                                  "--clear"
+                                ]
+                              }
+                            },
+                            "run-ios": {
+                              "command": "expo run:ios",
+                              "options": {
+                                "cwd": "apps/Lang"
+                              }
+                            },
+                            "run-android": {
+                              "command": "expo run:android",
+                              "options": {
+                                "cwd": "apps/Lang"
+                              }
+                            },
+                            "export": {
+                              "command": "expo export",
+                              "options": {
+                                "cwd": "apps/Lang",
+                                "args": [
+                                  "--clear"
+                                ]
+                              },
+                              "cache": true,
+                              "dependsOn": [
+                                "^export"
+                              ],
+                              "inputs": [
+                                "default",
+                                "^production",
+                                {
+                                  "externalDependencies": [
+                                    "expo"
+                                  ]
+                                }
+                              ],
+                              "outputs": [
+                                "{workspaceRoot}/apps/Lang/dist"
+                              ]
+                            },
+                            "install": {
+                              "executor": "@nx/expo:install"
+                            },
+                            "prebuild": {
+                              "executor": "@nx/expo:prebuild"
+                            },
+                            "build": {
+                              "executor": "@nx/expo:build"
+                            },
+                            "submit": {
+                              "command": "eas submit",
+                              "options": {
+                                "cwd": "apps/Lang"
+                              }
+                            },
+                            "build-deps": {
+                              "dependsOn": [
+                                "^build"
+                              ]
+                            },
+                            "watch-deps": {
+                              "dependsOn": [
+                                "build-deps"
+                              ],
+                              "command": "npx nx watch --projects Lang --includeDependentProjects -- npx nx build-deps Lang"
+                            }
+                          }
+                        },
+                        "8938252561734071601": {
+                          "start": {
+                            "executor": "@nx/expo:start"
+                          },
+                          "serve": {
+                            "command": "expo start --web",
+                            "options": {
+                              "cwd": "apps/Lang",
+                              "args": [
+                                "--clear"
+                              ]
+                            }
+                          },
+                          "run-ios": {
+                            "command": "expo run:ios",
+                            "options": {
+                              "cwd": "apps/Lang"
+                            }
+                          },
+                          "run-android": {
+                            "command": "expo run:android",
+                            "options": {
+                              "cwd": "apps/Lang"
+                            }
+                          },
+                          "export": {
+                            "command": "expo export",
+                            "options": {
+                              "cwd": "apps/Lang",
+                              "args": [
+                                "--clear"
+                              ]
+                            },
+                            "cache": true,
+                            "dependsOn": [
+                              "^export"
+                            ],
+                            "inputs": [
+                              "default",
+                              "^production",
+                              {
+                                "externalDependencies": [
+                                  "expo"
+                                ]
+                              }
+                            ],
+                            "outputs": [
+                              "{workspaceRoot}/apps/Lang/dist"
+                            ]
+                          },
+                          "install": {
+                            "executor": "@nx/expo:install"
+                          },
+                          "prebuild": {
+                            "executor": "@nx/expo:prebuild"
+                          },
+                          "build": {
+                            "executor": "@nx/expo:build"
+                          },
+                          "submit": {
+                            "command": "eas submit",
+                            "options": {
+                              "cwd": "apps/Lang"
+                            }
+                          },
+                          "build-deps": {
+                            "dependsOn": [
+                              "^build"
+                            ]
+                          },
+                          "watch-deps": {
+                            "dependsOn": [
+                              "build-deps"
+                            ],
+                            "command": "npx nx watch --projects Lang --includeDependentProjects -- npx nx build-deps Lang"
+                          }
+                        }
+                      },
+                      "8938252561734071601": {
+                        "start": {
+                          "executor": "@nx/expo:start"
+                        },
+                        "serve": {
+                          "command": "expo start --web",
+                          "options": {
+                            "cwd": "apps/Lang",
+                            "args": [
+                              "--clear"
+                            ]
+                          }
+                        },
+                        "run-ios": {
+                          "command": "expo run:ios",
+                          "options": {
+                            "cwd": "apps/Lang"
+                          }
+                        },
+                        "run-android": {
+                          "command": "expo run:android",
+                          "options": {
+                            "cwd": "apps/Lang"
+                          }
+                        },
+                        "export": {
+                          "command": "expo export",
+                          "options": {
+                            "cwd": "apps/Lang",
+                            "args": [
+                              "--clear"
+                            ]
+                          },
+                          "cache": true,
+                          "dependsOn": [
+                            "^export"
+                          ],
+                          "inputs": [
+                            "default",
+                            "^production",
+                            {
+                              "externalDependencies": [
+                                "expo"
+                              ]
+                            }
+                          ],
+                          "outputs": [
+                            "{workspaceRoot}/apps/Lang/dist"
+                          ]
+                        },
+                        "install": {
+                          "executor": "@nx/expo:install"
+                        },
+                        "prebuild": {
+                          "executor": "@nx/expo:prebuild"
+                        },
+                        "build": {
+                          "executor": "@nx/expo:build"
+                        },
+                        "submit": {
+                          "command": "eas submit",
+                          "options": {
+                            "cwd": "apps/Lang"
+                          }
+                        },
+                        "build-deps": {
+                          "dependsOn": [
+                            "^build"
+                          ]
+                        },
+                        "watch-deps": {
+                          "dependsOn": [
+                            "build-deps"
+                          ],
+                          "command": "npx nx watch --projects Lang --includeDependentProjects -- npx nx build-deps Lang"
+                        }
+                      }
+                    },
+                    "8938252561734071601": {
                       "start": {
                         "executor": "@nx/expo:start"
                       },
@@ -86,7 +1271,7 @@
                       }
                     }
                   },
-                  "6308528052571488461": {
+                  "8938252561734071601": {
                     "start": {
                       "executor": "@nx/expo:start"
                     },
@@ -164,7 +1349,7 @@
                     }
                   }
                 },
-                "6308528052571488461": {
+                "8938252561734071601": {
                   "start": {
                     "executor": "@nx/expo:start"
                   },
@@ -242,7 +1427,7 @@
                   }
                 }
               },
-              "6308528052571488461": {
+              "8938252561734071601": {
                 "start": {
                   "executor": "@nx/expo:start"
                 },
@@ -320,7 +1505,7 @@
                 }
               }
             },
-            "6308528052571488461": {
+            "8938252561734071601": {
               "start": {
                 "executor": "@nx/expo:start"
               },
@@ -398,7 +1583,7 @@
               }
             }
           },
-          "6308528052571488461": {
+          "8938252561734071601": {
             "start": {
               "executor": "@nx/expo:start"
             },
@@ -476,7 +1661,7 @@
             }
           }
         },
-        "6308528052571488461": {
+        "8938252561734071601": {
           "start": {
             "executor": "@nx/expo:start"
           },
@@ -554,7 +1739,7 @@
           }
         }
       },
-      "6308528052571488461": {
+      "8938252561734071601": {
         "start": {
           "executor": "@nx/expo:start"
         },
@@ -632,7 +1817,7 @@
         }
       }
     },
-    "6308528052571488461": {
+    "8938252561734071601": {
       "start": {
         "executor": "@nx/expo:start"
       },

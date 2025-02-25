@@ -47,6 +47,112 @@
   },
   "fileMap": {
     "projectFileMap": {
+      "Lang": [
+        {
+          "file": "apps/Lang/.babelrc.js",
+          "hash": "231774045518377938"
+        },
+        {
+          "file": "apps/Lang/app.json",
+          "hash": "14802477458601205434"
+        },
+        {
+          "file": "apps/Lang/assets/adaptive-icon.png",
+          "hash": "16102135492459408350"
+        },
+        {
+          "file": "apps/Lang/assets/favicon.png",
+          "hash": "10556792184362654649"
+        },
+        {
+          "file": "apps/Lang/assets/icon.png",
+          "hash": "14252482080276080187"
+        },
+        {
+          "file": "apps/Lang/assets/splash.png",
+          "hash": "16493559885079032523"
+        },
+        {
+          "file": "apps/Lang/eas.json",
+          "hash": "6330161018993400891"
+        },
+        {
+          "file": "apps/Lang/eslint.config.mjs",
+          "hash": "7479945352028719222"
+        },
+        {
+          "file": "apps/Lang/index.js",
+          "hash": "1184010334168630581"
+        },
+        {
+          "file": "apps/Lang/jest.config.ts",
+          "hash": "5723050910111887508"
+        },
+        {
+          "file": "apps/Lang/metro.config.js",
+          "hash": "10219935206077903016"
+        },
+        {
+          "file": "apps/Lang/package.json",
+          "hash": "10339348559032160168",
+          "deps": [
+            "npm:metro-config",
+            "npm:react-native",
+            "npm:expo",
+            "npm:react-native-web"
+          ]
+        },
+        {
+          "file": "apps/Lang/project.json",
+          "hash": "8820359911218011265"
+        },
+        {
+          "file": "apps/Lang/src/app/App.spec.tsx",
+          "hash": "5072730789784802033"
+        },
+        {
+          "file": "apps/Lang/src/app/App.tsx",
+          "hash": "4711345254684793135"
+        },
+        {
+          "file": "apps/Lang/src/test-setup.ts",
+          "hash": "9919311210714806624"
+        },
+        {
+          "file": "apps/Lang/tsconfig.app.json",
+          "hash": "7835089978196758631"
+        },
+        {
+          "file": "apps/Lang/tsconfig.json",
+          "hash": "468433131907124533"
+        },
+        {
+          "file": "apps/Lang/tsconfig.spec.json",
+          "hash": "15283316347733607234"
+        }
+      ],
+      "desktop-e2e": [
+        {
+          "file": "apps/desktop-e2e/eslint.config.mjs",
+          "hash": "13364302716925527983"
+        },
+        {
+          "file": "apps/desktop-e2e/playwright.config.ts",
+          "hash": "11586673279068914958"
+        },
+        {
+          "file": "apps/desktop-e2e/project.json",
+          "hash": "1892879620660811486"
+        },
+        {
+          "file": "apps/desktop-e2e/src/example.spec.ts",
+          "hash": "16019101014373124625"
+        },
+        {
+          "file": "apps/desktop-e2e/tsconfig.json",
+          "hash": "18107275616570252607"
+        }
+      ],
       "desktop": [
         {
           "file": "apps/desktop/eslint.config.mjs",
@@ -164,112 +270,6 @@
         },
         {
           "file": "apps/Lang-e2e/tsconfig.json",
-          "hash": "18107275616570252607"
-        }
-      ],
-      "Lang": [
-        {
-          "file": "apps/Lang/.babelrc.js",
-          "hash": "231774045518377938"
-        },
-        {
-          "file": "apps/Lang/app.json",
-          "hash": "14802477458601205434"
-        },
-        {
-          "file": "apps/Lang/assets/adaptive-icon.png",
-          "hash": "16102135492459408350"
-        },
-        {
-          "file": "apps/Lang/assets/favicon.png",
-          "hash": "10556792184362654649"
-        },
-        {
-          "file": "apps/Lang/assets/icon.png",
-          "hash": "14252482080276080187"
-        },
-        {
-          "file": "apps/Lang/assets/splash.png",
-          "hash": "16493559885079032523"
-        },
-        {
-          "file": "apps/Lang/eas.json",
-          "hash": "6330161018993400891"
-        },
-        {
-          "file": "apps/Lang/eslint.config.mjs",
-          "hash": "7479945352028719222"
-        },
-        {
-          "file": "apps/Lang/index.js",
-          "hash": "1184010334168630581"
-        },
-        {
-          "file": "apps/Lang/jest.config.ts",
-          "hash": "5723050910111887508"
-        },
-        {
-          "file": "apps/Lang/metro.config.js",
-          "hash": "10219935206077903016"
-        },
-        {
-          "file": "apps/Lang/package.json",
-          "hash": "10339348559032160168",
-          "deps": [
-            "npm:metro-config",
-            "npm:react-native",
-            "npm:expo",
-            "npm:react-native-web"
-          ]
-        },
-        {
-          "file": "apps/Lang/project.json",
-          "hash": "8820359911218011265"
-        },
-        {
-          "file": "apps/Lang/src/app/App.spec.tsx",
-          "hash": "5072730789784802033"
-        },
-        {
-          "file": "apps/Lang/src/app/App.tsx",
-          "hash": "4711345254684793135"
-        },
-        {
-          "file": "apps/Lang/src/test-setup.ts",
-          "hash": "9919311210714806624"
-        },
-        {
-          "file": "apps/Lang/tsconfig.app.json",
-          "hash": "7835089978196758631"
-        },
-        {
-          "file": "apps/Lang/tsconfig.json",
-          "hash": "468433131907124533"
-        },
-        {
-          "file": "apps/Lang/tsconfig.spec.json",
-          "hash": "15283316347733607234"
-        }
-      ],
-      "desktop-e2e": [
-        {
-          "file": "apps/desktop-e2e/eslint.config.mjs",
-          "hash": "13364302716925527983"
-        },
-        {
-          "file": "apps/desktop-e2e/playwright.config.ts",
-          "hash": "11586673279068914958"
-        },
-        {
-          "file": "apps/desktop-e2e/project.json",
-          "hash": "1892879620660811486"
-        },
-        {
-          "file": "apps/desktop-e2e/src/example.spec.ts",
-          "hash": "16019101014373124625"
-        },
-        {
-          "file": "apps/desktop-e2e/tsconfig.json",
           "hash": "18107275616570252607"
         }
       ]

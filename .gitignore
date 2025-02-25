@@ -25,6 +25,9 @@ dist-ssr
 mod
 yomu
 .nx
+.nx/*
+.nx/
+nx/
 .git
 
 vite.config.*.timestamp*
