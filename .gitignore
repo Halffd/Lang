@@ -24,11 +24,10 @@ dist-ssr
 *.sw?
 mod
 yomu
-.nx
-.nx/*
+
+# Nx cache
 .nx/
-nx/
-.git
+**/.nx/
 
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
