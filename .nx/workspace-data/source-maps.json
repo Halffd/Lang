@@ -89,6 +89,224 @@
       "nx/core/project-json"
     ]
   },
+  "apps/desktop": {
+    "root": [
+      "apps/desktop/project.json",
+      "nx/core/project-json"
+    ],
+    "sourceRoot": [
+      "apps/desktop/project.json",
+      "nx/core/project-json"
+    ],
+    "name": [
+      "apps/desktop/project.json",
+      "nx/core/project-json"
+    ],
+    "projectType": [
+      "apps/desktop/project.json",
+      "nx/core/project-json"
+    ],
+    "tags": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "tags.npm:public": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups.NPM Scripts": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups.NPM Scripts.0": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups.NPM Scripts.1": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups.NPM Scripts.2": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.targetGroups.NPM Scripts.3": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.description": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.js": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.js.packageName": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.js.packageMain": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "metadata.js.isInPackageManagerWorkspaces": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.start": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.start.executor": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.start.options": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.start.metadata": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.start.options.script": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.start.metadata.scriptContent": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.start.metadata.runCommand": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dev": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dev.executor": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dev.options": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dev.metadata": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dev.options.script": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dev.metadata.scriptContent": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.dev.metadata.runCommand": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.build": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.build.executor": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.build.options": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.build.metadata": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.build.options.script": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.build.metadata.scriptContent": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.build.metadata.runCommand": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.pack": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.pack.executor": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.pack.options": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.pack.metadata": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.pack.options.script": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.pack.metadata.scriptContent": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.pack.metadata.runCommand": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.nx-release-publish": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.nx-release-publish.executor": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.nx-release-publish.dependsOn": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "targets.nx-release-publish.options": [
+      "apps/desktop/package.json",
+      "nx/core/package-json"
+    ],
+    "$schema": [
+      "apps/desktop/project.json",
+      "nx/core/project-json"
+    ],
+    "// targets": [
+      "apps/desktop/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.dependsOn": [
+      "nx.json",
+      "nx/target-defaults"
+    ],
+    "targets.build.parallelism": [
+      "nx.json",
+      "nx/target-defaults"
+    ]
+  },
   "apps/Lang-e2e": {
     "root": [
       "apps/Lang-e2e/project.json",
@@ -124,40 +342,6 @@
     ],
     "targets": [
       "apps/Lang-e2e/project.json",
-      "nx/core/project-json"
-    ]
-  },
-  "apps/desktop": {
-    "root": [
-      "apps/desktop/project.json",
-      "nx/core/project-json"
-    ],
-    "name": [
-      "apps/desktop/project.json",
-      "nx/core/project-json"
-    ],
-    "$schema": [
-      "apps/desktop/project.json",
-      "nx/core/project-json"
-    ],
-    "sourceRoot": [
-      "apps/desktop/project.json",
-      "nx/core/project-json"
-    ],
-    "projectType": [
-      "apps/desktop/project.json",
-      "nx/core/project-json"
-    ],
-    "// targets": [
-      "apps/desktop/project.json",
-      "nx/core/project-json"
-    ],
-    "tags": [
-      "apps/desktop/project.json",
-      "nx/core/project-json"
-    ],
-    "targets": [
-      "apps/desktop/project.json",
       "nx/core/project-json"
     ]
   },

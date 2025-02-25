@@ -1,15 +1,7 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Text, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { useApp } from '../context/AppContext';
-
-interface TokenizedWord {
-  word: string;
-  reading?: string;
-  definitions: string[];
-  translations?: string[];
-  pos?: string;
-  frequency?: number;
-}
+import { TokenizedWord } from '../types';
 
 interface ResultDetailsProps {
   word: TokenizedWord;
@@ -29,7 +21,7 @@ export const ResultDetails = memo(function ResultDetails({ word }: ResultDetails
     }
   }, [word.word, getNoteForWord]);
 
-  const handleSaveNote = () => {
+  const handleSaveNote = useCallback(() => {
     const existingNote = getNoteForWord(word.word);
     if (existingNote) {
       updateNote(existingNote.id, noteContent);
@@ -37,7 +29,11 @@ export const ResultDetails = memo(function ResultDetails({ word }: ResultDetails
       addNote(word.word, noteContent);
     }
     setIsEditing(false);
-  };
+  }, [word.word, noteContent, getNoteForWord, updateNote, addNote]);
+
+  const toggleEditing = useCallback(() => {
+    setIsEditing(prev => !prev);
+  }, []);
 
   return (
     <ScrollView style={styles.container}>
@@ -92,7 +88,7 @@ export const ResultDetails = memo(function ResultDetails({ word }: ResultDetails
           <Text style={styles.sectionTitle}>Notes</Text>
           <TouchableOpacity
             style={styles.editButton}
-            onPress={() => setIsEditing(!isEditing)}
+            onPress={toggleEditing}
           >
             <Text style={styles.editButtonText}>
               {isEditing ? 'Cancel' : 'Edit'}

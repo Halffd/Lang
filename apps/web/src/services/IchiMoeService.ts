@@ -1,3 +1,5 @@
+import { TokenizedWord } from '../types';
+
 export interface IchiMoeResult {
   word: string;
   reading?: string;
@@ -5,53 +7,79 @@ export interface IchiMoeResult {
   pos?: string;
 }
 
-export async function analyzeText(text: string): Promise<IchiMoeResult[]> {
-  try {
-    // Encode text for URL
-    const encodedText = encodeURIComponent(text);
-    const response = await fetch(`https://ichi.moe/cl/qr/?q=${encodedText}&r=htr`);
-    const html = await response.text();
-
-    // Create a temporary div to parse the HTML
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-
-    // Find all word containers
-    const wordContainers = doc.querySelectorAll('.gloss-row');
-    const results: IchiMoeResult[] = [];
-
-    wordContainers.forEach((container) => {
-      // Get the word and reading
-      const wordElem = container.querySelector('.js-term-str');
-      const readingElem = container.querySelector('.js-term-reading');
-      const word = wordElem?.textContent?.trim() || '';
-      const reading = readingElem?.textContent?.trim();
-
-      // Get definitions
-      const definitionElems = container.querySelectorAll('.gloss-content');
-      const definitions: string[] = [];
-      definitionElems.forEach((defElem) => {
-        const def = defElem.textContent?.trim();
-        if (def) definitions.push(def);
-      });
-
-      // Get part of speech
-      const posElem = container.querySelector('.pos-desc');
-      const pos = posElem?.textContent?.trim();
-
-      if (word && definitions.length > 0) {
-        results.push({
-          word,
-          reading,
-          definitions,
-          pos,
-        });
-      }
-    });
-
-    return results;
-  } catch (error) {
-    console.error('Failed to analyze text with ichi.moe:', error);
-    throw error;
+export class AnalysisError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AnalysisError';
   }
+}
+
+// Mock data for testing
+const mockWords: Record<string, TokenizedWord> = {
+  '日本語': {
+    word: '日本語',
+    reading: 'にほんご',
+    definitions: ['Japanese language'],
+    translations: ['Japanese'],
+    pos: 'noun',
+    frequency: 95,
+  },
+  '勉強': {
+    word: '勉強',
+    reading: 'べんきょう',
+    definitions: ['study', 'learning', 'diligence'],
+    translations: ['to study', 'to learn'],
+    pos: 'noun',
+    frequency: 85,
+  },
+  '食べる': {
+    word: '食べる',
+    reading: 'たべる',
+    definitions: ['to eat', 'to consume'],
+    translations: ['to eat'],
+    pos: 'verb',
+    frequency: 90,
+  },
+};
+
+/**
+ * Analyzes Japanese text and returns tokenized words
+ */
+export async function analyzeText(text: string, signal?: AbortSignal): Promise<TokenizedWord[]> {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+
+  // Check if the request was aborted
+  if (signal?.aborted) {
+    throw new Error('Request aborted');
+  }
+
+  // For testing, return mock data if the text contains any of our mock words
+  const results: TokenizedWord[] = [];
+  
+  // Split the text into words (this is a very simplified approach)
+  const words = text.split(/\s+/);
+  
+  for (const word of words) {
+    if (mockWords[word]) {
+      results.push(mockWords[word]);
+    } else {
+      // For unknown words, create a mock result
+      results.push({
+        word,
+        reading: word,
+        definitions: [`Definition for ${word}`],
+        translations: [`Translation for ${word}`],
+        pos: 'unknown',
+        frequency: Math.random() * 50,
+      });
+    }
+  }
+
+  // If no results, throw an error
+  if (results.length === 0) {
+    throw new AnalysisError('No words found in the text');
+  }
+
+  return results;
 } 

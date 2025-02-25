@@ -1,71 +1,71 @@
 import React, { memo } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
-
-interface TokenizedWord {
-  word: string;
-  reading?: string;
-  definitions: string[];
-  translations?: string[];
-  pos?: string;
-  frequency?: number;
-}
+import { TokenizedWord } from '../types';
 
 interface ResultLineProps {
   word: TokenizedWord;
-  onSelect?: () => void;
+  onSelect: () => void;
+  isSelected?: boolean;
 }
 
-export const ResultLine = memo(function ResultLine({ word, onSelect }: ResultLineProps) {
+export const ResultLine = memo(function ResultLine({ word, onSelect, isSelected = false }: ResultLineProps) {
   return (
-    <TouchableOpacity
-      style={styles.container}
+    <TouchableOpacity 
+      style={[styles.container, isSelected && styles.selectedContainer]} 
       onPress={onSelect}
       activeOpacity={0.7}
     >
-      <View style={styles.mainContent}>
+      <View style={styles.wordContainer}>
         <Text style={styles.wordText}>{word.word}</Text>
         {word.reading && (
           <Text style={styles.readingText}>（{word.reading}）</Text>
         )}
       </View>
-
-      {word.pos && (
-        <View style={styles.posContainer}>
-          <Text style={styles.posText}>{word.pos}</Text>
-        </View>
-      )}
-
-      {word.frequency != null && (
-        <View style={[
-          styles.frequencyBadge,
-          { backgroundColor: word.frequency > 50 ? '#4CAF50' : '#FF9800' }
-        ]}>
-          <Text style={styles.frequencyText}>
-            {Math.round(word.frequency)}%
+      
+      <View style={styles.definitionContainer}>
+        {word.definitions.length > 0 && (
+          <Text style={styles.definitionText} numberOfLines={2}>
+            {word.definitions[0]}
           </Text>
-        </View>
-      )}
+        )}
+      </View>
+      
+      <View style={styles.metaContainer}>
+        {word.pos && (
+          <View style={styles.tag}>
+            <Text style={styles.tagText}>{word.pos}</Text>
+          </View>
+        )}
+        {word.frequency != null && (
+          <View style={[styles.tag, styles.frequencyTag]}>
+            <Text style={styles.tagText}>{Math.round(word.frequency)}%</Text>
+          </View>
+        )}
+      </View>
     </TouchableOpacity>
   );
 });
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    backgroundColor: '#fff',
     borderRadius: 8,
-    backgroundColor: '#f8f9fa',
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
-  mainContent: {
-    flex: 1,
+  selectedContainer: {
+    borderColor: '#2196f3',
+    backgroundColor: '#e3f2fd',
+  },
+  wordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 8,
     gap: 8,
   },
   wordText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
     color: '#2c3e50',
   },
@@ -73,26 +73,29 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
-  posContainer: {
-    backgroundColor: '#e3f2fd',
+  definitionContainer: {
+    marginBottom: 8,
+  },
+  definitionText: {
+    fontSize: 14,
+    color: '#2c3e50',
+    lineHeight: 20,
+  },
+  metaContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  tag: {
+    backgroundColor: '#f1f5f9',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 16,
-    marginRight: 8,
+    borderRadius: 4,
   },
-  posText: {
+  frequencyTag: {
+    backgroundColor: '#e8f5e9',
+  },
+  tagText: {
     fontSize: 12,
-    color: '#1976d2',
-    fontWeight: '500',
-  },
-  frequencyBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  frequencyText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
+    color: '#64748b',
   },
 }); 

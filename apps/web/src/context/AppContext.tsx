@@ -1,16 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
-interface HistoryItem {
-  text: string;
-  timestamp: number;
-}
-
-interface Note {
-  id: string;
-  word: string;
-  content: string;
-  timestamp: number;
-}
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { HistoryItem, Note } from '../types';
 
 interface AppContextType {
   history: HistoryItem[];
@@ -63,7 +52,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [notes]);
 
-  const addToHistory = (text: string) => {
+  const addToHistory = useCallback((text: string) => {
     if (!text.trim()) return;
     
     setHistory(prev => {
@@ -73,13 +62,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ].slice(0, 10);
       return newHistory;
     });
-  };
+  }, []);
 
-  const clearHistory = () => {
+  const clearHistory = useCallback(() => {
     setHistory([]);
-  };
+  }, []);
 
-  const addNote = (word: string, content: string) => {
+  const addNote = useCallback((word: string, content: string) => {
     const newNote: Note = {
       id: Date.now().toString(),
       word,
@@ -87,9 +76,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       timestamp: Date.now(),
     };
     setNotes(prev => [...prev, newNote]);
-  };
+  }, []);
 
-  const updateNote = (id: string, content: string) => {
+  const updateNote = useCallback((id: string, content: string) => {
     setNotes(prev => 
       prev.map(note => 
         note.id === id 
@@ -97,15 +86,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
           : note
       )
     );
-  };
+  }, []);
 
-  const deleteNote = (id: string) => {
+  const deleteNote = useCallback((id: string) => {
     setNotes(prev => prev.filter(note => note.id !== id));
-  };
+  }, []);
 
-  const getNoteForWord = (word: string) => {
+  const getNoteForWord = useCallback((word: string) => {
     return notes.find(note => note.word === word);
-  };
+  }, [notes]);
 
   const value = {
     history,

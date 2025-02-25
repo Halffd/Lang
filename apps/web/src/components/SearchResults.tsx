@@ -1,26 +1,37 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import { StyleSheet, View, Text, ScrollView, Animated } from 'react-native';
 import { ResultLine } from './ResultLine';
 import { ResultDetails } from './ResultDetails';
-
-interface TokenizedWord {
-  word: string;
-  reading?: string;
-  definitions: string[];
-  translations?: string[];
-  pos?: string;
-  frequency?: number;
-}
+import { TokenizedWord } from '../types';
 
 interface SearchResultsProps {
   results: TokenizedWord[];
   isLoading?: boolean;
+  error?: string | null;
+  scrollViewRef?: React.RefObject<ScrollView>;
+  onScroll?: (event: any) => void;
 }
 
-export function SearchResults({ results, isLoading }: SearchResultsProps) {
+// Animation configuration
+const FADE_ANIMATION_CONFIG = {
+  toValue: 1,
+  duration: 300,
+  useNativeDriver: true,
+};
+
+export const SearchResults = memo(function SearchResults({ 
+  results, 
+  isLoading, 
+  error,
+  scrollViewRef,
+  onScroll
+}: SearchResultsProps) {
   const [selectedWord, setSelectedWord] = useState<TokenizedWord | null>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scrollViewRef = useRef<ScrollView>(null);
+  const localScrollViewRef = useRef<ScrollView>(null);
+  
+  // Use provided scrollViewRef or local one
+  const effectiveScrollViewRef = scrollViewRef || localScrollViewRef;
 
   useEffect(() => {
     // Reset selection when results change
@@ -28,20 +39,24 @@ export function SearchResults({ results, isLoading }: SearchResultsProps) {
 
     // Animate new results
     fadeAnim.setValue(0);
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
+    Animated.timing(fadeAnim, FADE_ANIMATION_CONFIG).start();
 
     // Scroll to top when new results come in
-    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-  }, [results]);
+    effectiveScrollViewRef.current?.scrollTo({ y: 0, animated: true });
+  }, [results, fadeAnim, effectiveScrollViewRef]);
 
   if (isLoading) {
     return (
       <View style={styles.container}>
         <Text style={styles.loadingText}>Analyzing text...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Error: {error}</Text>
       </View>
     );
   }
@@ -57,9 +72,11 @@ export function SearchResults({ results, isLoading }: SearchResultsProps) {
   return (
     <View style={styles.container}>
       <ScrollView
-        ref={scrollViewRef}
+        ref={effectiveScrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
       >
         <Animated.View style={[styles.resultsContainer, { opacity: fadeAnim }]}>
           {results.map((word, index) => (
@@ -67,6 +84,7 @@ export function SearchResults({ results, isLoading }: SearchResultsProps) {
               <ResultLine
                 word={word}
                 onSelect={() => setSelectedWord(word)}
+                isSelected={selectedWord?.word === word.word}
               />
             </View>
           ))}
@@ -80,7 +98,7 @@ export function SearchResults({ results, isLoading }: SearchResultsProps) {
       )}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -126,6 +144,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
     color: '#666',
+    marginTop: 20,
+  },
+  errorText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#e53935',
     marginTop: 20,
   },
 }); 
