@@ -9,14 +9,17 @@
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
       "options": {
-        "outputPath": "dist/apps/web"
+        "outputPath": "dist/apps/web",
+        "configFile": "apps/web/vite.config.ts"
       },
       "configurations": {
         "development": {
           "mode": "development"
         },
         "production": {
-          "mode": "production"
+          "mode": "production",
+          "sourcemap": false,
+          "optimization": true
         }
       }
     },
@@ -24,7 +27,8 @@
       "executor": "@nx/vite:dev-server",
       "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "web:build"
+        "buildTarget": "web:build",
+        "port": 3000
       },
       "configurations": {
         "development": {
@@ -42,14 +46,6 @@
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "web:build"
-      },
-      "configurations": {
-        "development": {
-          "buildTarget": "web:build:development"
-        },
-        "production": {
-          "buildTarget": "web:build:production"
-        }
       }
     },
     "test": {

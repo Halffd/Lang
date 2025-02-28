@@ -10,7 +10,8 @@ import {
   FlatList, 
   useColorModeValue,
   IconButton,
-  Center
+  Center,
+  useBreakpointValue
 } from 'native-base';
 import { Platform } from 'react-native';
 import Card from '../components/Card';
@@ -32,6 +33,14 @@ export default function SearchPage() {
   const inputBgColor = useColorModeValue('white', 'gray.800');
   const placeholderColor = useColorModeValue('gray.400', 'gray.500');
   
+  // Responsive width for desktop/web
+  const containerWidth = useBreakpointValue({
+    base: '100%',
+    md: '90%',
+    lg: '80%',
+    xl: '70%'
+  });
+  
   const handleSearch = () => {
     if (query.trim()) {
       search(query);
@@ -45,13 +54,13 @@ export default function SearchPage() {
   };
   
   return (
-    <Box p={4} flex={1}>
-      <VStack space={4} width="100%">
+    <Box p={4} flex={1} alignItems="center">
+      <VStack space={4} width={containerWidth} maxW="1200px">
         <Heading size="xl" mb={2}>
           Japanese Dictionary
         </Heading>
         
-        <HStack width="100%" space={2}>
+        <HStack width="100%" space={2} alignItems="center">
           <Input
             flex={1}
             placeholder="Search for words in Japanese or English"
@@ -65,6 +74,7 @@ export default function SearchPage() {
             px={4}
             _focus={{
               borderColor: 'primary.500',
+              borderWidth: 2,
             }}
             placeholderTextColor={placeholderColor}
           />
@@ -75,36 +85,44 @@ export default function SearchPage() {
             _hover={{ bg: 'primary.600' }}
             _pressed={{ bg: 'primary.700' }}
             borderRadius="md"
+            size="lg"
           />
         </HStack>
         
-        {loading ? (
-          <Center flex={1} mt={10}>
-            <Spinner size="lg" color="primary.500" />
-            <Text mt={2}>Searching...</Text>
-          </Center>
-        ) : error ? (
-          <Center flex={1} mt={10}>
-            <Text color="error.500">{error}</Text>
-          </Center>
-        ) : (
-          <FlatList
-            data={results.length > 0 ? results : SAMPLE_RESULTS}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <Card
-                title={item.word}
-                description={`${item.reading} - ${item.meaning}`}
-                onPress={() => console.log('Selected:', item.word)}
-              />
-            )}
-            ListEmptyComponent={
-              <Center flex={1} mt={10}>
-                <Text>No results found. Try a different search term.</Text>
-              </Center>
-            }
-          />
-        )}
+        <Box flex={1} width="100%">
+          {loading ? (
+            <Center flex={1} mt={10}>
+              <Spinner size="lg" color="primary.500" />
+              <Text mt={2}>Searching...</Text>
+            </Center>
+          ) : error ? (
+            <Center flex={1} mt={10}>
+              <Text color="error.500">{error}</Text>
+            </Center>
+          ) : (
+            <FlatList
+              data={results}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <Card
+                  title={item.word}
+                  description={`${item.reading} - ${item.meaning}`}
+                  onPress={() => console.log('Selected:', item.word)}
+                  mb={4}
+                />
+              )}
+              ListEmptyComponent={
+                <Center flex={1} mt={10}>
+                  <Text>No results found. Try a different search term.</Text>
+                </Center>
+              }
+              contentContainerStyle={{
+                paddingTop: 4,
+                paddingBottom: Platform.OS === 'web' ? 20 : 4
+              }}
+            />
+          )}
+        </Box>
       </VStack>
     </Box>
   );
