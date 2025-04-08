@@ -1,143 +1,170 @@
 import React, { useState } from 'react';
-import { Box, VStack, HStack, Text, Select, TextArea, Button, Spinner, useColorModeValue } from 'native-base';
-import { TranslationMode, TranslationResult } from './types';
-import { TranslationResults } from './TranslationResults';
+import {
+  Box,
+  TextField,
+  Select,
+  MenuItem,
+  Button,
+  Typography,
+  useTheme,
+  FormControl,
+  InputLabel,
+  Stack,
+  ToggleButtonGroup,
+  ToggleButton,
+  Paper,
+} from '@mui/material';
+import { TranslationService } from '../../services/TranslationService';
 import { languageOptions } from './languageOptions';
-import { TranslationService } from './TranslationService';
 
-export const Translator: React.FC = () => {
+export type TranslationMode = 'per-word' | 'dictionary' | 'scraping';
+
+export interface TranslatorProps {
+  onTranslate: (text: string, sourceLang: string, targetLang: string, mode: TranslationMode) => Promise<string>;
+}
+
+export const Translator: React.FC<TranslatorProps> = ({ onTranslate }) => {
   const [sourceText, setSourceText] = useState('');
+  const [targetText, setTargetText] = useState('');
   const [sourceLanguage, setSourceLanguage] = useState('en');
-  const [targetLanguage, setTargetLanguage] = useState('es');
-  const [translationMode, setTranslationMode] = useState<TranslationMode>('standard');
+  const [targetLanguage, setTargetLanguage] = useState('ja');
   const [isTranslating, setIsTranslating] = useState(false);
-  const [translationResult, setTranslationResult] = useState<TranslationResult | null>(null);
-
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const textColor = useColorModeValue('gray.800', 'white');
-  const primaryColor = useColorModeValue('blue.500', 'blue.300');
+  const [mode, setMode] = useState<TranslationMode>('per-word');
+  const theme = useTheme();
 
   const handleTranslate = async () => {
     if (!sourceText.trim()) return;
-
+    
     setIsTranslating(true);
     try {
-      const result = await TranslationService.translate(
-        sourceText,
-        sourceLanguage,
-        targetLanguage,
-        translationMode
-      );
-      setTranslationResult(result);
+      const result = await onTranslate(sourceText, sourceLanguage, targetLanguage, mode);
+      setTargetText(result);
     } catch (error) {
       console.error('Translation error:', error);
+      setTargetText('Translation failed. Please try again.');
     } finally {
       setIsTranslating(false);
     }
   };
 
+  const handleModeChange = (_: React.MouseEvent<HTMLElement>, newMode: TranslationMode) => {
+    if (newMode !== null) {
+      setMode(newMode);
+    }
+  };
+
   return (
-    <VStack space={4} flex={1}>
-      <HStack space={4}>
-        <Select
-          selectedValue={sourceLanguage}
-          onValueChange={setSourceLanguage}
-          bg={bgColor}
-          borderColor={borderColor}
-          color={textColor}
+    <Stack spacing={3}>
+      <Paper elevation={1} sx={{ p: 2 }}>
+        <Typography variant="subtitle1" gutterBottom>
+          Translation Mode
+        </Typography>
+        <ToggleButtonGroup
+          value={mode}
+          exclusive
+          onChange={handleModeChange}
+          aria-label="translation mode"
+          fullWidth
         >
-          {languageOptions.map((option) => (
-            <Select.Item
-              key={option.value}
-              label={option.label}
-              value={option.value}
-            />
-          ))}
-        </Select>
+          <ToggleButton value="per-word" aria-label="per word translation">
+            Per Word
+          </ToggleButton>
+          <ToggleButton value="dictionary" aria-label="dictionary mode">
+            Dictionary
+          </ToggleButton>
+          <ToggleButton value="scraping" aria-label="scraping mode">
+            Scraping
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Paper>
 
-        <Select
-          selectedValue={targetLanguage}
-          onValueChange={setTargetLanguage}
-          bg={bgColor}
-          borderColor={borderColor}
-          color={textColor}
-        >
-          {languageOptions.map((option) => (
-            <Select.Item
-              key={option.value}
-              label={option.label}
-              value={option.value}
-            />
-          ))}
-        </Select>
+      <Box>
+        <FormControl fullWidth>
+          <InputLabel>Source Language</InputLabel>
+          <Select
+            value={sourceLanguage}
+            onChange={(e) => setSourceLanguage(e.target.value)}
+            label="Source Language"
+          >
+            {languageOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
 
-        <Select
-          selectedValue={translationMode}
-          onValueChange={(value) => setTranslationMode(value as TranslationMode)}
-          bg={bgColor}
-          borderColor={borderColor}
-          color={textColor}
-        >
-          <Select.Item label="Standard" value="standard" />
-          <Select.Item label="Learning" value="learning" />
-          <Select.Item label="Professional" value="professional" />
-        </Select>
-      </HStack>
-
-      <TextArea
+      <TextField
+        fullWidth
+        multiline
+        rows={4}
         value={sourceText}
-        onChangeText={setSourceText}
-        placeholder="Enter text to translate"
-        bg={bgColor}
-        borderColor={borderColor}
-        color={textColor}
-        flex={1}
-        autoCompleteType="off"
-        onTextInput={() => {}}
-        tvParallaxProperties={{}}
+        onChange={(e) => setSourceText(e.target.value)}
+        placeholder={
+          mode === 'per-word' 
+            ? "Enter text to translate word by word..." 
+            : mode === 'dictionary'
+            ? "Enter text to look up in dictionary..."
+            : "Enter URL or text to scrape and translate..."
+        }
+        variant="outlined"
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            backgroundColor: theme.palette.background.paper,
+          },
+        }}
       />
 
       <Button
-        onPress={handleTranslate}
-        isLoading={isTranslating}
-        isDisabled={!sourceText.trim()}
+        variant="contained"
+        onClick={handleTranslate}
+        disabled={isTranslating || !sourceText.trim()}
+        sx={{
+          backgroundColor: theme.palette.primary.main,
+          '&:hover': {
+            backgroundColor: theme.palette.primary.dark,
+          },
+        }}
       >
-        Translate
+        {isTranslating ? 'Translating...' : 'Translate'}
       </Button>
 
-      {translationResult && (
-        <TranslationResults result={translationResult} />
-      )}
-    </VStack>
+      <Box>
+        <FormControl fullWidth>
+          <InputLabel>Target Language</InputLabel>
+          <Select
+            value={targetLanguage}
+            onChange={(e) => setTargetLanguage(e.target.value)}
+            label="Target Language"
+          >
+            {languageOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
+
+      <TextField
+        fullWidth
+        multiline
+        rows={4}
+        value={targetText}
+        placeholder="Translation will appear here..."
+        variant="outlined"
+        InputProps={{
+          readOnly: true,
+        }}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            backgroundColor: theme.palette.background.paper,
+          },
+        }}
+      />
+    </Stack>
   );
 };
-
-// Helper function to translate text using Google Translate API
-async function translateText(text: string, fromLang: string, toLang: string): Promise<string> {
-  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${fromLang}&tl=${toLang}&dt=t&q=${encodeURIComponent(text)}`;
-
-  try {
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`Translation request failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    if (data && data[0] && data[0].length > 0) {
-      return data[0]
-        .filter((item: any[]) => item[0])
-        .map((item: any[]) => item[0])
-        .join('');
-    } else {
-      throw new Error('Unexpected translation response format');
-    }
-  } catch (error) {
-    console.error('Translation error:', error);
-    throw error;
-  }
-}
 
 export default Translator; 

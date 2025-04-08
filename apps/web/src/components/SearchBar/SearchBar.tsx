@@ -1,16 +1,17 @@
 import React, { useState, useRef } from 'react';
 import {
   Box,
-  Input,
+  TextField,
   IconButton,
-  useColorModeValue,
-  Text,
-  VStack,
-  IInputProps,
-  Pressable,
-} from 'native-base';
-import { StyleSheet } from 'react-native';
-import { CustomIcon } from '../CustomIcon/CustomIcon';
+  Paper,
+  List,
+  ListItem,
+  ListItemText,
+  Typography,
+  useTheme,
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import ClearIcon from '@mui/icons-material/Clear';
 
 export interface SearchBarProps {
   query: string;
@@ -21,25 +22,6 @@ export interface SearchBarProps {
   onClearHistory?: () => void;
 }
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
-  },
-  historyContainer: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    zIndex: 1,
-  },
-  historyItem: {
-    cursor: 'pointer',
-  },
-  clearHistory: {
-    cursor: 'pointer',
-  }
-});
-
 export const SearchBar: React.FC<SearchBarProps> = ({
   query,
   onSearch,
@@ -49,10 +31,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   onClearHistory,
 }) => {
   const [showHistory, setShowHistory] = useState(false);
-  const inputRef = useRef<any>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const theme = useTheme();
 
-  const handleKeyPress = (e: any) => {
-    if (e.key === 'Enter' || e.nativeEvent?.key === 'Enter') {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
       setShowHistory(false);
     }
   };
@@ -64,69 +47,88 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   };
 
   return (
-    <Box position="relative" _web={{ style: styles.container }}>
-      <Input
-        ref={inputRef}
-        flex={1}
+    <Box position="relative">
+      <TextField
+        fullWidth
+        variant="outlined"
         value={query}
-        onChangeText={onSearch}
+        onChange={(e) => onSearch(e.target.value)}
         onKeyPress={handleKeyPress}
         onFocus={() => setShowHistory(true)}
         placeholder={placeholder}
-        borderWidth={1}
-        borderColor={useColorModeValue('gray.200', 'gray.600')}
-        bg={useColorModeValue('white', 'gray.800')}
-        _focus={{
-          borderColor: useColorModeValue('blue.500', 'blue.400'),
+        inputRef={inputRef}
+        InputProps={{
+          startAdornment: (
+            <IconButton edge="start" disabled>
+              <SearchIcon />
+            </IconButton>
+          ),
+          endAdornment: query && (
+            <IconButton edge="end" onClick={() => onSearch('')}>
+              <ClearIcon />
+            </IconButton>
+          ),
         }}
-        rightElement={
-          <IconButton
-            icon={<CustomIcon name="search" />}
-            variant="ghost"
-            onPress={() => {
-              setShowHistory(false);
-              inputRef.current?.blur();
-            }}
-          />
-        }
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            backgroundColor: theme.palette.background.paper,
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: theme.palette.primary.main,
+            },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: theme.palette.primary.main,
+            },
+          },
+        }}
       />
 
       {showHistory && searchHistory.length > 0 && (
-        <Box
-          _web={{ style: styles.historyContainer }}
-          bg={useColorModeValue('white', 'gray.800')}
-          borderWidth={1}
-          borderColor={useColorModeValue('gray.200', 'gray.600')}
-          borderRadius="md"
-          shadow="md"
-          mt={1}
-          p={2}
+        <Paper
+          elevation={3}
+          sx={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            mt: 1,
+            maxHeight: 300,
+            overflow: 'auto',
+            backgroundColor: theme.palette.background.paper,
+          }}
         >
-          <VStack space={1}>
+          <List>
             {searchHistory.map((item) => (
-              <Pressable
+              <ListItem
                 key={item}
-                px={2}
-                py={1}
-                _web={{ style: { cursor: 'pointer' } }}
-                bg="transparent"
-                onTouchStart={() => handleHistoryItemClick(item)}
-                onPress={() => handleHistoryItemClick(item)}
+                button
+                onClick={() => handleHistoryItemClick(item)}
+                sx={{
+                  '&:hover': {
+                    backgroundColor: theme.palette.action.hover,
+                  },
+                }}
               >
-                <Text>{item}</Text>
-              </Pressable>
+                <ListItemText primary={item} />
+              </ListItem>
             ))}
             {onClearHistory && (
-              <Text
-                color="red.500"
-                _web={{ style: styles.clearHistory }}
-                onPress={onClearHistory}
+              <ListItem
+                button
+                onClick={onClearHistory}
+                sx={{
+                  '&:hover': {
+                    backgroundColor: theme.palette.error.main,
+                    '& .MuiTypography-root': {
+                      color: theme.palette.error.contrastText,
+                    },
+                  },
+                }}
               >
-                Clear History
-              </Text>
+                <Typography color="error">Clear History</Typography>
+              </ListItem>
             )}
-          </VStack>
-        </Box>
+          </List>
+        </Paper>
       )}
     </Box>
   );

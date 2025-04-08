@@ -20,28 +20,74 @@ export class AnalysisError extends Error {
 }
 
 export class IchiMoeService {
-  private baseUrl: string;
+  private static readonly API_URL = 'https://ichi.moe/cl/qr/';
+  private static readonly ROMA_MODE = 'hb';
 
-  constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
+  private isJapanese(text: string): boolean {
+    return /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]/.test(text);
   }
 
-  async analyze(text: string): Promise<TokenizedWord[]> {
-    try {
-      const response = await fetch(`${this.baseUrl}/api/analyze`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text }),
+  private async fetchIchiMoe(query: string): Promise<string> {
+    const url = `${IchiMoeService.API_URL}?r=${IchiMoeService.ROMA_MODE}&q=${encodeURIComponent(query)}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Ichi.moe API request failed: ${response.status}`);
+    }
+    return await response.text();
+  }
+
+  private parseIchiMoeResponse(html: string): IchiMoeResult[] {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const glossElements = doc.querySelectorAll('div.gloss-content.scroll-pane > dl');
+    
+    return Array.from(glossElements)
+      .filter(element => element.innerHTML.trim() !== '')
+      .map(element => {
+        const dt = element.querySelector('dt');
+        const dd = element.querySelector('dd');
+        const senseInfo = element.querySelector('.sense-info-note.has-tip');
+        const conjVia = element.querySelector('.conj-via');
+        const compounds = element.querySelector('.compounds');
+        const conjGloss = element.querySelector('.conj-gloss');
+        
+        if (!dt || !dd) {
+          throw new Error('Invalid Ichi.moe response format');
+        }
+
+        const ttt = dt.innerHTML.split(' ');
+        const surface = parseInt(ttt[0].substring(0, 1)) >= 0 && ttt.length > 1 ? ttt[1] : ttt[0];
+        
+        const definitions = Array.from(dd.querySelectorAll('li'))
+          .map(li => li.innerHTML.trim())
+          .filter(text => text.length > 0);
+
+        return {
+          surface,
+          reading: surface, // Default to surface if no reading available
+          basic: surface, // Default to surface if no basic form available
+          pos: 'unknown', // Would need to parse from senseInfo
+          pos_detail: [],
+          definitions,
+          translations: definitions, // Using definitions as translations for now
+          frequency: Math.random() * 100, // Mock frequency
+        };
       });
+  }
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+  public async analyzeText(text: string): Promise<TokenizedWord[]> {
+    if (!this.isJapanese(text)) {
+      throw new Error('Text must contain Japanese characters');
+    }
 
-      const data = await response.json();
-      return data.results.map((result: IchiMoeResult): TokenizedWord => ({
+    // Clean the text
+    const cleanedText = text.replace(/[&/\\#,+()$~%.'":*?<>{}]/g, '');
+
+    try {
+      const html = await this.fetchIchiMoe(cleanedText);
+      const results = this.parseIchiMoeResponse(html);
+      
+      return results.map(result => ({
         surface: result.surface,
         reading: result.reading || result.surface,
         basic: result.basic || result.surface,
@@ -49,10 +95,10 @@ export class IchiMoeService {
         pos_detail: result.pos_detail,
         definitions: result.definitions,
         translations: result.translations,
-        frequency: result.frequency,
+        frequency: result.frequency || Math.random() * 100,
       }));
     } catch (error) {
-      console.error('Error analyzing text:', error);
+      console.error('Ichi.moe analysis error:', error);
       throw error;
     }
   }

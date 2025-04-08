@@ -103,9 +103,14 @@ export interface TokenizedWord {
   pos_detail: string[];
   definitions: string[];
   translations?: string[];
-  tags?: string[];
-  frequency?: number;
-  conjugation?: string;
+  examples?: string[];
+  etymology?: string;
+  additionalInfo?: {
+    kanjiInfo?: {
+      meaning: string;
+      usage: string;
+    };
+  };
 }
 
 export interface IchiMoeResult {
