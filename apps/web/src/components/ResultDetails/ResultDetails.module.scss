@@ -1,0 +1,132 @@
+.container {
+  padding: 1.5rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease-in-out;
+
+  @media (prefers-color-scheme: dark) {
+    background-color: #1a202c;
+    box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1);
+  }
+}
+
+.header {
+  margin-bottom: 1rem;
+}
+
+.surface {
+  font-size: 2rem;
+  line-height: 1.2;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+
+  @media (prefers-color-scheme: dark) {
+    color: #e2e8f0;
+  }
+}
+
+.reading {
+  font-size: 1.25rem;
+  color: #718096;
+  position: relative;
+  padding: 0 0.5rem;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 0.25rem;
+    height: 0.25rem;
+    background-color: #718096;
+    border-radius: 50%;
+    transform: translateY(-50%);
+  }
+
+  &::before {
+    left: 0;
+  }
+
+  &::after {
+    right: 0;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    color: #a0aec0;
+
+    &::before,
+    &::after {
+      background-color: #a0aec0;
+    }
+  }
+}
+
+.frequency {
+  background: linear-gradient(135deg, #4299e1, #667eea);
+  color: white;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  box-shadow: 0 2px 4px rgba(66, 153, 225, 0.3);
+
+  @media (prefers-color-scheme: dark) {
+    background: linear-gradient(135deg, #2b6cb0, #4c51bf);
+    box-shadow: 0 2px 4px rgba(66, 153, 225, 0.1);
+  }
+}
+
+.pos {
+  background-color: #e9d8fd;
+  color: #553c9a;
+  font-weight: 500;
+  padding: 0.25rem 0.75rem;
+
+  @media (prefers-color-scheme: dark) {
+    background-color: #44337a;
+    color: #e9d8fd;
+  }
+}
+
+.posDetail {
+  background-color: #e2e8f0;
+  color: #4a5568;
+  font-weight: 500;
+  padding: 0.25rem 0.75rem;
+
+  @media (prefers-color-scheme: dark) {
+    background-color: #2d3748;
+    color: #e2e8f0;
+  }
+}
+
+.definitions {
+  padding-left: 1rem;
+
+  :global(.nb-text) {
+    line-height: 1.6;
+    color: #4a5568;
+
+    &:first-letter {
+      text-transform: capitalize;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      color: #e2e8f0;
+    }
+  }
+}
+
+.translations {
+  padding-left: 1rem;
+
+  :global(.nb-text) {
+    line-height: 1.6;
+    color: #718096;
+    font-style: italic;
+
+    @media (prefers-color-scheme: dark) {
+      color: #a0aec0;
+    }
+  }
+} 

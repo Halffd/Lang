@@ -1,129 +1,200 @@
-import React, { useState } from 'react';
-import { 
-  VStack, 
-  Input, 
-  Box, 
-  Text, 
-  Heading, 
-  HStack, 
-  Spinner, 
-  FlatList, 
+import React, { useState, useCallback, Suspense } from 'react';
+import {
+  Box,
+  VStack,
+  HStack,
+  Text,
+  Spinner,
   useColorModeValue,
   IconButton,
+  Tooltip,
   Center,
-  useBreakpointValue
+  Button,
 } from 'native-base';
-import { Platform } from 'react-native';
-import Card from '../components/Card';
-import Icon from '../components/CustomIcon';
+import { ViewStyle } from 'react-native';
+import { Icon } from '../components/CustomIcon';
+import { useTokenizerContext } from '../context/TokenizerContext';
 import { useSearch } from '../hooks/useSearch';
+import { useApp } from '../context/AppContext';
+import type { TokenizedWord } from '../types';
+import styles from './SearchPage.module.scss';
+import SearchBar from '../components/SearchBar';
+import SearchResults from '../components/SearchResults';
+import { useIchiMoeScraper } from '../hooks/useIchiMoeScraper';
+import { useLocalStorage } from '../hooks/useLocalStorage';
+import { Translator } from '../components/Translator/Translator';
 
-// Mock data for demonstration
-const SAMPLE_RESULTS = [
-  { id: '1', word: '猫', reading: 'ねこ', meaning: 'cat' },
-  { id: '2', word: '犬', reading: 'いぬ', meaning: 'dog' },
-  { id: '3', word: '鳥', reading: 'とり', meaning: 'bird' },
-];
+// Lazy loaded components
+const ResultDetails = React.lazy(() => import('../components/ResultDetails'));
 
-export default function SearchPage() {
+export const SearchPage: React.FC = () => {
   const [query, setQuery] = useState('');
-  const { results, loading, error, search } = useSearch();
-  
-  // Use theme colors
-  const inputBgColor = useColorModeValue('white', 'gray.800');
-  const placeholderColor = useColorModeValue('gray.400', 'gray.500');
-  
-  // Responsive width for desktop/web
-  const containerWidth = useBreakpointValue({
-    base: '100%',
-    md: '90%',
-    lg: '80%',
-    xl: '70%'
-  });
-  
-  const handleSearch = () => {
-    if (query.trim()) {
-      search(query);
+  const [selectedResult, setSelectedResult] = useState<TokenizedWord | null>(null);
+  const { analyze, isAnalyzing: loading } = useIchiMoeScraper();
+  const [history, setHistory] = useLocalStorage<string[]>('searchHistory', []);
+  const [error, setError] = useState<string | null>(null);
+  const [results, setResults] = useState<TokenizedWord[]>([]);
+  const [showTranslator, setShowTranslator] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState<number | undefined>();
+
+  const { tokenize } = useTokenizerContext();
+  const { searchMode, setSearchMode } = useSearch();
+  const { results: searchResults, error: searchError } = useSearch();
+
+  const bgColor = useColorModeValue('gray.50', 'gray.900');
+  const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const textColor = useColorModeValue('gray.600', 'gray.400');
+  const buttonBgColor = useColorModeValue('white', 'gray.800');
+  const activeButtonBgColor = useColorModeValue('gray.100', 'gray.700');
+
+  const addToHistory = useCallback((searchQuery: string) => {
+    setHistory(prev => {
+      const newHistory = [searchQuery, ...prev.filter(item => item !== searchQuery)];
+      return newHistory.slice(0, 10); // Keep only last 10 items
+    });
+  }, [setHistory]);
+
+  const clearHistory = useCallback(() => {
+    setHistory([]);
+  }, [setHistory]);
+
+  const handleSearch = useCallback(async (searchQuery: string) => {
+    setQuery(searchQuery);
+    if (!searchQuery.trim()) {
+      setResults([]);
+      setError(null);
+      return;
     }
-  };
-  
-  const handleKeyPress = (e: any) => {
-    if (Platform.OS === 'web' && e.key === 'Enter') {
-      handleSearch();
+
+    try {
+      const searchResults = await analyze(searchQuery);
+      setResults(searchResults);
+      setError(null);
+      addToHistory(searchQuery);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      setResults([]);
     }
-  };
-  
+  }, [analyze, addToHistory]);
+
+  const toggleSearchMode = useCallback(() => {
+    setSearchMode(prev => prev === 'db' ? 'scrape' : 'db');
+  }, [setSearchMode]);
+
+  const handleWordSelect = useCallback((index: number) => {
+    setSelectedIndex(index);
+    setSelectedResult(results[index] || null);
+  }, [results]);
+
   return (
-    <Box p={4} flex={1} alignItems="center">
-      <VStack space={4} width={containerWidth} maxW="1200px">
-        <Heading size="xl" mb={2}>
-          Japanese Dictionary
-        </Heading>
-        
-        <HStack width="100%" space={2} alignItems="center">
-          <Input
+    <Box
+      flex={1}
+      bg={bgColor}
+      _web={{ style: styles['container'] as unknown as ViewStyle }}
+    >
+      <VStack
+        space={6}
+        flex={1}
+        p={4}
+      >
+        <HStack space={4} mb={4}>
+          <Button
             flex={1}
-            placeholder="Search for words in Japanese or English"
-            value={query}
-            onChangeText={setQuery}
-            onKeyPress={handleKeyPress}
-            bg={inputBgColor}
-            borderRadius="md"
-            fontSize="md"
-            py={Platform.OS === 'web' ? 3 : 2}
-            px={4}
-            _focus={{
-              borderColor: 'primary.500',
-              borderWidth: 2,
-            }}
-            placeholderTextColor={placeholderColor}
-          />
-          <IconButton
-            icon={<Icon name="search" size="md" color="white" />}
-            onPress={handleSearch}
-            bg="primary.500"
-            _hover={{ bg: 'primary.600' }}
-            _pressed={{ bg: 'primary.700' }}
-            borderRadius="md"
-            size="lg"
-          />
+            variant="solid"
+            bg={!showTranslator ? activeButtonBgColor : buttonBgColor}
+            _hover={{ bg: activeButtonBgColor }}
+            onPress={() => setShowTranslator(false)}
+            _text={{ color: textColor }}
+          >
+            Dictionary Search
+          </Button>
+          <Button
+            flex={1}
+            variant="solid"
+            bg={showTranslator ? activeButtonBgColor : buttonBgColor}
+            _hover={{ bg: activeButtonBgColor }}
+            onPress={() => setShowTranslator(true)}
+            _text={{ color: textColor }}
+          >
+            Translator
+          </Button>
         </HStack>
-        
-        <Box flex={1} width="100%">
-          {loading ? (
-            <Center flex={1} mt={10}>
-              <Spinner size="lg" color="primary.500" />
-              <Text mt={2}>Searching...</Text>
-            </Center>
-          ) : error ? (
-            <Center flex={1} mt={10}>
-              <Text color="error.500">{error}</Text>
-            </Center>
-          ) : (
-            <FlatList
-              data={results}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <Card
-                  title={item.word}
-                  description={`${item.reading} - ${item.meaning}`}
-                  onPress={() => console.log('Selected:', item.word)}
-                  mb={4}
+
+        {!showTranslator ? (
+          <VStack space={4}>
+            <HStack space={4} alignItems="center">
+              <Box flex={1}>
+                <Suspense fallback={<Spinner size="sm" />}>
+                  <SearchBar
+                    query={query}
+                    onSearch={handleSearch}
+                    searchHistory={history}
+                    onClearHistory={clearHistory}
+                    onHistoryItemClick={handleSearch}
+                  />
+                </Suspense>
+              </Box>
+              <Tooltip label={`Switch to ${searchMode === 'db' ? 'web scraping' : 'database'} mode`}>
+                <IconButton
+                  icon={<Box>{searchMode === 'db' ? '🔍' : '🌐'}</Box>}
+                  variant="ghost"
+                  aria-label="Toggle search mode"
+                  onPress={toggleSearchMode}
+                  _web={{ style: styles['modeToggle'] as unknown as ViewStyle }}
                 />
-              )}
-              ListEmptyComponent={
-                <Center flex={1} mt={10}>
-                  <Text>No results found. Try a different search term.</Text>
-                </Center>
-              }
-              contentContainerStyle={{
-                paddingTop: 4,
-                paddingBottom: Platform.OS === 'web' ? 20 : 4
-              }}
-            />
-          )}
-        </Box>
+              </Tooltip>
+            </HStack>
+
+            <Box
+              flex={1}
+              borderWidth={1}
+              borderColor={borderColor}
+              borderRadius="lg"
+              overflow="hidden"
+              _web={{ style: styles['resultsContainer'] as unknown as ViewStyle }}
+            >
+              <HStack height="100%" space={0} alignItems="stretch">
+                <Box
+                  flex={1}
+                  borderRightWidth={1}
+                  borderColor={borderColor}
+                  _web={{ style: styles['resultsList'] as unknown as ViewStyle }}
+                >
+                  <Suspense fallback={<Spinner size="lg" />}>
+                    <SearchResults
+                      results={results}
+                      isLoading={loading}
+                      error={error || undefined}
+                      onWordSelect={handleWordSelect}
+                      selectedWordIndex={selectedIndex}
+                    />
+                  </Suspense>
+                </Box>
+
+                {selectedResult && (
+                  <Box
+                    width="400px"
+                    p={4}
+                    _web={{ style: styles['detailsPanel'] as unknown as ViewStyle }}
+                  >
+                    <Suspense fallback={<Spinner size="sm" />}>
+                      <ResultDetails result={selectedResult} />
+                    </Suspense>
+                  </Box>
+                )}
+              </HStack>
+            </Box>
+          </VStack>
+        ) : (
+          <Box flex={1}>
+            <Suspense fallback={<Spinner size="lg" />}>
+              <Translator />
+            </Suspense>
+          </Box>
+        )}
       </VStack>
     </Box>
   );
-}
+};
+
+export default SearchPage;

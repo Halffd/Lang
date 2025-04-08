@@ -1,54 +1,66 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { SearchResult } from '../types';
+import { databaseService } from '../services/DatabaseService';
+import { scraperService } from '../services/ScraperService';
 
-// Define the result type
-export interface SearchResult {
-  id: string;
-  word: string;
-  reading: string;
-  meaning: string;
-}
+export type SearchMode = 'db' | 'scrape';
 
-export const useSearch = () => {
+export function useSearch() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchMode, setSearchMode] = useState<SearchMode>('db');
 
-  const search = async (query: string) => {
+  const search = useCallback(async (query: string) => {
     if (!query.trim()) {
       return;
     }
 
     setLoading(true);
     setError(null);
+    setResults([]);
 
     try {
-      // Simulate API call with timeout
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      let searchResults: SearchResult[];
 
-      // Mock results - in a real app, this would be an API call
-      const mockResults: SearchResult[] = [
-        { id: '1', word: '猫', reading: 'ねこ', meaning: 'cat' },
-        { id: '2', word: '犬', reading: 'いぬ', meaning: 'dog' },
-        { id: '3', word: '鳥', reading: 'とり', meaning: 'bird' },
-      ].filter(item => 
-        item.word.includes(query) || 
-        item.reading.includes(query) || 
-        item.meaning.includes(query)
-      );
+      if (searchMode === 'db') {
+        // Search in local database
+        searchResults = await databaseService.search(query);
+        
+        // If no results in DB, try scraping
+        if (searchResults.length === 0) {
+          searchResults = await scraperService.search(query);
+          
+          // Save new results to database
+          await Promise.all(searchResults.map(result => 
+            databaseService.addWord(result)
+          ));
+        }
+      } else {
+        // Direct web scraping
+        searchResults = await scraperService.search(query);
+        
+        // Save results to database in background
+        searchResults.forEach(result => 
+          databaseService.addWord(result).catch(console.error)
+        );
+      }
 
-      setResults(mockResults);
+      setResults(searchResults);
     } catch (err) {
-      setError('An error occurred while searching. Please try again.');
       console.error('Search error:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred while searching');
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchMode]);
 
   return {
     results,
     loading,
     error,
     search,
+    searchMode,
+    setSearchMode
   };
-}; 
+} 

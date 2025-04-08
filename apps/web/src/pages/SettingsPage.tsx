@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Box, 
   VStack, 
@@ -12,16 +12,18 @@ import {
   ScrollView,
   useColorModeValue
 } from 'native-base';
-import Card from '../components/Card';
+import { Card } from '../components/Card';
+import { useApp } from '../context/AppContext';
 
 export default function SettingsPage() {
   const { colorMode, toggleColorMode } = useColorMode();
-  const [autoConvert, setAutoConvert] = useState(true);
-  const [clipboardMonitor, setClipboardMonitor] = useState(false);
-  const [showFurigana, setShowFurigana] = useState(true);
+  const { settings, updateSettings } = useApp();
+  const [autoConvert, setAutoConvert] = React.useState(true);
+  const [clipboardMonitor, setClipboardMonitor] = React.useState(false);
+  const [showFurigana, setShowFurigana] = React.useState(true);
   
   // Use theme colors
-  const textColor = useColorModeValue('gray.800', 'gray.100');
+  const textColor = useColorModeValue('gray.700', 'gray.200');
   const subtitleColor = useColorModeValue('gray.600', 'gray.400');
   
   return (
@@ -33,68 +35,44 @@ export default function SettingsPage() {
           </Heading>
           
           <Card title="Display Settings">
-            <VStack space={4} mt={2}>
+            <Text color={textColor} fontSize="xl" fontWeight="bold">
+              Display Settings
+            </Text>
+            <VStack space={4} mt={4}>
               <HStack justifyContent="space-between" alignItems="center">
-                <VStack>
-                  <Text color={textColor} fontWeight="medium">Dark Mode</Text>
-                  <Text color={subtitleColor} fontSize="sm">
-                    Switch between light and dark theme
-                  </Text>
-                </VStack>
+                <Text color={textColor}>Dark Mode</Text>
                 <Switch
                   isChecked={colorMode === 'dark'}
                   onToggle={toggleColorMode}
-                  colorScheme="primary"
                 />
               </HStack>
-              
-              <Divider />
-              
               <HStack justifyContent="space-between" alignItems="center">
-                <VStack>
-                  <Text color={textColor} fontWeight="medium">Show Furigana</Text>
-                  <Text color={subtitleColor} fontSize="sm">
-                    Display reading above kanji characters
-                  </Text>
-                </VStack>
+                <Text color={textColor}>Show Furigana</Text>
                 <Switch
-                  isChecked={showFurigana}
-                  onToggle={() => setShowFurigana(!showFurigana)}
-                  colorScheme="primary"
+                  isChecked={settings.showFurigana}
+                  onToggle={() => updateSettings('showFurigana', !settings.showFurigana)}
                 />
               </HStack>
             </VStack>
           </Card>
           
-          <Card title="Input Settings">
-            <VStack space={4} mt={2}>
+          <Card title="Search Settings">
+            <Text color={textColor} fontSize="xl" fontWeight="bold">
+              Search Settings
+            </Text>
+            <VStack space={4} mt={4}>
               <HStack justifyContent="space-between" alignItems="center">
-                <VStack>
-                  <Text color={textColor} fontWeight="medium">Auto-convert Romaji</Text>
-                  <Text color={subtitleColor} fontSize="sm">
-                    Automatically convert romaji to hiragana
-                  </Text>
-                </VStack>
+                <Text color={textColor}>Auto-convert to Hiragana</Text>
                 <Switch
-                  isChecked={autoConvert}
-                  onToggle={() => setAutoConvert(!autoConvert)}
-                  colorScheme="primary"
+                  isChecked={settings.autoConvert}
+                  onToggle={() => updateSettings('autoConvert', !settings.autoConvert)}
                 />
               </HStack>
-              
-              <Divider />
-              
               <HStack justifyContent="space-between" alignItems="center">
-                <VStack>
-                  <Text color={textColor} fontWeight="medium">Monitor Clipboard</Text>
-                  <Text color={subtitleColor} fontSize="sm">
-                    Automatically search for copied text
-                  </Text>
-                </VStack>
+                <Text color={textColor}>Monitor Clipboard</Text>
                 <Switch
-                  isChecked={clipboardMonitor}
-                  onToggle={() => setClipboardMonitor(!clipboardMonitor)}
-                  colorScheme="primary"
+                  isChecked={settings.clipboardMonitor}
+                  onToggle={() => updateSettings('clipboardMonitor', !settings.clipboardMonitor)}
                 />
               </HStack>
             </VStack>

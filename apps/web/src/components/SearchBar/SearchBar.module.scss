@@ -1,0 +1,124 @@
+.container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.input {
+  font-size: 1rem;
+  height: 3.5rem;
+  padding-left: 3rem;
+  padding-right: 3rem;
+  transition: all 0.2s ease-in-out;
+  
+  &::placeholder {
+    color: var(--chakra-colors-gray-400);
+  }
+}
+
+.history {
+  max-height: 300px;
+  overflow-y: auto;
+  backdrop-filter: blur(8px);
+  
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--chakra-colors-gray-300);
+    border-radius: 4px;
+    
+    &:hover {
+      background-color: var(--chakra-colors-gray-400);
+    }
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    &::-webkit-scrollbar-thumb {
+      background-color: var(--chakra-colors-gray-600);
+      
+      &:hover {
+        background-color: var(--chakra-colors-gray-500);
+      }
+    }
+  }
+}
+
+.historyItem {
+  transition: background-color 0.2s ease-in-out;
+  
+  &:hover {
+    .timeIcon {
+      color: var(--chakra-colors-blue-500);
+    }
+  }
+}
+
+.clearHistory {
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    color: var(--chakra-colors-red-500);
+  }
+}
+
+.searchInput {
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  &:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.searchButton {
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.historyContainer {
+  max-height: 300px;
+  overflow-y: auto;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  margin-top: 4px;
+  
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+    
+    &:hover {
+      background: #555;
+    }
+  }
+} 

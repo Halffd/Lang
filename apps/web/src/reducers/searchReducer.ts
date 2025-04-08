@@ -33,10 +33,13 @@ export const initialSearchState: SearchState = {
 
 // Memoized conversion function
 export const convertIchiMoeToTokenizedWord = (ichiMoeResult: IchiMoeResult): TokenizedWord => ({
-  word: ichiMoeResult.word,
-  reading: ichiMoeResult.reading,
-  definitions: ichiMoeResult.definitions,
+  surface: ichiMoeResult.surface,
+  reading: ichiMoeResult.reading || ichiMoeResult.surface,
+  basic: ichiMoeResult.basic || ichiMoeResult.surface,
   pos: ichiMoeResult.pos,
+  pos_detail: ichiMoeResult.pos_detail,
+  definitions: ichiMoeResult.definitions,
+  translations: ichiMoeResult.translations,
   frequency: Math.random() * 100, // Mock frequency for now
 });
 
