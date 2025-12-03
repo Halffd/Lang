@@ -4,13 +4,21 @@ import '../models/dictionary_entry.dart';
 class DictionaryEntryCard extends StatelessWidget {
   final DictionaryEntry entry;
   final bool isSaved;
+  final bool isFavorite;
+  final bool isInAnki;
   final VoidCallback onSaveToggle;
-  
+  final VoidCallback onFavoriteToggle;
+  final VoidCallback onAnkiToggle;
+
   const DictionaryEntryCard({
     super.key,
     required this.entry,
     required this.isSaved,
+    required this.isFavorite,
+    required this.isInAnki,
     required this.onSaveToggle,
+    required this.onFavoriteToggle,
+    required this.onAnkiToggle,
   });
 
   @override
@@ -52,13 +60,38 @@ class DictionaryEntryCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Save button
-                IconButton(
-                  icon: Icon(
-                    isSaved ? Icons.bookmark : Icons.bookmark_border,
-                    color: isSaved ? theme.colorScheme.primary : null,
-                  ),
-                  onPressed: onSaveToggle,
+                // Action buttons
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: isFavorite ? Colors.red : null,
+                        size: 20,
+                      ),
+                      onPressed: onFavoriteToggle,
+                      tooltip: isFavorite ? 'Remove from favorites' : 'Add to favorites',
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        isInAnki ? Icons.book : Icons.book_outlined,
+                        color: isInAnki ? Colors.blue : null,
+                        size: 20,
+                      ),
+                      onPressed: onAnkiToggle,
+                      tooltip: isInAnki ? 'Remove from Anki' : 'Add to Anki',
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        isSaved ? Icons.bookmark : Icons.bookmark_border,
+                        color: isSaved ? theme.colorScheme.primary : null,
+                        size: 20,
+                      ),
+                      onPressed: onSaveToggle,
+                      tooltip: isSaved ? 'Remove from saved' : 'Save word',
+                    ),
+                  ],
                 ),
               ],
             ),

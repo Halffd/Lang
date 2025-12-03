@@ -34,7 +34,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AppState(storageService)),
         Provider(create: (_) => DictionaryService()),
       ],
-      child: const YomitanApp(),
+      child: const LangApp(),
     ));
   } catch (e) {
     print('Error during initialization: $e');
@@ -49,13 +49,13 @@ void main() async {
   }
 }
 
-class YomitanApp extends StatelessWidget {
-  const YomitanApp({super.key});
+class LangApp extends StatelessWidget {
+  const LangApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Yomitan Search',
+      title: 'Lang',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,

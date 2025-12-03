@@ -21,12 +21,20 @@ class AppState extends ChangeNotifier {
   // Saved words
   List<String> _savedWords = [];
   Map<String, dynamic> _savedWordsDetails = {};
-  
+
+  // Favorite words
+  List<String> _favoriteWords = [];
+
+  // Anki words
+  List<String> _ankiWords = [];
+
   AppState(this._storageService) {
     _loadSettings();
     _loadSavedWords();
+    _loadFavoriteWords();
+    _loadAnkiWords();
   }
-  
+
   // Getters
   bool get clipboardMonitor => _clipboardMonitor;
   bool get automaticKanaConversion => _automaticKanaConversion;
@@ -40,6 +48,8 @@ class AppState extends ChangeNotifier {
   String get currentProfile => _currentProfile;
   List<String> get savedWords => _savedWords;
   Map<String, dynamic> get savedWordsDetails => _savedWordsDetails;
+  List<String> get favoriteWords => _favoriteWords;
+  List<String> get ankiWords => _ankiWords;
   
   // Setters with persistence
   void setClipboardMonitor(bool value) {
@@ -94,7 +104,7 @@ class AppState extends ChangeNotifier {
     _currentQuery = value;
     notifyListeners();
   }
-  
+
   // Word management
   void addSavedWord(String word, {Map<String, dynamic>? details}) {
     if (!_savedWords.contains(word)) {
@@ -106,11 +116,39 @@ class AppState extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   void removeSavedWord(String word) {
     _savedWords.remove(word);
     _savedWordsDetails.remove(word);
     _persistSavedWords();
+    notifyListeners();
+  }
+
+  void addFavoriteWord(String word) {
+    if (!_favoriteWords.contains(word)) {
+      _favoriteWords.add(word);
+      _persistFavoriteWords();
+      notifyListeners();
+    }
+  }
+
+  void removeFavoriteWord(String word) {
+    _favoriteWords.remove(word);
+    _persistFavoriteWords();
+    notifyListeners();
+  }
+
+  void addAnkiWord(String word) {
+    if (!_ankiWords.contains(word)) {
+      _ankiWords.add(word);
+      _persistAnkiWords();
+      notifyListeners();
+    }
+  }
+
+  void removeAnkiWord(String word) {
+    _ankiWords.remove(word);
+    _persistAnkiWords();
     notifyListeners();
   }
   
@@ -124,7 +162,7 @@ class AppState extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   // Private methods
   void _loadSettings() {
     _clipboardMonitor = _storageService.getBool('clipboard_monitor') ?? false;
@@ -137,7 +175,7 @@ class AppState extends ChangeNotifier {
     _currentProfile = _storageService.getString('current_profile') ?? 'Default';
     _searchHistory = _storageService.getStringList('search_history') ?? [];
   }
-  
+
   void _loadSavedWords() {
     _savedWords = _storageService.getStringList('saved_words') ?? [];
     final savedDetailsJson = _storageService.getString('saved_words_details');
@@ -149,9 +187,25 @@ class AppState extends ChangeNotifier {
       }
     }
   }
-  
+
+  void _loadFavoriteWords() {
+    _favoriteWords = _storageService.getStringList('favorite_words') ?? [];
+  }
+
+  void _loadAnkiWords() {
+    _ankiWords = _storageService.getStringList('anki_words') ?? [];
+  }
+
   void _persistSavedWords() {
     _storageService.setStringList('saved_words', _savedWords);
     _storageService.setJson('saved_words_details', _savedWordsDetails);
+  }
+
+  void _persistFavoriteWords() {
+    _storageService.setStringList('favorite_words', _favoriteWords);
+  }
+
+  void _persistAnkiWords() {
+    _storageService.setStringList('anki_words', _ankiWords);
   }
 }

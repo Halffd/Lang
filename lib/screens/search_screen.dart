@@ -202,6 +202,8 @@ class _SearchScreenState extends State<SearchScreen> {
                           return DictionaryEntryCard(
                             entry: entry,
                             isSaved: appState.savedWords.contains(entry.term),
+                            isFavorite: appState.favoriteWords.contains(entry.term),
+                            isInAnki: appState.ankiWords.contains(entry.term),
                             onSaveToggle: () {
                               if (appState.savedWords.contains(entry.term)) {
                                 appState.removeSavedWord(entry.term);
@@ -210,6 +212,20 @@ class _SearchScreenState extends State<SearchScreen> {
                                   entry.term,
                                   details: entry.toJson(),
                                 );
+                              }
+                            },
+                            onFavoriteToggle: () {
+                              if (appState.favoriteWords.contains(entry.term)) {
+                                appState.removeFavoriteWord(entry.term);
+                              } else {
+                                appState.addFavoriteWord(entry.term);
+                              }
+                            },
+                            onAnkiToggle: () {
+                              if (appState.ankiWords.contains(entry.term)) {
+                                appState.removeAnkiWord(entry.term);
+                              } else {
+                                appState.addAnkiWord(entry.term);
                               }
                             },
                           );

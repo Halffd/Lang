@@ -147,8 +147,24 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
                           return DictionaryEntryCard(
                             entry: entry,
                             isSaved: true,
+                            isFavorite: appState.favoriteWords.contains(word),
+                            isInAnki: appState.ankiWords.contains(word),
                             onSaveToggle: () {
                               appState.removeSavedWord(word);
+                            },
+                            onFavoriteToggle: () {
+                              if (appState.favoriteWords.contains(word)) {
+                                appState.removeFavoriteWord(word);
+                              } else {
+                                appState.addFavoriteWord(word);
+                              }
+                            },
+                            onAnkiToggle: () {
+                              if (appState.ankiWords.contains(word)) {
+                                appState.removeAnkiWord(word);
+                              } else {
+                                appState.addAnkiWord(word);
+                              }
                             },
                           );
                         },

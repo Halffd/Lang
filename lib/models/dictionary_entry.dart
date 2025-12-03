@@ -6,7 +6,10 @@ class DictionaryEntry {
   final int frequency;
   final List<String> examples;
   final Map<String, dynamic>? metadata;
-  
+
+  // Add convenience getter
+  String get word => term;  // Add word getter for compatibility
+
   DictionaryEntry({
     required this.term,
     required this.reading,
@@ -16,7 +19,7 @@ class DictionaryEntry {
     this.examples = const [],
     this.metadata,
   });
-  
+
   factory DictionaryEntry.fromJson(Map<String, dynamic> json) {
     return DictionaryEntry(
       term: json['term'] as String,
@@ -28,7 +31,7 @@ class DictionaryEntry {
       metadata: json['metadata'] as Map<String, dynamic>?,
     );
   }
-  
+
   Map<String, dynamic> toJson() {
     return {
       'term': term,
@@ -40,7 +43,7 @@ class DictionaryEntry {
       'metadata': metadata,
     };
   }
-  
+
   @override
   String toString() {
     return '$term [$reading]: ${definitions.join('; ')}';
