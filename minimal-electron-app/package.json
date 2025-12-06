@@ -1,0 +1,14 @@
+{
+  "name": "lang-minimal",
+  "version": "1.0.0",
+  "description": "Minimal Japanese Dictionary app",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "electron": "^35.1.4"
+  }
+} 

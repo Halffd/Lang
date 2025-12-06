@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Lang - Japanese Dictionary</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      color: #f4511e;
+      text-align: center;
+    }
+    
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-right: 10px;
+    }
+    
+    .tab.active {
+      border-bottom: 3px solid #f4511e;
+      font-weight: bold;
+      color: #f4511e;
+    }
+    
+    .search-container {
+      display: flex;
+      margin-bottom: 20px;
+    }
+    
+    input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px 0 0 4px;
+      font-size: 16px;
+    }
+    
+    button {
+      padding: 10px 20px;
+      background-color: #f4511e;
+      color: white;
+      border: none;
+      border-radius: 0 4px 4px 0;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button.settings {
+      background-color: transparent;
+      color: #333;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-left: 10px;
+    }
+    
+    .results {
+      margin-top: 20px;
+    }
+    
+    .word-result {
+      padding: 15px;
+      border: 1px solid #ddd;
+      margin-bottom: 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .word-result:hover {
+      background-color: #f9f9f9;
+    }
+    
+    .word-result.selected {
+      background-color: #fff9f0;
+      border-color: #f4511e;
+    }
+    
+    .word-surface {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .word-reading {
+      color: #666;
+      margin-bottom: 5px;
+    }
+    
+    .word-pos {
+      font-style: italic;
+      color: #888;
+      margin-bottom: 10px;
+    }
+    
+    .word-definitions {
+      margin-top: 10px;
+    }
+    
+    .word-definition {
+      margin-bottom: 5px;
+    }
+    
+    .history-item {
+      padding: 10px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .history-item:hover {
+      background-color: #f5f5f5;
+    }
+    
+    .translator-container {
+      display: none;
+    }
+    
+    .translator-container.active {
+      display: block;
+    }
+    
+    .dictionary-container.active {
+      display: block;
+    }
+    
+    .dictionary-container {
+      display: none;
+    }
+    
+    .textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+    
+    .translate-options {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+    
+    .translate-result {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background-color: #f9f9f9;
+    }
+
+    /* Settings Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 1000;
+    }
+
+    .modal.active {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 500px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+    }
+
+    .modal-close {
+      cursor: pointer;
+      font-size: 20px;
+    }
+
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #f4511e;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Lang - Japanese Dictionary</h1>
+    
+    <div class="tabs">
+      <div class="tab active" id="tab-dictionary">Dictionary Search</div>
+      <div class="tab" id="tab-translator">Translator</div>
+      <button class="settings" id="settings-button">⚙️ Settings</button>
+    </div>
+    
+    <div class="dictionary-container active" id="dictionary-container">
+      <div class="search-container">
+        <input type="text" id="search-input" placeholder="Search in Japanese...">
+        <button id="search-button">Search</button>
+      </div>
+      
+      <div class="results" id="results">
+        <!-- Dictionary results will be displayed here -->
+        <p>Enter a Japanese word to search</p>
+      </div>
+    </div>
+    
+    <div class="translator-container" id="translator-container">
+      <textarea class="textarea" id="translator-input" placeholder="Enter text to translate..."></textarea>
+      
+      <div class="translate-options">
+        <div>
+          <label for="source-lang">From:</label>
+          <select id="source-lang">
+            <option value="ja">Japanese</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        
+        <div>
+          <label for="target-lang">To:</label>
+          <select id="target-lang">
+            <option value="en">English</option>
+            <option value="ja">Japanese</option>
+          </select>
+        </div>
+        
+        <div>
+          <label for="translate-mode">Mode:</label>
+          <select id="translate-mode">
+            <option value="per-word">Per Word</option>
+            <option value="dictionary">Dictionary</option>
+            <option value="scraping">Web Scraping</option>
+          </select>
+        </div>
+        
+        <button id="translate-button">Translate</button>
+      </div>
+      
+      <div class="translate-result" id="translate-result">
+        Translation will appear here
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal" id="settings-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <span class="modal-close" id="close-modal">×</span>
+      </div>
+      <div class="setting-item">
+        <span>Show Furigana</span>
+        <label class="switch">
+          <input type="checkbox" id="setting-furigana" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // DOM elements
+    const dictionaryTab = document.getElementById('tab-dictionary');
+    const translatorTab = document.getElementById('tab-translator');
+    const dictionaryContainer = document.getElementById('dictionary-container');
+    const translatorContainer = document.getElementById('translator-container');
+    const searchInput = document.getElementById('search-input');
+    const searchButton = document.getElementById('search-button');
+    const resultsContainer = document.getElementById('results');
+    const translatorInput = document.getElementById('translator-input');
+    const translateButton = document.getElementById('translate-button');
+    const translateResult = document.getElementById('translate-result');
+    const settingsButton = document.getElementById('settings-button');
+    const settingsModal = document.getElementById('settings-modal');
+    const closeModal = document.getElementById('close-modal');
+    const furiganaSetting = document.getElementById('setting-furigana');
+    
+    // State
+    let searchHistory = [];
+    let settings = {
+      showFurigana: true
+    };
+    
+    // Tab switching
+    dictionaryTab.addEventListener('click', () => {
+      dictionaryTab.classList.add('active');
+      translatorTab.classList.remove('active');
+      dictionaryContainer.classList.add('active');
+      translatorContainer.classList.remove('active');
+    });
+    
+    translatorTab.addEventListener('click', () => {
+      translatorTab.classList.add('active');
+      dictionaryTab.classList.remove('active');
+      translatorContainer.classList.add('active');
+      dictionaryContainer.classList.remove('active');
+    });
+    
+    // Dictionary search
+    searchButton.addEventListener('click', () => {
+      const query = searchInput.value.trim();
+      
+      if (!query) {
+        resultsContainer.innerHTML = '<p>Please enter a search term</p>';
+        return;
+      }
+      
+      // Add to history
+      if (!searchHistory.includes(query)) {
+        searchHistory.unshift(query);
+        if (searchHistory.length > 10) {
+          searchHistory.pop();
+        }
+      }
+      
+      // Mock search results
+      const mockResults = [
+        {
+          surface: query,
+          reading: `${query} reading`,
+          pos: 'Noun',
+          definitions: ['Definition 1', 'Definition 2'],
+          translations: ['Translation 1', 'Translation 2']
+        },
+        {
+          surface: `${query}2`,
+          reading: `${query}2 reading`,
+          pos: 'Verb',
+          definitions: ['Another definition'],
+          translations: ['Another translation']
+        }
+      ];
+      
+      displayResults(mockResults);
+    });
+    
+    // Also search on Enter key
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        searchButton.click();
+      }
+    });
+    
+    // Translator functionality
+    translateButton.addEventListener('click', () => {
+      const text = translatorInput.value.trim();
+      const sourceLang = document.getElementById('source-lang').value;
+      const targetLang = document.getElementById('target-lang').value;
+      const mode = document.getElementById('translate-mode').value;
+      
+      if (!text) {
+        translateResult.textContent = 'Please enter text to translate';
+        return;
+      }
+      
+      // Mock translation
+      let translatedText;
+      switch (mode) {
+        case 'per-word':
+          translatedText = text.split(' ').map(word => `[${word}-translated]`).join(' ');
+          break;
+        case 'dictionary':
+          translatedText = `Dictionary translation of: ${text}`;
+          break;
+        case 'scraping':
+          translatedText = `Web scraping translation of: ${text}`;
+          break;
+        default:
+          translatedText = `Translated: ${text}`;
+      }
+      
+      translateResult.textContent = translatedText;
+    });
+    
+    // Settings modal
+    settingsButton.addEventListener('click', () => {
+      settingsModal.classList.add('active');
+    });
+    
+    closeModal.addEventListener('click', () => {
+      settingsModal.classList.remove('active');
+    });
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', (e) => {
+      if (e.target === settingsModal) {
+        settingsModal.classList.remove('active');
+      }
+    });
+    
+    // Settings changes
+    furiganaSetting.addEventListener('change', () => {
+      settings.showFurigana = furiganaSetting.checked;
+      // In a real app, you would re-render any components that use this setting
+    });
+    
+    // Helper function to display search results
+    function displayResults(results) {
+      if (!results || results.length === 0) {
+        resultsContainer.innerHTML = '<p>No results found</p>';
+        return;
+      }
+      
+      let html = '';
+      
+      results.forEach((result, index) => {
+        html += `
+          <div class="word-result" data-index="${index}">
+            <div class="word-surface">${result.surface}</div>
+            ${settings.showFurigana && result.reading ? `<div class="word-reading">[${result.reading}]</div>` : ''}
+            ${result.pos ? `<div class="word-pos">(${result.pos})</div>` : ''}
+            
+            ${result.definitions && result.definitions.length > 0 ? `
+              <div class="word-definitions">
+                ${result.definitions.map(def => `<div class="word-definition">• ${def}</div>`).join('')}
+              </div>
+            ` : ''}
+            
+            ${result.translations && result.translations.length > 0 ? `
+              <div class="word-translations">
+                ${result.translations.map(trans => `<div class="word-translation">→ ${trans}</div>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      });
+      
+      resultsContainer.innerHTML = html;
+      
+      // Add click handlers for result items
+      document.querySelectorAll('.word-result').forEach(item => {
+        item.addEventListener('click', () => {
+          // Remove selected class from all items
+          document.querySelectorAll('.word-result').forEach(el => {
+            el.classList.remove('selected');
+          });
+          
+          // Add selected class to clicked item
+          item.classList.add('selected');
+        });
+      });
+    }
+  </script>
+</body>
+</html> 
