@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../mixins/word_list_mixins.dart';
-import '../models/dictionary_entry.dart';
+import '../models/dictionary.dart';
 import '../services/dictionary_service.dart';
 import '../services/storage_service.dart';
 import '../widgets/dictionary_entry_card.dart';

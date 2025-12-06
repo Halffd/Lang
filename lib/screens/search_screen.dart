@@ -1,77 +1,58 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import '../models/app_state.dart';
-import '../models/dictionary_entry.dart';
+import '../models/dictionary.dart';
 import '../services/dictionary_service.dart';
-import '../widgets/dictionary_entry_card.dart';
-import '../widgets/search_bar_widget.dart';
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
-
+  const SearchScreen({Key? key}) : super(key: key);
+  
   @override
   State<SearchScreen> createState() => _SearchScreenState();
 }
 
 class _SearchScreenState extends State<SearchScreen> {
+  final DictionaryService _dictionaryService = DictionaryService();
   final TextEditingController _searchController = TextEditingController();
-  final FocusNode _searchFocusNode = FocusNode();
-  bool _isLoading = false;
-  List<DictionaryEntry> _searchResults = [];
-  String _currentQuery = '';
   
-  @override
-  void initState() {
-    super.initState();
-    final appState = Provider.of<AppState>(context, listen: false);
-    _searchController.text = appState.currentQuery;
-    
-    // Perform initial search if there's a query
-    if (appState.currentQuery.isNotEmpty) {
-      _performSearch(appState.currentQuery);
-    }
-  }
+  SearchResult? _searchResult;
+  bool _isSearching = false;
+  String _lastQuery = '';
   
   @override
   void dispose() {
     _searchController.dispose();
-    _searchFocusNode.dispose();
     super.dispose();
   }
   
   Future<void> _performSearch(String query) async {
-    if (query.isEmpty) {
+    if (query.trim().isEmpty) {
       setState(() {
-        _searchResults = [];
-        _isLoading = false;
+        _searchResult = null;
+        _lastQuery = '';
       });
       return;
     }
     
     setState(() {
-      _isLoading = true;
-      _currentQuery = query;
+      _isSearching = true;
+      _lastQuery = query;
     });
     
-    final appState = Provider.of<AppState>(context, listen: false);
-    appState.setCurrentQuery(query);
-    appState.addToSearchHistory(query);
-    
     try {
-      final dictionaryService = Provider.of<DictionaryService>(context, listen: false);
-      final result = await dictionaryService.search(query, language: appState.language);
+      final result = await _dictionaryService.searchTerm(
+        query,
+        options: const SearchOptions(
+          limit: 50,
+          exactMatch: false,
+          searchReadings: true,
+        ),
+      );
       
       setState(() {
-        _searchResults = result.entries;
-        _isLoading = false;
+        _searchResult = result;
+        _isSearching = false;
       });
     } catch (e) {
-      setState(() {
-        _searchResults = [];
-        _isLoading = false;
-      });
-      
+      setState(() => _isSearching = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Search error: $e')),
@@ -80,214 +61,632 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
   
-  void _handleClearSearch() {
-    _searchController.clear();
-    setState(() {
-      _searchResults = [];
-      _currentQuery = '';
-    });
-    Provider.of<AppState>(context, listen: false).setCurrentQuery('');
-  }
-  
   @override
   Widget build(BuildContext context) {
-    final appState = Provider.of<AppState>(context);
-    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Yomitan Search'),
-        centerTitle: true,
+        title: TextField(
+          controller: _searchController,
+          autofocus: true,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            hintText: 'Search Japanese...',
+            hintStyle: TextStyle(color: Colors.white70),
+            border: InputBorder.none,
+          ),
+          onSubmitted: _performSearch,
+        ),
         actions: [
+          if (_searchController.text.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.clear),
+              onPressed: () {
+                _searchController.clear();
+                setState(() {
+                  _searchResult = null;
+                  _lastQuery = '';
+                });
+              },
+            ),
           IconButton(
-            icon: const Icon(Icons.history),
-            onPressed: () {
-              _showSearchHistory(context);
-            },
+            icon: const Icon(Icons.search),
+            onPressed: () => _performSearch(_searchController.text),
           ),
         ],
       ),
-      body: Column(
+      body: _buildBody(),
+    );
+  }
+  
+  Widget _buildBody() {
+    if (_isSearching) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
+    if (_searchResult == null) {
+      return _buildEmptyState();
+    }
+    
+    if (_searchResult!.entries.isEmpty && _searchResult!.kanji.isEmpty) {
+      return _buildNoResults();
+    }
+    
+    return _buildSearchResults();
+  }
+  
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: SearchBarWidget(
-              controller: _searchController,
-              focusNode: _searchFocusNode,
-              onSearch: _performSearch,
-              onClear: _handleClearSearch,
-              automaticKanaConversion: appState.automaticKanaConversion,
+          Icon(
+            Icons.search,
+            size: 80,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Search for Japanese words',
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.grey[600],
             ),
           ),
-          
-          // Search options
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildNoResults() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 80,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No results for "$_lastQuery"',
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildSearchResults() {
+    final result = _searchResult!;
+    
+    return ListView(
+      children: [
+        // Kanji results
+        if (result.kanji.isNotEmpty) ...[
+          _buildSectionHeader('Kanji', result.kanji.length),
+          ...result.kanji.map((kanji) => _buildKanjiCard(kanji)),
+          const Divider(height: 32, thickness: 2),
+        ],
+        
+        // Entry results
+        if (result.entries.isNotEmpty) ...[
+          _buildSectionHeader('Entries', result.entries.length),
+          ...result.entries.map((entry) => _buildEntryCard(entry)),
+        ],
+      ],
+    );
+  }
+  
+  Widget _buildSectionHeader(String title, int count) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Text(
+        '$title ($count)',
+        style: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildKanjiCard(KanjiEntry kanji) {
+    final dict = _searchResult!.dictionaries[kanji.dictionaryId];
+    
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                // Profile selector
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(
-                      labelText: 'Profile',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    value: appState.currentProfile,
-                    items: ['Default', 'Japanese', 'Study', 'Advanced']
-                        .map((profile) => DropdownMenuItem(
-                              value: profile,
-                              child: Text(profile),
-                            ))
-                        .toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        appState.setCurrentProfile(value);
-                      }
-                    },
+                Text(
+                  kanji.character,
+                  style: const TextStyle(
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(width: 16),
-                
-                // Clipboard monitor toggle
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const Spacer(),
+                if (dict != null)
+                  Chip(
+                    label: Text(
+                      dict.title,
+                      style: const TextStyle(fontSize: 10),
+                    ),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            
+            if (kanji.onyomi != null && kanji.onyomi!.isNotEmpty) ...[
+              const Text(
+                '音読み (On\'yomi)',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 8,
+                children: kanji.onyomi!.map((reading) => 
+                  Chip(
+                    label: Text(reading),
+                    backgroundColor: Colors.blue[50],
+                  ),
+                ).toList(),
+              ),
+              const SizedBox(height: 12),
+            ],
+            
+            if (kanji.kunyomi != null && kanji.kunyomi!.isNotEmpty) ...[
+              const Text(
+                '訓読み (Kun\'yomi)',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 8,
+                children: kanji.kunyomi!.map((reading) => 
+                  Chip(
+                    label: Text(reading),
+                    backgroundColor: Colors.green[50],
+                  ),
+                ).toList(),
+              ),
+              const SizedBox(height: 12),
+            ],
+            
+            const Text(
+              'Meanings',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 4),
+            ...kanji.meanings.asMap().entries.map((entry) => 
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Text('${entry.key + 1}. ${entry.value}'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildEntryCard(DictionaryEntry entry) {
+    final dict = _searchResult!.dictionaries[entry.dictionaryId];
+    final pitchKey = '${entry.term}_${entry.reading}';
+    final pitches = _searchResult!.pitchAccents[pitchKey];
+    final frequencies = _searchResult!.frequencies[pitchKey];
+    
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: InkWell(
+        onTap: () => _showEntryDetails(entry),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          entry.term,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (entry.reading.isNotEmpty && entry.reading != entry.term)
+                          Text(
+                            entry.reading,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (dict != null)
+                    Chip(
+                      label: Text(
+                        dict.title,
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                ],
+              ),
+              
+              // Tags
+              if (entry.termTags != null && entry.termTags!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: entry.termTags!.map((tagName) {
+                    final tag = _searchResult!.tags['${entry.dictionaryId}_$tagName'];
+                    return Chip(
+                      label: Text(
+                        tag?.notes ?? tagName,
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                      backgroundColor: _getTagColor(tag?.category),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                    );
+                  }).toList(),
+                ),
+              ],
+              
+              // Pitch accent
+              if (pitches != null && pitches.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Row(
                   children: [
-                    const Text('Clipboard Monitor'),
-                    Switch(
-                      value: appState.clipboardMonitor,
-                      onChanged: (value) {
-                        appState.setClipboardMonitor(value);
-                      },
+                    const Icon(Icons.graphic_eq, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Pitch: ${pitches.map((p) => p.pitches.map((pp) => pp.position).join(", ")).join(" / ")}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[700],
+                      ),
                     ),
                   ],
                 ),
               ],
-            ),
-          ),
-          
-          // Automatic kana conversion toggle
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              children: [
-                const Text('Automatic Kana Conversion'),
-                const Spacer(),
-                Switch(
-                  value: appState.automaticKanaConversion,
-                  onChanged: (value) {
-                    appState.setAutomaticKanaConversion(value);
-                  },
+              
+              // Frequency
+              if (frequencies != null && frequencies.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.trending_up, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Frequency: ${frequencies.first.displayValue}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ],
                 ),
               ],
-            ),
+              
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+              
+              // Definitions (first 2)
+              ...List.generate(entry.definitions.take(2).length, (index) {
+                final definition = entry.definitions[index];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Text(
+                    '${index + 1}. ${_formatDefinition(definition)}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                );
+              }),
+              
+              if (entry.definitions.length > 2) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '+ ${entry.definitions.length - 2} more definitions',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ],
           ),
-          
-          const Divider(),
-          
-          // Search results
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _searchResults.isEmpty
-                    ? Center(
-                        child: _currentQuery.isEmpty
-                            ? const Text('Enter a term to search')
-                            : const Text('No results found'),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(8.0),
-                        itemCount: _searchResults.length,
-                        itemBuilder: (context, index) {
-                          final entry = _searchResults[index];
-                          return DictionaryEntryCard(
-                            entry: entry,
-                            isSaved: appState.savedWords.contains(entry.term),
-                            isFavorite: appState.favoriteWords.contains(entry.term),
-                            isInAnki: appState.ankiWords.contains(entry.term),
-                            onSaveToggle: () {
-                              if (appState.savedWords.contains(entry.term)) {
-                                appState.removeSavedWord(entry.term);
-                              } else {
-                                appState.addSavedWord(
-                                  entry.term,
-                                  details: entry.toJson(),
-                                );
-                              }
-                            },
-                            onFavoriteToggle: () {
-                              if (appState.favoriteWords.contains(entry.term)) {
-                                appState.removeFavoriteWord(entry.term);
-                              } else {
-                                appState.addFavoriteWord(entry.term);
-                              }
-                            },
-                            onAnkiToggle: () {
-                              if (appState.ankiWords.contains(entry.term)) {
-                                appState.removeAnkiWord(entry.term);
-                              } else {
-                                appState.addAnkiWord(entry.term);
-                              }
-                            },
-                          );
-                        },
-                      ),
-          ),
-        ],
+        ),
       ),
     );
   }
   
-  void _showSearchHistory(BuildContext context) {
-    final appState = Provider.of<AppState>(context, listen: false);
+  void _showEntryDetails(DictionaryEntry entry) {
+    final dict = _searchResult!.dictionaries[entry.dictionaryId];
+    final pitchKey = '${entry.term}_${entry.reading}';
+    final pitches = _searchResult!.pitchAccents[pitchKey];
+    final frequencies = _searchResult!.frequencies[pitchKey];
     
     showModalBottomSheet(
       context: context,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          padding: const EdgeInsets.all(24),
+          child: ListView(
+            controller: scrollController,
             children: [
+              // Header
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Search History',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          entry.term,
+                          style: const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (entry.reading.isNotEmpty && entry.reading != entry.term)
+                          Text(
+                            entry.reading,
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                  TextButton(
-                    onPressed: () {
-                      // Clear history functionality would be implemented here
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Clear'),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
-              const Divider(),
-              Expanded(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: appState.searchHistory.length,
-                  itemBuilder: (context, index) {
-                    final query = appState.searchHistory[index];
-                    return ListTile(
-                      title: Text(query),
-                      leading: const Icon(Icons.history),
-                      onTap: () {
-                        _searchController.text = query;
-                        _performSearch(query);
-                        Navigator.pop(context);
-                      },
+              
+              const SizedBox(height: 16),
+              
+              // Dictionary source
+              if (dict != null)
+                Chip(
+                  label: Text('Source: ${dict.title}'),
+                  avatar: const Icon(Icons.book, size: 16),
+                ),
+              
+              const SizedBox(height: 16),
+              
+              // Tags
+              if (entry.termTags != null && entry.termTags!.isNotEmpty) ...[
+                const Text(
+                  'Tags',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: entry.termTags!.map((tagName) {
+                    final tag = _searchResult!.tags['${entry.dictionaryId}_$tagName'];
+                    return Chip(
+                      label: Text(tag?.notes ?? tagName),
+                      backgroundColor: _getTagColor(tag?.category),
                     );
-                  },
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+              ],
+              
+              // Pitch accent
+              if (pitches != null && pitches.isNotEmpty) ...[
+                const Text(
+                  'Pitch Accent',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...pitches.expand((pitch) => 
+                  pitch.pitches.map((pattern) => 
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.graphic_eq),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Downstep: ${pattern.position}',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            if (pattern.tags != null) ...[
+                              const Spacer(),
+                              Text(
+                                pattern.tags!.join(', '),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              
+              // Frequency
+              if (frequencies != null && frequencies.isNotEmpty) ...[
+                const Text(
+                  'Frequency',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...frequencies.map((freq) => 
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.trending_up),
+                          const SizedBox(width: 12),
+                          Text(
+                            freq.displayValue ?? freq.value.toString(),
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const Spacer(),
+                          Text(
+                            freq.frequencyType,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              
+              // Definitions
+              const Text(
+                'Definitions',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
+              const SizedBox(height: 12),
+              ...entry.definitions.asMap().entries.map((defEntry) => 
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 24,
+                        height: 24,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.blue,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${defEntry.key + 1}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _formatDefinition(defEntry.value),
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              
+              // Additional info
+              if (entry.sequence != null) ...[
+                const SizedBox(height: 16),
+                const Divider(),
+                const SizedBox(height: 8),
+                Text(
+                  'Sequence: ${entry.sequence}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
             ],
           ),
-        );
-      },
+        ),
+      ),
     );
+  }
+  
+  Color? _getTagColor(String? category) {
+    switch (category) {
+      case 'partOfSpeech':
+        return Colors.blue[50];
+      case 'name':
+        return Colors.green[50];
+      case 'expression':
+        return Colors.orange[50];
+      case 'popular':
+        return Colors.purple[50];
+      default:
+        return Colors.grey[200];
+    }
+  }
+  
+  String _formatDefinition(String definition) {
+    // Check if it's JSON (structured content)
+    if (definition.startsWith('{') || definition.startsWith('[')) {
+      try {
+        // For now, just return plain text
+        // In production, you'd render HTML from structured content
+        return definition;
+      } catch (e) {
+        return definition;
+      }
+    }
+    return definition;
   }
 }

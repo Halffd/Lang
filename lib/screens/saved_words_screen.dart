@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/app_state.dart';
-import '../models/dictionary_entry.dart';
+import '../models/dictionary.dart';
 import '../widgets/dictionary_entry_card.dart';
 
 class SavedWordsScreen extends StatefulWidget {
@@ -138,7 +138,7 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
                           // Create a dictionary entry from saved details
                           final entry = details != null
                               ? DictionaryEntry.fromJson(details)
-                              : DictionaryEntry(
+                              : DictionaryEntry.fromData(
                                   term: word,
                                   reading: '',
                                   definitions: ['No details available'],

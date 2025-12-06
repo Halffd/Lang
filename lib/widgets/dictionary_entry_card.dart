@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/dictionary_entry.dart';
+import '../models/dictionary.dart';
 
 class DictionaryEntryCard extends StatelessWidget {
   final DictionaryEntry entry;

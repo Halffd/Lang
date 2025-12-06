@@ -6,8 +6,8 @@ import 'package:path/path.dart' as p;
 
 part 'database.g.dart';
 
-// Define the table
-class DictionaryEntries extends Table {
+// Define the table - rename to avoid conflicts with model
+class DriftDictionaryEntries extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get term => text()();
   TextColumn get reading => text().nullable()();
@@ -18,32 +18,34 @@ class DictionaryEntries extends Table {
   TextColumn get metadata => text().nullable()();  // JSON string
 }
 
-@DriftDatabase(tables: [DictionaryEntries])
+@DriftDatabase(tables: [
+  DriftDictionaryEntries,
+])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
   int get schemaVersion => 1;
 
-  // Search methods
-  Future<List<DictionaryEntry>> searchByTerm(String query) async {
-    return (select(dictionaryEntries)
+  // Search methods for existing dictionary entries
+  Future<List<DriftDictionaryEntry>> searchByTerm(String query) async {
+    return (select(driftDictionaryEntries)
           ..where((entry) => entry.term.like('%$query%'))
           ..limit(50))
         .get();
   }
 
-  Future<List<DictionaryEntry>> searchByReading(String query) async {
+  Future<List<DriftDictionaryEntry>> searchByReading(String query) async {
     if (query.isEmpty) return [];
-    return (select(dictionaryEntries)
+    return (select(driftDictionaryEntries)
           ..where((entry) => entry.reading.like('%$query%'))
           ..limit(50))
         .get();
   }
 
-  Future<List<DictionaryEntry>> searchBoth(String query) async {
+  Future<List<DriftDictionaryEntry>> searchBoth(String query) async {
     if (query.isEmpty) return [];
-    return (select(dictionaryEntries)
+    return (select(driftDictionaryEntries)
           ..where((entry) =>
               entry.term.like('%$query%') |
               entry.reading.like('%$query%'))
@@ -51,21 +53,21 @@ class AppDatabase extends _$AppDatabase {
         .get();
   }
 
-  // Insert entry
-  Future<int> insertEntry(DictionaryEntriesCompanion entry) {
-    return into(dictionaryEntries).insert(entry);
+  // Insert entry for existing dictionary
+  Future<int> insertEntry(DriftDictionaryEntriesCompanion entry) {
+    return into(driftDictionaryEntries).insert(entry);
   }
 
   // Batch insert for initial import
-  Future<void> insertBatch(List<DictionaryEntriesCompanion> entries) async {
+  Future<void> insertBatch(List<DriftDictionaryEntriesCompanion> entries) async {
     await batch((batch) {
-      batch.insertAll(dictionaryEntries, entries);
+      batch.insertAll(driftDictionaryEntries, entries);
     });
   }
 
   // Get entry by exact term
-  Future<DictionaryEntry?> getByTerm(String term) async {
-    final results = await (select(dictionaryEntries)
+  Future<DriftDictionaryEntry?> getByTerm(String term) async {
+    final results = await (select(driftDictionaryEntries)
           ..where((entry) => entry.term.equals(term))
           ..limit(1))
         .get();
@@ -73,8 +75,8 @@ class AppDatabase extends _$AppDatabase {
   }
 
   // Get all entries (for debugging/testing)
-  Future<List<DictionaryEntry>> getAllEntries() async {
-    return select(dictionaryEntries).get();
+  Future<List<DriftDictionaryEntry>> getAllEntries() async {
+    return select(driftDictionaryEntries).get();
   }
 }
 

@@ -3,12 +3,12 @@
 part of 'database.dart';
 
 // ignore_for_file: type=lint
-class $DictionaryEntriesTable extends DictionaryEntries
-    with TableInfo<$DictionaryEntriesTable, DictionaryEntry> {
+class $DriftDictionaryEntriesTable extends DriftDictionaryEntries
+    with TableInfo<$DriftDictionaryEntriesTable, DriftDictionaryEntry> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $DictionaryEntriesTable(this.attachedDatabase, [this._alias]);
+  $DriftDictionaryEntriesTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -111,10 +111,10 @@ class $DictionaryEntriesTable extends DictionaryEntries
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'dictionary_entries';
+  static const String $name = 'drift_dictionary_entries';
   @override
   VerificationContext validateIntegrity(
-    Insertable<DictionaryEntry> instance, {
+    Insertable<DriftDictionaryEntry> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -177,9 +177,9 @@ class $DictionaryEntriesTable extends DictionaryEntries
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  DictionaryEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+  DriftDictionaryEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return DictionaryEntry(
+    return DriftDictionaryEntry(
       id:
           attachedDatabase.typeMapping.read(
             DriftSqlType.int,
@@ -220,12 +220,13 @@ class $DictionaryEntriesTable extends DictionaryEntries
   }
 
   @override
-  $DictionaryEntriesTable createAlias(String alias) {
-    return $DictionaryEntriesTable(attachedDatabase, alias);
+  $DriftDictionaryEntriesTable createAlias(String alias) {
+    return $DriftDictionaryEntriesTable(attachedDatabase, alias);
   }
 }
 
-class DictionaryEntry extends DataClass implements Insertable<DictionaryEntry> {
+class DriftDictionaryEntry extends DataClass
+    implements Insertable<DriftDictionaryEntry> {
   final int id;
   final String term;
   final String? reading;
@@ -234,7 +235,7 @@ class DictionaryEntry extends DataClass implements Insertable<DictionaryEntry> {
   final int frequency;
   final String? examples;
   final String? metadata;
-  const DictionaryEntry({
+  const DriftDictionaryEntry({
     required this.id,
     required this.term,
     this.reading,
@@ -266,8 +267,8 @@ class DictionaryEntry extends DataClass implements Insertable<DictionaryEntry> {
     return map;
   }
 
-  DictionaryEntriesCompanion toCompanion(bool nullToAbsent) {
-    return DictionaryEntriesCompanion(
+  DriftDictionaryEntriesCompanion toCompanion(bool nullToAbsent) {
+    return DriftDictionaryEntriesCompanion(
       id: Value(id),
       term: Value(term),
       reading:
@@ -288,12 +289,12 @@ class DictionaryEntry extends DataClass implements Insertable<DictionaryEntry> {
     );
   }
 
-  factory DictionaryEntry.fromJson(
+  factory DriftDictionaryEntry.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return DictionaryEntry(
+    return DriftDictionaryEntry(
       id: serializer.fromJson<int>(json['id']),
       term: serializer.fromJson<String>(json['term']),
       reading: serializer.fromJson<String?>(json['reading']),
@@ -319,7 +320,7 @@ class DictionaryEntry extends DataClass implements Insertable<DictionaryEntry> {
     };
   }
 
-  DictionaryEntry copyWith({
+  DriftDictionaryEntry copyWith({
     int? id,
     String? term,
     Value<String?> reading = const Value.absent(),
@@ -328,7 +329,7 @@ class DictionaryEntry extends DataClass implements Insertable<DictionaryEntry> {
     int? frequency,
     Value<String?> examples = const Value.absent(),
     Value<String?> metadata = const Value.absent(),
-  }) => DictionaryEntry(
+  }) => DriftDictionaryEntry(
     id: id ?? this.id,
     term: term ?? this.term,
     reading: reading.present ? reading.value : this.reading,
@@ -338,8 +339,8 @@ class DictionaryEntry extends DataClass implements Insertable<DictionaryEntry> {
     examples: examples.present ? examples.value : this.examples,
     metadata: metadata.present ? metadata.value : this.metadata,
   );
-  DictionaryEntry copyWithCompanion(DictionaryEntriesCompanion data) {
-    return DictionaryEntry(
+  DriftDictionaryEntry copyWithCompanion(DriftDictionaryEntriesCompanion data) {
+    return DriftDictionaryEntry(
       id: data.id.present ? data.id.value : this.id,
       term: data.term.present ? data.term.value : this.term,
       reading: data.reading.present ? data.reading.value : this.reading,
@@ -354,7 +355,7 @@ class DictionaryEntry extends DataClass implements Insertable<DictionaryEntry> {
 
   @override
   String toString() {
-    return (StringBuffer('DictionaryEntry(')
+    return (StringBuffer('DriftDictionaryEntry(')
           ..write('id: $id, ')
           ..write('term: $term, ')
           ..write('reading: $reading, ')
@@ -381,7 +382,7 @@ class DictionaryEntry extends DataClass implements Insertable<DictionaryEntry> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is DictionaryEntry &&
+      (other is DriftDictionaryEntry &&
           other.id == this.id &&
           other.term == this.term &&
           other.reading == this.reading &&
@@ -392,7 +393,8 @@ class DictionaryEntry extends DataClass implements Insertable<DictionaryEntry> {
           other.metadata == this.metadata);
 }
 
-class DictionaryEntriesCompanion extends UpdateCompanion<DictionaryEntry> {
+class DriftDictionaryEntriesCompanion
+    extends UpdateCompanion<DriftDictionaryEntry> {
   final Value<int> id;
   final Value<String> term;
   final Value<String?> reading;
@@ -401,7 +403,7 @@ class DictionaryEntriesCompanion extends UpdateCompanion<DictionaryEntry> {
   final Value<int> frequency;
   final Value<String?> examples;
   final Value<String?> metadata;
-  const DictionaryEntriesCompanion({
+  const DriftDictionaryEntriesCompanion({
     this.id = const Value.absent(),
     this.term = const Value.absent(),
     this.reading = const Value.absent(),
@@ -411,7 +413,7 @@ class DictionaryEntriesCompanion extends UpdateCompanion<DictionaryEntry> {
     this.examples = const Value.absent(),
     this.metadata = const Value.absent(),
   });
-  DictionaryEntriesCompanion.insert({
+  DriftDictionaryEntriesCompanion.insert({
     this.id = const Value.absent(),
     required String term,
     this.reading = const Value.absent(),
@@ -422,7 +424,7 @@ class DictionaryEntriesCompanion extends UpdateCompanion<DictionaryEntry> {
     this.metadata = const Value.absent(),
   }) : term = Value(term),
        definitions = Value(definitions);
-  static Insertable<DictionaryEntry> custom({
+  static Insertable<DriftDictionaryEntry> custom({
     Expression<int>? id,
     Expression<String>? term,
     Expression<String>? reading,
@@ -444,7 +446,7 @@ class DictionaryEntriesCompanion extends UpdateCompanion<DictionaryEntry> {
     });
   }
 
-  DictionaryEntriesCompanion copyWith({
+  DriftDictionaryEntriesCompanion copyWith({
     Value<int>? id,
     Value<String>? term,
     Value<String?>? reading,
@@ -454,7 +456,7 @@ class DictionaryEntriesCompanion extends UpdateCompanion<DictionaryEntry> {
     Value<String?>? examples,
     Value<String?>? metadata,
   }) {
-    return DictionaryEntriesCompanion(
+    return DriftDictionaryEntriesCompanion(
       id: id ?? this.id,
       term: term ?? this.term,
       reading: reading ?? this.reading,
@@ -498,7 +500,7 @@ class DictionaryEntriesCompanion extends UpdateCompanion<DictionaryEntry> {
 
   @override
   String toString() {
-    return (StringBuffer('DictionaryEntriesCompanion(')
+    return (StringBuffer('DriftDictionaryEntriesCompanion(')
           ..write('id: $id, ')
           ..write('term: $term, ')
           ..write('reading: $reading, ')
@@ -515,17 +517,17 @@ class DictionaryEntriesCompanion extends UpdateCompanion<DictionaryEntry> {
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
-  late final $DictionaryEntriesTable dictionaryEntries =
-      $DictionaryEntriesTable(this);
+  late final $DriftDictionaryEntriesTable driftDictionaryEntries =
+      $DriftDictionaryEntriesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [dictionaryEntries];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [driftDictionaryEntries];
 }
 
-typedef $$DictionaryEntriesTableCreateCompanionBuilder =
-    DictionaryEntriesCompanion Function({
+typedef $$DriftDictionaryEntriesTableCreateCompanionBuilder =
+    DriftDictionaryEntriesCompanion Function({
       Value<int> id,
       required String term,
       Value<String?> reading,
@@ -535,8 +537,8 @@ typedef $$DictionaryEntriesTableCreateCompanionBuilder =
       Value<String?> examples,
       Value<String?> metadata,
     });
-typedef $$DictionaryEntriesTableUpdateCompanionBuilder =
-    DictionaryEntriesCompanion Function({
+typedef $$DriftDictionaryEntriesTableUpdateCompanionBuilder =
+    DriftDictionaryEntriesCompanion Function({
       Value<int> id,
       Value<String> term,
       Value<String?> reading,
@@ -547,9 +549,9 @@ typedef $$DictionaryEntriesTableUpdateCompanionBuilder =
       Value<String?> metadata,
     });
 
-class $$DictionaryEntriesTableFilterComposer
-    extends Composer<_$AppDatabase, $DictionaryEntriesTable> {
-  $$DictionaryEntriesTableFilterComposer({
+class $$DriftDictionaryEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $DriftDictionaryEntriesTable> {
+  $$DriftDictionaryEntriesTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -597,9 +599,9 @@ class $$DictionaryEntriesTableFilterComposer
   );
 }
 
-class $$DictionaryEntriesTableOrderingComposer
-    extends Composer<_$AppDatabase, $DictionaryEntriesTable> {
-  $$DictionaryEntriesTableOrderingComposer({
+class $$DriftDictionaryEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $DriftDictionaryEntriesTable> {
+  $$DriftDictionaryEntriesTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -647,9 +649,9 @@ class $$DictionaryEntriesTableOrderingComposer
   );
 }
 
-class $$DictionaryEntriesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $DictionaryEntriesTable> {
-  $$DictionaryEntriesTableAnnotationComposer({
+class $$DriftDictionaryEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DriftDictionaryEntriesTable> {
+  $$DriftDictionaryEntriesTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -683,47 +685,47 @@ class $$DictionaryEntriesTableAnnotationComposer
       $composableBuilder(column: $table.metadata, builder: (column) => column);
 }
 
-class $$DictionaryEntriesTableTableManager
+class $$DriftDictionaryEntriesTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $DictionaryEntriesTable,
-          DictionaryEntry,
-          $$DictionaryEntriesTableFilterComposer,
-          $$DictionaryEntriesTableOrderingComposer,
-          $$DictionaryEntriesTableAnnotationComposer,
-          $$DictionaryEntriesTableCreateCompanionBuilder,
-          $$DictionaryEntriesTableUpdateCompanionBuilder,
+          $DriftDictionaryEntriesTable,
+          DriftDictionaryEntry,
+          $$DriftDictionaryEntriesTableFilterComposer,
+          $$DriftDictionaryEntriesTableOrderingComposer,
+          $$DriftDictionaryEntriesTableAnnotationComposer,
+          $$DriftDictionaryEntriesTableCreateCompanionBuilder,
+          $$DriftDictionaryEntriesTableUpdateCompanionBuilder,
           (
-            DictionaryEntry,
+            DriftDictionaryEntry,
             BaseReferences<
               _$AppDatabase,
-              $DictionaryEntriesTable,
-              DictionaryEntry
+              $DriftDictionaryEntriesTable,
+              DriftDictionaryEntry
             >,
           ),
-          DictionaryEntry,
+          DriftDictionaryEntry,
           PrefetchHooks Function()
         > {
-  $$DictionaryEntriesTableTableManager(
+  $$DriftDictionaryEntriesTableTableManager(
     _$AppDatabase db,
-    $DictionaryEntriesTable table,
+    $DriftDictionaryEntriesTable table,
   ) : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer:
-              () => $$DictionaryEntriesTableFilterComposer(
+              () => $$DriftDictionaryEntriesTableFilterComposer(
                 $db: db,
                 $table: table,
               ),
           createOrderingComposer:
-              () => $$DictionaryEntriesTableOrderingComposer(
+              () => $$DriftDictionaryEntriesTableOrderingComposer(
                 $db: db,
                 $table: table,
               ),
           createComputedFieldComposer:
-              () => $$DictionaryEntriesTableAnnotationComposer(
+              () => $$DriftDictionaryEntriesTableAnnotationComposer(
                 $db: db,
                 $table: table,
               ),
@@ -737,7 +739,7 @@ class $$DictionaryEntriesTableTableManager
                 Value<int> frequency = const Value.absent(),
                 Value<String?> examples = const Value.absent(),
                 Value<String?> metadata = const Value.absent(),
-              }) => DictionaryEntriesCompanion(
+              }) => DriftDictionaryEntriesCompanion(
                 id: id,
                 term: term,
                 reading: reading,
@@ -757,7 +759,7 @@ class $$DictionaryEntriesTableTableManager
                 Value<int> frequency = const Value.absent(),
                 Value<String?> examples = const Value.absent(),
                 Value<String?> metadata = const Value.absent(),
-              }) => DictionaryEntriesCompanion.insert(
+              }) => DriftDictionaryEntriesCompanion.insert(
                 id: id,
                 term: term,
                 reading: reading,
@@ -782,27 +784,34 @@ class $$DictionaryEntriesTableTableManager
       );
 }
 
-typedef $$DictionaryEntriesTableProcessedTableManager =
+typedef $$DriftDictionaryEntriesTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $DictionaryEntriesTable,
-      DictionaryEntry,
-      $$DictionaryEntriesTableFilterComposer,
-      $$DictionaryEntriesTableOrderingComposer,
-      $$DictionaryEntriesTableAnnotationComposer,
-      $$DictionaryEntriesTableCreateCompanionBuilder,
-      $$DictionaryEntriesTableUpdateCompanionBuilder,
+      $DriftDictionaryEntriesTable,
+      DriftDictionaryEntry,
+      $$DriftDictionaryEntriesTableFilterComposer,
+      $$DriftDictionaryEntriesTableOrderingComposer,
+      $$DriftDictionaryEntriesTableAnnotationComposer,
+      $$DriftDictionaryEntriesTableCreateCompanionBuilder,
+      $$DriftDictionaryEntriesTableUpdateCompanionBuilder,
       (
-        DictionaryEntry,
-        BaseReferences<_$AppDatabase, $DictionaryEntriesTable, DictionaryEntry>,
+        DriftDictionaryEntry,
+        BaseReferences<
+          _$AppDatabase,
+          $DriftDictionaryEntriesTable,
+          DriftDictionaryEntry
+        >,
       ),
-      DictionaryEntry,
+      DriftDictionaryEntry,
       PrefetchHooks Function()
     >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
-  $$DictionaryEntriesTableTableManager get dictionaryEntries =>
-      $$DictionaryEntriesTableTableManager(_db, _db.dictionaryEntries);
+  $$DriftDictionaryEntriesTableTableManager get driftDictionaryEntries =>
+      $$DriftDictionaryEntriesTableTableManager(
+        _db,
+        _db.driftDictionaryEntries,
+      );
 }

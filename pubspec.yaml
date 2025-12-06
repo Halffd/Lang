@@ -50,6 +50,14 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.20  # For mobile
   path_provider: ^2.1.2
   path: ^1.9.0
+  sqflite: ^2.3.0
+
+  # File handling for Yomichan imports
+  archive: ^3.4.9
+  file_picker: ^6.1.1
+
+  # Collection utilities
+  collection: ^1.18.0
 
   # Networking
   http: ^1.2.1

@@ -1,0 +1,29 @@
+name: yomichan_importer
+description: Production-grade Yomichan dictionary importer
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Database
+  sqflite: ^2.3.0
+  path: ^1.8.3
+  path_provider: ^2.1.1
+  
+  # File handling
+  archive: ^3.4.9
+  file_picker: ^6.1.1
+  
+  # JSON & parsing
+  collection: ^1.18.0
+  
+  # State management
+  flutter_riverpod: ^2.4.9
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0

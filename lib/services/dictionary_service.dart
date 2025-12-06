@@ -1,27 +1,75 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:kana_kit/kana_kit.dart';
-import '../models/dictionary_entry.dart';
-import 'database.dart' as db;
+import '../models/dictionary.dart' as model;
 import 'package:drift/drift.dart' as drift;
+import 'database.dart'; // Import our database definition
+
+// Import sqflite for Yomichan functionality
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+
+class SearchOptions {
+  final int limit;
+  final bool exactMatch;
+  final bool searchReadings;
+  final List<int>? dictionaryIds;
+
+  const SearchOptions({
+    this.limit = 20,
+    this.exactMatch = false,
+    this.searchReadings = true,
+    this.dictionaryIds,
+  });
+}
+
+class SearchResult {
+  final List<model.DictionaryEntry> entries;
+  final List<model.KanjiEntry> kanji;
+  final Map<String, List<model.PitchAccent>> pitchAccents;
+  final Map<String, List<model.FrequencyData>> frequencies;
+  final Map<int, model.Dictionary> dictionaries;
+  final Map<String, model.DictionaryTag> tags;
+
+  SearchResult({
+    required this.entries,
+    required this.kanji,
+    required this.pitchAccents,
+    required this.frequencies,
+    required this.dictionaries,
+    required this.tags,
+  });
+}
 
 class DictionaryService {
-  static db.AppDatabase? _database;
+  static AppDatabase? _database;
+  static Database? _yomichanDatabase;
   final KanaKit _kanaKit = KanaKit();
 
-  static db.AppDatabase get database {
-    _database ??= db.AppDatabase();
+  static AppDatabase get database {
+    _database ??= AppDatabase();
     return _database!;
   }
 
-  // Search with automatic kana conversion
-  Future<DictionarySearchResult> search(String query, {String language = 'ja'}) async {
+  Database get yomichanDatabase {
+    _yomichanDatabase ??= _getYomichanDbInstance();
+    return _yomichanDatabase!;
+  }
+
+  Database _getYomichanDbInstance() {
+    throw UnimplementedError("Yomichan database creation not implemented yet");
+  }
+
+  // Search with automatic kana conversion for existing dictionary entries
+  Future<model.DictionarySearchResult> search(String query, {String language = 'ja'}) async {
     if (query.isEmpty) {
-      return DictionarySearchResult(entries: [], query: query);
+      return model.DictionarySearchResult(entries: [], query: query);
     }
 
     try {
-      // Try exact map first
-      List<db.DictionaryEntry> results = await database.searchBoth(query);
+      // Try exact match first with the existing database
+      List<DriftDictionaryEntry> results = await database.searchBoth(query);
 
       // If auto-convert is enabled and query is romaji, also search hiragana
       if (_isRomaji(query)) {
@@ -42,17 +90,30 @@ class DictionaryService {
         }
       }
 
-      // Convert from database models to DictionaryEntry
-      final entries = results.map(_rowToEntry).toList();
+      // Convert from database models to DictionaryEntry model
+      final entries = results.map<model.DictionaryEntry>((row) {
+        return model.DictionaryEntry.fromJson({
+          'id': row.id,
+          'dictionaryId': 1,  // Default to dictionary ID 1 since we don't have that field in this table
+          'term': row.term,
+          'reading': row.reading ?? '',
+          'definitionTags': [],
+          'rules': [],
+          'popularity': row.frequency.toDouble(),
+          'definitions': row.definitions.split('||'),
+          'sequence': row.id,
+          'termTags': []
+        });
+      }).toList();
 
-      return DictionarySearchResult(
+      return model.DictionarySearchResult(
         entries: entries,
         query: query,
         hasMore: results.length >= 50,
       );
     } catch (e) {
       print('Search error: $e');
-      return DictionarySearchResult(
+      return model.DictionarySearchResult(
         entries: [],
         query: query,
         hasMore: false,
@@ -60,84 +121,113 @@ class DictionaryService {
     }
   }
 
-  Future<List<String>> translateText(String text, String fromLang, String toLang) async {
-    // In a real implementation, this would use a translation API
-    // For now, we'll just return a mock translation
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    if (fromLang == 'ja' && toLang == 'en') {
-      return ['This is a mock translation of "$text" from Japanese to English'];
-    } else if (fromLang == 'en' && toLang == 'ja') {
-      return ['これは「$text」の英語から日本語へのモック翻訳です'];
-    } else {
-      return ['Translation from $fromLang to $toLang is not supported yet'];
-    }
+  // Yomichan search methods
+  /// Search Yomichan dictionaries
+  Future<List<YomichanSearchResult>> searchYomichan(String query) async {
+    // For now, return empty results until full Yomichan implementation is complete
+    return [];
   }
 
-  bool isJapanese(String text) {
-    final japaneseRegex = RegExp(r'[\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\uFF00-\uFFEF\u4E00-\u9FAF]');
-    return japaneseRegex.hasMatch(text);
+  /// Search kanji
+  Future<List<YomichanKanjiResult>> searchKanji(String character) async {
+    // For now, return empty results until full Yomichan implementation is complete
+    return [];
   }
 
-  String toHiragana(String text) {
-    return _kanaKit.toHiragana(text);
+  /// Get all dictionaries
+  Future<List<model.YomichanDictionary>> getYomichanDictionaries() async {
+    // For now, return empty until we complete the Yomichan implementation
+    return [];
   }
 
-  String toKatakana(String text) {
-    return _kanaKit.toKatakana(text);
+  /// Toggle dictionary enabled status
+  Future<void> toggleYomichanDictionary(int id, bool enabled) async {
+    // For now, do nothing until we complete the Yomichan implementation
   }
 
-  String toRomaji(String text) {
-    return _kanaKit.toRomaji(text);
+  /// Delete dictionary
+  Future<void> deleteYomichanDictionary(int id) async {
+    // For now, do nothing until we complete the Yomichan implementation
   }
 
-  // Check if string is likely romaji
-  bool _isRomaji(String text) {
-    return !text.contains(RegExp(r'[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]'));
+  /// Get dictionary statistics
+  Future<model.DictionaryStats> getDictionaryStats(int id) async {
+    // For now, return zero stats until we complete the Yomichan implementation
+    return model.DictionaryStats(entries: 0, kanji: 0);
   }
 
-  // Get entry by exact term
-  Future<DictionaryEntry?> getByTerm(String term) async {
-    final result = await database.getByTerm(term);
-    if (result != null) {
-      return _rowToEntry(result);
-    }
-    return null;
+  // Compatibility methods for existing screens
+
+  /// Get all dictionaries (for compatibility)
+  Future<List<model.YomichanDictionary>> getAllDictionaries() async {
+    return await getYomichanDictionaries();
   }
 
-  // Convert database row to DictionaryEntry model
-  DictionaryEntry _rowToEntry(db.DictionaryEntry row) {
-    return DictionaryEntry(
-      term: row.term,
-      reading: row.reading ?? '',
-      definitions: jsonDecode(row.definitions).cast<String>(),
-      tags: row.tags != null ? row.tags!.split(',') : [],
-      frequency: row.frequency,
-      examples: row.examples != null ? jsonDecode(row.examples!).cast<String>() : [],
-      metadata: row.metadata != null ? jsonDecode(row.metadata!) : null,
+  /// Update dictionary (for compatibility)
+  Future<void> updateDictionary(model.YomichanDictionary dictionary) async {
+    // For now, do nothing until we complete the Yomichan implementation
+  }
+
+  /// Delete dictionary (for compatibility) 
+  Future<void> deleteDictionary(int id) async {
+    await deleteYomichanDictionary(id);
+  }
+
+  /// Search term (for compatibility)
+  Future<SearchResult> searchTerm(String term, {SearchOptions options = const SearchOptions()}) async {
+    final searchResult = await search(term);
+
+    // Return a SearchResult with empty fields except for entries
+    return SearchResult(
+      entries: searchResult.entries,
+      kanji: [],
+      pitchAccents: {},
+      frequencies: {},
+      dictionaries: {},
+      tags: {},
     );
   }
 
-  // Initialize database with dictionary data
-  Future<void> importDictionary(List<Map<String, dynamic>> entries) async {
-    final companions = entries.map((json) {
-      return db.DictionaryEntriesCompanion.insert(
-        term: json['term'],
-        reading: drift.Value(json['reading']),
-        definitions: jsonEncode(json['definitions']),
-        tags: drift.Value(json['tags']?.join(',')),
-        frequency: drift.Value(json['frequency'] ?? -1),
-        examples: drift.Value(jsonEncode(json['examples'] ?? [])),
-        metadata: drift.Value(jsonEncode(json['metadata'] ?? {})),
-      );
-    }).toList();
-
-    await database.insertBatch(companions);
-  }
-
-  // Alias for compatibility with existing code
-  Future<List<DictionaryEntry>> searchDictionary(String query) async {
+  /// Search dictionary (for compatibility)
+  Future<List<model.DictionaryEntry>> searchDictionary(String query) async {
     final result = await search(query);
     return result.entries;
   }
+
+  // Helper methods
+  bool _isRomaji(String text) {
+    return !text.contains(RegExp(r'[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]'));
+  }
+}
+
+// Support classes
+class ImportProgress {
+  final String status;
+  final double progress;
+
+  ImportProgress({required this.status, required this.progress});
+}
+
+class YomichanSearchResult {
+  final dynamic entry; // Placeholder - would be properly typed
+  final dynamic dictionary; // Placeholder - would be properly typed
+  final List<dynamic> pitches; // Placeholder - would be properly typed
+  final List<dynamic> frequencies; // Placeholder - would be properly typed
+
+  YomichanSearchResult({
+    required this.entry,
+    required this.dictionary,
+    required this.pitches,
+    required this.frequencies,
+  });
+}
+
+class YomichanKanjiResult {
+  final dynamic kanji; // Placeholder - would be properly typed
+  final dynamic dictionary; // Placeholder - would be properly typed
+
+  YomichanKanjiResult({
+    required this.kanji,
+    required this.dictionary,
+  });
 }
