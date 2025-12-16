@@ -95,6 +95,57 @@ class SettingsScreen extends StatelessWidget {
           
           // Search settings section
           const Text(
+            'UI & Navigation',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          
+          Card(
+            elevation: 1,
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SwitchListTile(
+                    title: const Text('Auto-hide Navigation'),
+                    subtitle: const Text('Hide navigation bar when mouse is not near bottom'),
+                    value: appState.autoHideNavigation,
+                    onChanged: (value) => appState.setAutoHideNavigation(value),
+                  ),
+                  const Divider(),
+                  SwitchListTile(
+                    title: const Text('Default Flex Mode'),
+                    subtitle: const Text('Use flexible grid layout for word lists by default'),
+                    value: appState.defaultFlexMode,
+                    onChanged: (value) => appState.setDefaultFlexMode(value),
+                  ),
+                  const Divider(),
+                   const ListTile(
+                    title: Text('Keyboard Shortcuts'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Ctrl + 1: Search'),
+                        Text('Ctrl + 2: Reader'),
+                        Text('Ctrl + 3: Lists'),
+                        Text('Ctrl + 4: Dictionaries'),
+                        Text('Ctrl + 5: Settings'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Search settings section
+          const Text(
             'Search Settings',
             style: TextStyle(
               fontSize: 18,

@@ -12,6 +12,8 @@ class AppState extends ChangeNotifier {
   bool _showParticles = true;
   bool _showKanji = true;
   int _minFrequency = -1;
+  bool _autoHideNavigation = true;
+  bool _defaultFlexMode = false;
   
   // Search state
   String _currentQuery = '';
@@ -43,6 +45,8 @@ class AppState extends ChangeNotifier {
   bool get showParticles => _showParticles;
   bool get showKanji => _showKanji;
   int get minFrequency => _minFrequency;
+  bool get autoHideNavigation => _autoHideNavigation;
+  bool get defaultFlexMode => _defaultFlexMode;
   String get currentQuery => _currentQuery;
   List<String> get searchHistory => _searchHistory;
   String get currentProfile => _currentProfile;
@@ -91,6 +95,18 @@ class AppState extends ChangeNotifier {
   void setMinFrequency(int value) {
     _minFrequency = value;
     _storageService.setInt('min_frequency', value);
+    notifyListeners();
+  }
+
+  void setAutoHideNavigation(bool value) {
+    _autoHideNavigation = value;
+    _storageService.setBool('auto_hide_navigation', value);
+    notifyListeners();
+  }
+
+  void setDefaultFlexMode(bool value) {
+    _defaultFlexMode = value;
+    _storageService.setBool('default_flex_mode', value);
     notifyListeners();
   }
   
@@ -172,6 +188,8 @@ class AppState extends ChangeNotifier {
     _showParticles = _storageService.getBool('show_particles') ?? true;
     _showKanji = _storageService.getBool('show_kanji') ?? true;
     _minFrequency = _storageService.getInt('min_frequency') ?? -1;
+    _autoHideNavigation = _storageService.getBool('auto_hide_navigation') ?? true;
+    _defaultFlexMode = _storageService.getBool('default_flex_mode') ?? false;
     _currentProfile = _storageService.getString('current_profile') ?? 'Default';
     _searchHistory = _storageService.getStringList('search_history') ?? [];
   }

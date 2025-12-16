@@ -348,10 +348,80 @@ class DictionaryService {
   bool _isRomaji(String text) {
     return !text.contains(RegExp(r'[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]'));
   }
+
+  /// Tokenize text by finding the longest matching dictionary entries
+  Future<List<Token>> tokenizeText(String text) async {
+    final db = await yomichanDatabase;
+    final List<Token> tokens = [];
+    int cursor = 0;
+    
+    // Split by lines first to preserve structure if needed, but here we process the whole text
+    // We'll iterate through the text
+    while (cursor < text.length) {
+      bool matchFound = false;
+      
+      // Try to match longest possible word (up to 10 chars)
+      int maxLength = 10;
+      if (cursor + maxLength > text.length) {
+        maxLength = text.length - cursor;
+      }
+      
+      final candidates = <String>[];
+      for (int i = maxLength; i >= 1; i--) {
+        candidates.add(text.substring(cursor, cursor + i));
+      }
+      
+      // Batch query for all candidates
+      // We prioritize longer matches by checking them in order or sorting results
+      if (candidates.isNotEmpty) {
+        final placeholders = List.filled(candidates.length, '?').join(',');
+        final results = await db.query(
+          'entries',
+          where: 'term IN ($placeholders)',
+          whereArgs: candidates,
+          orderBy: 'length(term) DESC', // Prioritize longer matches
+          limit: 1, // Get the longest one
+        );
+        
+        if (results.isNotEmpty) {
+          final row = results.first;
+          final entry = model.DictionaryEntry.fromJson(row);
+          tokens.add(Token(
+            text: entry.term,
+            entry: entry,
+            isWord: true,
+          ));
+          cursor += entry.term.length;
+          matchFound = true;
+        }
+      }
+      
+      if (!matchFound) {
+        // No dictionary match, consume one character
+        tokens.add(Token(
+          text: text[cursor],
+          isWord: false,
+        ));
+        cursor++;
+      }
+    }
+    
+    return tokens;
+  }
 }
 
-// Support classes
-class ImportProgress {
+class Token {
+  final String text;
+  final model.DictionaryEntry? entry;
+  final bool isWord;
+  
+  Token({
+    required this.text,
+    this.entry,
+    this.isWord = false,
+  });
+}
+
   final String status;
   final double progress;
 

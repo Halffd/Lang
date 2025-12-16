@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../models/app_state.dart';
 import '../mixins/word_list_mixins.dart';
 import '../models/dictionary.dart';
 import '../services/dictionary_service.dart';
@@ -20,6 +22,7 @@ class _WordListsScreenState extends State<WordListsScreen>
   final StorageService _storageService = StorageService();
   List<DictionaryEntry> _searchResults = [];
   bool _isSearching = false;
+  bool? _isFlexMode;
   int _selectedIndex = 0;
 
   @override
@@ -27,6 +30,15 @@ class _WordListsScreenState extends State<WordListsScreen>
     super.initState();
     // Initialize storage service and load data
     _initializeData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_isFlexMode == null) {
+      final appState = Provider.of<AppState>(context, listen: false);
+      _isFlexMode = appState.defaultFlexMode;
+    }
   }
 
   Future<void> _initializeData() async {
@@ -78,10 +90,33 @@ class _WordListsScreenState extends State<WordListsScreen>
       );
     }
 
+    final recentWords = words.toList().reversed.toList();
+
+    if (_isFlexMode == true) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: recentWords.map((word) {
+            final isFav = isWordFavorite(word);
+            return ActionChip(
+              label: Text(word),
+              avatar: isFav ? const Icon(Icons.favorite, size: 16, color: Colors.red) : null,
+              onPressed: () {
+                 // Show details or actions
+                 _showWordActions(word);
+              },
+            );
+          }).toList(),
+        ),
+      );
+    }
+
     return ListView.builder(
-      itemCount: words.length,
+      itemCount: recentWords.length,
       itemBuilder: (context, index) {
-        final word = words.elementAt(index);
+        final word = recentWords[index];
         return ListTile(
           title: Text(word),
           trailing: Row(
@@ -100,8 +135,56 @@ class _WordListsScreenState extends State<WordListsScreen>
               ),
             ],
           ),
+          onTap: () => _showWordActions(word),
         );
       },
+    );
+  }
+
+  void _showWordActions(String word) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.search),
+              title: const Text('Search Definition'),
+              onTap: () {
+                Navigator.pop(context);
+                _searchWord(word);
+                DefaultTabController.of(context).animateTo(0); // Switch to Search tab
+                _searchController.text = word;
+              },
+            ),
+             ListTile(
+              leading: Icon(isWordInAnki(word) ? Icons.remove_circle_outline : Icons.add_circle_outline),
+              title: Text(isWordInAnki(word) ? 'Remove from Anki' : 'Add to Anki'),
+              onTap: () {
+                Navigator.pop(context);
+                toggleAnkiWord(word, isAnki: !isWordInAnki(word));
+              },
+            ),
+             ListTile(
+              leading: Icon(isWordFavorite(word) ? Icons.favorite : Icons.favorite_border, color: Colors.red),
+              title: Text(isWordFavorite(word) ? 'Remove from Favorites' : 'Add to Favorites'),
+              onTap: () {
+                Navigator.pop(context);
+                toggleFavoriteWord(word, isFavorite: !isWordFavorite(word));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('Delete'),
+              onTap: () {
+                Navigator.pop(context);
+                _showDeleteConfirmation(word);
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -140,6 +223,17 @@ class _WordListsScreenState extends State<WordListsScreen>
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Word Lists'),
+          actions: [
+            IconButton(
+              icon: Icon((_isFlexMode ?? false) ? Icons.list : Icons.grid_view),
+              tooltip: (_isFlexMode ?? false) ? 'Switch to List View' : 'Switch to Grid View',
+              onPressed: () {
+                setState(() {
+                  _isFlexMode = !(_isFlexMode ?? false);
+                });
+              },
+            ),
+          ],
           bottom: TabBar(
             isScrollable: true,
             tabs: const [

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../models/app_state.dart';
 import '../models/dictionary.dart';
 import '../services/dictionary_service.dart';
 
@@ -426,6 +428,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
   
   Widget _buildEntryCard(DictionaryEntry entry) {
+    final appState = Provider.of<AppState>(context);
     final dict = _searchResult!.dictionaries[entry.dictionaryId];
     final pitchKey = '${entry.term}_${entry.reading}';
     final pitches = _searchResult!.pitchAccents[pitchKey];
@@ -481,6 +484,21 @@ class _SearchScreenState extends State<SearchScreen> {
                         style: const TextStyle(fontSize: 10),
                       ),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  if (appState.ankiWords.contains(entry.term))
+                    const Padding(
+                      padding: EdgeInsets.only(left: 4),
+                      child: Icon(Icons.star, color: Colors.orange, size: 20),
+                    ),
+                  if (appState.favoriteWords.contains(entry.term))
+                    const Padding(
+                      padding: EdgeInsets.only(left: 4),
+                      child: Icon(Icons.favorite, color: Colors.red, size: 20),
+                    ),
+                  if (appState.savedWords.contains(entry.term))
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: Icon(Icons.bookmark, color: Theme.of(context).primaryColor, size: 20),
                     ),
                 ],
               ),
@@ -617,6 +635,10 @@ class _SearchScreenState extends State<SearchScreen> {
     final pitches = _searchResult!.pitchAccents[pitchKey];
     final frequencies = _searchResult!.frequencies[pitchKey];
 
+    final isSaved = appState.savedWords.contains(entry.term);
+    final isFavorite = appState.favoriteWords.contains(entry.term);
+    final isAnki = appState.ankiWords.contains(entry.term);
+
     return ListView(
       controller: controller,
       padding: showCloseButton ? EdgeInsets.zero : const EdgeInsets.all(24),
@@ -645,6 +667,35 @@ class _SearchScreenState extends State<SearchScreen> {
                     ),
                 ],
               ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border),
+                  color: isSaved ? Theme.of(context).primaryColor : null,
+                  tooltip: isSaved ? 'Remove from Saved' : 'Save',
+                  onPressed: () => isSaved 
+                      ? appState.removeSavedWord(entry.term) 
+                      : appState.addSavedWord(entry.term, details: entry.toJson()),
+                ),
+                IconButton(
+                  icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border),
+                  color: isFavorite ? Colors.red : null,
+                  tooltip: isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+                  onPressed: () => isFavorite 
+                      ? appState.removeFavoriteWord(entry.term) 
+                      : appState.addFavoriteWord(entry.term),
+                ),
+                IconButton(
+                  icon: Icon(isAnki ? Icons.star : Icons.star_border),
+                  color: isAnki ? Colors.orange : null,
+                  tooltip: isAnki ? 'Remove from Anki' : 'Add to Anki',
+                  onPressed: () => isAnki 
+                      ? appState.removeAnkiWord(entry.term) 
+                      : appState.addAnkiWord(entry.term),
+                ),
+              ],
             ),
             if (showCloseButton)
               IconButton(
