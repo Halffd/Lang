@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/dictionary.dart';
 import '../services/dictionary_service.dart';
 
@@ -16,6 +17,7 @@ class _SearchScreenState extends State<SearchScreen> {
   SearchResult? _searchResult;
   bool _isSearching = false;
   String _lastQuery = '';
+  DictionaryEntry? _selectedEntry;
   
   @override
   void dispose() {
@@ -61,8 +63,143 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
   
+  Future<void> _launchExternalLink(String url) async {
+    final uri = Uri.parse(url);
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        throw Exception('Could not launch $url');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not launch url: $e')),
+        );
+      }
+    }
+  }
+
+  Widget _buildExternalLinkButton(IconData icon, String label, String url) {
+    return InkWell(
+      onTap: () => _launchExternalLink(url),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Column(
+          children: [
+            Icon(icon, size: 24, color: Theme.of(context).primaryColor),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 900) {
+          return _buildDesktopLayout();
+        }
+        return _buildMobileLayout();
+      },
+    );
+  }
+
+  Widget _buildDesktopLayout() {
+    return Scaffold(
+      body: Row(
+        children: [
+          // Left Pane: Search and List
+          Expanded(
+            flex: 2,
+            child: Column(
+              children: [
+                // Desktop Search Bar
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    autofocus: true,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Search Japanese...',
+                      hintStyle: const TextStyle(color: Colors.white70),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.2),
+                      prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, color: Colors.white70),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {
+                                  _searchResult = null;
+                                  _lastQuery = '';
+                                  _selectedEntry = null;
+                                });
+                              },
+                            )
+                          : null,
+                    ),
+                    onSubmitted: _performSearch,
+                  ),
+                ),
+                // Results List
+                Expanded(
+                  child: _buildBody(),
+                ),
+              ],
+            ),
+          ),
+          // Vertical Divider
+          const VerticalDivider(width: 1, thickness: 1),
+          // Right Pane: Details
+          Expanded(
+            flex: 3,
+            child: _selectedEntry != null
+                ? _buildDetailPanel(_selectedEntry!)
+                : const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.touch_app, size: 64, color: Colors.grey),
+                        SizedBox(height: 16),
+                        Text(
+                          'Select an entry to view details',
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout() {
     return Scaffold(
       appBar: AppBar(
         title: TextField(
@@ -293,11 +430,20 @@ class _SearchScreenState extends State<SearchScreen> {
     final pitchKey = '${entry.term}_${entry.reading}';
     final pitches = _searchResult!.pitchAccents[pitchKey];
     final frequencies = _searchResult!.frequencies[pitchKey];
+    final isSelected = _selectedEntry == entry;
     
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: isSelected ? 4 : 1,
+      shape: isSelected 
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+            )
+          : null,
       child: InkWell(
         onTap: () => _showEntryDetails(entry),
+        borderRadius: isSelected ? BorderRadius.circular(12) : BorderRadius.circular(4),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -431,12 +577,24 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
   
+  Widget _buildDetailPanel(DictionaryEntry entry) {
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: _buildDetailContent(entry),
+    );
+  }
+
   void _showEntryDetails(DictionaryEntry entry) {
-    final dict = _searchResult!.dictionaries[entry.dictionaryId];
-    final pitchKey = '${entry.term}_${entry.reading}';
-    final pitches = _searchResult!.pitchAccents[pitchKey];
-    final frequencies = _searchResult!.frequencies[pitchKey];
-    
+    if (MediaQuery.of(context).size.width > 900) {
+      setState(() {
+        _selectedEntry = entry;
+      });
+    } else {
+      _showMobileEntryDetails(entry);
+    }
+  }
+
+  void _showMobileEntryDetails(DictionaryEntry entry) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -447,217 +605,223 @@ class _SearchScreenState extends State<SearchScreen> {
         expand: false,
         builder: (context, scrollController) => Container(
           padding: const EdgeInsets.all(24),
-          child: ListView(
-            controller: scrollController,
-            children: [
-              // Header
-              Row(
+          child: _buildDetailContent(entry, controller: scrollController, showCloseButton: true),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailContent(DictionaryEntry entry, {ScrollController? controller, bool showCloseButton = false}) {
+    final dict = _searchResult!.dictionaries[entry.dictionaryId];
+    final pitchKey = '${entry.term}_${entry.reading}';
+    final pitches = _searchResult!.pitchAccents[pitchKey];
+    final frequencies = _searchResult!.frequencies[pitchKey];
+
+    return ListView(
+      controller: controller,
+      padding: showCloseButton ? EdgeInsets.zero : const EdgeInsets.all(24),
+      children: [
+        // Header
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          entry.term,
-                          style: const TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        if (entry.reading.isNotEmpty && entry.reading != entry.term)
-                          Text(
-                            entry.reading,
-                            style: TextStyle(
-                              fontSize: 20,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                      ],
+                  Text(
+                    entry.term,
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
+                  if (entry.reading.isNotEmpty && entry.reading != entry.term)
+                    Text(
+                      entry.reading,
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.grey[600],
+                      ),
+                    ),
                 ],
               ),
-              
-              const SizedBox(height: 16),
-              
-              // Dictionary source
-              if (dict != null)
-                Chip(
-                  label: Text('Source: ${dict.title}'),
-                  avatar: const Icon(Icons.book, size: 16),
-                ),
-              
-              const SizedBox(height: 16),
-              
-              // Tags
-              if (entry.termTags != null && entry.termTags!.isNotEmpty) ...[
-                const Text(
-                  'Tags',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: entry.termTags!.map((tagName) {
-                    final tag = _searchResult!.tags['${entry.dictionaryId}_$tagName'];
-                    return Chip(
-                      label: Text(tag?.notes ?? tagName),
-                      backgroundColor: _getTagColor(tag?.category),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 16),
-              ],
-              
-              // Pitch accent
-              if (pitches != null && pitches.isNotEmpty) ...[
-                const Text(
-                  'Pitch Accent',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ...pitches.expand((pitch) => 
-                  pitch.pitches.map((pattern) => 
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.graphic_eq),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Downstep: ${pattern.position}',
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                            if (pattern.tags != null) ...[
-                              const Spacer(),
-                              Text(
-                                pattern.tags!.join(', '),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-              
-              // Frequency
-              if (frequencies != null && frequencies.isNotEmpty) ...[
-                const Text(
-                  'Frequency',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ...frequencies.map((freq) => 
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.trending_up),
-                          const SizedBox(width: 12),
-                          Text(
-                            freq.displayValue ?? freq.value.toString(),
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          const Spacer(),
-                          Text(
-                            freq.frequencyType,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-              
-              // Definitions
-              const Text(
-                'Definitions',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+            ),
+            if (showCloseButton)
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
               ),
-              const SizedBox(height: 12),
-              ...entry.definitions.asMap().entries.map((defEntry) => 
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+          ],
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Dictionary source
+        if (dict != null)
+          Chip(
+            label: Text('Source: ${dict.title}'),
+            avatar: const Icon(Icons.book, size: 16),
+          ),
+        
+        const SizedBox(height: 16),
+
+        // External Links
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildExternalLinkButton(
+              Icons.image,
+              'Images',
+              'https://www.google.com/search?tbm=isch&q=${Uri.encodeComponent(entry.term)}',
+            ),
+            _buildExternalLinkButton(
+              Icons.language,
+              'Wikipedia',
+              'https://ja.wikipedia.org/wiki/${Uri.encodeComponent(entry.term)}',
+            ),
+            _buildExternalLinkButton(
+              Icons.menu_book,
+              'Wiktionary',
+              'https://ja.wiktionary.org/wiki/${Uri.encodeComponent(entry.term)}',
+            ),
+          ],
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Tags
+        if (entry.termTags != null && entry.termTags!.isNotEmpty) ...[
+          const Text(
+            'Tags',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: entry.termTags!.map((tagName) {
+              final tag = _searchResult!.tags['${entry.dictionaryId}_$tagName'];
+              return Chip(
+                label: Text(tag?.notes ?? tagName),
+                backgroundColor: _getTagColor(tag?.category),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+        ],
+        
+        // Pitch accent
+        if (pitches != null && pitches.isNotEmpty) ...[
+          const Text(
+            'Pitch Accent',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...pitches.expand((pitch) => 
+            pitch.pitches.map((pattern) => 
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
                   child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 24,
-                        height: 24,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: Colors.blue,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '${defEntry.key + 1}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                      const Icon(Icons.graphic_eq),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Downstep: ${pattern.position}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      if (pattern.tags != null) ...[
+                        const Spacer(),
+                        Text(
+                          pattern.tags!.join(', '),
+                          style: TextStyle(
                             fontSize: 12,
+                            color: Colors.grey[600],
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          _formatDefinition(defEntry.value),
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
               ),
-              
-              // Additional info
-              if (entry.sequence != null) ...[
-                const SizedBox(height: 16),
-                const Divider(),
-                const SizedBox(height: 8),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        
+        // Frequency
+        if (frequencies != null && frequencies.isNotEmpty) ...[
+          const Text(
+            'Frequency',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...frequencies.map((freq) {
+            final freqDict = _searchResult!.dictionaries[freq.dictionaryId];
+            return Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.trending_up),
+                    const SizedBox(width: 12),
+                    Text(
+                      '${freqDict?.title ?? "Unknown"}: ${freq.displayValue ?? freq.value}',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 16),
+        ],
+        
+        // Definitions
+        const Text(
+          'Definitions',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ...entry.definitions.asMap().entries.map((defEntry) {
+          final index = defEntry.key;
+          final definition = defEntry.value;
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  'Sequence: ${entry.sequence}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
+                  '${index + 1}.',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _formatDefinition(definition),
+                    style: const TextStyle(fontSize: 16),
                   ),
                 ),
               ],
-            ],
-          ),
-        ),
-      ),
+            ),
+          );
+        }),
+      ],
     );
   }
   

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/dictionary.dart';
 
 class DictionaryEntryCard extends StatelessWidget {
@@ -20,6 +21,43 @@ class DictionaryEntryCard extends StatelessWidget {
     required this.onFavoriteToggle,
     required this.onAnkiToggle,
   });
+
+  Future<void> _launchExternalLink(BuildContext context, String url) async {
+    final uri = Uri.parse(url);
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        throw Exception('Could not launch $url');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not launch url: $e')),
+      );
+    }
+  }
+
+  Widget _buildExternalLinkButton(BuildContext context, IconData icon, String label, String url) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: () => _launchExternalLink(context, url),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: Column(
+          children: [
+            Icon(icon, size: 20, color: theme.colorScheme.primary),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -254,6 +292,30 @@ class DictionaryEntryCard extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              ListTile(
+                leading: const Icon(Icons.image),
+                title: const Text('Google Images'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _launchExternalLink(context, 'https://www.google.com/search?tbm=isch&q=${Uri.encodeComponent(entry.term)}');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.language),
+                title: const Text('Wikipedia'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _launchExternalLink(context, 'https://ja.wikipedia.org/wiki/${Uri.encodeComponent(entry.term)}');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.menu_book),
+                title: const Text('Wiktionary'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _launchExternalLink(context, 'https://ja.wiktionary.org/wiki/${Uri.encodeComponent(entry.term)}');
+                },
+              ),
               ListTile(
                 leading: const Icon(Icons.translate),
                 title: const Text('Translate'),

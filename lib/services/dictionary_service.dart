@@ -4,6 +4,7 @@ import 'package:kana_kit/kana_kit.dart';
 import '../models/dictionary.dart' as model;
 import 'package:drift/drift.dart' as drift;
 import 'database.dart'; // Import our database definition
+import '../database/database_manager.dart';
 
 // Import sqflite for Yomichan functionality
 import 'package:sqflite/sqflite.dart';
@@ -52,13 +53,9 @@ class DictionaryService {
     return _database!;
   }
 
-  Database get yomichanDatabase {
-    _yomichanDatabase ??= _getYomichanDbInstance();
+  Future<Database> get yomichanDatabase async {
+    _yomichanDatabase ??= await DatabaseManager().database;
     return _yomichanDatabase!;
-  }
-
-  Database _getYomichanDbInstance() {
-    throw UnimplementedError("Yomichan database creation not implemented yet");
   }
 
   // Search with automatic kana conversion for existing dictionary entries
@@ -124,36 +121,150 @@ class DictionaryService {
   // Yomichan search methods
   /// Search Yomichan dictionaries
   Future<List<YomichanSearchResult>> searchYomichan(String query) async {
-    // For now, return empty results until full Yomichan implementation is complete
-    return [];
+    final db = await yomichanDatabase;
+    
+    // Search entries
+    final results = await db.query(
+      'entries',
+      where: 'term = ? OR reading = ?',
+      whereArgs: [query, query],
+      limit: 50,
+    );
+
+    final List<YomichanSearchResult> searchResults = [];
+
+    for (final row in results) {
+      final entry = model.DictionaryEntry.fromJson(row);
+      
+      // Get dictionary info
+      final dictionaryResult = await db.query(
+        'dictionaries',
+        where: 'id = ?',
+        whereArgs: [entry.dictionaryId],
+        limit: 1,
+      );
+      
+      final dictionary = dictionaryResult.isNotEmpty 
+          ? model.Dictionary.fromMap(dictionaryResult.first)
+          : null;
+
+      // Get pitch accents
+      final pitchResults = await db.query(
+        'pitches',
+        where: 'dictionary_id = ? AND term = ? AND reading = ?',
+        whereArgs: [entry.dictionaryId, entry.term, entry.reading],
+      );
+      
+      final pitches = pitchResults
+          .map((p) => model.PitchAccent.fromMap(p))
+          .toList();
+
+      // Get frequencies
+      final freqResults = await db.query(
+        'frequencies',
+        where: 'dictionary_id = ? AND term = ? AND reading = ?',
+        whereArgs: [entry.dictionaryId, entry.term, entry.reading],
+      );
+      
+      final frequencies = freqResults
+          .map((f) => model.FrequencyData.fromMap(f))
+          .toList();
+
+      searchResults.add(YomichanSearchResult(
+        entry: entry,
+        dictionary: dictionary,
+        pitches: pitches,
+        frequencies: frequencies,
+      ));
+    }
+
+    return searchResults;
   }
 
   /// Search kanji
   Future<List<YomichanKanjiResult>> searchKanji(String character) async {
-    // For now, return empty results until full Yomichan implementation is complete
-    return [];
+    final db = await yomichanDatabase;
+    
+    final results = await db.query(
+      'kanji',
+      where: 'character = ?',
+      whereArgs: [character],
+    );
+
+    final List<YomichanKanjiResult> searchResults = [];
+
+    for (final row in results) {
+      final kanji = model.KanjiEntry.fromMap(row);
+      
+      // Get dictionary info
+      final dictionaryResult = await db.query(
+        'dictionaries',
+        where: 'id = ?',
+        whereArgs: [kanji.dictionaryId],
+        limit: 1,
+      );
+      
+      final dictionary = dictionaryResult.isNotEmpty 
+          ? model.Dictionary.fromMap(dictionaryResult.first)
+          : null;
+
+      searchResults.add(YomichanKanjiResult(
+        kanji: kanji,
+        dictionary: dictionary,
+      ));
+    }
+
+    return searchResults;
   }
 
   /// Get all dictionaries
   Future<List<model.YomichanDictionary>> getYomichanDictionaries() async {
-    // For now, return empty until we complete the Yomichan implementation
-    return [];
+    final db = await yomichanDatabase;
+    final results = await db.query('dictionaries', orderBy: 'priority DESC, id ASC');
+    
+    return results.map((row) => model.YomichanDictionary.fromMap(row)).toList();
   }
 
   /// Toggle dictionary enabled status
   Future<void> toggleYomichanDictionary(int id, bool enabled) async {
-    // For now, do nothing until we complete the Yomichan implementation
+    final db = await yomichanDatabase;
+    await db.update(
+      'dictionaries',
+      {'enabled': enabled ? 1 : 0},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   /// Delete dictionary
   Future<void> deleteYomichanDictionary(int id) async {
-    // For now, do nothing until we complete the Yomichan implementation
+    final db = await yomichanDatabase;
+    await db.transaction((txn) async {
+      // Delete all related data
+      await txn.delete('entries', where: 'dictionary_id = ?', whereArgs: [id]);
+      await txn.delete('kanji', where: 'dictionary_id = ?', whereArgs: [id]);
+      await txn.delete('tags', where: 'dictionary_id = ?', whereArgs: [id]);
+      await txn.delete('pitches', where: 'dictionary_id = ?', whereArgs: [id]);
+      await txn.delete('frequencies', where: 'dictionary_id = ?', whereArgs: [id]);
+      await txn.delete('dictionaries', where: 'id = ?', whereArgs: [id]);
+    });
   }
 
   /// Get dictionary statistics
   Future<model.DictionaryStats> getDictionaryStats(int id) async {
-    // For now, return zero stats until we complete the Yomichan implementation
-    return model.DictionaryStats(entries: 0, kanji: 0);
+    final db = await yomichanDatabase;
+    
+    final entriesCount = Sqflite.firstIntValue(await db.rawQuery(
+      'SELECT COUNT(*) FROM entries WHERE dictionary_id = ?',
+      [id],
+    )) ?? 0;
+    
+    final kanjiCount = Sqflite.firstIntValue(await db.rawQuery(
+      'SELECT COUNT(*) FROM kanji WHERE dictionary_id = ?',
+      [id],
+    )) ?? 0;
+    
+    return model.DictionaryStats(entries: entriesCount, kanji: kanjiCount);
   }
 
   // Compatibility methods for existing screens
@@ -165,7 +276,13 @@ class DictionaryService {
 
   /// Update dictionary (for compatibility)
   Future<void> updateDictionary(model.YomichanDictionary dictionary) async {
-    // For now, do nothing until we complete the Yomichan implementation
+    final db = await yomichanDatabase;
+    await db.update(
+      'dictionaries',
+      dictionary.toMap(),
+      where: 'id = ?',
+      whereArgs: [dictionary.id],
+    );
   }
 
   /// Delete dictionary (for compatibility) 
@@ -175,23 +292,56 @@ class DictionaryService {
 
   /// Search term (for compatibility)
   Future<SearchResult> searchTerm(String term, {SearchOptions options = const SearchOptions()}) async {
-    final searchResult = await search(term);
+    // Search Yomichan entries
+    final yomichanResults = await searchYomichan(term);
+    
+    // Search Kanji
+    final kanjiResults = await searchKanji(term);
 
-    // Return a SearchResult with empty fields except for entries
+    // Convert to SearchResult format
+    final entries = yomichanResults.map((r) => r.entry).toList();
+    final kanji = kanjiResults.map((r) => r.kanji).toList();
+    
+    final pitchAccents = <String, List<model.PitchAccent>>{};
+    final frequencies = <String, List<model.FrequencyData>>{};
+    final dictionaries = <int, model.Dictionary>{};
+    
+    for (final result in yomichanResults) {
+      final key = '${result.entry.term}_${result.entry.reading}';
+      
+      if (result.pitches.isNotEmpty) {
+        pitchAccents[key] = result.pitches;
+      }
+      
+      if (result.frequencies.isNotEmpty) {
+        frequencies[key] = result.frequencies;
+      }
+      
+      if (result.dictionary != null) {
+        dictionaries[result.dictionary!.id] = result.dictionary!;
+      }
+    }
+
+    for (final result in kanjiResults) {
+       if (result.dictionary != null) {
+        dictionaries[result.dictionary!.id] = result.dictionary!;
+      }
+    }
+
     return SearchResult(
-      entries: searchResult.entries,
-      kanji: [],
-      pitchAccents: {},
-      frequencies: {},
-      dictionaries: {},
-      tags: {},
+      entries: entries,
+      kanji: kanji,
+      pitchAccents: pitchAccents,
+      frequencies: frequencies,
+      dictionaries: dictionaries,
+      tags: {}, // Tags not implemented in searchYomichan yet
     );
   }
 
   /// Search dictionary (for compatibility)
   Future<List<model.DictionaryEntry>> searchDictionary(String query) async {
-    final result = await search(query);
-    return result.entries;
+    final results = await searchYomichan(query);
+    return results.map((r) => r.entry).toList();
   }
 
   // Helper methods
@@ -209,10 +359,10 @@ class ImportProgress {
 }
 
 class YomichanSearchResult {
-  final dynamic entry; // Placeholder - would be properly typed
-  final dynamic dictionary; // Placeholder - would be properly typed
-  final List<dynamic> pitches; // Placeholder - would be properly typed
-  final List<dynamic> frequencies; // Placeholder - would be properly typed
+  final model.DictionaryEntry entry;
+  final model.Dictionary? dictionary;
+  final List<model.PitchAccent> pitches;
+  final List<model.FrequencyData> frequencies;
 
   YomichanSearchResult({
     required this.entry,
@@ -223,8 +373,8 @@ class YomichanSearchResult {
 }
 
 class YomichanKanjiResult {
-  final dynamic kanji; // Placeholder - would be properly typed
-  final dynamic dictionary; // Placeholder - would be properly typed
+  final model.KanjiEntry kanji;
+  final model.Dictionary? dictionary;
 
   YomichanKanjiResult({
     required this.kanji,

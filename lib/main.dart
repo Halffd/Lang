@@ -4,7 +4,7 @@ import 'screens/search_screen.dart';
 
 void main() {
   runApp(const YomichanApp());
-}
+}   
 
 class YomichanApp extends StatelessWidget {
   const YomichanApp({Key? key}) : super(key: key);
