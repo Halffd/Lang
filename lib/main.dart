@@ -8,6 +8,7 @@ import 'screens/search_screen.dart';
 import 'screens/reader_screen.dart';
 import 'screens/word_lists_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/sentence_translator_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,18 +20,18 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AppState(storageService)),
       ],
-      child: const YomichanApp(),
+      child: const LangApp(),
     ),
   );
 }
 
-class YomichanApp extends StatelessWidget {
-  const YomichanApp({Key? key}) : super(key: key);
-  
+class LangApp extends StatelessWidget {
+  const LangApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Yomichan Dictionary',
+      title: 'Lang',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         useMaterial3: true,
@@ -56,6 +57,7 @@ class _MainScreenState extends State<MainScreen> {
     ReaderScreen(),
     WordListsScreen(),
     DictionaryListScreen(),
+    SentenceTranslatorScreen(),
     SettingsScreen(),
   ];
 
@@ -81,6 +83,7 @@ class _MainScreenState extends State<MainScreen> {
         const SingleActivator(LogicalKeyboardKey.digit3, control: true): () => _handleShortcut(2),
         const SingleActivator(LogicalKeyboardKey.digit4, control: true): () => _handleShortcut(3),
         const SingleActivator(LogicalKeyboardKey.digit5, control: true): () => _handleShortcut(4),
+        const SingleActivator(LogicalKeyboardKey.digit6, control: true): () => _handleShortcut(5),
       },
       child: Focus(
         autofocus: true,
@@ -122,6 +125,10 @@ class _MainScreenState extends State<MainScreen> {
                 NavigationDestination(
                   icon: Icon(Icons.book),
                   label: 'Dictionaries',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.translate),
+                  label: 'Translator',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.settings),

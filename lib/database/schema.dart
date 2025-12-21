@@ -98,6 +98,25 @@ const String createFrequenciesIndexes = '''
   CREATE INDEX IF NOT EXISTS idx_frequencies_type ON frequencies(frequency_type);
 ''';
 
+const String createTonesTable = '''
+  CREATE TABLE IF NOT EXISTS tones (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    dictionary_id INTEGER NOT NULL,
+    term TEXT NOT NULL,
+    reading TEXT NOT NULL,
+    language TEXT NOT NULL,
+    tones TEXT NOT NULL,
+    FOREIGN KEY (dictionary_id) REFERENCES dictionaries(id) ON DELETE CASCADE
+  )
+''';
+
+const String createTonesIndexes = '''
+  CREATE INDEX IF NOT EXISTS idx_tones_term ON tones(term);
+  CREATE INDEX IF NOT EXISTS idx_tones_reading ON tones(reading);
+  CREATE INDEX IF NOT EXISTS idx_tones_language ON tones(language);
+  CREATE INDEX IF NOT EXISTS idx_tones_term_reading ON tones(term, reading);
+''';
+
 const String createDictionariesTable = '''
   CREATE TABLE IF NOT EXISTS dictionaries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -123,8 +142,8 @@ const String createMetadataTable = '''
 ''';
 
 class DatabaseSchema {
-  static const int currentVersion = 3;
-  
+  static const int currentVersion = 4;
+
   static Future<void> onCreate(Database db, int version) async {
     await db.execute(createDictionariesTable);
     await db.execute(createEntriesTable);
@@ -132,25 +151,27 @@ class DatabaseSchema {
     await db.execute(createTagsTable);
     await db.execute(createPitchesTable);
     await db.execute(createFrequenciesTable);
+    await db.execute(createTonesTable); // Add tone table
     await db.execute(createMetadataTable);
-    
+
     await _createIndexes(db);
-    
+
     // Set schema version
     await db.insert('metadata', {
       'key': 'schema_version',
       'value': currentVersion.toString(),
     });
   }
-  
+
   static Future<void> _createIndexes(Database db) async {
     await db.execute(createEntriesIndexes);
     await db.execute(createKanjiIndexes);
     await db.execute(createTagsIndexes);
     await db.execute(createPitchesIndexes);
     await db.execute(createFrequenciesIndexes);
+    await db.execute(createTonesIndexes); // Add tone indexes
   }
-  
+
   static Future<void> onUpgrade(
     Database db,
     int oldVersion,
@@ -163,6 +184,10 @@ class DatabaseSchema {
     if (oldVersion < 3) {
       await db.execute(createFrequenciesTable);
       await db.execute(createFrequenciesIndexes);
+    }
+    if (oldVersion < 4) {
+      await db.execute(createTonesTable);
+      await db.execute(createTonesIndexes);
     }
   }
 }

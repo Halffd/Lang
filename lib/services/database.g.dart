@@ -514,16 +514,428 @@ class DriftDictionaryEntriesCompanion
   }
 }
 
+class $DriftTonesTable extends DriftTones
+    with TableInfo<$DriftTonesTable, DriftTone> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DriftTonesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _dictionaryIdMeta = const VerificationMeta(
+    'dictionaryId',
+  );
+  @override
+  late final GeneratedColumn<int> dictionaryId = GeneratedColumn<int>(
+    'dictionary_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _termMeta = const VerificationMeta('term');
+  @override
+  late final GeneratedColumn<String> term = GeneratedColumn<String>(
+    'term',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _readingMeta = const VerificationMeta(
+    'reading',
+  );
+  @override
+  late final GeneratedColumn<String> reading = GeneratedColumn<String>(
+    'reading',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _languageMeta = const VerificationMeta(
+    'language',
+  );
+  @override
+  late final GeneratedColumn<String> language = GeneratedColumn<String>(
+    'language',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tonesMeta = const VerificationMeta('tones');
+  @override
+  late final GeneratedColumn<String> tones = GeneratedColumn<String>(
+    'tones',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    dictionaryId,
+    term,
+    reading,
+    language,
+    tones,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'drift_tones';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DriftTone> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('dictionary_id')) {
+      context.handle(
+        _dictionaryIdMeta,
+        dictionaryId.isAcceptableOrUnknown(
+          data['dictionary_id']!,
+          _dictionaryIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_dictionaryIdMeta);
+    }
+    if (data.containsKey('term')) {
+      context.handle(
+        _termMeta,
+        term.isAcceptableOrUnknown(data['term']!, _termMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_termMeta);
+    }
+    if (data.containsKey('reading')) {
+      context.handle(
+        _readingMeta,
+        reading.isAcceptableOrUnknown(data['reading']!, _readingMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_readingMeta);
+    }
+    if (data.containsKey('language')) {
+      context.handle(
+        _languageMeta,
+        language.isAcceptableOrUnknown(data['language']!, _languageMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_languageMeta);
+    }
+    if (data.containsKey('tones')) {
+      context.handle(
+        _tonesMeta,
+        tones.isAcceptableOrUnknown(data['tones']!, _tonesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tonesMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DriftTone map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DriftTone(
+      id:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}id'],
+          )!,
+      dictionaryId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}dictionary_id'],
+          )!,
+      term:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}term'],
+          )!,
+      reading:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}reading'],
+          )!,
+      language:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}language'],
+          )!,
+      tones:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}tones'],
+          )!,
+    );
+  }
+
+  @override
+  $DriftTonesTable createAlias(String alias) {
+    return $DriftTonesTable(attachedDatabase, alias);
+  }
+}
+
+class DriftTone extends DataClass implements Insertable<DriftTone> {
+  final int id;
+  final int dictionaryId;
+  final String term;
+  final String reading;
+  final String language;
+  final String tones;
+  const DriftTone({
+    required this.id,
+    required this.dictionaryId,
+    required this.term,
+    required this.reading,
+    required this.language,
+    required this.tones,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['dictionary_id'] = Variable<int>(dictionaryId);
+    map['term'] = Variable<String>(term);
+    map['reading'] = Variable<String>(reading);
+    map['language'] = Variable<String>(language);
+    map['tones'] = Variable<String>(tones);
+    return map;
+  }
+
+  DriftTonesCompanion toCompanion(bool nullToAbsent) {
+    return DriftTonesCompanion(
+      id: Value(id),
+      dictionaryId: Value(dictionaryId),
+      term: Value(term),
+      reading: Value(reading),
+      language: Value(language),
+      tones: Value(tones),
+    );
+  }
+
+  factory DriftTone.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DriftTone(
+      id: serializer.fromJson<int>(json['id']),
+      dictionaryId: serializer.fromJson<int>(json['dictionaryId']),
+      term: serializer.fromJson<String>(json['term']),
+      reading: serializer.fromJson<String>(json['reading']),
+      language: serializer.fromJson<String>(json['language']),
+      tones: serializer.fromJson<String>(json['tones']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'dictionaryId': serializer.toJson<int>(dictionaryId),
+      'term': serializer.toJson<String>(term),
+      'reading': serializer.toJson<String>(reading),
+      'language': serializer.toJson<String>(language),
+      'tones': serializer.toJson<String>(tones),
+    };
+  }
+
+  DriftTone copyWith({
+    int? id,
+    int? dictionaryId,
+    String? term,
+    String? reading,
+    String? language,
+    String? tones,
+  }) => DriftTone(
+    id: id ?? this.id,
+    dictionaryId: dictionaryId ?? this.dictionaryId,
+    term: term ?? this.term,
+    reading: reading ?? this.reading,
+    language: language ?? this.language,
+    tones: tones ?? this.tones,
+  );
+  DriftTone copyWithCompanion(DriftTonesCompanion data) {
+    return DriftTone(
+      id: data.id.present ? data.id.value : this.id,
+      dictionaryId:
+          data.dictionaryId.present
+              ? data.dictionaryId.value
+              : this.dictionaryId,
+      term: data.term.present ? data.term.value : this.term,
+      reading: data.reading.present ? data.reading.value : this.reading,
+      language: data.language.present ? data.language.value : this.language,
+      tones: data.tones.present ? data.tones.value : this.tones,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DriftTone(')
+          ..write('id: $id, ')
+          ..write('dictionaryId: $dictionaryId, ')
+          ..write('term: $term, ')
+          ..write('reading: $reading, ')
+          ..write('language: $language, ')
+          ..write('tones: $tones')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, dictionaryId, term, reading, language, tones);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DriftTone &&
+          other.id == this.id &&
+          other.dictionaryId == this.dictionaryId &&
+          other.term == this.term &&
+          other.reading == this.reading &&
+          other.language == this.language &&
+          other.tones == this.tones);
+}
+
+class DriftTonesCompanion extends UpdateCompanion<DriftTone> {
+  final Value<int> id;
+  final Value<int> dictionaryId;
+  final Value<String> term;
+  final Value<String> reading;
+  final Value<String> language;
+  final Value<String> tones;
+  const DriftTonesCompanion({
+    this.id = const Value.absent(),
+    this.dictionaryId = const Value.absent(),
+    this.term = const Value.absent(),
+    this.reading = const Value.absent(),
+    this.language = const Value.absent(),
+    this.tones = const Value.absent(),
+  });
+  DriftTonesCompanion.insert({
+    this.id = const Value.absent(),
+    required int dictionaryId,
+    required String term,
+    required String reading,
+    required String language,
+    required String tones,
+  }) : dictionaryId = Value(dictionaryId),
+       term = Value(term),
+       reading = Value(reading),
+       language = Value(language),
+       tones = Value(tones);
+  static Insertable<DriftTone> custom({
+    Expression<int>? id,
+    Expression<int>? dictionaryId,
+    Expression<String>? term,
+    Expression<String>? reading,
+    Expression<String>? language,
+    Expression<String>? tones,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (dictionaryId != null) 'dictionary_id': dictionaryId,
+      if (term != null) 'term': term,
+      if (reading != null) 'reading': reading,
+      if (language != null) 'language': language,
+      if (tones != null) 'tones': tones,
+    });
+  }
+
+  DriftTonesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? dictionaryId,
+    Value<String>? term,
+    Value<String>? reading,
+    Value<String>? language,
+    Value<String>? tones,
+  }) {
+    return DriftTonesCompanion(
+      id: id ?? this.id,
+      dictionaryId: dictionaryId ?? this.dictionaryId,
+      term: term ?? this.term,
+      reading: reading ?? this.reading,
+      language: language ?? this.language,
+      tones: tones ?? this.tones,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (dictionaryId.present) {
+      map['dictionary_id'] = Variable<int>(dictionaryId.value);
+    }
+    if (term.present) {
+      map['term'] = Variable<String>(term.value);
+    }
+    if (reading.present) {
+      map['reading'] = Variable<String>(reading.value);
+    }
+    if (language.present) {
+      map['language'] = Variable<String>(language.value);
+    }
+    if (tones.present) {
+      map['tones'] = Variable<String>(tones.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DriftTonesCompanion(')
+          ..write('id: $id, ')
+          ..write('dictionaryId: $dictionaryId, ')
+          ..write('term: $term, ')
+          ..write('reading: $reading, ')
+          ..write('language: $language, ')
+          ..write('tones: $tones')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $DriftDictionaryEntriesTable driftDictionaryEntries =
       $DriftDictionaryEntriesTable(this);
+  late final $DriftTonesTable driftTones = $DriftTonesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [driftDictionaryEntries];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    driftDictionaryEntries,
+    driftTones,
+  ];
 }
 
 typedef $$DriftDictionaryEntriesTableCreateCompanionBuilder =
@@ -805,6 +1217,225 @@ typedef $$DriftDictionaryEntriesTableProcessedTableManager =
       DriftDictionaryEntry,
       PrefetchHooks Function()
     >;
+typedef $$DriftTonesTableCreateCompanionBuilder =
+    DriftTonesCompanion Function({
+      Value<int> id,
+      required int dictionaryId,
+      required String term,
+      required String reading,
+      required String language,
+      required String tones,
+    });
+typedef $$DriftTonesTableUpdateCompanionBuilder =
+    DriftTonesCompanion Function({
+      Value<int> id,
+      Value<int> dictionaryId,
+      Value<String> term,
+      Value<String> reading,
+      Value<String> language,
+      Value<String> tones,
+    });
+
+class $$DriftTonesTableFilterComposer
+    extends Composer<_$AppDatabase, $DriftTonesTable> {
+  $$DriftTonesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dictionaryId => $composableBuilder(
+    column: $table.dictionaryId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get term => $composableBuilder(
+    column: $table.term,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get reading => $composableBuilder(
+    column: $table.reading,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get language => $composableBuilder(
+    column: $table.language,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tones => $composableBuilder(
+    column: $table.tones,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DriftTonesTableOrderingComposer
+    extends Composer<_$AppDatabase, $DriftTonesTable> {
+  $$DriftTonesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dictionaryId => $composableBuilder(
+    column: $table.dictionaryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get term => $composableBuilder(
+    column: $table.term,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get reading => $composableBuilder(
+    column: $table.reading,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get language => $composableBuilder(
+    column: $table.language,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tones => $composableBuilder(
+    column: $table.tones,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DriftTonesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DriftTonesTable> {
+  $$DriftTonesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get dictionaryId => $composableBuilder(
+    column: $table.dictionaryId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get term =>
+      $composableBuilder(column: $table.term, builder: (column) => column);
+
+  GeneratedColumn<String> get reading =>
+      $composableBuilder(column: $table.reading, builder: (column) => column);
+
+  GeneratedColumn<String> get language =>
+      $composableBuilder(column: $table.language, builder: (column) => column);
+
+  GeneratedColumn<String> get tones =>
+      $composableBuilder(column: $table.tones, builder: (column) => column);
+}
+
+class $$DriftTonesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DriftTonesTable,
+          DriftTone,
+          $$DriftTonesTableFilterComposer,
+          $$DriftTonesTableOrderingComposer,
+          $$DriftTonesTableAnnotationComposer,
+          $$DriftTonesTableCreateCompanionBuilder,
+          $$DriftTonesTableUpdateCompanionBuilder,
+          (
+            DriftTone,
+            BaseReferences<_$AppDatabase, $DriftTonesTable, DriftTone>,
+          ),
+          DriftTone,
+          PrefetchHooks Function()
+        > {
+  $$DriftTonesTableTableManager(_$AppDatabase db, $DriftTonesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer:
+              () => $$DriftTonesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer:
+              () => $$DriftTonesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer:
+              () => $$DriftTonesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> dictionaryId = const Value.absent(),
+                Value<String> term = const Value.absent(),
+                Value<String> reading = const Value.absent(),
+                Value<String> language = const Value.absent(),
+                Value<String> tones = const Value.absent(),
+              }) => DriftTonesCompanion(
+                id: id,
+                dictionaryId: dictionaryId,
+                term: term,
+                reading: reading,
+                language: language,
+                tones: tones,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int dictionaryId,
+                required String term,
+                required String reading,
+                required String language,
+                required String tones,
+              }) => DriftTonesCompanion.insert(
+                id: id,
+                dictionaryId: dictionaryId,
+                term: term,
+                reading: reading,
+                language: language,
+                tones: tones,
+              ),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          BaseReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DriftTonesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DriftTonesTable,
+      DriftTone,
+      $$DriftTonesTableFilterComposer,
+      $$DriftTonesTableOrderingComposer,
+      $$DriftTonesTableAnnotationComposer,
+      $$DriftTonesTableCreateCompanionBuilder,
+      $$DriftTonesTableUpdateCompanionBuilder,
+      (DriftTone, BaseReferences<_$AppDatabase, $DriftTonesTable, DriftTone>),
+      DriftTone,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -814,4 +1445,6 @@ class $AppDatabaseManager {
         _db,
         _db.driftDictionaryEntries,
       );
+  $$DriftTonesTableTableManager get driftTones =>
+      $$DriftTonesTableTableManager(_db, _db.driftTones);
 }

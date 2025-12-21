@@ -18,8 +18,19 @@ class DriftDictionaryEntries extends Table {
   TextColumn get metadata => text().nullable()();  // JSON string
 }
 
+// Table for tone information (Mandarin, Cantonese, etc.)
+class DriftTones extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get dictionaryId => integer()();
+  TextColumn get term => text()();
+  TextColumn get reading => text()();
+  TextColumn get language => text()(); // 'mandarin', 'cantonese', etc.
+  TextColumn get tones => text()(); // JSON string containing tone patterns
+}
+
 @DriftDatabase(tables: [
   DriftDictionaryEntries,
+  DriftTones,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
@@ -53,6 +64,30 @@ class AppDatabase extends _$AppDatabase {
         .get();
   }
 
+  // Search method for Pinyin support
+  Future<List<DriftDictionaryEntry>> searchPinyin(String query) async {
+    if (query.isEmpty) return [];
+    // Search in both term and reading fields for the query
+    return (select(driftDictionaryEntries)
+          ..where((entry) =>
+              entry.term.like('%$query%') |
+              entry.reading.like('%$query%'))
+          ..limit(50))
+        .get();
+  }
+
+  // Search specifically for Chinese characters (hanzi)
+  Future<List<DriftDictionaryEntry>> searchHanzi(String query) async {
+    if (query.isEmpty) return [];
+    // Exact match for the Chinese character
+    return (select(driftDictionaryEntries)
+          ..where((entry) =>
+              entry.term.like('%$query%') &
+              entry.term.isNotNull())
+          ..limit(50))
+        .get();
+  }
+
   // Insert entry for existing dictionary
   Future<int> insertEntry(DriftDictionaryEntriesCompanion entry) {
     return into(driftDictionaryEntries).insert(entry);
@@ -77,6 +112,31 @@ class AppDatabase extends _$AppDatabase {
   // Get all entries (for debugging/testing)
   Future<List<DriftDictionaryEntry>> getAllEntries() async {
     return select(driftDictionaryEntries).get();
+  }
+
+  // Tone-related methods
+  Future<List<DriftTone>> getTonesByTerm(String term) async {
+    return (select(driftTones)
+          ..where((tone) => tone.term.equals(term)))
+        .get();
+  }
+
+  Future<List<DriftTone>> getTonesByTermAndLanguage(String term, String language) async {
+    return (select(driftTones)
+          ..where((tone) =>
+              tone.term.equals(term) &
+              tone.language.equals(language)))
+        .get();
+  }
+
+  Future<int> insertTone(DriftTonesCompanion entry) {
+    return into(driftTones).insert(entry);
+  }
+
+  Future<void> insertToneBatch(List<DriftTonesCompanion> entries) async {
+    await batch((batch) {
+      batch.insertAll(driftTones, entries);
+    });
   }
 }
 

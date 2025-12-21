@@ -14,6 +14,7 @@ class AppState extends ChangeNotifier {
   int _minFrequency = -1;
   bool _autoHideNavigation = true;
   bool _defaultFlexMode = false;
+  List<String> _etymologyLanguages = ['en', 'zh', 'ja']; // Default languages for etymology
   
   // Search state
   String _currentQuery = '';
@@ -54,7 +55,11 @@ class AppState extends ChangeNotifier {
   Map<String, dynamic> get savedWordsDetails => _savedWordsDetails;
   List<String> get favoriteWords => _favoriteWords;
   List<String> get ankiWords => _ankiWords;
-  
+  List<String> get etymologyLanguages => _etymologyLanguages;
+  bool get autoTranslate => _autoTranslate;
+
+  bool _autoTranslate = false;
+
   // Setters with persistence
   void setClipboardMonitor(bool value) {
     _clipboardMonitor = value;
@@ -118,6 +123,18 @@ class AppState extends ChangeNotifier {
   
   void setCurrentQuery(String value) {
     _currentQuery = value;
+    notifyListeners();
+  }
+
+  void setEtymologyLanguages(List<String> languages) {
+    _etymologyLanguages = languages;
+    _storageService.setStringList('etymology_languages', languages);
+    notifyListeners();
+  }
+
+  void setAutoTranslate(bool value) {
+    _autoTranslate = value;
+    _storageService.setBool('auto_translate', value);
     notifyListeners();
   }
 
@@ -192,6 +209,8 @@ class AppState extends ChangeNotifier {
     _defaultFlexMode = _storageService.getBool('default_flex_mode') ?? false;
     _currentProfile = _storageService.getString('current_profile') ?? 'Default';
     _searchHistory = _storageService.getStringList('search_history') ?? [];
+    _etymologyLanguages = _storageService.getStringList('etymology_languages') ?? ['en', 'zh', 'ja'];
+    _autoTranslate = _storageService.getBool('auto_translate') ?? false;
   }
 
   void _loadSavedWords() {

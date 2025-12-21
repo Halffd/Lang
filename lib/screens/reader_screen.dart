@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../models/dictionary.dart';
+import '../models/app_state.dart';
+import '../models/translation_model.dart';
 import '../services/dictionary_service.dart';
+import '../services/translation_service.dart';
 import '../mixins/word_list_mixins.dart';
 import '../widgets/dictionary_entry_card.dart';
 
@@ -12,10 +16,11 @@ class ReaderScreen extends StatefulWidget {
   State<ReaderScreen> createState() => _ReaderScreenState();
 }
 
-class _ReaderScreenState extends State<ReaderScreen> 
+class _ReaderScreenState extends State<ReaderScreen>
     with SavedWordsMixin, AnkiWordsMixin, FavoriteWordsMixin, DeletedWordsMixin {
   final TextEditingController _textController = TextEditingController();
   final DictionaryService _dictionaryService = DictionaryService();
+  final TranslationService _translationService = TranslationService();
   final FocusNode _keyboardFocusNode = FocusNode();
   
   // State
@@ -138,6 +143,7 @@ class _ReaderScreenState extends State<ReaderScreen>
       _expandedEntry = null; // Close expanded info on move
     });
     _scrollToCurrent();
+    _handleAutoTranslationIfNeeded();
   }
 
   void _movePrevWord() {
@@ -201,6 +207,53 @@ class _ReaderScreenState extends State<ReaderScreen>
           _expandedEntry = token.entry;
         }
       });
+    }
+
+    // If auto translate is enabled, translate when expanding the word info
+    final appState = context.read<AppState>();
+    if (appState.autoTranslate) {
+      _performAutoTranslation();
+    }
+  }
+
+  /// Handle auto translation if enabled
+  void _handleAutoTranslationIfNeeded() {
+    if (mounted) {
+      final appState = context.read<AppState>();
+      if (appState.autoTranslate) {
+        _performAutoTranslation();
+      }
+    }
+  }
+
+  /// Perform auto translation for the current token
+  Future<void> _performAutoTranslation() async {
+    final token = _currentToken;
+    if (token == null || token.text.isEmpty) return;
+
+    try {
+      // Create a translation request for the current token
+      final request = TranslationRequest(
+        sourceText: token.text,
+        sourceLanguage: 'ja', // Assuming Japanese input by default
+        targetLanguage: 'en', // Default to English output
+      );
+
+      final result = await _translationService.translate(request);
+
+      // For now, show a snackbar with the translation
+      // In a more advanced implementation, we could show this inline
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Translation: ${result.fullTranslation}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      // Optionally show an error message
+      print('Translation failed: $e');
     }
   }
 
@@ -323,6 +376,29 @@ class _ReaderScreenState extends State<ReaderScreen>
           },
         ),
         actions: [
+          Consumer<AppState>(
+            builder: (context, appState, child) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Auto Translate',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    Switch(
+                      value: appState.autoTranslate,
+                      onChanged: (value) {
+                        appState.setAutoTranslate(value);
+                      },
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.help_outline),
             onPressed: () {

@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/app_state.dart';
 import '../models/dictionary.dart';
+import '../models/etymology_model.dart';
 import '../services/dictionary_service.dart';
+import '../services/wiktionary_etymology_service.dart';
+import '../utils/chinese_util.dart';
+import '../utils/character_breakdown.dart';
+import '../widgets/character_breakdown_widget.dart';
+import '../widgets/etymology_widget.dart';
+import '../widgets/wiktionary_details_widget.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({Key? key}) : super(key: key);
@@ -15,15 +23,21 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final DictionaryService _dictionaryService = DictionaryService();
   final TextEditingController _searchController = TextEditingController();
-  
+
   SearchResult? _searchResult;
   bool _isSearching = false;
   String _lastQuery = '';
   DictionaryEntry? _selectedEntry;
+
+  // For character breakdown functionality
+  String? _breakdownWord;
+  List<CharacterInfo>? _characterBreakdown;
+  bool _showBreakdown = false;
   
   @override
   void dispose() {
     _searchController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
   
@@ -103,15 +117,49 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
+  late FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+  }
+
+  void _showCharacterBreakdown(String word) {
+    if (ChineseUtil.containsIdeographic(word)) {
+      final breakdown = CharacterBreakdown.breakdownWithDetails(
+        word,
+        _searchResult?.entries ?? [],
+        _searchResult?.kanji ?? [],
+      );
+
+      setState(() {
+        _breakdownWord = word;
+        _characterBreakdown = breakdown;
+        _showBreakdown = true;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth > 900) {
-          return _buildDesktopLayout();
+    return KeyboardListener(
+      focusNode: _focusNode,
+      onKeyEvent: (KeyEvent event) {
+        if (event.logicalKey == LogicalKeyboardKey.space &&
+            event is KeyDownEvent &&
+            _selectedEntry != null) {
+          _showCharacterBreakdown(_selectedEntry!.term);
         }
-        return _buildMobileLayout();
       },
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth > 900) {
+            return _buildDesktopLayout();
+          }
+          return _buildMobileLayout();
+        },
+      ),
     );
   }
 
@@ -142,7 +190,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     autofocus: true,
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                      hintText: 'Search Japanese...',
+                      hintText: 'Search Japanese/Chinese...',
                       hintStyle: const TextStyle(color: Colors.white70),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -209,7 +257,7 @@ class _SearchScreenState extends State<SearchScreen> {
           autofocus: true,
           style: const TextStyle(color: Colors.white),
           decoration: const InputDecoration(
-            hintText: 'Search Japanese...',
+            hintText: 'Search Japanese/Chinese...',
             hintStyle: TextStyle(color: Colors.white70),
             border: InputBorder.none,
           ),
@@ -241,15 +289,37 @@ class _SearchScreenState extends State<SearchScreen> {
     if (_isSearching) {
       return const Center(child: CircularProgressIndicator());
     }
-    
+
     if (_searchResult == null) {
       return _buildEmptyState();
     }
-    
+
     if (_searchResult!.entries.isEmpty && _searchResult!.kanji.isEmpty) {
       return _buildNoResults();
     }
-    
+
+    // Show character breakdown if available
+    if (_showBreakdown && _characterBreakdown != null && _breakdownWord != null) {
+      return Column(
+        children: [
+          Expanded(
+            child: _buildSearchResults(),
+          ),
+          CharacterBreakdownWidget(
+            characterInfos: _characterBreakdown!,
+            originalWord: _breakdownWord!,
+            onClose: () {
+              setState(() {
+                _showBreakdown = false;
+                _characterBreakdown = null;
+                _breakdownWord = null;
+              });
+            },
+          ),
+        ],
+      );
+    }
+
     return _buildSearchResults();
   }
   
@@ -265,7 +335,7 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Search for Japanese words',
+            'Search for Japanese/Chinese words',
             style: TextStyle(
               fontSize: 18,
               color: Colors.grey[600],
@@ -335,93 +405,135 @@ class _SearchScreenState extends State<SearchScreen> {
   
   Widget _buildKanjiCard(KanjiEntry kanji) {
     final dict = _searchResult!.dictionaries[kanji.dictionaryId];
-    
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  kanji.character,
-                  style: const TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Spacer(),
-                if (dict != null)
-                  Chip(
-                    label: Text(
-                      dict.title,
-                      style: const TextStyle(fontSize: 10),
+
+    return GestureDetector(
+      onDoubleTap: () {
+        // For single kanji characters, provide breakdown too (though it will just be the same character)
+        _showCharacterBreakdown(kanji.character);
+      },
+      child: Card(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    kanji.character,
+                    style: const TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.bold,
                     ),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
+                  const Spacer(),
+                  if (dict != null)
+                    Chip(
+                      label: Text(
+                        dict.title,
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              if (kanji.onyomi != null && kanji.onyomi!.isNotEmpty) ...[
+                const Text(
+                  '音読み (On\'yomi)',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 8,
+                  children: kanji.onyomi!.map((reading) =>
+                    Chip(
+                      label: Text(reading),
+                      backgroundColor: Colors.blue[50],
+                    ),
+                  ).toList(),
+                ),
+                const SizedBox(height: 12),
               ],
-            ),
-            const SizedBox(height: 12),
-            
-            if (kanji.onyomi != null && kanji.onyomi!.isNotEmpty) ...[
+
+              if (kanji.kunyomi != null && kanji.kunyomi!.isNotEmpty) ...[
+                const Text(
+                  '訓読み (Kun\'yomi)',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 8,
+                  children: kanji.kunyomi!.map((reading) =>
+                    Chip(
+                      label: Text(reading),
+                      backgroundColor: Colors.green[50],
+                    ),
+                  ).toList(),
+                ),
+                const SizedBox(height: 12),
+              ],
+
+              // Tone information for Chinese characters
+              if (ChineseUtil.containsChinese(kanji.character)) ...[
+                // Find tone information for this character
+                if (_searchResult!.toneInfo['${kanji.character}_'] != null ||
+                    // Try with the character name in the search result
+                    _searchResult!.toneInfo.entries.any((entry) =>
+                        entry.key.startsWith('${kanji.character}_'))) ...[
+                  const Text(
+                    'Tones',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  for (final entry in _searchResult!.toneInfo.entries)
+                    if (entry.key.startsWith('${kanji.character}_'))
+                      for (final toneInfo in entry.value)
+                        for (final pattern in toneInfo.tones)
+                          Row(
+                            children: [
+                              Icon(Icons.hearing, size: 14, color: Colors.green[700]),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${toneInfo.language.toUpperCase()} ${pattern.getToneName(toneInfo.language)}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.green[700],
+                                ),
+                              ),
+                            ],
+                          ),
+                  const SizedBox(height: 8),
+                ],
+              ],
+
               const Text(
-                '音読み (On\'yomi)',
+                'Meanings',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),
               ),
               const SizedBox(height: 4),
-              Wrap(
-                spacing: 8,
-                children: kanji.onyomi!.map((reading) => 
-                  Chip(
-                    label: Text(reading),
-                    backgroundColor: Colors.blue[50],
-                  ),
-                ).toList(),
-              ),
-              const SizedBox(height: 12),
-            ],
-            
-            if (kanji.kunyomi != null && kanji.kunyomi!.isNotEmpty) ...[
-              const Text(
-                '訓読み (Kun\'yomi)',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+              ...kanji.meanings.asMap().entries.map((entry) =>
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Text('${entry.key + 1}. ${entry.value}'),
                 ),
               ),
-              const SizedBox(height: 4),
-              Wrap(
-                spacing: 8,
-                children: kanji.kunyomi!.map((reading) => 
-                  Chip(
-                    label: Text(reading),
-                    backgroundColor: Colors.green[50],
-                  ),
-                ).toList(),
-              ),
-              const SizedBox(height: 12),
             ],
-            
-            const Text(
-              'Meanings',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 4),
-            ...kanji.meanings.asMap().entries.map((entry) => 
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Text('${entry.key + 1}. ${entry.value}'),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -434,161 +546,235 @@ class _SearchScreenState extends State<SearchScreen> {
     final pitches = _searchResult!.pitchAccents[pitchKey];
     final frequencies = _searchResult!.frequencies[pitchKey];
     final isSelected = _selectedEntry == entry;
-    
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: isSelected ? 4 : 1,
-      shape: isSelected 
-          ? RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Theme.of(context).primaryColor, width: 2),
-            )
-          : null,
-      child: InkWell(
-        onTap: () => _showEntryDetails(entry),
-        borderRadius: isSelected ? BorderRadius.circular(12) : BorderRadius.circular(4),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          entry.term,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        if (entry.reading.isNotEmpty && entry.reading != entry.term)
+
+    return GestureDetector(
+      onDoubleTap: () {
+        _showCharacterBreakdown(entry.term);
+      },
+      child: Card(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        elevation: isSelected ? 4 : 1,
+        shape: isSelected
+            ? RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+              )
+            : null,
+        child: InkWell(
+          onTap: () => _showEntryDetails(entry),
+          borderRadius: isSelected ? BorderRadius.circular(12) : BorderRadius.circular(4),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            entry.reading,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
+                            entry.term,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
+                          if (entry.reading.isNotEmpty && entry.reading != entry.term)
+                            Text(
+                              entry.reading,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (dict != null)
+                      Chip(
+                        label: Text(
+                          dict.title,
+                          style: const TextStyle(fontSize: 10),
+                        ),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    if (appState.ankiWords.contains(entry.term))
+                      const Padding(
+                        padding: EdgeInsets.only(left: 4),
+                        child: Icon(Icons.star, color: Colors.orange, size: 20),
+                      ),
+                    if (appState.favoriteWords.contains(entry.term))
+                      const Padding(
+                        padding: EdgeInsets.only(left: 4),
+                        child: Icon(Icons.favorite, color: Colors.red, size: 20),
+                      ),
+                    if (appState.savedWords.contains(entry.term))
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: Icon(Icons.bookmark, color: Theme.of(context).primaryColor, size: 20),
+                      ),
+                  ],
+                ),
+
+                // Tags
+                if (entry.termTags != null && entry.termTags!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: entry.termTags!.map((tagName) {
+                      final tag = _searchResult!.tags['${entry.dictionaryId}_$tagName'];
+                      return Chip(
+                        label: Text(
+                          tag?.notes ?? tagName,
+                          style: const TextStyle(fontSize: 10),
+                        ),
+                        backgroundColor: _getTagColor(tag?.category),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      );
+                    }).toList(),
+                  ),
+                ],
+
+                // Pitch accent
+                if (pitches != null && pitches.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.graphic_eq, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Pitch: ${pitches.map((p) => p.pitches.map((pp) => pp.position).join(", ")).join(" / ")}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+
+                // Tone information for Chinese characters
+                if (_searchResult!.toneInfo[pitchKey] != null &&
+                    _searchResult!.toneInfo[pitchKey]!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.hearing, size: 16),
+                      const SizedBox(width: 4),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (final toneInfo in _searchResult!.toneInfo[pitchKey]!)
+                            for (final tonePattern in toneInfo.tones)
+                              Text(
+                                '${toneInfo.language.toUpperCase()} ${tonePattern.getToneName(toneInfo.language)}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.green[700],
+                                ),
+                              ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+
+                // Frequency
+                if (frequencies != null && frequencies.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.trending_up, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Frequency: ${frequencies.first.displayValue}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+
+                // Etymology preview in main card
+                if (_searchResult!.etymology[pitchKey]?.isNotEmpty == true) ...[
+                  const SizedBox(height: 4),
+                  for (final etymologyEntry in _searchResult!.etymology[pitchKey]!.take(1)) // Show only the first etymology entry in card
+                    Row(
+                      children: [
+                        Icon(Icons.history, size: 14, color: Colors.orange[700]),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            'Etymology: ${etymologyEntry.originalLanguage}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.orange[700],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                  ),
-                  if (dict != null)
-                    Chip(
-                      label: Text(
-                        dict.title,
-                        style: const TextStyle(fontSize: 10),
-                      ),
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  if (appState.ankiWords.contains(entry.term))
-                    const Padding(
-                      padding: EdgeInsets.only(left: 4),
-                      child: Icon(Icons.star, color: Colors.orange, size: 20),
-                    ),
-                  if (appState.favoriteWords.contains(entry.term))
-                    const Padding(
-                      padding: EdgeInsets.only(left: 4),
-                      child: Icon(Icons.favorite, color: Colors.red, size: 20),
-                    ),
-                  if (appState.savedWords.contains(entry.term))
-                    Padding(
-                      padding: const EdgeInsets.only(left: 4),
-                      child: Icon(Icons.bookmark, color: Theme.of(context).primaryColor, size: 20),
+                ],
+
+                // Wiktionary preview in main card
+                if (_searchResult!.wiktionaryDetails[pitchKey]?.isNotEmpty == true) ...[
+                  const SizedBox(height: 4),
+                  for (final wiktionaryEntry in _searchResult!.wiktionaryDetails[pitchKey]!.take(1)) // Show only the first entry in card
+                    Row(
+                      children: [
+                        Icon(Icons.menu_book, size: 14, color: Colors.blue[700]),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            '${wiktionaryEntry.partOfSpeech.isNotEmpty ? '${wiktionaryEntry.partOfSpeech}: ' : ''}${wiktionaryEntry.definition.length > 60 ? '${wiktionaryEntry.definition.substring(0, 60)}...' : wiktionaryEntry.definition}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.blue[700],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                 ],
-              ),
-              
-              // Tags
-              if (entry.termTags != null && entry.termTags!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: entry.termTags!.map((tagName) {
-                    final tag = _searchResult!.tags['${entry.dictionaryId}_$tagName'];
-                    return Chip(
-                      label: Text(
-                        tag?.notes ?? tagName,
-                        style: const TextStyle(fontSize: 10),
-                      ),
-                      backgroundColor: _getTagColor(tag?.category),
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
-                    );
-                  }).toList(),
-                ),
-              ],
-              
-              // Pitch accent
-              if (pitches != null && pitches.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.graphic_eq, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Pitch: ${pitches.map((p) => p.pitches.map((pp) => pp.position).join(", ")).join(" / ")}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[700],
-                      ),
+
+                const SizedBox(height: 12),
+                const Divider(height: 1),
+                const SizedBox(height: 12),
+
+                // Definitions (first 2)
+                ...List.generate(entry.definitions.take(2).length, (index) {
+                  final definition = entry.definitions[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Text(
+                      '${index + 1}. ${_formatDefinition(definition)}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ],
-                ),
-              ],
-              
-              // Frequency
-              if (frequencies != null && frequencies.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.trending_up, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Frequency: ${frequencies.first.displayValue}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[700],
-                      ),
+                  );
+                }),
+
+                if (entry.definitions.length > 2) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    '+ ${entry.definitions.length - 2} more definitions',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontStyle: FontStyle.italic,
                     ),
-                  ],
-                ),
-              ],
-              
-              const SizedBox(height: 12),
-              const Divider(height: 1),
-              const SizedBox(height: 12),
-              
-              // Definitions (first 2)
-              ...List.generate(entry.definitions.take(2).length, (index) {
-                final definition = entry.definitions[index];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Text(
-                    '${index + 1}. ${_formatDefinition(definition)}',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                );
-              }),
-              
-              if (entry.definitions.length > 2) ...[
-                const SizedBox(height: 8),
-                Text(
-                  '+ ${entry.definitions.length - 2} more definitions',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -635,6 +821,7 @@ class _SearchScreenState extends State<SearchScreen> {
     final pitches = _searchResult!.pitchAccents[pitchKey];
     final frequencies = _searchResult!.frequencies[pitchKey];
 
+    final appState = Provider.of<AppState>(context, listen: false);
     final isSaved = appState.savedWords.contains(entry.term);
     final isFavorite = appState.favoriteWords.contains(entry.term);
     final isAnki = appState.ankiWords.contains(entry.term);
@@ -774,8 +961,8 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          ...pitches.expand((pitch) => 
-            pitch.pitches.map((pattern) => 
+          ...pitches.expand((pitch) =>
+            pitch.pitches.map((pattern) =>
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
@@ -797,6 +984,64 @@ class _SearchScreenState extends State<SearchScreen> {
                           ),
                         ),
                       ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // Tone information for Chinese characters
+        if (_searchResult!.toneInfo[pitchKey] != null &&
+            _searchResult!.toneInfo[pitchKey]!.isNotEmpty) ...[
+          const Text(
+            'Tones',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ..._searchResult!.toneInfo[pitchKey]!.expand((toneInfo) =>
+            toneInfo.tones.map((pattern) =>
+              Card(
+                color: Colors.grey[50],
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      Icon(Icons.hearing, color: Colors.green[700]),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${toneInfo.language.toUpperCase()} Tone',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.green[800],
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${pattern.position + 1}. ${pattern.getToneName(toneInfo.language)}',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            if (pattern.romanization != null)
+                              Text(
+                                'Reading: ${pattern.romanization}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -836,7 +1081,23 @@ class _SearchScreenState extends State<SearchScreen> {
           }),
           const SizedBox(height: 16),
         ],
-        
+
+        // Etymology
+        if (_searchResult!.etymology[pitchKey]?.isNotEmpty == true) ...[
+          EtymologyWidget(
+            etymologyEntries: _searchResult!.etymology[pitchKey]!,
+            word: entry.term,
+          ),
+        ],
+
+        // Wiktionary details (meanings, examples, synonyms, etc.)
+        if (_searchResult!.wiktionaryDetails[pitchKey]?.isNotEmpty == true) ...[
+          WiktionaryDetailsWidget(
+            wiktionaryEntries: _searchResult!.wiktionaryDetails[pitchKey]!,
+            word: entry.term,
+          ),
+        ],
+
         // Definitions
         const Text(
           'Definitions',
