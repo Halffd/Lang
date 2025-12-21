@@ -247,7 +247,144 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
           ),
-          
+
+          const SizedBox(height: 16),
+
+          // Advanced settings section
+          const Text(
+            'Advanced Settings',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Anki Decks and Profiles settings
+          Card(
+            elevation: 1,
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Anki & Profiles',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  // Anki Deck Selection
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: const Text('Current Anki Deck:'),
+                      ),
+                      Expanded(
+                        flex: 4,
+                        child: DropdownButtonFormField<String>(
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                          value: appState.currentAnkiDeck,
+                          items: appState.ankiDecks.map((deck) {
+                            return DropdownMenuItem(
+                              value: deck,
+                              child: Text(deck),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              appState.setCurrentAnkiDeck(value);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Profile Selection
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: const Text('Current Profile:'),
+                      ),
+                      Expanded(
+                        flex: 4,
+                        child: DropdownButtonFormField<String>(
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                          value: appState.currentProfile,
+                          items: appState.profiles.map((profile) {
+                            return DropdownMenuItem(
+                              value: profile,
+                              child: Text(profile),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              appState.setCurrentProfile(value);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Clipboard and Forvo settings
+          Card(
+            elevation: 1,
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Enhanced Features',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  SwitchListTile(
+                    title: const Text('Clipboard Auto-Detect'),
+                    subtitle: const Text('Automatically detect and process text from clipboard'),
+                    value: appState.clipboardAutoDetect,
+                    onChanged: (value) {
+                      appState.setClipboardAutoDetect(value);
+                    },
+                  ),
+                  const Divider(),
+                  SwitchListTile(
+                    title: const Text('Forvo Audio'),
+                    subtitle: const Text('Enable audio pronunciations from Forvo'),
+                    value: appState.forvoAudioEnabled,
+                    onChanged: (value) {
+                      appState.setForvoAudioEnabled(value);
+                    },
+                  ),
+                  const Divider(),
+                  SwitchListTile(
+                    title: const Text('Auto Translation'),
+                    subtitle: const Text('Automatically translate words in reader mode'),
+                    value: appState.autoTranslate,
+                    onChanged: (value) {
+                      appState.setAutoTranslate(value);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+
           const SizedBox(height: 16),
           
           // About section
@@ -269,7 +406,7 @@ class SettingsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Yomitan Search',
+                    'Lang',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 8),

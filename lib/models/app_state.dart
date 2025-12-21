@@ -57,8 +57,18 @@ class AppState extends ChangeNotifier {
   List<String> get ankiWords => _ankiWords;
   List<String> get etymologyLanguages => _etymologyLanguages;
   bool get autoTranslate => _autoTranslate;
+  List<String> get ankiDecks => _ankiDecks;
+  String get currentAnkiDeck => _currentAnkiDeck;
+  List<String> get profiles => _profiles;
+  bool get clipboardAutoDetect => _clipboardAutoDetect;
+  bool get forvoAudioEnabled => _forvoAudioEnabled;
 
   bool _autoTranslate = false;
+  List<String> _ankiDecks = ['Default'];
+  String _currentAnkiDeck = 'Default';
+  bool _clipboardAutoDetect = false;
+  bool _forvoAudioEnabled = false;
+  List<String> _profiles = ['Default'];
 
   // Setters with persistence
   void setClipboardMonitor(bool value) {
@@ -138,6 +148,77 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setAnkiDecks(List<String> decks) {
+    _ankiDecks = decks;
+    _storageService.setStringList('anki_decks', decks);
+    notifyListeners();
+  }
+
+  void setCurrentAnkiDeck(String deckName) {
+    _currentAnkiDeck = deckName;
+    _storageService.setString('current_anki_deck', deckName);
+    notifyListeners();
+  }
+
+  void addAnkiDeck(String deckName) {
+    if (!_ankiDecks.contains(deckName)) {
+      _ankiDecks.add(deckName);
+      _storageService.setStringList('anki_decks', _ankiDecks);
+      notifyListeners();
+    }
+  }
+
+  void removeAnkiDeck(String deckName) {
+    if (_ankiDecks.length > 1 && _ankiDecks.contains(deckName)) { // Don't remove last deck
+      _ankiDecks.remove(deckName);
+      if (_currentAnkiDeck == deckName) {
+        _currentAnkiDeck = _ankiDecks.first; // Switch to first deck
+        _storageService.setString('current_anki_deck', _currentAnkiDeck);
+      }
+      _storageService.setStringList('anki_decks', _ankiDecks);
+      notifyListeners();
+    }
+  }
+
+  // Profile management
+  void setProfiles(List<String> profiles) {
+    _profiles = profiles;
+    _storageService.setStringList('profiles', profiles);
+    notifyListeners();
+  }
+
+  void addProfile(String profileName) {
+    if (!_profiles.contains(profileName)) {
+      _profiles.add(profileName);
+      _storageService.setStringList('profiles', _profiles);
+      notifyListeners();
+    }
+  }
+
+  void removeProfile(String profileName) {
+    if (_profiles.length > 1 && _profiles.contains(profileName)) { // Don't remove last profile
+      _profiles.remove(profileName);
+      if (_currentProfile == profileName) {
+        _currentProfile = _profiles.first; // Switch to first profile
+        _storageService.setString('current_profile', _currentProfile);
+      }
+      _storageService.setStringList('profiles', _profiles);
+      notifyListeners();
+    }
+  }
+
+  void setClipboardAutoDetect(bool value) {
+    _clipboardAutoDetect = value;
+    _storageService.setBool('clipboard_auto_detect', value);
+    notifyListeners();
+  }
+
+  void setForvoAudioEnabled(bool value) {
+    _forvoAudioEnabled = value;
+    _storageService.setBool('forvo_audio_enabled', value);
+    notifyListeners();
+  }
+
   // Word management
   void addSavedWord(String word, {Map<String, dynamic>? details}) {
     if (!_savedWords.contains(word)) {
@@ -211,6 +292,11 @@ class AppState extends ChangeNotifier {
     _searchHistory = _storageService.getStringList('search_history') ?? [];
     _etymologyLanguages = _storageService.getStringList('etymology_languages') ?? ['en', 'zh', 'ja'];
     _autoTranslate = _storageService.getBool('auto_translate') ?? false;
+    _ankiDecks = _storageService.getStringList('anki_decks') ?? ['Default'];
+    _currentAnkiDeck = _storageService.getString('current_anki_deck') ?? 'Default';
+    _profiles = _storageService.getStringList('profiles') ?? ['Default'];
+    _clipboardAutoDetect = _storageService.getBool('clipboard_auto_detect') ?? false;
+    _forvoAudioEnabled = _storageService.getBool('forvo_audio_enabled') ?? false;
   }
 
   void _loadSavedWords() {
