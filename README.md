@@ -1,6 +1,6 @@
-# Yomitan Search
+# Lang
 
-A modern Japanese language learning tool with dictionary lookup and word saving features, built with Flutter.
+A modern multilingual language learning tool with dictionary lookup and word saving features, built with Flutter.
 
 ## Features
 
