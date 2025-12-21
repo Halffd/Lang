@@ -102,7 +102,7 @@ class _WordListsScreenState extends State<WordListsScreen>
             final isFav = isWordFavorite(word);
             return ActionChip(
               label: Text(word),
-              avatar: isFav ? const Icon(Icons.favorite, size: 16, color: Colors.red) : null,
+              avatar: isFav ? Icon(Icons.favorite, size: 16, color: Colors.red) : null,
               onPressed: () {
                  // Show details or actions
                  _showWordActions(word);
@@ -149,8 +149,8 @@ class _WordListsScreenState extends State<WordListsScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.search),
-              title: const Text('Search Definition'),
+              leading: Icon(Icons.search),
+              title: Text('Search Definition'),
               onTap: () {
                 Navigator.pop(context);
                 _searchWord(word);
@@ -175,8 +175,8 @@ class _WordListsScreenState extends State<WordListsScreen>
               },
             ),
             ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete'),
+              leading: Icon(Icons.delete, color: Colors.red),
+              title: Text('Delete'),
               onTap: () {
                 Navigator.pop(context);
                 _showDeleteConfirmation(word);
@@ -192,12 +192,12 @@ class _WordListsScreenState extends State<WordListsScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirm Delete'),
+        title: Text('Confirm Delete'),
         content: Text('Are you sure you want to delete "$word"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           TextButton(
             onPressed: () async {
@@ -209,7 +209,7 @@ class _WordListsScreenState extends State<WordListsScreen>
                 );
               }
             },
-            child: const Text('Delete'),
+            child: Text('Delete'),
           ),
         ],
       ),
@@ -236,7 +236,7 @@ class _WordListsScreenState extends State<WordListsScreen>
           ],
           bottom: TabBar(
             isScrollable: true,
-            tabs: const [
+            tabs: [
               Tab(text: 'Search'),
               Tab(text: 'Saved'),
               Tab(text: 'Favorites'),
@@ -256,7 +256,7 @@ class _WordListsScreenState extends State<WordListsScreen>
                     decoration: InputDecoration(
                       hintText: 'Search for a word...',
                       suffixIcon: IconButton(
-                        icon: const Icon(Icons.search),
+                        icon: Icon(Icons.search),
                         onPressed: () => _searchWord(_searchController.text),
                       ),
                       border: const OutlineInputBorder(),
