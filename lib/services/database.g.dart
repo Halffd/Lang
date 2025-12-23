@@ -922,12 +922,761 @@ class DriftTonesCompanion extends UpdateCompanion<DriftTone> {
   }
 }
 
+class $WordOccurrencesTable extends WordOccurrences
+    with TableInfo<$WordOccurrencesTable, WordOccurrence> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WordOccurrencesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _wordMeta = const VerificationMeta('word');
+  @override
+  late final GeneratedColumn<String> word = GeneratedColumn<String>(
+    'word',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _readingMeta = const VerificationMeta(
+    'reading',
+  );
+  @override
+  late final GeneratedColumn<String> reading = GeneratedColumn<String>(
+    'reading',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _baseFormMeta = const VerificationMeta(
+    'baseForm',
+  );
+  @override
+  late final GeneratedColumn<String> baseForm = GeneratedColumn<String>(
+    'base_form',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sentenceIdMeta = const VerificationMeta(
+    'sentenceId',
+  );
+  @override
+  late final GeneratedColumn<int> sentenceId = GeneratedColumn<int>(
+    'sentence_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    word,
+    reading,
+    baseForm,
+    position,
+    sentenceId,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'word_occurrences';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WordOccurrence> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('word')) {
+      context.handle(
+        _wordMeta,
+        word.isAcceptableOrUnknown(data['word']!, _wordMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_wordMeta);
+    }
+    if (data.containsKey('reading')) {
+      context.handle(
+        _readingMeta,
+        reading.isAcceptableOrUnknown(data['reading']!, _readingMeta),
+      );
+    }
+    if (data.containsKey('base_form')) {
+      context.handle(
+        _baseFormMeta,
+        baseForm.isAcceptableOrUnknown(data['base_form']!, _baseFormMeta),
+      );
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    if (data.containsKey('sentence_id')) {
+      context.handle(
+        _sentenceIdMeta,
+        sentenceId.isAcceptableOrUnknown(data['sentence_id']!, _sentenceIdMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WordOccurrence map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WordOccurrence(
+      id:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}id'],
+          )!,
+      word:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}word'],
+          )!,
+      reading: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reading'],
+      ),
+      baseForm: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}base_form'],
+      ),
+      position:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}position'],
+          )!,
+      sentenceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sentence_id'],
+      ),
+    );
+  }
+
+  @override
+  $WordOccurrencesTable createAlias(String alias) {
+    return $WordOccurrencesTable(attachedDatabase, alias);
+  }
+}
+
+class WordOccurrence extends DataClass implements Insertable<WordOccurrence> {
+  final int id;
+  final String word;
+  final String? reading;
+  final String? baseForm;
+  final int position;
+  final int? sentenceId;
+  const WordOccurrence({
+    required this.id,
+    required this.word,
+    this.reading,
+    this.baseForm,
+    required this.position,
+    this.sentenceId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['word'] = Variable<String>(word);
+    if (!nullToAbsent || reading != null) {
+      map['reading'] = Variable<String>(reading);
+    }
+    if (!nullToAbsent || baseForm != null) {
+      map['base_form'] = Variable<String>(baseForm);
+    }
+    map['position'] = Variable<int>(position);
+    if (!nullToAbsent || sentenceId != null) {
+      map['sentence_id'] = Variable<int>(sentenceId);
+    }
+    return map;
+  }
+
+  WordOccurrencesCompanion toCompanion(bool nullToAbsent) {
+    return WordOccurrencesCompanion(
+      id: Value(id),
+      word: Value(word),
+      reading:
+          reading == null && nullToAbsent
+              ? const Value.absent()
+              : Value(reading),
+      baseForm:
+          baseForm == null && nullToAbsent
+              ? const Value.absent()
+              : Value(baseForm),
+      position: Value(position),
+      sentenceId:
+          sentenceId == null && nullToAbsent
+              ? const Value.absent()
+              : Value(sentenceId),
+    );
+  }
+
+  factory WordOccurrence.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WordOccurrence(
+      id: serializer.fromJson<int>(json['id']),
+      word: serializer.fromJson<String>(json['word']),
+      reading: serializer.fromJson<String?>(json['reading']),
+      baseForm: serializer.fromJson<String?>(json['baseForm']),
+      position: serializer.fromJson<int>(json['position']),
+      sentenceId: serializer.fromJson<int?>(json['sentenceId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'word': serializer.toJson<String>(word),
+      'reading': serializer.toJson<String?>(reading),
+      'baseForm': serializer.toJson<String?>(baseForm),
+      'position': serializer.toJson<int>(position),
+      'sentenceId': serializer.toJson<int?>(sentenceId),
+    };
+  }
+
+  WordOccurrence copyWith({
+    int? id,
+    String? word,
+    Value<String?> reading = const Value.absent(),
+    Value<String?> baseForm = const Value.absent(),
+    int? position,
+    Value<int?> sentenceId = const Value.absent(),
+  }) => WordOccurrence(
+    id: id ?? this.id,
+    word: word ?? this.word,
+    reading: reading.present ? reading.value : this.reading,
+    baseForm: baseForm.present ? baseForm.value : this.baseForm,
+    position: position ?? this.position,
+    sentenceId: sentenceId.present ? sentenceId.value : this.sentenceId,
+  );
+  WordOccurrence copyWithCompanion(WordOccurrencesCompanion data) {
+    return WordOccurrence(
+      id: data.id.present ? data.id.value : this.id,
+      word: data.word.present ? data.word.value : this.word,
+      reading: data.reading.present ? data.reading.value : this.reading,
+      baseForm: data.baseForm.present ? data.baseForm.value : this.baseForm,
+      position: data.position.present ? data.position.value : this.position,
+      sentenceId:
+          data.sentenceId.present ? data.sentenceId.value : this.sentenceId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WordOccurrence(')
+          ..write('id: $id, ')
+          ..write('word: $word, ')
+          ..write('reading: $reading, ')
+          ..write('baseForm: $baseForm, ')
+          ..write('position: $position, ')
+          ..write('sentenceId: $sentenceId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, word, reading, baseForm, position, sentenceId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WordOccurrence &&
+          other.id == this.id &&
+          other.word == this.word &&
+          other.reading == this.reading &&
+          other.baseForm == this.baseForm &&
+          other.position == this.position &&
+          other.sentenceId == this.sentenceId);
+}
+
+class WordOccurrencesCompanion extends UpdateCompanion<WordOccurrence> {
+  final Value<int> id;
+  final Value<String> word;
+  final Value<String?> reading;
+  final Value<String?> baseForm;
+  final Value<int> position;
+  final Value<int?> sentenceId;
+  const WordOccurrencesCompanion({
+    this.id = const Value.absent(),
+    this.word = const Value.absent(),
+    this.reading = const Value.absent(),
+    this.baseForm = const Value.absent(),
+    this.position = const Value.absent(),
+    this.sentenceId = const Value.absent(),
+  });
+  WordOccurrencesCompanion.insert({
+    this.id = const Value.absent(),
+    required String word,
+    this.reading = const Value.absent(),
+    this.baseForm = const Value.absent(),
+    required int position,
+    this.sentenceId = const Value.absent(),
+  }) : word = Value(word),
+       position = Value(position);
+  static Insertable<WordOccurrence> custom({
+    Expression<int>? id,
+    Expression<String>? word,
+    Expression<String>? reading,
+    Expression<String>? baseForm,
+    Expression<int>? position,
+    Expression<int>? sentenceId,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (word != null) 'word': word,
+      if (reading != null) 'reading': reading,
+      if (baseForm != null) 'base_form': baseForm,
+      if (position != null) 'position': position,
+      if (sentenceId != null) 'sentence_id': sentenceId,
+    });
+  }
+
+  WordOccurrencesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? word,
+    Value<String?>? reading,
+    Value<String?>? baseForm,
+    Value<int>? position,
+    Value<int?>? sentenceId,
+  }) {
+    return WordOccurrencesCompanion(
+      id: id ?? this.id,
+      word: word ?? this.word,
+      reading: reading ?? this.reading,
+      baseForm: baseForm ?? this.baseForm,
+      position: position ?? this.position,
+      sentenceId: sentenceId ?? this.sentenceId,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (word.present) {
+      map['word'] = Variable<String>(word.value);
+    }
+    if (reading.present) {
+      map['reading'] = Variable<String>(reading.value);
+    }
+    if (baseForm.present) {
+      map['base_form'] = Variable<String>(baseForm.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    if (sentenceId.present) {
+      map['sentence_id'] = Variable<int>(sentenceId.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WordOccurrencesCompanion(')
+          ..write('id: $id, ')
+          ..write('word: $word, ')
+          ..write('reading: $reading, ')
+          ..write('baseForm: $baseForm, ')
+          ..write('position: $position, ')
+          ..write('sentenceId: $sentenceId')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $JapaneseTextFtsTable extends JapaneseTextFts
+    with TableInfo<$JapaneseTextFtsTable, JapaneseTextFt> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $JapaneseTextFtsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _contentMeta = const VerificationMeta(
+    'content',
+  );
+  @override
+  late final GeneratedColumn<String> content = GeneratedColumn<String>(
+    'content',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [content];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'japanese_text_fts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<JapaneseTextFt> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('content')) {
+      context.handle(
+        _contentMeta,
+        content.isAcceptableOrUnknown(data['content']!, _contentMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_contentMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => const {};
+  @override
+  JapaneseTextFt map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return JapaneseTextFt(
+      content:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}content'],
+          )!,
+    );
+  }
+
+  @override
+  $JapaneseTextFtsTable createAlias(String alias) {
+    return $JapaneseTextFtsTable(attachedDatabase, alias);
+  }
+}
+
+class JapaneseTextFt extends DataClass implements Insertable<JapaneseTextFt> {
+  final String content;
+  const JapaneseTextFt({required this.content});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['content'] = Variable<String>(content);
+    return map;
+  }
+
+  JapaneseTextFtsCompanion toCompanion(bool nullToAbsent) {
+    return JapaneseTextFtsCompanion(content: Value(content));
+  }
+
+  factory JapaneseTextFt.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return JapaneseTextFt(
+      content: serializer.fromJson<String>(json['content']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{'content': serializer.toJson<String>(content)};
+  }
+
+  JapaneseTextFt copyWith({String? content}) =>
+      JapaneseTextFt(content: content ?? this.content);
+  JapaneseTextFt copyWithCompanion(JapaneseTextFtsCompanion data) {
+    return JapaneseTextFt(
+      content: data.content.present ? data.content.value : this.content,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('JapaneseTextFt(')
+          ..write('content: $content')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => content.hashCode;
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is JapaneseTextFt && other.content == this.content);
+}
+
+class JapaneseTextFtsCompanion extends UpdateCompanion<JapaneseTextFt> {
+  final Value<String> content;
+  final Value<int> rowid;
+  const JapaneseTextFtsCompanion({
+    this.content = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  JapaneseTextFtsCompanion.insert({
+    required String content,
+    this.rowid = const Value.absent(),
+  }) : content = Value(content);
+  static Insertable<JapaneseTextFt> custom({
+    Expression<String>? content,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (content != null) 'content': content,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  JapaneseTextFtsCompanion copyWith({
+    Value<String>? content,
+    Value<int>? rowid,
+  }) {
+    return JapaneseTextFtsCompanion(
+      content: content ?? this.content,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (content.present) {
+      map['content'] = Variable<String>(content.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('JapaneseTextFtsCompanion(')
+          ..write('content: $content, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ChineseTextFtsTable extends ChineseTextFts
+    with TableInfo<$ChineseTextFtsTable, ChineseTextFt> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ChineseTextFtsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _contentMeta = const VerificationMeta(
+    'content',
+  );
+  @override
+  late final GeneratedColumn<String> content = GeneratedColumn<String>(
+    'content',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [content];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'chinese_text_fts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ChineseTextFt> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('content')) {
+      context.handle(
+        _contentMeta,
+        content.isAcceptableOrUnknown(data['content']!, _contentMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_contentMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => const {};
+  @override
+  ChineseTextFt map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ChineseTextFt(
+      content:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}content'],
+          )!,
+    );
+  }
+
+  @override
+  $ChineseTextFtsTable createAlias(String alias) {
+    return $ChineseTextFtsTable(attachedDatabase, alias);
+  }
+}
+
+class ChineseTextFt extends DataClass implements Insertable<ChineseTextFt> {
+  final String content;
+  const ChineseTextFt({required this.content});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['content'] = Variable<String>(content);
+    return map;
+  }
+
+  ChineseTextFtsCompanion toCompanion(bool nullToAbsent) {
+    return ChineseTextFtsCompanion(content: Value(content));
+  }
+
+  factory ChineseTextFt.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ChineseTextFt(content: serializer.fromJson<String>(json['content']));
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{'content': serializer.toJson<String>(content)};
+  }
+
+  ChineseTextFt copyWith({String? content}) =>
+      ChineseTextFt(content: content ?? this.content);
+  ChineseTextFt copyWithCompanion(ChineseTextFtsCompanion data) {
+    return ChineseTextFt(
+      content: data.content.present ? data.content.value : this.content,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChineseTextFt(')
+          ..write('content: $content')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => content.hashCode;
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ChineseTextFt && other.content == this.content);
+}
+
+class ChineseTextFtsCompanion extends UpdateCompanion<ChineseTextFt> {
+  final Value<String> content;
+  final Value<int> rowid;
+  const ChineseTextFtsCompanion({
+    this.content = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ChineseTextFtsCompanion.insert({
+    required String content,
+    this.rowid = const Value.absent(),
+  }) : content = Value(content);
+  static Insertable<ChineseTextFt> custom({
+    Expression<String>? content,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (content != null) 'content': content,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ChineseTextFtsCompanion copyWith({
+    Value<String>? content,
+    Value<int>? rowid,
+  }) {
+    return ChineseTextFtsCompanion(
+      content: content ?? this.content,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (content.present) {
+      map['content'] = Variable<String>(content.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChineseTextFtsCompanion(')
+          ..write('content: $content, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $DriftDictionaryEntriesTable driftDictionaryEntries =
       $DriftDictionaryEntriesTable(this);
   late final $DriftTonesTable driftTones = $DriftTonesTable(this);
+  late final $WordOccurrencesTable wordOccurrences = $WordOccurrencesTable(
+    this,
+  );
+  late final $JapaneseTextFtsTable japaneseTextFts = $JapaneseTextFtsTable(
+    this,
+  );
+  late final $ChineseTextFtsTable chineseTextFts = $ChineseTextFtsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -935,6 +1684,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     driftDictionaryEntries,
     driftTones,
+    wordOccurrences,
+    japaneseTextFts,
+    chineseTextFts,
   ];
 }
 
@@ -1436,6 +2188,513 @@ typedef $$DriftTonesTableProcessedTableManager =
       DriftTone,
       PrefetchHooks Function()
     >;
+typedef $$WordOccurrencesTableCreateCompanionBuilder =
+    WordOccurrencesCompanion Function({
+      Value<int> id,
+      required String word,
+      Value<String?> reading,
+      Value<String?> baseForm,
+      required int position,
+      Value<int?> sentenceId,
+    });
+typedef $$WordOccurrencesTableUpdateCompanionBuilder =
+    WordOccurrencesCompanion Function({
+      Value<int> id,
+      Value<String> word,
+      Value<String?> reading,
+      Value<String?> baseForm,
+      Value<int> position,
+      Value<int?> sentenceId,
+    });
+
+class $$WordOccurrencesTableFilterComposer
+    extends Composer<_$AppDatabase, $WordOccurrencesTable> {
+  $$WordOccurrencesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get word => $composableBuilder(
+    column: $table.word,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get reading => $composableBuilder(
+    column: $table.reading,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get baseForm => $composableBuilder(
+    column: $table.baseForm,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sentenceId => $composableBuilder(
+    column: $table.sentenceId,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$WordOccurrencesTableOrderingComposer
+    extends Composer<_$AppDatabase, $WordOccurrencesTable> {
+  $$WordOccurrencesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get word => $composableBuilder(
+    column: $table.word,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get reading => $composableBuilder(
+    column: $table.reading,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get baseForm => $composableBuilder(
+    column: $table.baseForm,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sentenceId => $composableBuilder(
+    column: $table.sentenceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$WordOccurrencesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WordOccurrencesTable> {
+  $$WordOccurrencesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get word =>
+      $composableBuilder(column: $table.word, builder: (column) => column);
+
+  GeneratedColumn<String> get reading =>
+      $composableBuilder(column: $table.reading, builder: (column) => column);
+
+  GeneratedColumn<String> get baseForm =>
+      $composableBuilder(column: $table.baseForm, builder: (column) => column);
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<int> get sentenceId => $composableBuilder(
+    column: $table.sentenceId,
+    builder: (column) => column,
+  );
+}
+
+class $$WordOccurrencesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WordOccurrencesTable,
+          WordOccurrence,
+          $$WordOccurrencesTableFilterComposer,
+          $$WordOccurrencesTableOrderingComposer,
+          $$WordOccurrencesTableAnnotationComposer,
+          $$WordOccurrencesTableCreateCompanionBuilder,
+          $$WordOccurrencesTableUpdateCompanionBuilder,
+          (
+            WordOccurrence,
+            BaseReferences<
+              _$AppDatabase,
+              $WordOccurrencesTable,
+              WordOccurrence
+            >,
+          ),
+          WordOccurrence,
+          PrefetchHooks Function()
+        > {
+  $$WordOccurrencesTableTableManager(
+    _$AppDatabase db,
+    $WordOccurrencesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer:
+              () =>
+                  $$WordOccurrencesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer:
+              () => $$WordOccurrencesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer:
+              () => $$WordOccurrencesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> word = const Value.absent(),
+                Value<String?> reading = const Value.absent(),
+                Value<String?> baseForm = const Value.absent(),
+                Value<int> position = const Value.absent(),
+                Value<int?> sentenceId = const Value.absent(),
+              }) => WordOccurrencesCompanion(
+                id: id,
+                word: word,
+                reading: reading,
+                baseForm: baseForm,
+                position: position,
+                sentenceId: sentenceId,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String word,
+                Value<String?> reading = const Value.absent(),
+                Value<String?> baseForm = const Value.absent(),
+                required int position,
+                Value<int?> sentenceId = const Value.absent(),
+              }) => WordOccurrencesCompanion.insert(
+                id: id,
+                word: word,
+                reading: reading,
+                baseForm: baseForm,
+                position: position,
+                sentenceId: sentenceId,
+              ),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          BaseReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$WordOccurrencesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WordOccurrencesTable,
+      WordOccurrence,
+      $$WordOccurrencesTableFilterComposer,
+      $$WordOccurrencesTableOrderingComposer,
+      $$WordOccurrencesTableAnnotationComposer,
+      $$WordOccurrencesTableCreateCompanionBuilder,
+      $$WordOccurrencesTableUpdateCompanionBuilder,
+      (
+        WordOccurrence,
+        BaseReferences<_$AppDatabase, $WordOccurrencesTable, WordOccurrence>,
+      ),
+      WordOccurrence,
+      PrefetchHooks Function()
+    >;
+typedef $$JapaneseTextFtsTableCreateCompanionBuilder =
+    JapaneseTextFtsCompanion Function({
+      required String content,
+      Value<int> rowid,
+    });
+typedef $$JapaneseTextFtsTableUpdateCompanionBuilder =
+    JapaneseTextFtsCompanion Function({
+      Value<String> content,
+      Value<int> rowid,
+    });
+
+class $$JapaneseTextFtsTableFilterComposer
+    extends Composer<_$AppDatabase, $JapaneseTextFtsTable> {
+  $$JapaneseTextFtsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$JapaneseTextFtsTableOrderingComposer
+    extends Composer<_$AppDatabase, $JapaneseTextFtsTable> {
+  $$JapaneseTextFtsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$JapaneseTextFtsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $JapaneseTextFtsTable> {
+  $$JapaneseTextFtsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get content =>
+      $composableBuilder(column: $table.content, builder: (column) => column);
+}
+
+class $$JapaneseTextFtsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $JapaneseTextFtsTable,
+          JapaneseTextFt,
+          $$JapaneseTextFtsTableFilterComposer,
+          $$JapaneseTextFtsTableOrderingComposer,
+          $$JapaneseTextFtsTableAnnotationComposer,
+          $$JapaneseTextFtsTableCreateCompanionBuilder,
+          $$JapaneseTextFtsTableUpdateCompanionBuilder,
+          (
+            JapaneseTextFt,
+            BaseReferences<
+              _$AppDatabase,
+              $JapaneseTextFtsTable,
+              JapaneseTextFt
+            >,
+          ),
+          JapaneseTextFt,
+          PrefetchHooks Function()
+        > {
+  $$JapaneseTextFtsTableTableManager(
+    _$AppDatabase db,
+    $JapaneseTextFtsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer:
+              () =>
+                  $$JapaneseTextFtsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer:
+              () => $$JapaneseTextFtsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer:
+              () => $$JapaneseTextFtsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> content = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => JapaneseTextFtsCompanion(content: content, rowid: rowid),
+          createCompanionCallback:
+              ({
+                required String content,
+                Value<int> rowid = const Value.absent(),
+              }) => JapaneseTextFtsCompanion.insert(
+                content: content,
+                rowid: rowid,
+              ),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          BaseReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$JapaneseTextFtsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $JapaneseTextFtsTable,
+      JapaneseTextFt,
+      $$JapaneseTextFtsTableFilterComposer,
+      $$JapaneseTextFtsTableOrderingComposer,
+      $$JapaneseTextFtsTableAnnotationComposer,
+      $$JapaneseTextFtsTableCreateCompanionBuilder,
+      $$JapaneseTextFtsTableUpdateCompanionBuilder,
+      (
+        JapaneseTextFt,
+        BaseReferences<_$AppDatabase, $JapaneseTextFtsTable, JapaneseTextFt>,
+      ),
+      JapaneseTextFt,
+      PrefetchHooks Function()
+    >;
+typedef $$ChineseTextFtsTableCreateCompanionBuilder =
+    ChineseTextFtsCompanion Function({
+      required String content,
+      Value<int> rowid,
+    });
+typedef $$ChineseTextFtsTableUpdateCompanionBuilder =
+    ChineseTextFtsCompanion Function({Value<String> content, Value<int> rowid});
+
+class $$ChineseTextFtsTableFilterComposer
+    extends Composer<_$AppDatabase, $ChineseTextFtsTable> {
+  $$ChineseTextFtsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ChineseTextFtsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ChineseTextFtsTable> {
+  $$ChineseTextFtsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ChineseTextFtsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ChineseTextFtsTable> {
+  $$ChineseTextFtsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get content =>
+      $composableBuilder(column: $table.content, builder: (column) => column);
+}
+
+class $$ChineseTextFtsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ChineseTextFtsTable,
+          ChineseTextFt,
+          $$ChineseTextFtsTableFilterComposer,
+          $$ChineseTextFtsTableOrderingComposer,
+          $$ChineseTextFtsTableAnnotationComposer,
+          $$ChineseTextFtsTableCreateCompanionBuilder,
+          $$ChineseTextFtsTableUpdateCompanionBuilder,
+          (
+            ChineseTextFt,
+            BaseReferences<_$AppDatabase, $ChineseTextFtsTable, ChineseTextFt>,
+          ),
+          ChineseTextFt,
+          PrefetchHooks Function()
+        > {
+  $$ChineseTextFtsTableTableManager(
+    _$AppDatabase db,
+    $ChineseTextFtsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer:
+              () => $$ChineseTextFtsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer:
+              () =>
+                  $$ChineseTextFtsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer:
+              () => $$ChineseTextFtsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> content = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ChineseTextFtsCompanion(content: content, rowid: rowid),
+          createCompanionCallback:
+              ({
+                required String content,
+                Value<int> rowid = const Value.absent(),
+              }) => ChineseTextFtsCompanion.insert(
+                content: content,
+                rowid: rowid,
+              ),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          BaseReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ChineseTextFtsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ChineseTextFtsTable,
+      ChineseTextFt,
+      $$ChineseTextFtsTableFilterComposer,
+      $$ChineseTextFtsTableOrderingComposer,
+      $$ChineseTextFtsTableAnnotationComposer,
+      $$ChineseTextFtsTableCreateCompanionBuilder,
+      $$ChineseTextFtsTableUpdateCompanionBuilder,
+      (
+        ChineseTextFt,
+        BaseReferences<_$AppDatabase, $ChineseTextFtsTable, ChineseTextFt>,
+      ),
+      ChineseTextFt,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1447,4 +2706,10 @@ class $AppDatabaseManager {
       );
   $$DriftTonesTableTableManager get driftTones =>
       $$DriftTonesTableTableManager(_db, _db.driftTones);
+  $$WordOccurrencesTableTableManager get wordOccurrences =>
+      $$WordOccurrencesTableTableManager(_db, _db.wordOccurrences);
+  $$JapaneseTextFtsTableTableManager get japaneseTextFts =>
+      $$JapaneseTextFtsTableTableManager(_db, _db.japaneseTextFts);
+  $$ChineseTextFtsTableTableManager get chineseTextFts =>
+      $$ChineseTextFtsTableTableManager(_db, _db.chineseTextFts);
 }

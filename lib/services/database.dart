@@ -28,9 +28,32 @@ class DriftTones extends Table {
   TextColumn get tones => text()(); // JSON string containing tone patterns
 }
 
+// Table for tracking word occurrences during text analysis
+class WordOccurrences extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get word => text()();
+  TextColumn get reading => text().nullable()();
+  TextColumn get baseForm => text().nullable()();
+  IntColumn get position => integer()();
+  IntColumn get sentenceId => integer().nullable()(); // To track which sentence a word came from
+}
+
+// Table for Japanese text FTS5 analysis
+class JapaneseTextFts extends Table {
+  TextColumn get content => text()();
+}
+
+// Table for Chinese text FTS5 analysis
+class ChineseTextFts extends Table {
+  TextColumn get content => text()();
+}
+
 @DriftDatabase(tables: [
   DriftDictionaryEntries,
   DriftTones,
+  WordOccurrences,
+  JapaneseTextFts,
+  ChineseTextFts,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
@@ -138,6 +161,63 @@ class AppDatabase extends _$AppDatabase {
       batch.insertAll(driftTones, entries);
     });
   }
+
+  // Methods for text analysis and word occurrence tracking
+  Future<void> insertWordOccurrences(List<WordOccurrencesCompanion> entries) async {
+    // Batch insert for performance
+    await batch((batch) {
+      batch.insertAll(wordOccurrences, entries);
+    });
+  }
+
+  Future<int> clearWordOccurrences() async {
+    return await (delete(wordOccurrences)..where((tbl) => const Constant(true))).go();
+  }
+
+  // Get word frequencies from the current analysis
+  Future<List<WordFrequencyResult>> getWordFrequencies() async {
+    final results = await customSelect('''
+      SELECT
+        word,
+        COUNT(*) as occurrence_count,
+        MIN(position) as first_occurrence
+      FROM word_occurrences
+      GROUP BY word
+      ORDER BY occurrence_count DESC, first_occurrence ASC
+    ''').get();
+
+    return results.map((row) => WordFrequencyResult(
+      word: row.read<String>('word'),
+      count: row.read<int>('occurrence_count'),
+      firstOccurrence: row.read<int>('first_occurrence'),
+    )).toList();
+  }
+
+  // Get word frequencies with dictionary information
+  Future<List<WordFrequencyWithDefinition>> getWordFrequenciesWithDefinitions() async {
+    final results = await customSelect('''
+      SELECT
+        wo.word,
+        COUNT(wo.word) as occurrence_count,
+        MIN(wo.position) as first_occurrence,
+        de.definitions,
+        de.reading as dict_reading,
+        de.popularity
+      FROM word_occurrences wo
+      LEFT JOIN drift_dictionary_entries de ON wo.word = de.term
+      GROUP BY wo.word
+      ORDER BY occurrence_count DESC, first_occurrence ASC
+    ''').get();
+
+    return results.map((row) => WordFrequencyWithDefinition(
+      word: row.read<String>('word'),
+      count: row.read<int>('occurrence_count'),
+      firstOccurrence: row.read<int>('first_occurrence'),
+      definitions: row.read<String?>('definitions'),
+      reading: row.read<String?>('dict_reading'),
+      popularity: row.read<int>('popularity') ?? -1,
+    )).toList();
+  }
 }
 
 // Connection setup for cross-platform
@@ -147,5 +227,36 @@ LazyDatabase _openConnection() {
     final file = File(p.join(dbFolder.path, 'jmdict.db'));
 
     return NativeDatabase.createInBackground(file);
+  });
+}
+
+// Data classes for query results
+class WordFrequencyResult {
+  final String word;
+  final int count;
+  final int firstOccurrence;
+
+  WordFrequencyResult({
+    required this.word,
+    required this.count,
+    required this.firstOccurrence,
+  });
+}
+
+class WordFrequencyWithDefinition {
+  final String word;
+  final int count;
+  final int firstOccurrence;
+  final String? definitions;
+  final String? reading;
+  final int popularity;
+
+  WordFrequencyWithDefinition({
+    required this.word,
+    required this.count,
+    required this.firstOccurrence,
+    this.definitions,
+    this.reading,
+    this.popularity = -1,
   });
 }

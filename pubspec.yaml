@@ -67,9 +67,11 @@ dependencies:
 
   # Japanese language processing
   kana_kit: ^2.0.0
+  mecab_for_flutter: ^1.0.5
 
   # Chinese language processing
   pinyin: ^3.3.0
+  jieba_flutter: ^0.2.0
 
   # Audio
   just_audio: ^0.9.36
