@@ -1,0 +1,469 @@
+{
+  "appName": "Lang",
+  "search": "Search",
+  "reader": "Reader",
+  "lists": "Lists",
+  "dictionaries": "Dictionaries",
+  "translator": "Translator",
+  "settings": "Settings",
+  "language": "Language",
+  "generalSettings": "General Settings",
+  "dictionaryLanguage": "Dictionary Language",
+  "appearance": "Appearance",
+  "darkMode": "Dark Mode",
+  "useDarkTheme": "Use dark theme",
+  "uiAndNavigation": "UI & Navigation",
+  "autoHideNavigation": "Auto-hide Navigation",
+  "hideNavigationBottom": "Hide navigation bar when mouse is not near bottom",
+  "defaultFlexMode": "Default Flex Mode",
+  "useFlexibleGrid": "Use flexible grid layout for word lists by default",
+  "keyboardShortcuts": "Keyboard Shortcuts",
+  "ctrl1Search": "Ctrl + 1: Search",
+  "ctrl2Reader": "Ctrl + 2: Reader",
+  "ctrl3Lists": "Ctrl + 3: Lists",
+  "ctrl4Dictionaries": "Ctrl + 4: Dictionaries",
+  "ctrl5Translator": "Ctrl + 5: Translator",
+  "ctrl6Settings": "Ctrl + 6: Settings",
+  "searchSettings": "Search Settings",
+  "clipboardMonitor": "Clipboard Monitor",
+  "autoSearchClipboard": "Automatically search for clipboard content",
+  "autoKanaConversion": "Automatic Kana Conversion",
+  "convertRomajiToKana": "Convert romaji to kana while typing",
+  "displayOptions": "Display Options",
+  "showParticles": "Show Particles",
+  "highlightParticles": "Highlight Japanese particles in text",
+  "showKanji": "Show Kanji",
+  "displayKanjiInfo": "Display kanji information",
+  "minFrequency": "Minimum Frequency",
+  "filterByFrequency": "Filter words by frequency (lower = more common)",
+  "advancedSettings": "Advanced Settings",
+  "ankiProfiles": "Anki & Profiles",
+  "currentAnkiDeck": "Current Anki Deck",
+  "currentProfile": "Current Profile",
+  "enhancedFeatures": "Enhanced Features",
+  "clipboardAutoDetect": "Clipboard Auto-Detect",
+  "autoDetectProcessText": "Automatically detect and process text from clipboard",
+  "forvoAudio": "Forvo Audio",
+  "enableForvoPronunciations": "Enable audio pronunciations from Forvo",
+  "autoTranslation": "Auto Translation",
+  "autoTranslateWords": "Automatically translate words in reader mode",
+  "about": "About",
+  "version": "Version {version}",
+  "japanese": "Japanese",
+  "chinese": "Chinese",
+  "korean": "Korean",
+  "english": "English",
+  "searchOptions": "Search Options",
+  "french": "French",
+  "spanish": "Spanish",
+  "german": "German",
+  "italian": "Italian",
+  "portuguese": "Portuguese",
+  "russian": "Russian",
+  "arabic": "Arabic",
+  "hindi": "Hindi",
+  "afrikaans": "Afrikaans",
+  "bulgarian": "Bulgarian",
+  "catalan": "Catalan",
+  "croatian": "Croatian",
+  "czech": "Czech",
+  "danish": "Danish",
+  "dutch": "Dutch",
+  "estonian": "Estonian",
+  "filipino": "Filipino",
+  "finnish": "Finnish",
+  "greek": "Greek",
+  "hebrew": "Hebrew",
+  "hungarian": "Hungarian",
+  "indonesian": "Indonésian",
+  "latvian": "Latvian",
+  "lithuanian": "Lithuanian",
+  "norwegian": "Norwegian",
+  "polish": "Polish",
+  "romanian": "Romanian",
+  "serbian": "Serbian",
+  "slovak": "Slovak",
+  "slovenian": "Slovenian",
+  "swedish": "Swedish",
+  "thai": "Thai",
+  "turkish": "Turkish",
+  "ukrainian": "Ukrainian",
+  "vietnamese": "Vietnamese",
+  "privacyPolicy": "Privacy Policy",
+  "termsOfService": "Terms of Service",
+  "multilingualLearningTool": "A multilingual language learning tool with dictionary and word saving features.",
+  "@appName": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@search": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@reader": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@lists": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@dictionaries": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@translator": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@settings": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@language": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@generalSettings": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@dictionaryLanguage": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@appearance": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@darkMode": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@useDarkTheme": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@uiAndNavigation": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@autoHideNavigation": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@hideNavigationBottom": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@defaultFlexMode": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@useFlexibleGrid": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@keyboardShortcuts": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@ctrl1Search": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@ctrl2Reader": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@ctrl3Lists": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@ctrl4Dictionaries": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@ctrl5Translator": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@ctrl6Settings": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@searchSettings": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@clipboardMonitor": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@autoSearchClipboard": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@autoKanaConversion": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@convertRomajiToKana": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@displayOptions": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@showParticles": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@highlightParticles": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@showKanji": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@displayKanjiInfo": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@minFrequency": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@filterByFrequency": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@advancedSettings": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@ankiProfiles": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@currentAnkiDeck": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@currentProfile": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@enhancedFeatures": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@clipboardAutoDetect": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@autoDetectProcessText": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@forvoAudio": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@enableForvoPronunciations": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@autoTranslation": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@autoTranslateWords": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@about": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@version": {
+    "type": "text",
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "@japanese": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@chinese": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@korean": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@english": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@french": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@spanish": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@german": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@italian": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@portuguese": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@russian": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@arabic": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@hindi": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@afrikaans": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@bulgarian": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@catalan": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@croatian": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@czech": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@danish": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@dutch": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@estonian": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@filipino": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@finnish": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@greek": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@hebrew": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@hungarian": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@indonesian": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@latvian": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@lithuanian": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@norwegian": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@polish": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@romanian": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@serbian": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@slovak": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@slovenian": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@swedish": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@thai": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@turkish": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@ukrainian": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@vietnamese": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@privacyPolicy": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@termsOfService": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@multilingualLearningTool": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@searchOptions": {
+    "type": "text",
+    "placeholders": {}
+  }
+}

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'models/app_state.dart';
 import 'services/storage_service.dart';
@@ -9,6 +10,7 @@ import 'screens/reader_screen.dart';
 import 'screens/word_lists_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/sentence_translator_screen.dart';
+import 'l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +34,19 @@ class LangApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Lang',
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'), // English
+        Locale('es'), // Spanish
+        Locale('ja'), // Japanese
+        Locale('zh'), // Chinese
+      ],
+      locale: null, // Use system locale by default
       theme: ThemeData(
         primarySwatch: Colors.blue,
         useMaterial3: true,
