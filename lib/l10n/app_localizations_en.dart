@@ -21,6 +21,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lists => 'Lists';
 
   @override
+  String get wordLists => 'Word Lists';
+
+  @override
   String get dictionaries => 'Dictionaries';
 
   @override
@@ -288,4 +291,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get multilingualLearningTool => 'A multilingual language learning tool with dictionary and word saving features.';
+
+  @override
+  String get defaultScreen => 'Default Screen';
+
+  @override
+  String get defaultScreenSubtitle => 'Select which screen to show when app starts';
 }

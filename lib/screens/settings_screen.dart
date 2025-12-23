@@ -228,6 +228,53 @@ class SettingsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const Divider(),
+                  // Default screen selection
+                  ListTile(
+                    title: Text(AppLocalizations.of(context)!.defaultScreen),
+                    subtitle: Text(AppLocalizations.of(context)!.defaultScreenSubtitle),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: DropdownButtonFormField<int>(
+                      value: appState.defaultScreenIndex,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: 0,
+                          child: Text(AppLocalizations.of(context)!.search),
+                        ),
+                        DropdownMenuItem(
+                          value: 1,
+                          child: Text(AppLocalizations.of(context)!.reader),
+                        ),
+                        DropdownMenuItem(
+                          value: 2,
+                          child: Text(AppLocalizations.of(context)!.wordLists),
+                        ),
+                        DropdownMenuItem(
+                          value: 3,
+                          child: Text(AppLocalizations.of(context)!.dictionaries),
+                        ),
+                        DropdownMenuItem(
+                          value: 4,
+                          child: Text(AppLocalizations.of(context)!.translator),
+                        ),
+                        DropdownMenuItem(
+                          value: 5,
+                          child: Text(AppLocalizations.of(context)!.settings),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          appState.setDefaultScreenIndex(value);
+                        }
+                      },
+                    ),
+                  ),
                 ],
               ),
             ),

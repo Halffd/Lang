@@ -14,6 +14,7 @@ class AppState extends ChangeNotifier {
   int _minFrequency = -1;
   bool _autoHideNavigation = true;
   bool _defaultFlexMode = false;
+  int _defaultScreenIndex = 0; // Default to 0 (Search screen)
   List<String> _etymologyLanguages = ['en', 'zh', 'ja']; // Default languages for etymology
   
   // Search state
@@ -62,6 +63,7 @@ class AppState extends ChangeNotifier {
   List<String> get profiles => _profiles;
   bool get clipboardAutoDetect => _clipboardAutoDetect;
   bool get forvoAudioEnabled => _forvoAudioEnabled;
+  int get defaultScreenIndex => _defaultScreenIndex;
 
   bool _autoTranslate = false;
   List<String> _ankiDecks = ['Default'];
@@ -219,6 +221,12 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setDefaultScreenIndex(int value) {
+    _defaultScreenIndex = value;
+    _storageService.setInt('default_screen_index', value);
+    notifyListeners();
+  }
+
   // Word management
   void addSavedWord(String word, {Map<String, dynamic>? details}) {
     if (!_savedWords.contains(word)) {
@@ -297,6 +305,7 @@ class AppState extends ChangeNotifier {
     _profiles = _storageService.getStringList('profiles') ?? ['Default'];
     _clipboardAutoDetect = _storageService.getBool('clipboard_auto_detect') ?? false;
     _forvoAudioEnabled = _storageService.getBool('forvo_audio_enabled') ?? false;
+    _defaultScreenIndex = _storageService.getInt('default_screen_index') ?? 0;
   }
 
   void _loadSavedWords() {

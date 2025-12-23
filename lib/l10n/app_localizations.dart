@@ -123,6 +123,12 @@ abstract class AppLocalizations {
   /// **'Lists'**
   String get lists;
 
+  /// No description provided for @wordLists.
+  ///
+  /// In en, this message translates to:
+  /// **'Word Lists'**
+  String get wordLists;
+
   /// No description provided for @dictionaries.
   ///
   /// In en, this message translates to:
@@ -656,6 +662,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A multilingual language learning tool with dictionary and word saving features.'**
   String get multilingualLearningTool;
+
+  /// No description provided for @defaultScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Default Screen'**
+  String get defaultScreen;
+
+  /// No description provided for @defaultScreenSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select which screen to show when app starts'**
+  String get defaultScreenSubtitle;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

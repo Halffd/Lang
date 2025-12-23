@@ -64,9 +64,9 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
+  int _currentIndex = 0; // Default to 0, but will be set based on app state
   bool _isNavBarVisible = true;
-  
+
   final List<Widget> _screens = const [
     SearchScreen(),
     ReaderScreen(),
@@ -76,6 +76,18 @@ class _MainScreenState extends State<MainScreen> {
     SettingsScreen(),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    // Set initial index based on app state
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final appState = Provider.of<AppState>(context, listen: false);
+      setState(() {
+        _currentIndex = appState.defaultScreenIndex; // 0-5 for the screens
+      });
+    });
+  }
+
   void _handleShortcut(int index) {
     if (index >= 0 && index < _screens.length) {
       setState(() {
@@ -83,11 +95,11 @@ class _MainScreenState extends State<MainScreen> {
       });
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
-    
+
     // Always show nav bar if auto-hide is disabled
     final shouldShowNavBar = !appState.autoHideNavigation || _isNavBarVisible;
 
@@ -103,55 +115,59 @@ class _MainScreenState extends State<MainScreen> {
       child: Focus(
         autofocus: true,
         child: Scaffold(
-          body: MouseRegion(
-            onHover: (event) {
-              if (!appState.autoHideNavigation) return;
-              final screenHeight = MediaQuery.of(context).size.height;
-              final isNearBottom = event.position.dy > screenHeight - 80;
-              if (isNearBottom != _isNavBarVisible) {
-                setState(() => _isNavBarVisible = isNearBottom);
-              }
-            },
-            child: _screens[_currentIndex],
-          ),
-          bottomNavigationBar: AnimatedSlide(
-            duration: const Duration(milliseconds: 200),
-            offset: shouldShowNavBar ? Offset.zero : const Offset(0, 1),
-            child: NavigationBar(
-              selectedIndex: _currentIndex,
-              onDestinationSelected: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-              },
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.search),
-                  label: 'Search',
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(60),
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: shouldShowNavBar ? 1.0 : 0.0,
+              child: MouseRegion(
+                onHover: (event) {
+                  if (!appState.autoHideNavigation) return;
+                  final screenHeight = MediaQuery.of(context).size.height;
+                  // Auto-show nav bar when mouse is near the top
+                  final isNearTop = event.position.dy < 60;
+                  if (isNearTop != _isNavBarVisible) {
+                    setState(() => _isNavBarVisible = isNearTop);
+                  }
+                },
+                child: NavigationBar(
+                  selectedIndex: _currentIndex,
+                  onDestinationSelected: (index) {
+                    setState(() {
+                      _currentIndex = index;
+                    });
+                  },
+                  destinations: const [
+                    NavigationDestination(
+                      icon: Icon(Icons.search),
+                      label: 'Search',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.article),
+                      label: 'Reader',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.list),
+                      label: 'Lists',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.book),
+                      label: 'Dictionaries',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.translate),
+                      label: 'Translator',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.settings),
+                      label: 'Settings',
+                    ),
+                  ],
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.article),
-                  label: 'Reader',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.list),
-                  label: 'Lists',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.book),
-                  label: 'Dictionaries',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.translate),
-                  label: 'Translator',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.settings),
-                  label: 'Settings',
-                ),
-              ],
+              ),
             ),
           ),
+          body: _screens[_currentIndex],
         ),
       ),
     );

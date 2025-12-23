@@ -3,6 +3,7 @@
   "search": "Search",
   "reader": "Reader",
   "lists": "Lists",
+  "wordLists": "Word Lists",
   "dictionaries": "Dictionaries",
   "translator": "Translator",
   "settings": "Settings",
@@ -92,6 +93,8 @@
   "privacyPolicy": "Privacy Policy",
   "termsOfService": "Terms of Service",
   "multilingualLearningTool": "A multilingual language learning tool with dictionary and word saving features.",
+  "defaultScreen": "Default Screen",
+  "defaultScreenSubtitle": "Select which screen to show when app starts",
   "@appName": {
     "type": "text",
     "placeholders": {}
@@ -463,6 +466,18 @@
     "placeholders": {}
   },
   "@searchOptions": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@defaultScreen": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@defaultScreenSubtitle": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@wordLists": {
     "type": "text",
     "placeholders": {}
   }

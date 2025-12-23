@@ -3,6 +3,7 @@
   "search": "搜索",
   "reader": "阅读器",
   "lists": "列表",
+  "wordLists": "单词列表",
   "dictionaries": "词典",
   "translator": "翻译",
   "settings": "设置",
@@ -92,6 +93,8 @@
   "privacyPolicy": "隐私政策",
   "termsOfService": "服务条款",
   "multilingualLearningTool": "一个支持多语言的词典及单词保存功能的学习工具。",
+  "defaultScreen": "默认屏幕",
+  "defaultScreenSubtitle": "选择应用启动时显示的屏幕",
   "@appName": {
     "type": "text",
     "placeholders": {}
@@ -463,6 +466,18 @@
     "placeholders": {}
   },
   "@searchOptions": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@defaultScreen": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@defaultScreenSubtitle": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@wordLists": {
     "type": "text",
     "placeholders": {}
   }

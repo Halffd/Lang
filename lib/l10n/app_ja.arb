@@ -3,6 +3,7 @@
   "search": "検索",
   "reader": "リーダー",
   "lists": "リスト",
+  "wordLists": "単語リスト",
   "dictionaries": "辞書",
   "translator": "翻訳",
   "settings": "設定",
@@ -92,6 +93,8 @@
   "privacyPolicy": "プライバシーポリシー",
   "termsOfService": "利用規約",
   "multilingualLearningTool": "辞書機能と単語保存機能を備えた多言語対応の言語学習ツール。",
+  "defaultScreen": "デフォルト画面",
+  "defaultScreenSubtitle": "アプリ起動時に表示する画面を選択",
   "@appName": {
     "type": "text",
     "placeholders": {}
@@ -463,6 +466,18 @@
     "placeholders": {}
   },
   "@searchOptions": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@defaultScreen": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@defaultScreenSubtitle": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@wordLists": {
     "type": "text",
     "placeholders": {}
   }

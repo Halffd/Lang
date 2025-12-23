@@ -21,6 +21,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lists => '列表';
 
   @override
+  String get wordLists => '单词列表';
+
+  @override
   String get dictionaries => '词典';
 
   @override
@@ -288,4 +291,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get multilingualLearningTool => '一个支持多语言的词典及单词保存功能的学习工具。';
+
+  @override
+  String get defaultScreen => '默认屏幕';
+
+  @override
+  String get defaultScreenSubtitle => '选择应用启动时显示的屏幕';
 }

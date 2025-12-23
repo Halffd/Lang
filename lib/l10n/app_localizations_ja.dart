@@ -21,6 +21,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get lists => 'リスト';
 
   @override
+  String get wordLists => '単語リスト';
+
+  @override
   String get dictionaries => '辞書';
 
   @override
@@ -288,4 +291,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get multilingualLearningTool => '辞書機能と単語保存機能を備えた多言語対応の言語学習ツール。';
+
+  @override
+  String get defaultScreen => 'デフォルト画面';
+
+  @override
+  String get defaultScreenSubtitle => 'アプリ起動時に表示する画面を選択';
 }
