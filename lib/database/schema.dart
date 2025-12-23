@@ -16,6 +16,15 @@ const String createEntriesTable = '''
   )
 ''';
 
+// FTS5 virtual table for full-text search on definitions
+const String createEntriesFtsTable = '''
+  CREATE VIRTUAL TABLE IF NOT EXISTS entries_fts USING fts5(
+    definitions,
+    content='entries',
+    content_rowid='id'
+  )
+''';
+
 const String createEntriesIndexes = '''
   CREATE INDEX IF NOT EXISTS idx_entries_term ON entries(term);
   CREATE INDEX IF NOT EXISTS idx_entries_reading ON entries(reading);
@@ -77,6 +86,8 @@ const String createPitchesIndexes = '''
   CREATE INDEX IF NOT EXISTS idx_pitches_term ON pitches(term);
   CREATE INDEX IF NOT EXISTS idx_pitches_reading ON pitches(reading);
   CREATE INDEX IF NOT EXISTS idx_pitches_term_reading ON pitches(term, reading);
+  -- Compound index for joins with entries table
+  CREATE INDEX IF NOT EXISTS idx_pitches_term_reading_dict ON pitches(term, reading, dictionary_id);
 ''';
 
 const String createFrequenciesTable = '''
@@ -96,6 +107,8 @@ const String createFrequenciesIndexes = '''
   CREATE INDEX IF NOT EXISTS idx_frequencies_term ON frequencies(term);
   CREATE INDEX IF NOT EXISTS idx_frequencies_reading ON frequencies(reading);
   CREATE INDEX IF NOT EXISTS idx_frequencies_type ON frequencies(frequency_type);
+  -- Compound index for joins with entries table
+  CREATE INDEX IF NOT EXISTS idx_frequencies_term_reading_dict ON frequencies(term, reading, dictionary_id);
 ''';
 
 const String createTonesTable = '''
@@ -115,6 +128,8 @@ const String createTonesIndexes = '''
   CREATE INDEX IF NOT EXISTS idx_tones_reading ON tones(reading);
   CREATE INDEX IF NOT EXISTS idx_tones_language ON tones(language);
   CREATE INDEX IF NOT EXISTS idx_tones_term_reading ON tones(term, reading);
+  -- Compound index for joins with entries table
+  CREATE INDEX IF NOT EXISTS idx_tones_term_reading_dict ON tones(term, reading, dictionary_id);
 ''';
 
 const String createDictionariesTable = '''
@@ -142,7 +157,7 @@ const String createMetadataTable = '''
 ''';
 
 class DatabaseSchema {
-  static const int currentVersion = 4;
+  static const int currentVersion = 5;
 
   static Future<void> onCreate(Database db, int version) async {
     await db.execute(createDictionariesTable);
@@ -154,13 +169,41 @@ class DatabaseSchema {
     await db.execute(createTonesTable); // Add tone table
     await db.execute(createMetadataTable);
 
+    // Create FTS5 table for full-text search
+    await db.execute(createEntriesFtsTable);
+
     await _createIndexes(db);
+
+    // Create FTS5 triggers to keep search table in sync
+    await _createFtsTriggers(db);
 
     // Set schema version
     await db.insert('metadata', {
       'key': 'schema_version',
       'value': currentVersion.toString(),
     });
+  }
+
+  static Future<void> _createFtsTriggers(Database db) async {
+    // Create triggers to keep FTS table in sync with main table
+    await db.execute('''
+      CREATE TRIGGER IF NOT EXISTS entries_ai AFTER INSERT ON entries BEGIN
+        INSERT INTO entries_fts(rowid, definitions) VALUES (new.id, new.definitions);
+      END;
+    ''');
+
+    await db.execute('''
+      CREATE TRIGGER IF NOT EXISTS entries_ad AFTER DELETE ON entries BEGIN
+        INSERT INTO entries_fts(entries_fts, rowid, definitions) VALUES('delete', old.id, old.definitions);
+      END;
+    ''');
+
+    await db.execute('''
+      CREATE TRIGGER IF NOT EXISTS entries_au AFTER UPDATE ON entries BEGIN
+        INSERT INTO entries_fts(entries_fts, rowid, definitions) VALUES('delete', old.id, old.definitions);
+        INSERT INTO entries_fts(rowid, definitions) VALUES (new.id, new.definitions);
+      END;
+    ''');
   }
 
   static Future<void> _createIndexes(Database db) async {
@@ -188,6 +231,13 @@ class DatabaseSchema {
     if (oldVersion < 4) {
       await db.execute(createTonesTable);
       await db.execute(createTonesIndexes);
+    }
+    if (oldVersion < 5) {
+      // Add FTS5 table and triggers for version 5
+      await db.execute(createEntriesFtsTable);
+      await _createFtsTriggers(db);
+      // Populate the FTS table with existing data
+      await db.execute('INSERT INTO entries_fts(rowid, definitions) SELECT id, definitions FROM entries;');
     }
   }
 }

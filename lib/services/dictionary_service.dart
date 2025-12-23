@@ -216,11 +216,33 @@ class DictionaryService {
       );
     }
 
+    // If no exact matches found, try full-text search on definitions
+    if (results.isEmpty) {
+      try {
+        // Use FTS5 for meaning/definition search
+        final ftsResults = await db.rawQuery(
+          'SELECT e.* FROM entries e JOIN entries_fts f ON e.id = f.rowid WHERE f.definitions MATCH ? LIMIT 50',
+          [query],
+        );
+        if (ftsResults.isNotEmpty) {
+          results = ftsResults;
+        }
+      } catch (e) {
+        // FTS may not be available in some cases, fallback to LIKE search
+        results = await db.query(
+          'entries',
+          where: 'definitions LIKE ?',
+          whereArgs: ['%$query%'],
+          limit: 50,
+        );
+      }
+    }
+
     final List<YomichanSearchResult> searchResults = [];
 
     for (final row in results) {
       final entry = model.DictionaryEntry.fromJson(row);
-      
+
       // Get dictionary info
       final dictionaryResult = await db.query(
         'dictionaries',
@@ -228,8 +250,8 @@ class DictionaryService {
         whereArgs: [entry.dictionaryId],
         limit: 1,
       );
-      
-      final dictionary = dictionaryResult.isNotEmpty 
+
+      final dictionary = dictionaryResult.isNotEmpty
           ? model.Dictionary.fromMap(dictionaryResult.first)
           : null;
 
@@ -239,7 +261,7 @@ class DictionaryService {
         where: 'dictionary_id = ? AND term = ? AND reading = ?',
         whereArgs: [entry.dictionaryId, entry.term, entry.reading],
       );
-      
+
       final pitches = pitchResults
           .map((p) => model.PitchAccent.fromMap(p))
           .toList();
@@ -250,16 +272,27 @@ class DictionaryService {
         where: 'dictionary_id = ? AND term = ? AND reading = ?',
         whereArgs: [entry.dictionaryId, entry.term, entry.reading],
       );
-      
+
       final frequencies = freqResults
           .map((f) => model.FrequencyData.fromMap(f))
+          .toList();
+
+      // Get tone information
+      final toneResults = await db.query(
+        'tones',
+        where: 'dictionary_id = ? AND term = ? AND reading = ?',
+        whereArgs: [entry.dictionaryId, entry.term, entry.reading],
+      );
+
+      final tones = toneResults
+          .map((t) => ToneInfo.fromMap(t))
           .toList();
 
       searchResults.add(YomichanSearchResult(
         entry: entry,
         dictionary: dictionary,
         pitches: pitches,
-        tones: [],
+        tones: tones,
         frequencies: frequencies,
       ));
     }
