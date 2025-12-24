@@ -95,6 +95,15 @@
   "multilingualLearningTool": "辞書機能と単語保存機能を備えた多言語対応の言語学習ツール。",
   "defaultScreen": "デフォルト画面",
   "defaultScreenSubtitle": "アプリ起動時に表示する画面を選択",
+  "themeMode": "テーマモード",
+  "themeModeSubtitle": "アプリテーマの決定方法を選択してください",
+  "systemTheme": "システムテーマ",
+  "lightTheme": "ライトテーマ",
+  "darkTheme": "ダークテーマ",
+  "zoomLevel": "ズームレベル",
+  "zoomLevelSubtitle": "アプリ全体のズームレベルを調整する",
+  "fontSize": "フォントサイズ",
+  "fontSizeSubtitle": "テキストのフォントサイズ倍率を調整する",
   "@appName": {
     "type": "text",
     "placeholders": {}
@@ -478,6 +487,42 @@
     "placeholders": {}
   },
   "@wordLists": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@themeMode": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@themeModeSubtitle": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@systemTheme": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@lightTheme": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@darkTheme": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@zoomLevel": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@zoomLevelSubtitle": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@fontSize": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@fontSizeSubtitle": {
     "type": "text",
     "placeholders": {}
   }

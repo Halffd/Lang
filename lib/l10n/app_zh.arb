@@ -95,6 +95,15 @@
   "multilingualLearningTool": "一个支持多语言的词典及单词保存功能的学习工具。",
   "defaultScreen": "默认屏幕",
   "defaultScreenSubtitle": "选择应用启动时显示的屏幕",
+  "themeMode": "主题模式",
+  "themeModeSubtitle": "选择应用程序主题的确定方式",
+  "systemTheme": "系统主题",
+  "lightTheme": "浅色主题",
+  "darkTheme": "深色主题",
+  "zoomLevel": "缩放级别",
+  "zoomLevelSubtitle": "调整整个应用的缩放级别",
+  "fontSize": "字体大小",
+  "fontSizeSubtitle": "调整文字的字体大小倍率",
   "@appName": {
     "type": "text",
     "placeholders": {}
@@ -478,6 +487,42 @@
     "placeholders": {}
   },
   "@wordLists": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@themeMode": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@themeModeSubtitle": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@systemTheme": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@lightTheme": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@darkTheme": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@zoomLevel": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@zoomLevelSubtitle": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@fontSize": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@fontSizeSubtitle": {
     "type": "text",
     "placeholders": {}
   }

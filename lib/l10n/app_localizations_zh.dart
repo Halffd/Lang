@@ -297,4 +297,31 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get defaultScreenSubtitle => '选择应用启动时显示的屏幕';
+
+  @override
+  String get themeMode => '主题模式';
+
+  @override
+  String get themeModeSubtitle => '选择应用程序主题的确定方式';
+
+  @override
+  String get systemTheme => '系统主题';
+
+  @override
+  String get lightTheme => '浅色主题';
+
+  @override
+  String get darkTheme => '深色主题';
+
+  @override
+  String get zoomLevel => '缩放级别';
+
+  @override
+  String get zoomLevelSubtitle => '调整整个应用的缩放级别';
+
+  @override
+  String get fontSize => '字体大小';
+
+  @override
+  String get fontSizeSubtitle => '调整文字的字体大小倍率';
 }

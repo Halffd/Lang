@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:kana_kit/kana_kit.dart';
 import '../models/app_state.dart';
 import '../models/dictionary.dart';
 import '../models/etymology_model.dart';
@@ -9,9 +10,37 @@ import '../services/dictionary_service.dart';
 import '../services/wiktionary_etymology_service.dart';
 import '../utils/chinese_util.dart';
 import '../utils/character_breakdown.dart';
+import '../utils/json_html_renderer.dart';
+import 'dart:convert';
+import 'dart:io';
 import '../widgets/character_breakdown_widget.dart';
 import '../widgets/etymology_widget.dart';
 import '../widgets/wiktionary_details_widget.dart';
+
+// Define custom intent classes at top level
+class _CopyIntent extends Intent {
+  const _CopyIntent();
+}
+
+class _AddToKnownWordsIntent extends Intent {
+  const _AddToKnownWordsIntent();
+}
+
+class _AddToFavoritesIntent extends Intent {
+  const _AddToFavoritesIntent();
+}
+
+class _DeleteIntent extends Intent {
+  const _DeleteIntent();
+}
+
+class _FocusSearchIntent extends Intent {
+  const _FocusSearchIntent();
+}
+
+class _ToggleNavIntent extends Intent {
+  const _ToggleNavIntent();
+}
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({Key? key}) : super(key: key);
@@ -23,11 +52,44 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final DictionaryService _dictionaryService = DictionaryService();
   final TextEditingController _searchController = TextEditingController();
+  final KanaKit _kanaKit = KanaKit();
+  late FocusNode _searchFocusNode;
 
   SearchResult? _searchResult;
   bool _isSearching = false;
   String _lastQuery = '';
   DictionaryEntry? _selectedEntry;
+
+  /// Check if text is mainly Latin characters (not Japanese)
+  bool _isMainlyLatinText(String text) {
+    if (text.isEmpty) return false;
+
+    // Check if the text contains mostly Latin characters
+    // Count Latin characters vs Japanese characters
+    int latinCount = 0;
+    int japaneseCount = 0;
+
+    for (int i = 0; i < text.length; i++) {
+      final char = text.codeUnitAt(i);
+      if ((char >= 65 && char <= 122) || // A-Z, a-z
+          (char >= 48 && char <= 57) || // 0-9
+          char == 32 || // space
+          char == 95 || // underscore
+          (char >= 40 && char <= 47) || // punctuation
+          (char >= 58 && char <= 64) ||
+          (char >= 91 && char <= 96) ||
+          (char >= 123 && char <= 126)) {
+        latinCount++;
+      } else if ((char >= 12353 && char <= 12438) || // Hiragana
+          (char >= 12449 && char <= 12542) || // Katakana
+          (char >= 19968 && char <= 40959)) { // Common Kanji range
+        japaneseCount++;
+      }
+    }
+
+    // If more than 50% are Latin characters, try conversion
+    return latinCount > japaneseCount;
+  }
 
   // For character breakdown functionality
   String? _breakdownWord;
@@ -78,7 +140,48 @@ class _SearchScreenState extends State<SearchScreen> {
       }
     }
   }
-  
+
+  /// Launch external search in browser
+  Future<void> _launchExtendedSearch(String query, String searchType) async {
+    String encodedQuery = Uri.encodeComponent(query);
+    String url = '';
+
+    switch(searchType) {
+      case 'wiktionary':
+        url = 'https://ja.wiktionary.org/wiki/$encodedQuery';
+        break;
+      case 'wikipedia':
+        url = 'https://ja.wikipedia.org/wiki/$encodedQuery';
+        break;
+      case 'wikimedia_images':
+        url = 'https://commons.wikimedia.org/wiki/Special:Search?search=$encodedQuery';
+        break;
+      case 'google_images':
+        url = 'https://www.google.com/search?q=$encodedQuery&tbm=isch';
+        break;
+      default:
+        url = 'https://www.google.com/search?q=$encodedQuery';
+    }
+
+    final uri = Uri.parse(url);
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        throw Exception('Could not launch $url');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not launch search: $e')),
+        );
+      }
+    }
+  }
+
+  /// Get the current search term for external search
+  String get _currentSearchTerm {
+    return _searchController.text;
+  }
+
   Future<void> _launchExternalLink(String url) async {
     final uri = Uri.parse(url);
     try {
@@ -277,14 +380,151 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           IconButton(
             icon: const Icon(Icons.search),
-            onPressed: () => _performSearch(_searchController.text),
+            onPressed: () async {
+              final appState = Provider.of<AppState>(context, listen: false);
+              String query = _searchController.text;
+
+              // Auto-convert to Japanese if enabled and the text is mainly Latin
+              if (appState.autoConvertJapanese && _isMainlyLatinText(query)) {
+                try {
+                  query = _kanaKit.toKana(query);
+                } catch (e) {
+                  // If conversion fails, use original text
+                }
+              }
+              await _performSearch(query);
+            },
           ),
         ],
       ),
-      body: _buildBody(),
+      body: Shortcuts(
+        shortcuts: {
+          // Copy word to clipboard (Ctrl+C)
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyC): const _CopyIntent(),
+          // Add to known words (Enter)
+          LogicalKeySet(LogicalKeyboardKey.enter): const _AddToKnownWordsIntent(),
+          // Add to favorites (\ key)
+          LogicalKeySet(LogicalKeyboardKey.backslash): const _AddToFavoritesIntent(),
+          // Delete word (Delete key)
+          LogicalKeySet(LogicalKeyboardKey.delete): const _DeleteIntent(),
+          // Focus on search textbox (Space)
+          LogicalKeySet(LogicalKeyboardKey.space): const _FocusSearchIntent(),
+          // Toggle hide navigation bar (Ctrl+H)
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyH): const _ToggleNavIntent(),
+        },
+        child: Actions(
+          actions: {
+            _CopyIntent: CallbackAction<_CopyIntent>(
+              onInvoke: (intent) => _copySelectedEntry(),
+            ),
+            _AddToKnownWordsIntent: CallbackAction<_AddToKnownWordsIntent>(
+              onInvoke: (intent) => _addSelectedEntryToKnownWords(),
+            ),
+            _AddToFavoritesIntent: CallbackAction<_AddToFavoritesIntent>(
+              onInvoke: (intent) => _toggleSelectedEntryFavorite(),
+            ),
+            _DeleteIntent: CallbackAction<_DeleteIntent>(
+              onInvoke: (intent) => _deleteSelectedEntry(),
+            ),
+            _FocusSearchIntent: CallbackAction<_FocusSearchIntent>(
+              onInvoke: (intent) => _focusOnSearchBox(),
+            ),
+            _ToggleNavIntent: CallbackAction<_ToggleNavIntent>(
+              onInvoke: (intent) => _toggleNavigationVisibility(),
+            ),
+          },
+          child: _buildBody(),
+        ),
+      ),
     );
   }
   
+  // Keyboard shortcut action methods
+  void _copySelectedEntry() {
+    if (_selectedEntry != null) {
+      Clipboard.setData(ClipboardData(text: _selectedEntry!.term));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Copied: ${_selectedEntry!.term}')),
+        );
+      }
+    }
+  }
+
+  void _addSelectedEntryToKnownWords() {
+    if (_selectedEntry != null) {
+      final appState = Provider.of<AppState>(context, listen: false);
+      appState.addSavedWord(_selectedEntry!.term, details: {
+        'reading': _selectedEntry!.reading,
+        'definitions': _selectedEntry!.definitions,
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Added to known words: ${_selectedEntry!.term}'),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () => appState.removeSavedWord(_selectedEntry!.term),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  void _toggleSelectedEntryFavorite() {
+    if (_selectedEntry != null) {
+      final appState = Provider.of<AppState>(context, listen: false);
+      final isFavorite = appState.isWordFavorite(_selectedEntry!.term);
+      appState.toggleFavoriteWord(_selectedEntry!.term, isFavorite: !isFavorite);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${isFavorite ? 'Removed from' : 'Added to'} favorites: ${_selectedEntry!.term}'),
+          ),
+        );
+      }
+    }
+  }
+
+  void _deleteSelectedEntry() {
+    if (_selectedEntry != null) {
+      final appState = Provider.of<AppState>(context, listen: false);
+      final deletedWord = _selectedEntry!.term;
+      appState.deleteWord(deletedWord);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Deleted word: $deletedWord'),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () {
+                // Undo by removing from the deleted words list
+                appState.undeleteWord(deletedWord);
+              },
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  void _focusOnSearchBox() {
+    FocusScope.of(context).requestFocus(_searchFocusNode);
+  }
+
+  void _toggleNavigationVisibility() {
+    final appState = Provider.of<AppState>(context, listen: false);
+    appState.setAutoHideNavigation(!appState.autoHideNavigation);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Navigation bar ${appState.autoHideNavigation ? 'will auto-hide' : 'will stay visible'}'),
+        ),
+      );
+    }
+  }
+
   Widget _buildBody() {
     if (_isSearching) {
       return const Center(child: CircularProgressIndicator());
@@ -386,10 +626,65 @@ class _SearchScreenState extends State<SearchScreen> {
           _buildSectionHeader('Entries', result.entries.length),
           ...result.entries.map((entry) => _buildEntryCard(entry)),
         ],
+
+        // External search options
+        if (result.entries.isNotEmpty || result.kanji.isNotEmpty) ...[
+          _buildExternalSearchSection(),
+        ],
       ],
     );
   }
   
+  Widget _buildExternalSearchSection() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Card(
+        elevation: 4,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'External Search',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildExternalSearchButton('Wiktionary', Icons.book_outlined, 'wiktionary'),
+                  _buildExternalSearchButton('Wikipedia', Icons.public, 'wikipedia'),
+                  _buildExternalSearchButton('Images', Icons.image, 'google_images'),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExternalSearchButton(String label, IconData icon, String searchType) {
+    return ElevatedButton.icon(
+      onPressed: () {
+        if (_currentSearchTerm.isNotEmpty) {
+          _launchExtendedSearch(_currentSearchTerm, searchType);
+        }
+      },
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        textStyle: const TextStyle(fontSize: 12),
+      ),
+    );
+  }
+
   Widget _buildSectionHeader(String title, int count) {
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -1152,13 +1447,64 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
   
+  String _extractPlainTextFromStructuredContent(String definition) {
+    // Check if it's JSON (structured content)
+    if (definition.startsWith('{') || definition.startsWith('[')) {
+      try {
+        final dynamic jsonContent = jsonDecode(definition);
+        // Extract plain text from the structured content
+        return _extractTextFromJson(jsonContent);
+      } catch (e) {
+        // If it's not valid JSON, return as is
+        return definition;
+      }
+    }
+    return definition;
+  }
+
+  String _extractTextFromJson(dynamic content) {
+    if (content == null) {
+      return '';
+    }
+
+    if (content is String) {
+      return content;
+    }
+
+    if (content is List) {
+      return content.map(_extractTextFromJson).join(' ');
+    }
+
+    if (content is Map<String, dynamic>) {
+      final result = <String>[];
+
+      // Add content field if it exists
+      if (content['content'] != null) {
+        result.add(_extractTextFromJson(content['content']));
+      }
+
+      // Add text field if it exists
+      if (content['text'] != null) {
+        result.add(_extractTextFromJson(content['text']));
+      }
+
+      // Add title field if it exists
+      if (content['title'] != null) {
+        result.add(_extractTextFromJson(content['title']));
+      }
+
+      return result.where((s) => s.isNotEmpty).join(' ');
+    }
+
+    return content.toString();
+  }
+
   String _formatDefinition(String definition) {
     // Check if it's JSON (structured content)
     if (definition.startsWith('{') || definition.startsWith('[')) {
       try {
-        // For now, just return plain text
-        // In production, you'd render HTML from structured content
-        return definition;
+        // For structured content, extract plain text for display in simple Text widgets
+        return _extractPlainTextFromStructuredContent(definition);
       } catch (e) {
         return definition;
       }

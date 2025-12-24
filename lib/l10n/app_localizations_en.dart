@@ -297,4 +297,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get defaultScreenSubtitle => 'Select which screen to show when app starts';
+
+  @override
+  String get themeMode => 'Theme Mode';
+
+  @override
+  String get themeModeSubtitle => 'Select how the app theme should be determined';
+
+  @override
+  String get systemTheme => 'System Theme';
+
+  @override
+  String get lightTheme => 'Light Theme';
+
+  @override
+  String get darkTheme => 'Dark Theme';
+
+  @override
+  String get zoomLevel => 'Zoom Level';
+
+  @override
+  String get zoomLevelSubtitle => 'Adjust the zoom level for the entire app';
+
+  @override
+  String get fontSize => 'Font Size';
+
+  @override
+  String get fontSizeSubtitle => 'Adjust the font size multiplier for text';
 }

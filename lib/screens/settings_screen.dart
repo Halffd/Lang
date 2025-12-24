@@ -93,6 +93,15 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
+  String _getValidLanguageCode(String currentCode) {
+    // If the current code is valid, return it
+    if (LanguageOption.all.any((option) => option.code == currentCode)) {
+      return currentCode;
+    }
+    // Otherwise, default to 'ja' (Japanese)
+    return 'ja';
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
@@ -134,7 +143,16 @@ class SettingsScreen extends StatelessWidget {
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     ),
-                    value: appState.language,
+                    value: () {
+                      // Double-check that the value is valid at build time
+                      final currentLang = appState.language;
+                      if (LanguageOption.all.any((option) => option.code == currentLang)) {
+                        return currentLang;
+                      } else {
+                        // If the value is invalid right now, return default
+                        return 'ja';
+                      }
+                    }(),
                     items: [
                       for (final languageOption in LanguageOption.all)
                         DropdownMenuItem(
@@ -167,13 +185,39 @@ class SettingsScreen extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-                  SwitchListTile(
-                    title: Text(AppLocalizations.of(context)!.darkMode),
-                    subtitle: Text(AppLocalizations.of(context)!.useDarkTheme),
-                    value: appState.darkMode,
-                    onChanged: (value) {
-                      appState.setDarkMode(value);
-                    },
+                  // Theme mode selection
+                  ListTile(
+                    title: Text(AppLocalizations.of(context)!.themeMode),
+                    subtitle: Text(AppLocalizations.of(context)!.themeModeSubtitle),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: DropdownButtonFormField<ThemeMode>(
+                      value: appState.themeMode,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: ThemeMode.system,
+                          child: Text(AppLocalizations.of(context)!.systemTheme),
+                        ),
+                        DropdownMenuItem(
+                          value: ThemeMode.light,
+                          child: Text(AppLocalizations.of(context)!.lightTheme),
+                        ),
+                        DropdownMenuItem(
+                          value: ThemeMode.dark,
+                          child: Text(AppLocalizations.of(context)!.darkTheme),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          appState.setThemeMode(value);
+                        }
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -229,6 +273,16 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   const Divider(),
+                  // Auto-Kana conversion setting
+                  SwitchListTile(
+                    title: Text(AppLocalizations.of(context)!.autoKanaConversion),
+                    subtitle: Text(AppLocalizations.of(context)!.convertRomajiToKana),
+                    value: appState.autoConvertJapanese,
+                    onChanged: (value) {
+                      appState.setAutoConvertJapanese(value);
+                    },
+                  ),
+                  const Divider(),
                   // Default screen selection
                   ListTile(
                     title: Text(AppLocalizations.of(context)!.defaultScreen),
@@ -237,7 +291,9 @@ class SettingsScreen extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: DropdownButtonFormField<int>(
-                      value: appState.defaultScreenIndex,
+                      value: (appState.defaultScreenIndex >= 0 && appState.defaultScreenIndex <= 5)
+                          ? appState.defaultScreenIndex
+                          : 0, // fallback to 0 if current value is invalid
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -273,6 +329,64 @@ class SettingsScreen extends StatelessWidget {
                           appState.setDefaultScreenIndex(value);
                         }
                       },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Zoom level control
+                  ListTile(
+                    title: Text(AppLocalizations.of(context)!.zoomLevel),
+                    subtitle: Text(AppLocalizations.of(context)!.zoomLevelSubtitle),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Slider(
+                            value: appState.zoomLevel,
+                            min: 0.5,
+                            max: 3.0,
+                            divisions: 50, // Provides 0.05 increments between 0.5 and 3.0
+                            label: '${appState.zoomLevel.toStringAsFixed(2)}x',
+                            onChanged: (value) {
+                              appState.setZoomLevel(value);
+                            },
+                          ),
+                        ),
+                        Text(
+                          '${appState.zoomLevel.toStringAsFixed(2)}x',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Font size control
+                  ListTile(
+                    title: Text(AppLocalizations.of(context)!.fontSize),
+                    subtitle: Text(AppLocalizations.of(context)!.fontSizeSubtitle),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Slider(
+                            value: appState.fontSizeMultiplier,
+                            min: 0.8,
+                            max: 2.0,
+                            divisions: 24, // Provides 0.05 increments between 0.8 and 2.0
+                            label: '${(appState.fontSizeMultiplier * 100).round()}%',
+                            onChanged: (value) {
+                              appState.setFontSizeMultiplier(value);
+                            },
+                          ),
+                        ),
+                        Text(
+                          '${(appState.fontSizeMultiplier * 100).round()}%',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ],
                     ),
                   ),
                 ],

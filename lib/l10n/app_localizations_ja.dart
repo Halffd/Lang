@@ -297,4 +297,31 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get defaultScreenSubtitle => 'アプリ起動時に表示する画面を選択';
+
+  @override
+  String get themeMode => 'テーマモード';
+
+  @override
+  String get themeModeSubtitle => 'アプリテーマの決定方法を選択してください';
+
+  @override
+  String get systemTheme => 'システムテーマ';
+
+  @override
+  String get lightTheme => 'ライトテーマ';
+
+  @override
+  String get darkTheme => 'ダークテーマ';
+
+  @override
+  String get zoomLevel => 'ズームレベル';
+
+  @override
+  String get zoomLevelSubtitle => 'アプリ全体のズームレベルを調整する';
+
+  @override
+  String get fontSize => 'フォントサイズ';
+
+  @override
+  String get fontSizeSubtitle => 'テキストのフォントサイズ倍率を調整する';
 }

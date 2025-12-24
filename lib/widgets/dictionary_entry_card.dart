@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:convert';
 import '../models/dictionary.dart';
+import '../utils/json_html_renderer.dart';
+import 'tag_renderer.dart';
 
 class DictionaryEntryCard extends StatelessWidget {
   final DictionaryEntry entry;
@@ -31,6 +34,28 @@ class DictionaryEntryCard extends StatelessWidget {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Could not launch url: $e')),
+      );
+    }
+  }
+
+  /// Helper method to render definition content that might be plain text or structured JSON
+  Widget _renderDefinitionContent(String definition, ThemeData theme) {
+    try {
+      // Try to decode the definition as JSON
+      final dynamic jsonContent = jsonDecode(definition);
+      // If successful, render it using our JSON HTML renderer
+      return JsonHtmlRenderer.render(jsonContent);
+    } on FormatException {
+      // If it's not valid JSON, render as plain text
+      return Text(
+        definition,
+        style: theme.textTheme.bodyLarge,
+      );
+    } catch (e) {
+      // If there's any other error, render as plain text
+      return Text(
+        definition,
+        style: theme.textTheme.bodyLarge,
       );
     }
   }
@@ -159,11 +184,11 @@ class DictionaryEntryCard extends StatelessWidget {
             
             const SizedBox(height: 12),
             
-            // Definitions
+            // Definitions with tags
             ...entry.definitions.asMap().entries.map((defEntry) {
               final index = defEntry.key;
               final definition = defEntry.value;
-              
+
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Row(
@@ -187,9 +212,19 @@ class DictionaryEntryCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        definition,
-                        style: theme.textTheme.bodyLarge,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Render tags if available
+                          if (entry.definitionTags != null && entry.definitionTags!.isNotEmpty)
+                            Wrap(
+                              spacing: 4,
+                              runSpacing: 4,
+                              children: TagRenderer.renderTags(entry.definitionTags!),
+                            ),
+                          // Render the definition content
+                          _renderDefinitionContent(definition, theme),
+                        ],
                       ),
                     ),
                   ],

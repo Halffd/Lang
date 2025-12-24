@@ -95,6 +95,15 @@
   "multilingualLearningTool": "Una herramienta de aprendizaje de idiomas multilingüe con funciones de diccionario y guardado de palabras.",
   "defaultScreen": "Pantalla predeterminada",
   "defaultScreenSubtitle": "Seleccionar qué pantalla mostrar al iniciar la aplicación",
+  "themeMode": "Modo de Tema",
+  "themeModeSubtitle": "Seleccionar cómo se debe determinar el tema de la aplicación",
+  "systemTheme": "Tema del Sistema",
+  "lightTheme": "Tema Claro",
+  "darkTheme": "Tema Oscuro",
+  "zoomLevel": "Nivel de Zoom",
+  "zoomLevelSubtitle": "Ajustar el nivel de zoom para toda la aplicación",
+  "fontSize": "Tamaño de Fuente",
+  "fontSizeSubtitle": "Ajustar el multiplicador del tamaño de fuente para el texto",
   "@appName": {
     "type": "text",
     "placeholders": {}
@@ -478,6 +487,42 @@
     "placeholders": {}
   },
   "@wordLists": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@themeMode": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@themeModeSubtitle": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@systemTheme": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@lightTheme": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@darkTheme": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@zoomLevel": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@zoomLevelSubtitle": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@fontSize": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "@fontSizeSubtitle": {
     "type": "text",
     "placeholders": {}
   }

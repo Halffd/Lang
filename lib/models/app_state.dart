@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/storage_service.dart';
+import 'translation_model.dart';
 
 class AppState extends ChangeNotifier {
   final StorageService _storageService;
@@ -9,10 +10,13 @@ class AppState extends ChangeNotifier {
   bool _automaticKanaConversion = true;
   String _language = 'ja';
   bool _darkMode = false;
+  ThemeMode _themeMode = ThemeMode.system; // Default to system theme
   bool _showParticles = true;
   bool _showKanji = true;
   int _minFrequency = -1;
   bool _autoHideNavigation = true;
+  double _zoomLevel = 1.0; // Default zoom level
+  double _fontSizeMultiplier = 1.0; // Default font size multiplier
   bool _defaultFlexMode = false;
   int _defaultScreenIndex = 0; // Default to 0 (Search screen)
   List<String> _etymologyLanguages = ['en', 'zh', 'ja']; // Default languages for etymology
@@ -37,6 +41,7 @@ class AppState extends ChangeNotifier {
     _loadSavedWords();
     _loadFavoriteWords();
     _loadAnkiWords();
+    _loadDeletedWords();
   }
 
   // Getters
@@ -44,11 +49,14 @@ class AppState extends ChangeNotifier {
   bool get automaticKanaConversion => _automaticKanaConversion;
   String get language => _language;
   bool get darkMode => _darkMode;
+  ThemeMode get themeMode => _themeMode;
   bool get showParticles => _showParticles;
   bool get showKanji => _showKanji;
   int get minFrequency => _minFrequency;
   bool get autoHideNavigation => _autoHideNavigation;
   bool get defaultFlexMode => _defaultFlexMode;
+  double get zoomLevel => _zoomLevel;
+  double get fontSizeMultiplier => _fontSizeMultiplier;
   String get currentQuery => _currentQuery;
   List<String> get searchHistory => _searchHistory;
   String get currentProfile => _currentProfile;
@@ -63,16 +71,33 @@ class AppState extends ChangeNotifier {
   List<String> get profiles => _profiles;
   bool get clipboardAutoDetect => _clipboardAutoDetect;
   bool get forvoAudioEnabled => _forvoAudioEnabled;
+  bool get autoConvertJapanese => _autoConvertJapanese;
+
+  void setAutoConvertJapanese(bool value) {
+    _autoConvertJapanese = value;
+    _storageService.setBool('auto_convert_japanese', value);
+    notifyListeners();
+  }
   int get defaultScreenIndex => _defaultScreenIndex;
+
+  // Expose storage service for mixins
+  StorageService get storageService => _storageService;
 
   bool _autoTranslate = false;
   List<String> _ankiDecks = ['Default'];
   String _currentAnkiDeck = 'Default';
   bool _clipboardAutoDetect = false;
   bool _forvoAudioEnabled = false;
+  bool _autoConvertJapanese = true; // Default to auto-convert letters to Japanese
   List<String> _profiles = ['Default'];
 
   // Setters with persistence
+  void setAutoConvertJapanese(bool value) {
+    _autoConvertJapanese = value;
+    _storageService.setBool('auto_convert_japanese', value);
+    notifyListeners();
+  }
+
   void setClipboardMonitor(bool value) {
     _clipboardMonitor = value;
     _storageService.setBool('clipboard_monitor', value);
@@ -94,6 +119,28 @@ class AppState extends ChangeNotifier {
   void setDarkMode(bool value) {
     _darkMode = value;
     _storageService.setBool('dark_mode', value);
+    notifyListeners();
+  }
+
+  ThemeMode? _parseThemeMode(String? themeModeString) {
+    if (themeModeString == null) return null;
+
+    switch (themeModeString) {
+      case 'ThemeMode.light':
+        return ThemeMode.light;
+      case 'ThemeMode.dark':
+        return ThemeMode.dark;
+      case 'ThemeMode.system':
+        return ThemeMode.system;
+      default:
+        return null;
+    }
+  }
+
+  void setThemeMode(ThemeMode mode) {
+    _themeMode = mode;
+    // Save as string since ThemeMode isn't directly supported by shared preferences
+    _storageService.setString('theme_mode', mode.toString());
     notifyListeners();
   }
   
@@ -124,6 +171,20 @@ class AppState extends ChangeNotifier {
   void setDefaultFlexMode(bool value) {
     _defaultFlexMode = value;
     _storageService.setBool('default_flex_mode', value);
+    notifyListeners();
+  }
+
+  void setZoomLevel(double zoom) {
+    // Limit zoom between 0.5 and 3.0
+    _zoomLevel = zoom.clamp(0.5, 3.0);
+    _storageService.setDouble('zoom_level', _zoomLevel);
+    notifyListeners();
+  }
+
+  void setFontSizeMultiplier(double multiplier) {
+    // Limit font size between 0.8 and 2.0
+    _fontSizeMultiplier = multiplier.clamp(0.8, 2.0);
+    _storageService.setDouble('font_size_multiplier', _fontSizeMultiplier);
     notifyListeners();
   }
   
@@ -222,9 +283,12 @@ class AppState extends ChangeNotifier {
   }
 
   void setDefaultScreenIndex(int value) {
-    _defaultScreenIndex = value;
-    _storageService.setInt('default_screen_index', value);
-    notifyListeners();
+    // Ensure value is within valid range (0-5 for the 6 screens)
+    if (value >= 0 && value <= 5) {
+      _defaultScreenIndex = value;
+      _storageService.setInt('default_screen_index', value);
+      notifyListeners();
+    }
   }
 
   // Word management
@@ -287,45 +351,153 @@ class AppState extends ChangeNotifier {
 
   // Private methods
   void _loadSettings() {
-    _clipboardMonitor = _storageService.getBool('clipboard_monitor') ?? false;
-    _automaticKanaConversion = _storageService.getBool('automatic_kana_conversion') ?? true;
-    _language = _storageService.getString('language') ?? 'ja';
-    _darkMode = _storageService.getBool('dark_mode') ?? false;
-    _showParticles = _storageService.getBool('show_particles') ?? true;
-    _showKanji = _storageService.getBool('show_kanji') ?? true;
-    _minFrequency = _storageService.getInt('min_frequency') ?? -1;
-    _autoHideNavigation = _storageService.getBool('auto_hide_navigation') ?? true;
-    _defaultFlexMode = _storageService.getBool('default_flex_mode') ?? false;
-    _currentProfile = _storageService.getString('current_profile') ?? 'Default';
-    _searchHistory = _storageService.getStringList('search_history') ?? [];
-    _etymologyLanguages = _storageService.getStringList('etymology_languages') ?? ['en', 'zh', 'ja'];
-    _autoTranslate = _storageService.getBool('auto_translate') ?? false;
-    _ankiDecks = _storageService.getStringList('anki_decks') ?? ['Default'];
-    _currentAnkiDeck = _storageService.getString('current_anki_deck') ?? 'Default';
-    _profiles = _storageService.getStringList('profiles') ?? ['Default'];
-    _clipboardAutoDetect = _storageService.getBool('clipboard_auto_detect') ?? false;
-    _forvoAudioEnabled = _storageService.getBool('forvo_audio_enabled') ?? false;
-    _defaultScreenIndex = _storageService.getInt('default_screen_index') ?? 0;
+    try {
+      _clipboardMonitor = _storageService.getBool('clipboard_monitor') ?? false;
+      _automaticKanaConversion = _storageService.getBool('automatic_kana_conversion') ?? true;
+      _language = _storageService.getString('language') ?? 'ja';
+      // Ensure language code is valid - fix any legacy data that might have display names instead of codes
+      if (!LanguageOption.all.any((option) => option.code == _language)) {
+        // If the saved language is not a valid code, it might be a display name
+        // Look it up in a simple mapping to convert it back to a code
+        final languageMap = {
+          'Japanese': 'ja',
+          'Chinese': 'zh',
+          'Korean': 'ko',
+          'English': 'en',
+          'French': 'fr',
+          'Spanish': 'es',
+          'German': 'de',
+          'Italian': 'it',
+          'Portuguese': 'pt',
+          'Russian': 'ru',
+          'Arabic': 'ar',
+          'Hindi': 'hi',
+          'Afrikaans': 'af',
+          'Bulgarian': 'bg',
+          'Catalan': 'ca',
+          'Croatian': 'hr',
+          'Czech': 'cs',
+          'Danish': 'da',
+          'Dutch': 'nl',
+          'Estonian': 'et',
+          'Filipino': 'tl',
+          'Finnish': 'fi',
+          'Greek': 'el',
+          'Hebrew': 'iw',
+          'Hungarian': 'hu',
+          'Indonesian': 'id',
+          'Latvian': 'lv',
+          'Lithuanian': 'lt',
+          'Norwegian': 'no',
+          'Polish': 'pl',
+          'Romanian': 'ro',
+          'Serbian': 'sr',
+          'Slovak': 'sk',
+          'Slovenian': 'sl',
+          'Swedish': 'sv',
+          'Thai': 'th',
+          'Turkish': 'tr',
+          'Ukrainian': 'uk',
+          'Vietnamese': 'vi',
+        };
+
+        final correctedCode = languageMap[_language] ?? 'ja';
+        _language = correctedCode;
+        // Update the saved value to be correct
+        _storageService.setString('language', _language);
+        // Notify listeners so the UI updates with the corrected language
+        notifyListeners();
+      }
+      _darkMode = _storageService.getBool('dark_mode') ?? false;
+      // Load theme mode with fallback to system
+      final themeModeString = _storageService.getString('theme_mode');
+      _themeMode = _parseThemeMode(themeModeString) ?? ThemeMode.system;
+      _showParticles = _storageService.getBool('show_particles') ?? true;
+      _showKanji = _storageService.getBool('show_kanji') ?? true;
+      _minFrequency = _storageService.getInt('min_frequency') ?? -1;
+      _autoHideNavigation = _storageService.getBool('auto_hide_navigation') ?? true;
+      _defaultFlexMode = _storageService.getBool('default_flex_mode') ?? false;
+      _zoomLevel = _storageService.getDouble('zoom_level') ?? 1.0;
+      _fontSizeMultiplier = _storageService.getDouble('font_size_multiplier') ?? 1.0;
+      _currentProfile = _storageService.getString('current_profile') ?? 'Default';
+      _searchHistory = _storageService.getStringList('search_history') ?? [];
+      _etymologyLanguages = _storageService.getStringList('etymology_languages') ?? ['en', 'zh', 'ja'];
+      _autoTranslate = _storageService.getBool('auto_translate') ?? false;
+      _ankiDecks = _storageService.getStringList('anki_decks') ?? ['Default'];
+      _currentAnkiDeck = _storageService.getString('current_anki_deck') ?? 'Default';
+      _profiles = _storageService.getStringList('profiles') ?? ['Default'];
+      _clipboardAutoDetect = _storageService.getBool('clipboard_auto_detect') ?? false;
+      _forvoAudioEnabled = _storageService.getBool('forvo_audio_enabled') ?? false;
+      _autoConvertJapanese = _storageService.getBool('auto_convert_japanese') ?? true;
+      _defaultScreenIndex = _storageService.getInt('default_screen_index') ?? 0;
+      // Ensure value is within valid range (0-5 for the 6 screens)
+      if (_defaultScreenIndex < 0 || _defaultScreenIndex > 5) {
+        _defaultScreenIndex = 0;
+      }
+    } catch (e) {
+      // Handle the case where preferences are not initialized yet
+      // Set default values
+      _clipboardMonitor = false;
+      _automaticKanaConversion = true;
+      _language = 'ja';
+      _darkMode = false;
+      _showParticles = true;
+      _showKanji = true;
+      _minFrequency = -1;
+      _autoHideNavigation = true;
+      _defaultFlexMode = false;
+      _currentProfile = 'Default';
+      _searchHistory = [];
+      _etymologyLanguages = ['en', 'zh', 'ja'];
+      _autoTranslate = false;
+      _ankiDecks = ['Default'];
+      _currentAnkiDeck = 'Default';
+      _profiles = ['Default'];
+      _clipboardAutoDetect = false;
+      _forvoAudioEnabled = false;
+      _defaultScreenIndex = 0;
+    }
   }
 
   void _loadSavedWords() {
-    _savedWords = _storageService.getStringList('saved_words') ?? [];
-    final savedDetailsJson = _storageService.getString('saved_words_details');
-    if (savedDetailsJson != null) {
-      try {
-        _savedWordsDetails = Map<String, dynamic>.from(_storageService.getJson('saved_words_details') ?? {});
-      } catch (e) {
-        _savedWordsDetails = {};
+    try {
+      _savedWords = _storageService.getStringList('saved_words') ?? [];
+      final savedDetailsJson = _storageService.getString('saved_words_details');
+      if (savedDetailsJson != null) {
+        try {
+          _savedWordsDetails = Map<String, dynamic>.from(_storageService.getJson('saved_words_details') ?? {});
+        } catch (e) {
+          _savedWordsDetails = {};
+        }
       }
+    } catch (e) {
+      _savedWords = [];
+      _savedWordsDetails = {};
     }
   }
 
   void _loadFavoriteWords() {
-    _favoriteWords = _storageService.getStringList('favorite_words') ?? [];
+    try {
+      _favoriteWords = _storageService.getStringList('favorite_words') ?? [];
+    } catch (e) {
+      _favoriteWords = [];
+    }
   }
 
   void _loadAnkiWords() {
-    _ankiWords = _storageService.getStringList('anki_words') ?? [];
+    try {
+      _ankiWords = _storageService.getStringList('anki_words') ?? [];
+    } catch (e) {
+      _ankiWords = [];
+    }
+  }
+
+  void _loadDeletedWords() {
+    try {
+      _deletedWords = _storageService.getStringList('deleted_words') ?? [];
+    } catch (e) {
+      _deletedWords = [];
+    }
   }
 
   void _persistSavedWords() {
@@ -339,5 +511,43 @@ class AppState extends ChangeNotifier {
 
   void _persistAnkiWords() {
     _storageService.setStringList('anki_words', _ankiWords);
+  }
+
+  // Word list functionality (deleted words)
+  List<String> _deletedWords = [];
+
+  List<String> get deletedWords => _deletedWords;
+
+  bool isWordDeleted(String word) => _deletedWords.contains(word);
+
+  Future<void> deleteWord(String word) async {
+    if (!_deletedWords.contains(word)) {
+      _deletedWords.add(word);
+      await _storageService.addToDeletedWords(word);
+      notifyListeners();
+    }
+  }
+
+  Future<void> undeleteWord(String word) async {
+    if (_deletedWords.contains(word)) {
+      _deletedWords.remove(word);
+      await _storageService.removeFromDeletedWords(word);
+      notifyListeners();
+    }
+  }
+
+  // Favorite words methods
+  bool isWordFavorite(String word) => _favoriteWords.contains(word);
+
+  Future<void> toggleFavoriteWord(String word, {required bool isFavorite}) async {
+    if (isFavorite) {
+      if (!_favoriteWords.contains(word)) {
+        _favoriteWords.add(word);
+      }
+    } else {
+      _favoriteWords.remove(word);
+    }
+    await _storageService.setStringList('favorite_words', _favoriteWords);
+    notifyListeners();
   }
 }

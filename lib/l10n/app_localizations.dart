@@ -674,6 +674,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Select which screen to show when app starts'**
   String get defaultScreenSubtitle;
+
+  /// No description provided for @themeMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme Mode'**
+  String get themeMode;
+
+  /// No description provided for @themeModeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select how the app theme should be determined'**
+  String get themeModeSubtitle;
+
+  /// No description provided for @systemTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'System Theme'**
+  String get systemTheme;
+
+  /// No description provided for @lightTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Light Theme'**
+  String get lightTheme;
+
+  /// No description provided for @darkTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark Theme'**
+  String get darkTheme;
+
+  /// No description provided for @zoomLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom Level'**
+  String get zoomLevel;
+
+  /// No description provided for @zoomLevelSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust the zoom level for the entire app'**
+  String get zoomLevelSubtitle;
+
+  /// No description provided for @fontSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Font Size'**
+  String get fontSize;
+
+  /// No description provided for @fontSizeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust the font size multiplier for text'**
+  String get fontSizeSubtitle;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
