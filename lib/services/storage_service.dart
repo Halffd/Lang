@@ -63,6 +63,12 @@ class StorageService {
     await _prefs.setStringList('deleted_words', words.toList());
   }
 
+  Future<void> removeFromDeletedWords(String word) async {
+    final words = await getDeletedWords();
+    words.remove(word);
+    await _prefs.setStringList('deleted_words', words.toList());
+  }
+
   Future<Set<String>> getAnkiWords() async {
     final words = _prefs.getStringList('anki_words') ?? [];
     return Set<String>.from(words);

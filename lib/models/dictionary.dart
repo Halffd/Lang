@@ -53,27 +53,45 @@ class DictionaryEntry {
       dictionaryId: json['dictionaryId'] ?? json['dictionary_id'] ?? 0,
       term: json['term'] as String,
       reading: json['reading'] as String,
-      definitionTags: json['definitionTags'] != null 
-          ? List<String>.from(json['definitionTags']) 
-          : json['definition_tags'] != null
-              ? List<String>.from(json['definition_tags'])
-              : null,
-      rules: json['rules'] != null 
-          ? List<String>.from(json['rules']) 
-          : null,
+      definitionTags: _extractStringList(json['definitionTags']) ??
+          _extractStringList(json['definition_tags']),
+      rules: _extractStringList(json['rules']),
       popularity: (json['popularity'] as num?)?.toDouble() ?? 0.0,
-      definitions: json['definitions'] != null
-          ? List<String>.from(json['definitions'])
-          : [],
+      definitions: _extractStringList(json['definitions']) ?? [],
       sequence: json['sequence'],
-      termTags: json['termTags'] != null
-          ? List<String>.from(json['termTags'])
-          : json['term_tags'] != null
-              ? List<String>.from(json['term_tags'])
-              : null,
+      termTags: _extractStringList(json['termTags']) ??
+          _extractStringList(json['term_tags']),
     );
   }
-  
+
+  /// Helper method to safely extract a list of strings from JSON
+  static List<String>? _extractStringList(dynamic value) {
+    if (value == null) return null;
+    if (value is List) {
+      try {
+        return List<String>.from(value.map((e) => e.toString()));
+      } catch (e) {
+        // If conversion fails, return null
+        return null;
+      }
+    } else if (value is String) {
+      // If it's a string, try to parse it as a JSON array or return a list with the string
+      try {
+        final parsed = jsonDecode(value);
+        if (parsed is List) {
+          return List<String>.from(parsed.map((e) => e.toString()));
+        } else {
+          // If it's not a list, return a list with the single string
+          return [value];
+        }
+      } catch (e) {
+        // If parsing fails, return a list with the original string
+        return [value];
+      }
+    }
+    return null;
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

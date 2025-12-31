@@ -52,28 +52,81 @@ class EtymologySection {
 }
 
 class WiktionaryEtymologyService {
-  static const String _baseUrl = 'https://en.wiktionary.org/w/api.php';
-  
+  // Map of language codes to their Wiktionary subdomain
+  static const Map<String, String> _languageSubdomains = {
+    'en': 'en',
+    'ja': 'ja',
+    'zh': 'zh',
+    'de': 'de',
+    'fr': 'fr',
+    'es': 'es',
+    'ko': 'ko',
+    'ru': 'ru',
+    'ar': 'ar',
+    'pt': 'pt',
+    'it': 'it',
+    'nl': 'nl',
+    'pl': 'pl',
+    'sv': 'sv',
+    'da': 'da',
+    'fi': 'fi',
+    'no': 'no',
+    'tr': 'tr',
+    'he': 'he',
+    'el': 'el',
+    'th': 'th',
+    'vi': 'vi',
+    'hi': 'hi',
+    'id': 'id',
+    'cs': 'cs',
+    'hu': 'hu',
+    'ro': 'ro',
+    'bg': 'bg',
+    'uk': 'uk',
+    'hr': 'hr',
+    'sr': 'sr',
+    'sk': 'sk',
+    'sl': 'sl',
+    'lt': 'lt',
+    'lv': 'lv',
+    'et': 'et',
+    'ca': 'ca',
+    'tl': 'tl',
+  };
+
+  /// Get the Wiktionary subdomain for a given language code
+  String _getSubdomain(String languageCode) {
+    return _languageSubdomains[languageCode] ?? 'en'; // Default to English if language not supported
+  }
+
   /// Fetch detailed Wiktionary information for a given word in a specific language
   Future<List<WiktionaryEntry>> fetchWordDetails(String word, String language) async {
     try {
+      // Get the appropriate Wiktionary subdomain for the language
+      String subdomain = _getSubdomain(language);
+      String baseUrl = 'https://${subdomain}.wiktionary.org/w/api.php';
+
       // Use the Parse API which gives us wikitext that we can parse more accurately
       final response = await http.get(
-        Uri.parse('$_baseUrl?action=parse&page=$word&prop=wikitext&format=json'),
+        Uri.parse('$baseUrl?action=parse&page=$word&prop=wikitext&format=json'),
         headers: {'User-Agent': 'LangApp/1.0 (contact@langapp.com)'},
       );
 
       if (response.statusCode != 200) {
+        // Fallback to English Wiktionary if the specific language version doesn't exist
+        if (subdomain != 'en') {
+          return await fetchWordDetails(word, 'en');
+        }
         return [];
       }
 
       final data = json.decode(response.body);
       final wikitext = data['parse']['wikitext']['*'] as String?;
-      
+
       if (wikitext == null) {
         return [];
       }
-      
+
       // Parse the wikitext for different sections
       return _parseWiktionaryContent(wikitext, word, language);
     } catch (e) {

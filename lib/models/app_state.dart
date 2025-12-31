@@ -72,12 +72,6 @@ class AppState extends ChangeNotifier {
   bool get clipboardAutoDetect => _clipboardAutoDetect;
   bool get forvoAudioEnabled => _forvoAudioEnabled;
   bool get autoConvertJapanese => _autoConvertJapanese;
-
-  void setAutoConvertJapanese(bool value) {
-    _autoConvertJapanese = value;
-    _storageService.setBool('auto_convert_japanese', value);
-    notifyListeners();
-  }
   int get defaultScreenIndex => _defaultScreenIndex;
 
   // Expose storage service for mixins
@@ -92,11 +86,6 @@ class AppState extends ChangeNotifier {
   List<String> _profiles = ['Default'];
 
   // Setters with persistence
-  void setAutoConvertJapanese(bool value) {
-    _autoConvertJapanese = value;
-    _storageService.setBool('auto_convert_japanese', value);
-    notifyListeners();
-  }
 
   void setClipboardMonitor(bool value) {
     _clipboardMonitor = value;
@@ -279,6 +268,12 @@ class AppState extends ChangeNotifier {
   void setForvoAudioEnabled(bool value) {
     _forvoAudioEnabled = value;
     _storageService.setBool('forvo_audio_enabled', value);
+    notifyListeners();
+  }
+
+  void setAutoConvertJapanese(bool value) {
+    _autoConvertJapanese = value;
+    _storageService.setBool('auto_convert_japanese', value);
     notifyListeners();
   }
 

@@ -11,9 +11,18 @@ import 'screens/word_lists_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/sentence_translator_screen.dart';
 import 'l10n/app_localizations.dart';
+import 'widgets/gesture_zoom_wrapper.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'dart:io' show Platform;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize database factory for desktop platforms
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    databaseFactory = databaseFactoryFfi;
+  }
+
   final storageService = StorageService();
   await storageService.init();
 
@@ -32,26 +41,55 @@ class LangApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Lang',
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('en'), // English
-        Locale('es'), // Spanish
-        Locale('ja'), // Japanese
-        Locale('zh'), // Chinese
-      ],
-      locale: null, // Use system locale by default
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true,
-      ),
-      home: const MainScreen(),
+    return Consumer<AppState>(
+      builder: (context, appState, child) {
+        return MaterialApp(
+          title: 'Lang',
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en'), // English
+            Locale('es'), // Spanish
+            Locale('ja'), // Japanese
+            Locale('zh'), // Chinese
+          ],
+          locale: null, // Use system locale by default
+          themeMode: appState.themeMode,
+          theme: ThemeData(
+            brightness: Brightness.light,
+            primarySwatch: Colors.blue,
+            useMaterial3: true,
+          ),
+          darkTheme: ThemeData(
+            brightness: Brightness.dark,
+            primarySwatch: Colors.blue,
+            useMaterial3: true,
+          ),
+          builder: (context, child) {
+            // Apply zoom and font size multiplier to the entire app
+            // Wrap with gesture detection for zoom functionality
+            Widget appContent = Transform.scale(
+              scale: appState.zoomLevel,
+              child: MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  textScaleFactor: appState.fontSizeMultiplier,
+                ),
+                child: child ?? const SizedBox(), // Handle nullable child
+              ),
+            );
+
+            // Add gesture detection for pinch-to-zoom and keyboard shortcuts
+            return GestureZoomWrapper(
+              child: appContent,
+            );
+          },
+          home: const MainScreen(),
+        );
+      },
     );
   }
 }

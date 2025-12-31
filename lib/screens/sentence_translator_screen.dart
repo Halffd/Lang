@@ -220,64 +220,121 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
             // Results
             if (_translationResult != null) ...[
               Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Word-by-word translation header
-                      Text(
-                        'Word-by-Word Translation',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context).primaryColor,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      
-                      // Word-by-word container
-                      Container(
-                        padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    // Original text column
+                    Expanded(
+                      flex: 1,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.grey[800]
-                              : Colors.grey[100],
+                              ? Colors.grey[850]
+                              : Colors.grey[50],
                           borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Theme.of(context).dividerColor,
+                          ),
                         ),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _translationResult!.wordTranslations.map((word) {
-                            return _buildWordCard(word);
-                          }).toList(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Original (${_getLanguageName(_sourceLanguage)})',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _sourceController.text,
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            const SizedBox(height: 16),
+                            // Word-by-word translation for original
+                            Text(
+                              'Word-by-Word',
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _translationResult!.wordTranslations.map((word) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).brightness == Brightness.dark
+                                        ? Colors.grey[700]
+                                        : Colors.grey[200],
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: Theme.of(context).primaryColor.withOpacity(0.5),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        word.source,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      Text(
+                                        word.translation,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
                         ),
                       ),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Full sentence translation header
-                      Text(
-                        'Full Sentence Translation',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context).primaryColor,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      
-                      // Full translation
-                      Container(
-                        padding: const EdgeInsets.all(12),
+                    ),
+                    const SizedBox(width: 16),
+                    // Translation column
+                    Expanded(
+                      flex: 1,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.grey[800]
-                              : Colors.grey[100],
+                              ? Colors.grey[850]
+                              : Colors.grey[50],
                           borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Theme.of(context).dividerColor,
+                          ),
                         ),
-                        child: Text(
-                          _translationResult!.fullTranslation,
-                          style: const TextStyle(fontSize: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Translation (${_getLanguageName(_targetLanguage)})',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _translationResult!.fullTranslation,
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -339,5 +396,12 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
         ],
       ),
     );
+  }
+
+  String _getLanguageName(String languageCode) {
+    return LanguageOption.all.firstWhere(
+      (option) => option.code == languageCode,
+      orElse: () => LanguageOption('unknown', 'Unknown'),
+    ).name;
   }
 }

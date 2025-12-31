@@ -19,7 +19,6 @@ class _WordListsScreenState extends State<WordListsScreen>
     implements SavedWordsMixin, DeletedWordsMixin, AnkiWordsMixin, FavoriteWordsMixin {
   final TextEditingController _searchController = TextEditingController();
   final DictionaryService _dictionaryService = DictionaryService();
-  final StorageService _storageService = StorageService();
   List<DictionaryEntry> _searchResults = [];
   bool _isSearching = false;
   bool? _isFlexMode;
@@ -42,7 +41,9 @@ class _WordListsScreenState extends State<WordListsScreen>
   }
 
   Future<void> _initializeData() async {
-    await _storageService.init();
+    // Get the storage service from the app state instead of creating our own
+    final appState = Provider.of<AppState>(context, listen: false);
+    setStorageService(appState.storageService);
     await loadSavedWords();
     await loadDeletedWords();
     await loadAnkiWords();

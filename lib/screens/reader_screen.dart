@@ -34,7 +34,12 @@ class _ReaderScreenState extends State<ReaderScreen>
   @override
   void initState() {
     super.initState();
-    _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Get the storage service from the app state
+      final appState = Provider.of<AppState>(context, listen: false);
+      setStorageService(appState.storageService);
+      await _loadData();
+    });
   }
 
   Future<void> _loadData() async {
@@ -441,9 +446,9 @@ class _ReaderScreenState extends State<ReaderScreen>
                 itemBuilder: (context, sentenceIndex) {
                   final sentence = _sentences[sentenceIndex];
                   final isCurrentSentence = sentenceIndex == _currentSentenceIndex;
-                  
+
                   return Container(
-                    decoration: isCurrentSentence 
+                    decoration: isCurrentSentence
                         ? BoxDecoration(
                             border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.3)),
                             borderRadius: BorderRadius.circular(8),
@@ -458,7 +463,7 @@ class _ReaderScreenState extends State<ReaderScreen>
                         final token = sentence[wordIndex];
                         final isSelected = isCurrentSentence && wordIndex == _currentWordIndex;
                         final isDeleted = token.isWord && isWordDeleted(token.text);
-                        
+
                         return GestureDetector(
                           onTap: () {
                             setState(() {
@@ -470,8 +475,8 @@ class _ReaderScreenState extends State<ReaderScreen>
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                             decoration: BoxDecoration(
-                              color: isSelected 
-                                  ? Theme.of(context).primaryColor 
+                              color: isSelected
+                                  ? Theme.of(context).primaryColor
                                   : (isDeleted ? Colors.red.withOpacity(0.2) : (token.isWord ? Colors.grey[200] : Colors.transparent)),
                               borderRadius: BorderRadius.circular(4),
                               border: isSelected ? Border.all(color: Colors.blueAccent, width: 2) : null,

@@ -16,6 +16,8 @@ import 'wiktionary_etymology_service.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:kana_kit/kana_kit.dart';
+import '../utils/japanese_grammar.dart';
 
 class SearchOptions {
   final int limit;
@@ -437,70 +439,97 @@ class DictionaryService {
 
   /// Search term (for compatibility)
   Future<SearchResult> searchTerm(String term, {SearchOptions options = const SearchOptions()}) async {
+    // Normalize the search term and get all possible forms
+    final allForms = JapaneseGrammar.getAllPossibleForms(term);
+
+    // If term contains kanji, also search for kana readings to address the kanji search issue
+    List<String> searchTerms = [term];
+    if (JapaneseGrammar.hasKanji(term)) {
+      try {
+        final kanaReading = JapaneseGrammar.kanaKit.toHiragana(term);
+        if (kanaReading != term) {
+          searchTerms.add(kanaReading);
+        }
+      } catch (e) {
+        // If conversion fails, continue with original term
+      }
+    }
+    // Add normalized verb forms
+    searchTerms.addAll(allForms);
+    // Remove duplicates
+    searchTerms = searchTerms.toSet().toList();
+
+    // Now perform the search with all possible forms
     List<YomichanSearchResult> yomichanResults = [];
     List<YomichanKanjiResult> kanjiResults = [];
 
     // Check if it's an ideographic particle search (single character that could be a radical/component)
-    if (term.length == 1 && IdeographicUtil.containsIdeographic(term)) {
-      // First try regular search
-      yomichanResults = await searchYomichan(term);
-      kanjiResults = await searchKanji(term);
+    for (var searchTerm in searchTerms) {
+      if (searchTerm.length == 1 && IdeographicUtil.containsIdeographic(searchTerm)) {
+        // First try regular search
+        final results = await searchYomichan(searchTerm);
+        final kanji = await searchKanji(searchTerm);
+        yomichanResults.addAll(results);
+        kanjiResults.addAll(kanji);
 
-      // If regular search yields few results, also try particle search
-      if (yomichanResults.length < 5) {
-        final particleResults = await searchByParticle(term);
-        for (final result in particleResults) {
-          if (!yomichanResults.any((r) => r.entry.id == result.entry.id)) {
-            yomichanResults.add(result);
-          }
-        }
-      }
-    }
-    // If it's a Chinese character search, search with multiple strategies
-    else if (ChineseUtil.containsChinese(term)) {
-      // Direct search for Chinese characters
-      yomichanResults = await searchYomichan(term);
-      kanjiResults = await searchKanji(term);
-
-      // If no results and it looks like Pinyin, also search with Pinyin variations
-      if (yomichanResults.isEmpty && kanjiResults.isEmpty) {
-        final pinyinVariants = ChineseUtil.getAllSearchVariations(term);
-        for (final variant in pinyinVariants) {
-          if (variant != term) {
-            final variantResults = await searchYomichan(variant);
-            final variantKanjiResults = await searchKanji(variant);
-
-            // Add unique results
-            for (final result in variantResults) {
-              if (!yomichanResults.any((r) => r.entry.id == result.entry.id)) {
-                yomichanResults.add(result);
-              }
-            }
-
-            for (final result in variantKanjiResults) {
-              if (!kanjiResults.any((r) => r.kanji.id == result.kanji.id)) {
-                kanjiResults.add(result);
-              }
+        // If regular search yields few results, also try particle search
+        if (yomichanResults.length < 5) {
+          final particleResults = await searchByParticle(searchTerm);
+          for (final result in particleResults) {
+            if (!yomichanResults.any((r) => r.entry.id == result.entry.id)) {
+              yomichanResults.add(result);
             }
           }
         }
       }
-    }
-    // If it's Pinyin-like, search with enhanced Pinyin processing
-    else if (ChineseUtil.looksLikeChinesePinyin(term) || _isLikelyPinyin(term)) {
+      // If it's a Chinese character search, search with multiple strategies
+      else if (ChineseUtil.containsChinese(searchTerm)) {
+        // Direct search for Chinese characters
+        final results = await searchYomichan(searchTerm);
+        final kanji = await searchKanji(searchTerm);
+        yomichanResults.addAll(results);
+        kanjiResults.addAll(kanji);
+
+        // If no results and it looks like Pinyin, also search with Pinyin variations
+        if (results.isEmpty && kanji.isEmpty) {
+          final pinyinVariants = ChineseUtil.getAllSearchVariations(searchTerm);
+          for (final variant in pinyinVariants) {
+            if (variant != searchTerm) {
+              final variantResults = await searchYomichan(variant);
+              final variantKanjiResults = await searchKanji(variant);
+
+              // Add unique results
+              for (final result in variantResults) {
+                if (!yomichanResults.any((r) => r.entry.id == result.entry.id)) {
+                  yomichanResults.add(result);
+                }
+              }
+
+              for (final result in variantKanjiResults) {
+                if (!kanjiResults.any((r) => r.kanji.id == result.kanji.id)) {
+                  kanjiResults.add(result);
+                }
+              }
+            }
+          }
+        }
+      }
+      else if (ChineseUtil.looksLikeChinesePinyin(searchTerm) || _isLikelyPinyin(searchTerm)) {
       // First search directly
-      yomichanResults = await searchYomichan(term);
-      kanjiResults = await searchKanji(term);
+      final results = await searchYomichan(searchTerm);
+      final kanji = await searchKanji(searchTerm);
+      yomichanResults.addAll(results);
+      kanjiResults.addAll(kanji);
 
       // Then search with variations
       final pinyinVariants = [
-        ChineseUtil.toPinyinWithoutTone(term),
-        ChineseUtil.toPinyinWithToneNumber(term),
-        ChineseUtil.getPinyinInitials(term)
+        ChineseUtil.toPinyinWithoutTone(searchTerm),
+        ChineseUtil.toPinyinWithToneNumber(searchTerm),
+        ChineseUtil.getPinyinInitials(searchTerm)
       ];
 
       for (final variant in pinyinVariants) {
-        if (variant.isNotEmpty && variant != term) {
+        if (variant.isNotEmpty && variant != searchTerm) {
           final variantResults = await searchYomichan(variant);
           final variantKanjiResults = await searchKanji(variant);
 
@@ -521,12 +550,19 @@ class DictionaryService {
     }
     // Default search for Japanese or other content
     else {
-      yomichanResults = await searchYomichan(term);
-      kanjiResults = await searchKanji(term);
+      final results = await searchYomichan(searchTerm);
+      final kanji = await searchKanji(searchTerm);
+      yomichanResults.addAll(results);
+      kanjiResults.addAll(kanji);
     }
+  } // End of for loop
 
-    // Convert to SearchResult format
-    final entries = yomichanResults.map((r) => r.entry).toList();
+  // Remove duplicates if needed
+  yomichanResults = yomichanResults.toSet().toList();
+  kanjiResults = kanjiResults.toSet().toList();
+
+  // Convert to SearchResult format
+  final entries = yomichanResults.map((r) => r.entry).toList();
     final kanji = kanjiResults.map((r) => r.kanji).toList();
 
     final pitchAccents = <String, List<model.PitchAccent>>{};
