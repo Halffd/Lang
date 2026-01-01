@@ -79,7 +79,15 @@ class DictionaryService {
     }
 
     try {
-      // Try exact match first with the existing database
+      // First detect the language of the query
+      final detectedLanguage = _detectLanguage(query);
+
+      // If it's European text, use Wiktionary primarily
+      if (_isEuropeanText(query)) {
+        return await _searchEuropeanText(query, detectedLanguage);
+      }
+
+      // For non-European text (Japanese, Chinese), use existing database search
       List<DriftDictionaryEntry> results = await database.searchBoth(query);
 
       // Handle Japanese kana conversion if needed
@@ -171,6 +179,68 @@ class DictionaryService {
       );
     } catch (e) {
       print('Search error: $e');
+      return model.DictionarySearchResult(
+        entries: [],
+        query: query,
+        hasMore: false,
+      );
+    }
+  }
+
+  /// Search European text using Wiktionary
+  Future<model.DictionarySearchResult> _searchEuropeanText(String query, String language) async {
+    try {
+      // Search in Wiktionary for European languages
+      final wiktionaryEntries = await fetchWiktionaryDetails(query, language: language);
+
+      if (wiktionaryEntries.isNotEmpty) {
+        // Convert Wiktionary entries to DictionaryEntry format
+        final entries = wiktionaryEntries.map((wiktionaryEntry) {
+          return model.DictionaryEntry.fromJson({
+            'id': 0, // Placeholder ID
+            'dictionaryId': 0, // Placeholder dictionary ID
+            'term': query,
+            'reading': '', // No reading for European languages
+            'definitionTags': [], // No tags
+            'rules': [], // No rules
+            'popularity': 0.0, // No popularity yet
+            'definitions': [wiktionaryEntry.definition], // Use Wiktionary definition
+            'sequence': null, // No sequence
+            'termTags': [] // No tags
+          });
+        }).toList();
+
+        return model.DictionarySearchResult(
+          entries: entries,
+          query: query,
+          hasMore: false,
+        );
+      } else {
+        // If no Wiktionary results, try the existing database as fallback
+        final fallbackResults = await database.searchBoth(query);
+        final entries = fallbackResults.map<model.DictionaryEntry>((row) {
+          return model.DictionaryEntry.fromJson({
+            'id': row.id,
+            'dictionaryId': 1,  // Default to dictionary ID 1 since we don't have that field in this table
+            'term': row.term,
+            'reading': row.reading ?? '',
+            'definitionTags': [],
+            'rules': [],
+            'popularity': row.frequency.toDouble(),
+            'definitions': row.definitions.split('||'),
+            'sequence': row.id,
+            'termTags': []
+          });
+        }).toList();
+
+        return model.DictionarySearchResult(
+          entries: entries,
+          query: query,
+          hasMore: fallbackResults.length >= 50,
+        );
+      }
+    } catch (e) {
+      print('European language search error: $e');
       return model.DictionarySearchResult(
         entries: [],
         query: query,
@@ -786,88 +856,243 @@ class DictionaryService {
     }
   }
 
-  /// Tokenize text by finding the longest matching dictionary entries
+  /// Detect the language/script of input text
+  String _detectLanguage(String text) {
+    // Check for specific character ranges to determine the language/script
+    if (ChineseUtil.containsChinese(text)) {
+      return 'zh';  // Chinese
+    } else if (RegExp(r'[\u3040-\u309F\u30A0-\u30FF]').hasMatch(text)) {
+      // Contains hiragana or katakana
+      return 'ja';  // Japanese
+    } else if (RegExp(r'[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]').hasMatch(text)) {
+      // Contains Arabic script
+      return 'ar';  // Arabic
+    } else if (RegExp(r'[\u0590-\u05FF]').hasMatch(text)) {
+      // Contains Hebrew script
+      return 'he';  // Hebrew
+    } else if (RegExp(r'[\u0400-\u04FF\u0500-\u052F]').hasMatch(text)) {
+      // Contains Cyrillic script (Russian, etc.)
+      return 'ru';  // Russian as example
+    } else if (RegExp(r'[\uAC00-\uD7AF]').hasMatch(text)) {
+      // Contains Korean Hangul
+      return 'ko';  // Korean
+    } else if (RegExp(r'[\u1780-\u17FF\u19E0-\u19FF]').hasMatch(text)) {
+      // Contains Khmer script
+      return 'km';  // Khmer
+    } else if (RegExp(r'[\u0900-\u097F\u1CD0-\u1CFF]').hasMatch(text)) {
+      // Contains Devanagari script (Hindi, etc.)
+      return 'hi';  // Hindi
+    } else if (RegExp(r'[\u0D80-\u0DFF]').hasMatch(text)) {
+      // Contains Sinhala script
+      return 'si';  // Sinhala
+    } else if (RegExp(r'[\u1000-\u109F]').hasMatch(text)) {
+      // Contains Myanmar script
+      return 'my';  // Myanmar
+    } else {
+      // It's likely a Latin-based script (European languages, English, etc.)
+      // We'll return 'en' as a default for Latin scripts
+      return 'en';
+    }
+  }
+
+  /// Check if the text is primarily European (Latin-based script)
+  bool _isEuropeanText(String text) {
+    // Check if the text contains mainly Latin characters (European languages, English, etc.)
+    // Count the ratio of Latin characters to other characters
+    int latinCount = 0;
+    int otherCount = 0;
+
+    for (int i = 0; i < text.length; i++) {
+      final codeUnit = text.codeUnitAt(i);
+      if ((codeUnit >= 65 && codeUnit <= 122) || // A-Z, a-z
+          (codeUnit >= 48 && codeUnit <= 57) || // 0-9
+          codeUnit == 32 || // space
+          (codeUnit >= 192 && codeUnit <= 687)) { // Extended Latin characters used in European languages
+        latinCount++;
+      } else {
+        otherCount++;
+      }
+    }
+
+    // If more than 50% are Latin characters, consider it European text
+    return latinCount > 0 && otherCount < latinCount;
+  }
+
+  /// Tokenize text by finding the longest matching dictionary entries or using Wiktionary for European languages
   Future<List<Token>> tokenizeText(String text) async {
+    // If it's European text (or any Latin-based script), use Wiktionary as primary source
+    if (_isEuropeanText(text)) {
+      return await _tokenizeEuropeanText(text);
+    } else if (ChineseUtil.containsChinese(text)) {
+      return await _tokenizeChineseText(text);
+    } else {
+      // For Japanese or other supported scripts, use existing approach
+      return await _tokenizeJapaneseText(text);
+    }
+  }
+
+  /// Tokenize European text - split by spaces and punctuation, then look up in Wiktionary
+  Future<List<Token>> _tokenizeEuropeanText(String text) async {
+    final List<Token> tokens = [];
+
+    // Split by words while preserving spaces and punctuation
+    final words = text.split(RegExp(r'(\s+|[^\w\s]+)')); // Split by word boundaries
+
+    for (final word in words) {
+      if (word.trim().isNotEmpty) {
+        if (_isWordLike(word)) {
+          // Look up the word in Wiktionary
+          final wiktionaryEntries = await fetchWiktionaryDetails(word, language: _detectLanguage(word));
+
+          if (wiktionaryEntries.isNotEmpty) {
+            // Convert Wiktionary entry to DictionaryEntry format
+            final entry = _convertWiktionaryToDictionaryEntry(wiktionaryEntries.first, word);
+            tokens.add(Token(
+              text: word,
+              entry: entry,
+              isWord: true,
+            ));
+          } else {
+            // If no Wiktionary entry, add as non-word token
+            tokens.add(Token(
+              text: word,
+              isWord: false,
+            ));
+          }
+        } else {
+          // Add punctuation/spaces as non-word tokens
+          tokens.add(Token(
+            text: word,
+            isWord: false,
+          ));
+        }
+      }
+    }
+
+    return tokens;
+  }
+
+  /// Check if text looks like a word (not just punctuation or spaces)
+  bool _isWordLike(String text) {
+    // Check if text contains at least one alphabetic character
+    return RegExp(r'[a-zA-Z]').hasMatch(text);
+  }
+
+  /// Convert Wiktionary entry to DictionaryEntry format
+  model.DictionaryEntry _convertWiktionaryToDictionaryEntry(WiktionaryEntry wiktionaryEntry, String term) {
+    // Create a DictionaryEntry from Wiktionary data
+    return model.DictionaryEntry(
+      id: 0, // We need to ensure proper ID handling
+      dictionaryId: 0, // Placeholder value
+      term: term,
+      reading: '', // No reading for European languages
+      definitionTags: [], // No tags in this simple conversion
+      rules: [], // No rules
+      popularity: 0.0, // No popularity for Wiktionary entries
+      definitions: [wiktionaryEntry.definition], // Use the main definition
+      sequence: null, // No sequence
+      termTags: [], // No term tags
+    );
+  }
+
+  /// Tokenize Chinese text
+  Future<List<Token>> _tokenizeChineseText(String text) async {
     final db = await yomichanDatabase;
     final List<Token> tokens = [];
     int cursor = 0;
 
-    // Split by lines first to preserve structure if needed, but here we process the whole text
-    // We'll iterate through the text
     while (cursor < text.length) {
       bool matchFound = false;
 
-      // For Chinese text, we need different tokenization strategy
-      if (cursor < text.length && ChineseUtil.containsChinese(text[cursor])) {
-        // Try to match Chinese characters in various lengths
-        int maxLength = 3; // Chinese words are typically 1-3 characters
-        if (cursor + maxLength > text.length) {
-          maxLength = text.length - cursor;
-        }
+      // Try to match Chinese characters in various lengths
+      int maxLength = 3; // Chinese words are typically 1-3 characters
+      if (cursor + maxLength > text.length) {
+        maxLength = text.length - cursor;
+      }
 
-        final candidates = <String>[];
-        for (int i = maxLength; i >= 1; i--) {
-          candidates.add(text.substring(cursor, cursor + i));
-        }
+      final candidates = <String>[];
+      for (int i = maxLength; i >= 1; i--) {
+        candidates.add(text.substring(cursor, cursor + i));
+      }
 
-        if (candidates.isNotEmpty) {
-          final placeholders = List.filled(candidates.length, '?').join(',');
-          final results = await db.query(
-            'entries',
-            where: 'term IN ($placeholders)',
-            whereArgs: candidates,
-            orderBy: 'length(term) DESC', // Prioritize longer matches
-            limit: 1, // Get the longest one
-          );
+      if (candidates.isNotEmpty) {
+        final placeholders = List.filled(candidates.length, '?').join(',');
+        final results = await db.query(
+          'entries',
+          where: 'term IN ($placeholders)',
+          whereArgs: candidates,
+          orderBy: 'length(term) DESC', // Prioritize longer matches
+          limit: 1, // Get the longest one
+        );
 
-          if (results.isNotEmpty) {
-            final row = results.first;
-            final entry = model.DictionaryEntry.fromJson(row);
-            tokens.add(Token(
-              text: entry.term,
-              entry: entry,
-              isWord: true,
-            ));
-            cursor += entry.term.length;
-            matchFound = true;
-          }
+        if (results.isNotEmpty) {
+          final row = results.first;
+          final entry = model.DictionaryEntry.fromJson(row);
+          tokens.add(Token(
+            text: entry.term,
+            entry: entry,
+            isWord: true,
+          ));
+          cursor += entry.term.length;
+          matchFound = true;
         }
       }
-      else {
-        // Try to match longest possible word (up to 10 chars) for Japanese
-        int maxLength = 10;
-        if (cursor + maxLength > text.length) {
-          maxLength = text.length - cursor;
-        }
 
-        final candidates = <String>[];
-        for (int i = maxLength; i >= 1; i--) {
-          candidates.add(text.substring(cursor, cursor + i));
-        }
+      if (!matchFound) {
+        // No dictionary match, consume one character
+        tokens.add(Token(
+          text: text[cursor],
+          isWord: false,
+        ));
+        cursor++;
+      }
+    }
 
-        // Batch query for all candidates
-        // We prioritize longer matches by checking them in order or sorting results
-        if (candidates.isNotEmpty) {
-          final placeholders = List.filled(candidates.length, '?').join(',');
-          final results = await db.query(
-            'entries',
-            where: 'term IN ($placeholders)',
-            whereArgs: candidates,
-            orderBy: 'length(term) DESC', // Prioritize longer matches
-            limit: 1, // Get the longest one
-          );
+    return tokens;
+  }
 
-          if (results.isNotEmpty) {
-            final row = results.first;
-            final entry = model.DictionaryEntry.fromJson(row);
-            tokens.add(Token(
-              text: entry.term,
-              entry: entry,
-              isWord: true,
-            ));
-            cursor += entry.term.length;
-            matchFound = true;
-          }
+  /// Tokenize Japanese text
+  Future<List<Token>> _tokenizeJapaneseText(String text) async {
+    final db = await yomichanDatabase;
+    final List<Token> tokens = [];
+    int cursor = 0;
+
+    while (cursor < text.length) {
+      bool matchFound = false;
+
+      // Try to match longest possible word (up to 10 chars) for Japanese
+      int maxLength = 10;
+      if (cursor + maxLength > text.length) {
+        maxLength = text.length - cursor;
+      }
+
+      final candidates = <String>[];
+      for (int i = maxLength; i >= 1; i--) {
+        candidates.add(text.substring(cursor, cursor + i));
+      }
+
+      // Batch query for all candidates
+      // We prioritize longer matches by checking them in order or sorting results
+      if (candidates.isNotEmpty) {
+        final placeholders = List.filled(candidates.length, '?').join(',');
+        final results = await db.query(
+          'entries',
+          where: 'term IN ($placeholders)',
+          whereArgs: candidates,
+          orderBy: 'length(term) DESC', // Prioritize longer matches
+          limit: 1, // Get the longest one
+        );
+
+        if (results.isNotEmpty) {
+          final row = results.first;
+          final entry = model.DictionaryEntry.fromJson(row);
+          tokens.add(Token(
+            text: entry.term,
+            entry: entry,
+            isWord: true,
+          ));
+          cursor += entry.term.length;
+          matchFound = true;
         }
       }
 

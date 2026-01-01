@@ -71,7 +71,6 @@ class LangApp extends StatelessWidget {
           ),
           builder: (context, child) {
             // Apply zoom and font size multiplier to the entire app
-            // Wrap with gesture detection for zoom functionality
             Widget appContent = Transform.scale(
               scale: appState.zoomLevel,
               child: MediaQuery(
@@ -82,10 +81,12 @@ class LangApp extends StatelessWidget {
               ),
             );
 
-            // Add gesture detection for pinch-to-zoom and keyboard shortcuts
-            return GestureZoomWrapper(
-              child: appContent,
-            );
+            // Add gesture detection for pinch-to-zoom and keyboard shortcuts on mobile only
+            return Platform.isIOS || Platform.isAndroid
+                ? GestureZoomWrapper(
+                    child: appContent,
+                  )
+                : appContent;
           },
           home: const MainScreen(),
         );

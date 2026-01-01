@@ -156,6 +156,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get autoTranslateWords => 'Automatically translate words in reader mode';
 
   @override
+  String get autoPasteReader => 'Auto-paste in Reader Mode';
+
+  @override
+  String get autoPasteReaderSubtitle => 'Automatically paste text from clipboard into reader mode';
+
+  @override
   String get about => 'About';
 
   @override

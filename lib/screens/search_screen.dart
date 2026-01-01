@@ -293,7 +293,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     autofocus: true,
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                      hintText: 'Search Japanese/Chinese...',
+                      hintText: 'Search Japanese/Chinese/European languages...',
                       hintStyle: const TextStyle(color: Colors.white70),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -360,7 +360,7 @@ class _SearchScreenState extends State<SearchScreen> {
           autofocus: true,
           style: const TextStyle(color: Colors.white),
           decoration: const InputDecoration(
-            hintText: 'Search Japanese/Chinese...',
+            hintText: 'Search Japanese/Chinese/European languages...',
             hintStyle: TextStyle(color: Colors.white70),
             border: InputBorder.none,
           ),

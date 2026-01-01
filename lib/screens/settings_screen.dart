@@ -631,6 +631,15 @@ class SettingsScreen extends StatelessWidget {
                       appState.setAutoTranslate(value);
                     },
                   ),
+                  const Divider(),
+                  SwitchListTile(
+                    title: Text(AppLocalizations.of(context)!.autoPasteReader),
+                    subtitle: Text(AppLocalizations.of(context)!.autoPasteReaderSubtitle),
+                    value: appState.autoPasteReader,
+                    onChanged: (value) {
+                      appState.setAutoPasteReader(value);
+                    },
+                  ),
                 ],
               ),
             ),

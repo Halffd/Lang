@@ -156,6 +156,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get autoTranslateWords => 'リーダーモードで単語を自動翻訳';
 
   @override
+  String get autoPasteReader => 'リーダーモード自動貼り付け';
+
+  @override
+  String get autoPasteReaderSubtitle => 'クリップボードからテキストを自動的にリーダーモードに貼り付け';
+
+  @override
   String get about => 'アプリについて';
 
   @override

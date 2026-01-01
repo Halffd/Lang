@@ -393,6 +393,18 @@ abstract class AppLocalizations {
   /// **'Automatically translate words in reader mode'**
   String get autoTranslateWords;
 
+  /// No description provided for @autoPasteReader.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-paste in Reader Mode'**
+  String get autoPasteReader;
+
+  /// No description provided for @autoPasteReaderSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically paste text from clipboard into reader mode'**
+  String get autoPasteReaderSubtitle;
+
   /// No description provided for @about.
   ///
   /// In en, this message translates to:

@@ -73,6 +73,7 @@ class AppState extends ChangeNotifier {
   bool get forvoAudioEnabled => _forvoAudioEnabled;
   bool get autoConvertJapanese => _autoConvertJapanese;
   int get defaultScreenIndex => _defaultScreenIndex;
+  bool get autoPasteReader => _autoPasteReader;
 
   // Expose storage service for mixins
   StorageService get storageService => _storageService;
@@ -84,6 +85,7 @@ class AppState extends ChangeNotifier {
   bool _forvoAudioEnabled = false;
   bool _autoConvertJapanese = true; // Default to auto-convert letters to Japanese
   List<String> _profiles = ['Default'];
+  bool _autoPasteReader = false; // Auto-paste from clipboard in reader mode
 
   // Setters with persistence
 
@@ -286,6 +288,12 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  void setAutoPasteReader(bool value) {
+    _autoPasteReader = value;
+    _storageService.setBool('auto_paste_reader', value);
+    notifyListeners();
+  }
+
   // Word management
   void addSavedWord(String word, {Map<String, dynamic>? details}) {
     if (!_savedWords.contains(word)) {
@@ -425,6 +433,7 @@ class AppState extends ChangeNotifier {
       _forvoAudioEnabled = _storageService.getBool('forvo_audio_enabled') ?? false;
       _autoConvertJapanese = _storageService.getBool('auto_convert_japanese') ?? true;
       _defaultScreenIndex = _storageService.getInt('default_screen_index') ?? 0;
+      _autoPasteReader = _storageService.getBool('auto_paste_reader') ?? false;
       // Ensure value is within valid range (0-5 for the 6 screens)
       if (_defaultScreenIndex < 0 || _defaultScreenIndex > 5) {
         _defaultScreenIndex = 0;

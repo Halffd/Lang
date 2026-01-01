@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import '../models/dictionary.dart';
 import '../models/app_state.dart';
 import '../models/translation_model.dart';
@@ -8,6 +9,7 @@ import '../services/dictionary_service.dart';
 import '../services/translation_service.dart';
 import '../mixins/word_list_mixins.dart';
 import '../widgets/dictionary_entry_card.dart';
+import '../utils/chinese_util.dart';
 
 class ReaderScreen extends StatefulWidget {
   const ReaderScreen({Key? key}) : super(key: key);
@@ -39,6 +41,11 @@ class _ReaderScreenState extends State<ReaderScreen>
       final appState = Provider.of<AppState>(context, listen: false);
       setStorageService(appState.storageService);
       await _loadData();
+
+      // Check if auto-paste is enabled and try to paste from clipboard
+      if (appState.autoPasteReader) {
+        await _autoPasteFromClipboard();
+      }
     });
   }
 
@@ -47,6 +54,20 @@ class _ReaderScreenState extends State<ReaderScreen>
     await loadAnkiWords();
     await loadFavoriteWords();
     await loadDeletedWords();
+  }
+
+  Future<void> _autoPasteFromClipboard() async {
+    try {
+      final ClipboardData? clipboardData = await Clipboard.getData('text/plain');
+      final text = clipboardData?.text ?? '';
+
+      if (text.isNotEmpty) {
+        _textController.text = text;
+        await _analyzeText();
+      }
+    } catch (e) {
+      print('Error auto-pasting from clipboard: $e');
+    }
   }
 
   @override
@@ -101,6 +122,21 @@ class _ReaderScreenState extends State<ReaderScreen>
     if (event is RawKeyDownEvent) {
       if (_sentences.isEmpty) return;
 
+      // Toggle auto-paste with 'm' key
+      if (event.logicalKey == LogicalKeyboardKey.keyM) {
+        final appState = Provider.of<AppState>(context, listen: false);
+        appState.setAutoPasteReader(!appState.autoPasteReader);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(appState.autoPasteReader
+              ? 'Auto-paste enabled'
+              : 'Auto-paste disabled'),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+        return; // Early return to avoid other processing
+      }
+
       // Navigation
       if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
         _moveNextWord();
@@ -114,7 +150,7 @@ class _ReaderScreenState extends State<ReaderScreen>
         _moveNextLine();
       } else if (event.logicalKey == LogicalKeyboardKey.pageUp) {
         _movePrevLine();
-      } 
+      }
       // Actions
       else if (event.logicalKey == LogicalKeyboardKey.space) {
         _toggleExpandInfo();
@@ -237,11 +273,19 @@ class _ReaderScreenState extends State<ReaderScreen>
     if (token == null || token.text.isEmpty) return;
 
     try {
+      // Detect language of the token text
+      final detectedLanguage = _detectLanguage(token.text);
+
+      // Create a translation request for the current token
+      // For European languages, translate to English; for Asian languages, use appropriate target
+      String targetLanguage = 'en'; // Default to English
+      String sourceLanguage = detectedLanguage;
+
       // Create a translation request for the current token
       final request = TranslationRequest(
         sourceText: token.text,
-        sourceLanguage: 'ja', // Assuming Japanese input by default
-        targetLanguage: 'en', // Default to English output
+        sourceLanguage: sourceLanguage,
+        targetLanguage: targetLanguage,
       );
 
       final result = await _translationService.translate(request);
@@ -259,6 +303,45 @@ class _ReaderScreenState extends State<ReaderScreen>
     } catch (e) {
       // Optionally show an error message
       print('Translation failed: $e');
+    }
+  }
+
+  /// Detect the language/script of input text (similar to dictionary service)
+  String _detectLanguage(String text) {
+    // Check for specific character ranges to determine the language/script
+    if (ChineseUtil.containsChinese(text)) {
+      return 'zh';  // Chinese
+    } else if (RegExp(r'[\u3040-\u309F\u30A0-\u30FF]').hasMatch(text)) {
+      // Contains hiragana or katakana
+      return 'ja';  // Japanese
+    } else if (RegExp(r'[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]').hasMatch(text)) {
+      // Contains Arabic script
+      return 'ar';  // Arabic
+    } else if (RegExp(r'[\u0590-\u05FF]').hasMatch(text)) {
+      // Contains Hebrew script
+      return 'he';  // Hebrew
+    } else if (RegExp(r'[\u0400-\u04FF\u0500-\u052F]').hasMatch(text)) {
+      // Contains Cyrillic script (Russian, etc.)
+      return 'ru';  // Russian as example
+    } else if (RegExp(r'[\uAC00-\uD7AF]').hasMatch(text)) {
+      // Contains Korean Hangul
+      return 'ko';  // Korean
+    } else if (RegExp(r'[\u1780-\u17FF\u19E0-\u19FF]').hasMatch(text)) {
+      // Contains Khmer script
+      return 'km';  // Khmer
+    } else if (RegExp(r'[\u0900-\u097F\u1CD0-\u1CFF]').hasMatch(text)) {
+      // Contains Devanagari script (Hindi, etc.)
+      return 'hi';  // Hindi
+    } else if (RegExp(r'[\u0D80-\u0DFF]').hasMatch(text)) {
+      // Contains Sinhala script
+      return 'si';  // Sinhala
+    } else if (RegExp(r'[\u1000-\u109F]').hasMatch(text)) {
+      // Contains Myanmar script
+      return 'my';  // Myanmar
+    } else {
+      // It's likely a Latin-based script (European languages, English, etc.)
+      // We'll return 'en' as a default for Latin scripts
+      return 'en';
     }
   }
 
@@ -339,7 +422,7 @@ class _ReaderScreenState extends State<ReaderScreen>
   Widget build(BuildContext context) {
     if (_showInput) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Reader')),
+        appBar: AppBar(title: const Text('Japanese Reader')),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -370,7 +453,7 @@ class _ReaderScreenState extends State<ReaderScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Reader Mode'),
+        title: const Text('Japanese Reader Mode'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -422,6 +505,7 @@ class _ReaderScreenState extends State<ReaderScreen>
                       Text('Enter: Toggle Anki'),
                       Text('B: Toggle Favorites'),
                       Text('Delete: Delete word'),
+                      Text('M: Toggle Auto-paste'),
                     ],
                   ),
                   actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
@@ -473,21 +557,46 @@ class _ReaderScreenState extends State<ReaderScreen>
                             });
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            margin: const EdgeInsets.only(top: 2),
                             decoration: BoxDecoration(
-                              color: isSelected
-                                  ? Theme.of(context).primaryColor
-                                  : (isDeleted ? Colors.red.withOpacity(0.2) : (token.isWord ? Colors.grey[200] : Colors.transparent)),
-                              borderRadius: BorderRadius.circular(4),
-                              border: isSelected ? Border.all(color: Colors.blueAccent, width: 2) : null,
-                            ),
-                            child: Text(
-                              token.text,
-                              style: TextStyle(
-                                color: isSelected ? Colors.white : (isDeleted ? Colors.red : Colors.black),
-                                fontSize: 18,
-                                decoration: isDeleted ? TextDecoration.lineThrough : null,
+                              border: Border.all(
+                                color: isSelected
+                                    ? Colors.purple
+                                    : (token.isWord ? Colors.grey.shade400 : Colors.transparent),
                               ),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                  child: Text(
+                                    token.text,
+                                    style: TextStyle(
+                                      color: isSelected ? Colors.white : (isDeleted ? Colors.red : Colors.black),
+                                      fontSize: 18,
+                                      decoration: isDeleted ? TextDecoration.lineThrough : null,
+                                    ),
+                                  ),
+                                ),
+                                // Show definition below the word if available
+                                if (token.entry != null && token.entry!.definitions.isNotEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                    color: isSelected ? Colors.purple.shade100 : Colors.grey.shade100,
+                                    child: Text(
+                                      token.entry!.definitions.first.length > 60
+                                        ? '${token.entry!.definitions.first.substring(0, 60)}...'
+                                        : token.entry!.definitions.first,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: isSelected ? Colors.purple.shade800 : Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         );

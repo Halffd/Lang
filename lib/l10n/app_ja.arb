@@ -48,6 +48,8 @@
   "enableForvoPronunciations": "Forvoからの音声発音を有効化",
   "autoTranslation": "自動翻訳",
   "autoTranslateWords": "リーダーモードで単語を自動翻訳",
+  "autoPasteReader": "リーダーモード自動貼り付け",
+  "autoPasteReaderSubtitle": "クリップボードからテキストを自動的にリーダーモードに貼り付け",
   "about": "アプリについて",
   "version": "バージョン {version}",
   "japanese": "日本語",

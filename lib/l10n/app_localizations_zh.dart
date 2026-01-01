@@ -156,6 +156,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get autoTranslateWords => '在阅读器模式下自动翻译词语';
 
   @override
+  String get autoPasteReader => '阅读器模式自动粘贴';
+
+  @override
+  String get autoPasteReaderSubtitle => '自动从剪贴板粘贴文本到阅读器模式';
+
+  @override
   String get about => '关于';
 
   @override

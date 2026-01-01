@@ -156,6 +156,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get autoTranslateWords => 'Traducir automáticamente palabras en modo lector';
 
   @override
+  String get autoPasteReader => 'Pegado automático en modo lector';
+
+  @override
+  String get autoPasteReaderSubtitle => 'Pegar automáticamente texto desde el portapapeles en modo lector';
+
+  @override
   String get about => 'Acerca de';
 
   @override

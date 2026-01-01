@@ -48,6 +48,8 @@
   "enableForvoPronunciations": "启用Forvo的发音音频",
   "autoTranslation": "自动翻译",
   "autoTranslateWords": "在阅读器模式下自动翻译词语",
+  "autoPasteReader": "阅读器模式自动粘贴",
+  "autoPasteReaderSubtitle": "自动从剪贴板粘贴文本到阅读器模式",
   "about": "关于",
   "version": "版本 {version}",
   "japanese": "日语",

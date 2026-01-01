@@ -48,6 +48,8 @@
   "enableForvoPronunciations": "Enable audio pronunciations from Forvo",
   "autoTranslation": "Auto Translation",
   "autoTranslateWords": "Automatically translate words in reader mode",
+  "autoPasteReader": "Auto-paste in Reader Mode",
+  "autoPasteReaderSubtitle": "Automatically paste text from clipboard into reader mode",
   "about": "About",
   "version": "Version {version}",
   "japanese": "Japanese",

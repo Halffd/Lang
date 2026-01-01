@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'dart:io' show Platform;
 import '../models/app_state.dart';
 
 class GestureZoomWrapper extends StatefulWidget {
@@ -25,10 +26,15 @@ class _GestureZoomWrapperState extends State<GestureZoomWrapper> {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context, listen: false);
-    
+
+    // Only add zoom functionality on mobile platforms
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      return widget.child;
+    }
+
     return Listener(
       onPointerSignal: (PointerSignalEvent event) {
-        // Handle mouse wheel for zoom on desktop
+        // Handle mouse wheel for zoom on mobile platforms only
         if (event is PointerScrollEvent) {
           // For simplicity, we're not checking for control keys in this version
           // as it requires more complex handling
@@ -72,7 +78,7 @@ class _GestureZoomWrapperState extends State<GestureZoomWrapper> {
   void _handleScaleStart(ScaleStartDetails details) {
     _lastScale = 1.0;
     _lastFontSize = 1.0;
-    
+
     final appState = context.read<AppState>();
     _initialScale = appState.zoomLevel;
     _initialFontSize = appState.fontSizeMultiplier;
