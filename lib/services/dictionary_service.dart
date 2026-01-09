@@ -11,6 +11,7 @@ import '../database/database_manager.dart';
 import '../utils/chinese_util.dart';
 import '../utils/ideographic_util.dart';
 import 'wiktionary_etymology_service.dart';
+import 'wiktionary_service.dart';
 
 // Import sqflite for Yomichan functionality
 import 'package:sqflite/sqflite.dart';
@@ -1107,6 +1108,51 @@ class DictionaryService {
     }
 
     return tokens;
+  }
+
+  /// Fetch detailed information from Wiktionary using the new WiktionaryService
+  /// This method implements the JavaScript-originated function logic in Dart
+  Future<List<String>> fetchWiktionaryDetailed(String word, [bool isChinese = false]) async {
+    try {
+      final service = WiktionaryService();
+      final result = await service.fetchDetailedWordInformation(word, isChinese);
+
+      // result is a List<List<String>> where:
+      // result[0] = japaneseContent
+      // result[1] = originContent
+      // result[2] = alternativeContent
+      // result[3] = allContent
+      // result[4] = otherContent
+
+      if (result.length >= 5) {
+        // Combine relevant content from various sections
+        final combinedContent = <String>[];
+        combinedContent.addAll(result[0]);  // japaneseContent
+        combinedContent.addAll(result[1]);  // originContent
+        combinedContent.addAll(result[2]);  // alternativeContent
+        combinedContent.addAll(result[3]);  // allContent
+        combinedContent.addAll(result[4]);  // otherContent
+
+        return combinedContent;
+      }
+
+      return [];
+    } catch (e) {
+      print('Error fetching detailed Wiktionary data: $e');
+      return [];
+    }
+  }
+
+  /// Enhanced method to fetch detailed word information for any language
+  /// This integrates with the new WiktionaryService to support multi-language word lookup
+  Future<List<String>> fetchWordDetailsMultiLanguage(String word, String detectedLanguage) async {
+    try {
+      final service = WiktionaryService();
+      return await service.fetchWordDetailsForAnyLanguage(word, detectedLanguage);
+    } catch (e) {
+      print('Error fetching multi-language word details: $e');
+      return [];
+    }
   }
 }
 
