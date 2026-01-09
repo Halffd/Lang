@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:kana_kit/kana_kit.dart';
 import '../models/app_state.dart';
+import '../models/dictionary.dart' as model;
 import '../models/dictionary.dart';
 import '../models/etymology_model.dart';
+import '../models/tone_model.dart';
 import '../services/dictionary_service.dart';
 import '../services/wiktionary_etymology_service.dart';
 import '../utils/chinese_util.dart';
@@ -42,9 +44,13 @@ class _ToggleNavIntent extends Intent {
   const _ToggleNavIntent();
 }
 
+class SendAndAppendIntent extends Intent {
+  const SendAndAppendIntent();
+}
+
 class SearchScreen extends StatefulWidget {
   const SearchScreen({Key? key}) : super(key: key);
-  
+
   @override
   State<SearchScreen> createState() => _SearchScreenState();
 }
@@ -126,11 +132,50 @@ class _SearchScreenState extends State<SearchScreen> {
           searchReadings: true,
         ),
       );
-      
-      setState(() {
-        _searchResult = result;
-        _isSearching = false;
-      });
+
+      // Also fetch multi-language Wiktionary details for the query
+      final wiktionaryDetails = await _dictionaryService.fetchWordDetailsMultiLanguage(query, _detectLanguage(query));
+
+      // If we found Wiktionary details, add them to the search result
+      if (wiktionaryDetails.isNotEmpty) {
+        final updatedWiktionaryDetails = Map<String, List<WiktionaryEntry>>.from(result.wiktionaryDetails);
+
+        // Create WiktionaryEntry objects from the detailed information
+        final newWiktionaryEntries = wiktionaryDetails.map((detail) => WiktionaryEntry(
+          word: query,
+          language: _detectLanguage(query),
+          definition: detail,
+          partOfSpeech: 'Detailed Info',
+        )).toList();
+
+        if (newWiktionaryEntries.isNotEmpty) {
+          final key = '${query}_'; // Use the query as key
+          updatedWiktionaryDetails[key] = newWiktionaryEntries;
+        }
+
+        // Update the search result with the new Wiktionary details
+        final updatedResult = SearchResult(
+          entries: result.entries,
+          kanji: result.kanji,
+          pitchAccents: result.pitchAccents,
+          toneInfo: result.toneInfo,
+          frequencies: result.frequencies,
+          dictionaries: result.dictionaries,
+          tags: result.tags,
+          etymology: result.etymology,
+          wiktionaryDetails: updatedWiktionaryDetails,
+        );
+
+        setState(() {
+          _searchResult = updatedResult;
+          _isSearching = false;
+        });
+      } else {
+        setState(() {
+          _searchResult = result;
+          _isSearching = false;
+        });
+      }
     } catch (e) {
       setState(() => _isSearching = false);
       if (mounted) {
@@ -138,6 +183,217 @@ class _SearchScreenState extends State<SearchScreen> {
           SnackBar(content: Text('Search error: $e')),
         );
       }
+    }
+  }
+
+  /// Send search and append result to existing results
+  Future<void> _sendAndAppendResult() async {
+    final query = _searchController.text.trim();
+    if (query.isEmpty) return;
+
+    setState(() {
+      _isSearching = true;
+    });
+
+    try {
+      final result = await _dictionaryService.searchTerm(
+        query,
+        options: const SearchOptions(
+          limit: 50,
+          exactMatch: false,
+          searchReadings: true,
+        ),
+      );
+
+      // Also fetch multi-language Wiktionary details for the query
+      final wiktionaryDetails = await _dictionaryService.fetchWordDetailsMultiLanguage(query, _detectLanguage(query));
+
+      // If we found Wiktionary details, add them to the search result
+      if (wiktionaryDetails.isNotEmpty) {
+        final updatedWiktionaryDetails = Map<String, List<WiktionaryEntry>>.from(_searchResult?.wiktionaryDetails ?? {});
+
+        // Create WiktionaryEntry objects from the detailed information
+        final newWiktionaryEntries = wiktionaryDetails.map((detail) => WiktionaryEntry(
+          word: query,
+          language: _detectLanguage(query),
+          definition: detail,
+          partOfSpeech: 'Detailed Info',
+        )).toList();
+
+        if (newWiktionaryEntries.isNotEmpty) {
+          final key = '${query}_'; // Use the query as key
+          updatedWiktionaryDetails[key] = newWiktionaryEntries;
+        }
+
+        // Update the search result with the new Wiktionary details
+        final updatedResult = SearchResult(
+          entries: result.entries,
+          kanji: result.kanji,
+          pitchAccents: result.pitchAccents,
+          toneInfo: result.toneInfo,
+          frequencies: result.frequencies,
+          dictionaries: result.dictionaries,
+          tags: result.tags,
+          etymology: result.etymology,
+          wiktionaryDetails: updatedWiktionaryDetails,
+        );
+
+        setState(() {
+          // Append new results to existing ones
+          if (_searchResult != null) {
+            // Combine existing and new entries
+            final combinedEntries = <DictionaryEntry>[
+              ...(_searchResult?.entries ?? []),
+              ...result.entries,
+            ];
+
+            // Remove duplicates
+            final seenTerms = <String>{};
+            final uniqueEntries = <DictionaryEntry>[];
+            for (final entry in combinedEntries) {
+              if (!seenTerms.contains(entry.term)) {
+                seenTerms.add(entry.term);
+                uniqueEntries.add(entry);
+              }
+            }
+
+            // Combine Maps properly
+            final combinedPitchAccents = Map<String, List<PitchAccent>>.from(_searchResult?.pitchAccents ?? {});
+            combinedPitchAccents.addAll(result.pitchAccents);
+
+            final combinedFrequencies = Map<String, List<model.FrequencyData>>.from(_searchResult?.frequencies ?? {});
+            combinedFrequencies.addAll(result.frequencies);
+
+            final combinedDictionaries = Map<int, model.Dictionary>.from(_searchResult?.dictionaries ?? {});
+            combinedDictionaries.addAll(result.dictionaries);
+
+            final combinedTags = Map<String, DictionaryTag>.from(_searchResult?.tags ?? {});
+            combinedTags.addAll(result.tags);
+
+            final combinedEtymology = Map<String, List<EtymologyEntry>>.from(_searchResult?.etymology ?? {});
+            combinedEtymology.addAll(result.etymology);
+
+            final combinedToneInfo = Map<String, List<ToneInfo>>.from(_searchResult?.toneInfo ?? {});
+            combinedToneInfo.addAll(result.toneInfo);
+
+            _searchResult = SearchResult(
+              entries: uniqueEntries,
+              kanji: [...(_searchResult?.kanji ?? []), ...result.kanji],
+              pitchAccents: combinedPitchAccents,
+              toneInfo: combinedToneInfo,
+              frequencies: combinedFrequencies,
+              dictionaries: combinedDictionaries,
+              tags: combinedTags,
+              etymology: combinedEtymology,
+              wiktionaryDetails: updatedResult.wiktionaryDetails,
+            );
+          } else {
+            _searchResult = updatedResult;
+          }
+          _isSearching = false;
+        });
+      } else {
+        setState(() {
+          // Append new results to existing ones
+          if (_searchResult != null) {
+            // Combine existing and new entries
+            final combinedEntries = <DictionaryEntry>[
+              ...(_searchResult?.entries ?? []),
+              ...result.entries,
+            ];
+
+            // Remove duplicates
+            final seenTerms = <String>{};
+            final uniqueEntries = <DictionaryEntry>[];
+            for (final entry in combinedEntries) {
+              if (!seenTerms.contains(entry.term)) {
+                seenTerms.add(entry.term);
+                uniqueEntries.add(entry);
+              }
+            }
+
+            // Combine Maps properly
+            final combinedPitchAccents = Map<String, List<PitchAccent>>.from(_searchResult?.pitchAccents ?? {});
+            combinedPitchAccents.addAll(result.pitchAccents);
+
+            final combinedFrequencies = Map<String, List<model.FrequencyData>>.from(_searchResult?.frequencies ?? {});
+            combinedFrequencies.addAll(result.frequencies);
+
+            final combinedDictionaries = Map<int, model.Dictionary>.from(_searchResult?.dictionaries ?? {});
+            combinedDictionaries.addAll(result.dictionaries);
+
+            final combinedTags = Map<String, DictionaryTag>.from(_searchResult?.tags ?? {});
+            combinedTags.addAll(result.tags);
+
+            final combinedEtymology = Map<String, List<EtymologyEntry>>.from(_searchResult?.etymology ?? {});
+            combinedEtymology.addAll(result.etymology);
+
+            final combinedToneInfo = Map<String, List<ToneInfo>>.from(_searchResult?.toneInfo ?? {});
+            combinedToneInfo.addAll(result.toneInfo);
+
+            _searchResult = SearchResult(
+              entries: uniqueEntries,
+              kanji: [...(_searchResult?.kanji ?? []), ...result.kanji],
+              pitchAccents: combinedPitchAccents,
+              toneInfo: combinedToneInfo,
+              frequencies: combinedFrequencies,
+              dictionaries: combinedDictionaries,
+              tags: combinedTags,
+              etymology: combinedEtymology,
+              wiktionaryDetails: _searchResult?.wiktionaryDetails ?? {},
+            );
+          } else {
+            _searchResult = result;
+          }
+          _isSearching = false;
+        });
+      }
+    } catch (e) {
+      setState(() => _isSearching = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Search error: $e')),
+        );
+      }
+    }
+  }
+
+  /// Detect the language/script of input text
+  String _detectLanguage(String text) {
+    // Check for specific character ranges to determine the language/script
+    if (ChineseUtil.containsChinese(text)) {
+      return 'zh';  // Chinese
+    } else if (RegExp(r'[\u3040-\u309F\u30A0-\u30FF]').hasMatch(text)) {
+      // Contains hiragana or katakana
+      return 'ja';  // Japanese
+    } else if (RegExp(r'[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]').hasMatch(text)) {
+      // Contains Arabic script
+      return 'ar';  // Arabic
+    } else if (RegExp(r'[\u0590-\u05FF]').hasMatch(text)) {
+      // Contains Hebrew script
+      return 'he';  // Hebrew
+    } else if (RegExp(r'[\u0400-\u04FF\u0500-\u052F]').hasMatch(text)) {
+      // Contains Cyrillic script (Russian, etc.)
+      return 'ru';  // Russian as example
+    } else if (RegExp(r'[\uAC00-\uD7AF]').hasMatch(text)) {
+      // Contains Korean Hangul
+      return 'ko';  // Korean
+    } else if (RegExp(r'[\u1780-\u17FF\u19E0-\u19FF]').hasMatch(text)) {
+      // Contains Khmer script
+      return 'km';  // Khmer
+    } else if (RegExp(r'[\u0900-\u097F\u1CD0-\u1CFF]').hasMatch(text)) {
+      // Contains Devanagari script (Hindi, etc.)
+      return 'hi';  // Hindi
+    } else if (RegExp(r'[\u0D80-\u0DFF]').hasMatch(text)) {
+      // Contains Sinhala script
+      return 'si';  // Sinhala
+    } else if (RegExp(r'[\u1000-\u109F]').hasMatch(text)) {
+      // Contains Myanmar script
+      return 'my';  // Myanmar
+    } else {
+      // It's likely a Latin-based script (European languages, English, etc.)
+      // We'll return 'en' as a default for Latin scripts
+      return 'en';
     }
   }
 
@@ -288,35 +544,77 @@ class _SearchScreenState extends State<SearchScreen> {
                       ),
                     ],
                   ),
-                  child: TextField(
-                    controller: _searchController,
-                    autofocus: true,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'Search Japanese/Chinese/European languages...',
-                      hintStyle: const TextStyle(color: Colors.white70),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
+                  child: RawKeyboardListener(
+                    focusNode: _focusNode,
+                    onKey: (RawKeyEvent event) {
+                      if (event is RawKeyDownEvent) {
+                        // Handle Shift+Enter: add new line
+                        if (event.logicalKey == LogicalKeyboardKey.enter &&
+                            event.isShiftPressed) {
+                          // Insert newline at cursor position
+                          final text = _searchController.text;
+                          final selection = _searchController.selection;
+                          final newText = text.replaceRange(
+                            selection.start,
+                            selection.end,
+                            '\n',
+                          );
+                          final newSelection = TextSelection.collapsed(
+                            offset: selection.start + 1,
+                          );
+
+                          _searchController.text = newText;
+                          _searchController.selection = newSelection;
+
+                          // Prevent default behavior
+                          return;
+                        }
+
+                        // Handle Ctrl+Enter: send and append result
+                        if (event.logicalKey == LogicalKeyboardKey.enter &&
+                            event.isControlPressed) {
+                          _sendAndAppendResult();
+                          return;
+                        }
+
+                        // Regular Enter: submit search (handled by onSubmitted)
+                      }
+                    },
+                    child: TextField(
+                      controller: _searchController,
+                      focusNode: _focusNode,
+                      autofocus: true,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Search Japanese/Chinese/European languages...',
+                        hintStyle: const TextStyle(color: Colors.white70),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.2),
+                        prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                        suffixIcon: _searchController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, color: Colors.white70),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() {
+                                    _searchResult = null;
+                                    _lastQuery = '';
+                                    _selectedEntry = null;
+                                  });
+                                },
+                              )
+                            : null,
                       ),
-                      filled: true,
-                      fillColor: Colors.white.withOpacity(0.2),
-                      prefixIcon: const Icon(Icons.search, color: Colors.white70),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear, color: Colors.white70),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() {
-                                  _searchResult = null;
-                                  _lastQuery = '';
-                                  _selectedEntry = null;
-                                });
-                              },
-                            )
-                          : null,
+                      onSubmitted: _performSearch,
+                      textInputAction: TextInputAction.newline, // Allow multiline input
+                      keyboardType: TextInputType.multiline,
+                      maxLines: null, // Allow multiple lines
+                      textCapitalization: TextCapitalization.sentences,
                     ),
-                    onSubmitted: _performSearch,
                   ),
                 ),
                 // Results List
