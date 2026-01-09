@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'models/app_state.dart';
 import 'services/storage_service.dart';
+import 'services/clipboard_monitor_service.dart';
 import 'screens/dictionary_list_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/reader_screen.dart';
@@ -97,7 +98,7 @@ class LangApp extends StatelessWidget {
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
-  
+
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
@@ -105,6 +106,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0; // Default to 0, but will be set based on app state
   bool _isNavBarVisible = true;
+  final ClipboardMonitorService _clipboardMonitorService = ClipboardMonitorService();
 
   final List<Widget> _screens = const [
     SearchScreen(),
@@ -118,13 +120,37 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
+
+    // Set up clipboard change callback
+    _clipboardMonitorService.onClipboardChanged = (String content) {
+      // Update the app state with the new clipboard content
+      final appState = Provider.of<AppState>(context, listen: false);
+      appState.setCurrentQuery(content);
+
+      // Switch to the search screen (index 0)
+      setState(() {
+        _currentIndex = 0;
+      });
+    };
+
     // Set initial index based on app state
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final appState = Provider.of<AppState>(context, listen: false);
       setState(() {
         _currentIndex = appState.defaultScreenIndex; // 0-5 for the screens
       });
+
+      // Start clipboard monitoring based on the setting
+      if (appState.clipboardMonitor) {
+        _clipboardMonitorService.startMonitoring(appState);
+      }
     });
+  }
+
+  @override
+  void dispose() {
+    _clipboardMonitorService.stopMonitoring();
+    super.dispose();
   }
 
   void _handleShortcut(int index) {
@@ -138,6 +164,15 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+
+    // Listen to changes in clipboard monitor setting
+    if (_clipboardMonitorService.isMonitoring != appState.clipboardMonitor) {
+      if (appState.clipboardMonitor) {
+        _clipboardMonitorService.startMonitoring(appState);
+      } else {
+        _clipboardMonitorService.stopMonitoring();
+      }
+    }
 
     // Always show nav bar if auto-hide is disabled
     final shouldShowNavBar = !appState.autoHideNavigation || _isNavBarVisible;
