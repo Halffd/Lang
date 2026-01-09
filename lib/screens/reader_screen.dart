@@ -345,6 +345,99 @@ class _ReaderScreenState extends State<ReaderScreen>
     }
   }
 
+  /// Enhanced translation method that supports multi-language lookup
+  Future<void> _getDetailedTranslationForToken(Token token) async {
+    if (token == null || token.text.isEmpty) return;
+
+    try {
+      // First, detect the language of the token text
+      final detectedLanguage = _detectLanguage(token.text);
+
+      // Check if we should use the enhanced Wiktionary service for detailed information
+      final dictionaryService = DictionaryService();
+      final wiktionaryDetails = await dictionaryService.fetchWordDetailsMultiLanguage(token.text, detectedLanguage);
+
+      if (wiktionaryDetails.isNotEmpty) {
+        // Use Wiktionary details as primary source for multi-language support
+        _showDetailedWordInfo(token.text, detectedLanguage, wiktionaryDetails);
+        return;
+      }
+
+      // Fallback to the existing translation service if no Wiktionary details
+      final request = TranslationRequest(
+        sourceText: token.text,
+        sourceLanguage: detectedLanguage,
+        targetLanguage: 'en', // Default to English output
+      );
+
+      final result = await _translationService.translate(request);
+
+      if (result.wordTranslations.isNotEmpty) {
+        // Show translation result
+        _showTranslationResult(result);
+      } else {
+        // If no translation found, show a message
+        _showNoTranslationFound(token.text);
+      }
+    } catch (e) {
+      print('Error getting detailed translation: $e');
+      _showError('Failed to get translation for: ${token.text}');
+    }
+  }
+
+  /// Show detailed word information from Wiktionary
+  void _showDetailedWordInfo(String word, String language, List<String> details) {
+    // For now, we'll just print the details - in a real implementation
+    // you'd show this information in a popup or dialog
+    print('Detailed word info for "$word" in $language:');
+    for (int i = 0; i < details.length; i++) {
+      print('  ${i + 1}. ${details[i]}');
+    }
+
+    // In the future, this could show a detailed popup with the information
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Found detailed info for: $word'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  /// Show translation result in UI
+  void _showTranslationResult(TranslationResult result) {
+    final translation = result.fullTranslation.isNotEmpty ? result.fullTranslation :
+                       result.wordTranslations.firstOrNull?.translation ?? '';
+    if (translation.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Translation: $translation'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  /// Show message when no translation is found
+  void _showNoTranslationFound(String word) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('No translation found for: $word'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  /// Show error message
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 3),
+      ),
+    );
+  }
+
   Future<void> _addToAnki() async {
     final token = _currentToken;
     if (token != null && token.isWord && token.entry != null) {
@@ -407,10 +500,78 @@ class _ReaderScreenState extends State<ReaderScreen>
     }
   }
 
+  /// Show Wiktionary definition for the selected token
+  Future<void> _showWiktionaryDefinition(Token token) async {
+    if (token == null || token.text.isEmpty) return;
+
+    try {
+      // Detect language of the token text
+      final detectedLanguage = _detectLanguage(token.text);
+
+      // Fetch Wiktionary details
+      final dictionaryService = DictionaryService();
+      final wiktionaryDetails = await dictionaryService.fetchWordDetailsMultiLanguage(token.text, detectedLanguage);
+
+      if (wiktionaryDetails.isNotEmpty) {
+        // Show Wiktionary details in a dialog
+        await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Wiktionary: ${token.text}'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: wiktionaryDetails.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Text(
+                        '${index + 1}. ${wiktionaryDetails[index]}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Close'),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        // Show message if no Wiktionary details found
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('No Wiktionary details found for: ${token.text}'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error fetching Wiktionary definition: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to fetch Wiktionary details for: ${token.text}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   // Scroll logic is tricky with Wrap. For now, we rely on the user seeing the highlight.
   // Ideally, we'd use ScrollablePositionedList, but we have a list of Wraps.
   final ScrollController _scrollController = ScrollController();
-  
+
   void _scrollToCurrent() {
     // Basic auto-scroll: scroll to the approximate position of the sentence
     // This is not perfect for long sentences wrapped multiple times.
@@ -422,7 +583,7 @@ class _ReaderScreenState extends State<ReaderScreen>
   Widget build(BuildContext context) {
     if (_showInput) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Japanese Reader')),
+        appBar: AppBar(title: const Text('Text Reader')),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -432,7 +593,7 @@ class _ReaderScreenState extends State<ReaderScreen>
                   controller: _textController,
                   maxLines: null,
                   decoration: const InputDecoration(
-                    hintText: 'Paste Japanese text here...',
+                    hintText: 'Paste text here...',
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -440,7 +601,7 @@ class _ReaderScreenState extends State<ReaderScreen>
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: _isAnalyzing ? null : _analyzeText,
-                icon: _isAnalyzing 
+                icon: _isAnalyzing
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.analytics),
                 label: const Text('Analyze Text'),
@@ -453,7 +614,7 @@ class _ReaderScreenState extends State<ReaderScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Japanese Reader Mode'),
+        title: const Text('Text Reader Mode'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -479,6 +640,18 @@ class _ReaderScreenState extends State<ReaderScreen>
                       value: appState.autoTranslate,
                       onChanged: (value) {
                         appState.setAutoTranslate(value);
+                      },
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Wiktionary',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    Switch(
+                      value: appState.showWiktionary,
+                      onChanged: (value) {
+                        appState.setShowWiktionary(value);
                       },
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
@@ -549,12 +722,21 @@ class _ReaderScreenState extends State<ReaderScreen>
                         final isDeleted = token.isWord && isWordDeleted(token.text);
 
                         return GestureDetector(
-                          onTap: () {
+                          onTap: () async {
                             setState(() {
                               _currentSentenceIndex = sentenceIndex;
                               _currentWordIndex = wordIndex;
                               _keyboardFocusNode.requestFocus();
                             });
+
+                            // Get detailed translation using the enhanced multi-language service
+                            await _getDetailedTranslationForToken(token);
+
+                            // If Wiktionary is enabled, show Wiktionary details
+                            final appState = context.read<AppState>();
+                            if (appState.showWiktionary) {
+                              await _showWiktionaryDefinition(token);
+                            }
                           },
                           child: Container(
                             margin: const EdgeInsets.only(top: 2),
@@ -571,12 +753,13 @@ class _ReaderScreenState extends State<ReaderScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                                   child: Text(
                                     token.text,
                                     style: TextStyle(
                                       color: isSelected ? Colors.white : (isDeleted ? Colors.red : Colors.black),
-                                      fontSize: 18,
+                                      fontSize: 24, // Increased from 18 to 24
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                       decoration: isDeleted ? TextDecoration.lineThrough : null,
                                     ),
                                   ),
@@ -584,14 +767,14 @@ class _ReaderScreenState extends State<ReaderScreen>
                                 // Show definition below the word if available
                                 if (token.entry != null && token.entry!.definitions.isNotEmpty)
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     color: isSelected ? Colors.purple.shade100 : Colors.grey.shade100,
                                     child: Text(
-                                      token.entry!.definitions.first.length > 60
-                                        ? '${token.entry!.definitions.first.substring(0, 60)}...'
+                                      token.entry!.definitions.first.length > 80
+                                        ? '${token.entry!.definitions.first.substring(0, 80)}...'
                                         : token.entry!.definitions.first,
                                       style: TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 16, // Increased from 12 to 16
                                         color: isSelected ? Colors.purple.shade800 : Colors.grey.shade600,
                                       ),
                                     ),
