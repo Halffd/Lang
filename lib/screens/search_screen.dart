@@ -44,9 +44,6 @@ class _ToggleNavIntent extends Intent {
   const _ToggleNavIntent();
 }
 
-class SendAndAppendIntent extends Intent {
-  const SendAndAppendIntent();
-}
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({Key? key}) : super(key: key);
@@ -59,7 +56,6 @@ class _SearchScreenState extends State<SearchScreen> {
   final DictionaryService _dictionaryService = DictionaryService();
   final TextEditingController _searchController = TextEditingController();
   final KanaKit _kanaKit = KanaKit();
-  late FocusNode _searchFocusNode;
 
   SearchResult? _searchResult;
   bool _isSearching = false;
@@ -105,7 +101,6 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void dispose() {
     _searchController.dispose();
-    _focusNode.dispose();
     super.dispose();
   }
   
@@ -476,12 +471,9 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  late FocusNode _focusNode;
-
   @override
   void initState() {
     super.initState();
-    _focusNode = FocusNode();
   }
 
   void _showCharacterBreakdown(String word) {
@@ -503,7 +495,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return KeyboardListener(
-      focusNode: _focusNode,
+      focusNode: FocusNode(),
       onKeyEvent: (KeyEvent event) {
         if (event.logicalKey == LogicalKeyboardKey.space &&
             event is KeyDownEvent &&
@@ -544,77 +536,38 @@ class _SearchScreenState extends State<SearchScreen> {
                       ),
                     ],
                   ),
-                  child: RawKeyboardListener(
-                    focusNode: _focusNode,
-                    onKey: (RawKeyEvent event) {
-                      if (event is RawKeyDownEvent) {
-                        // Handle Shift+Enter: add new line
-                        if (event.logicalKey == LogicalKeyboardKey.enter &&
-                            event.isShiftPressed) {
-                          // Insert newline at cursor position
-                          final text = _searchController.text;
-                          final selection = _searchController.selection;
-                          final newText = text.replaceRange(
-                            selection.start,
-                            selection.end,
-                            '\n',
-                          );
-                          final newSelection = TextSelection.collapsed(
-                            offset: selection.start + 1,
-                          );
-
-                          _searchController.text = newText;
-                          _searchController.selection = newSelection;
-
-                          // Prevent default behavior
-                          return;
-                        }
-
-                        // Handle Ctrl+Enter: send and append result
-                        if (event.logicalKey == LogicalKeyboardKey.enter &&
-                            event.isControlPressed) {
-                          _sendAndAppendResult();
-                          return;
-                        }
-
-                        // Regular Enter: submit search (handled by onSubmitted)
-                      }
-                    },
-                    child: TextField(
-                      controller: _searchController,
-                      focusNode: _focusNode,
-                      autofocus: true,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: 'Search Japanese/Chinese/European languages...',
-                        hintStyle: const TextStyle(color: Colors.white70),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
-                        ),
-                        filled: true,
-                        fillColor: Colors.white.withOpacity(0.2),
-                        prefixIcon: const Icon(Icons.search, color: Colors.white70),
-                        suffixIcon: _searchController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear, color: Colors.white70),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() {
-                                    _searchResult = null;
-                                    _lastQuery = '';
-                                    _selectedEntry = null;
-                                  });
-                                },
-                              )
-                            : null,
+                  child: TextField(
+                    controller: _searchController,
+                    autofocus: true,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Search Japanese/Chinese/European languages...',
+                      hintStyle: const TextStyle(color: Colors.white70),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
                       ),
-                      onSubmitted: _performSearch,
-                      textInputAction: TextInputAction.newline, // Allow multiline input
-                      keyboardType: TextInputType.multiline,
-                      maxLines: null, // Allow multiple lines
-                      textCapitalization: TextCapitalization.sentences,
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.2),
+                      prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, color: Colors.white70),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {
+                                  _searchResult = null;
+                                  _lastQuery = '';
+                                  _selectedEntry = null;
+                                });
+                              },
+                            )
+                          : null,
                     ),
+                    onSubmitted: _performSearch,
+                    textInputAction: TextInputAction.search, // Use search action
+                    keyboardType: TextInputType.text, // Use text instead of multiline
+                    textCapitalization: TextCapitalization.sentences,
                   ),
                 ),
                 // Results List
@@ -724,9 +677,6 @@ class _SearchScreenState extends State<SearchScreen> {
             _DeleteIntent: CallbackAction<_DeleteIntent>(
               onInvoke: (intent) => _deleteSelectedEntry(),
             ),
-            _FocusSearchIntent: CallbackAction<_FocusSearchIntent>(
-              onInvoke: (intent) => _focusOnSearchBox(),
-            ),
             _ToggleNavIntent: CallbackAction<_ToggleNavIntent>(
               onInvoke: (intent) => _toggleNavigationVisibility(),
             ),
@@ -805,10 +755,6 @@ class _SearchScreenState extends State<SearchScreen> {
         );
       }
     }
-  }
-
-  void _focusOnSearchBox() {
-    FocusScope.of(context).requestFocus(_searchFocusNode);
   }
 
   void _toggleNavigationVisibility() {
