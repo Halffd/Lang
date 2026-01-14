@@ -10,6 +10,10 @@ import '../services/translation_service.dart';
 import '../mixins/word_list_mixins.dart';
 import '../widgets/dictionary_entry_card.dart';
 import '../utils/chinese_util.dart';
+import '../utils/language_detector.dart';
+import '../widgets/reader/reader_app_bar.dart';
+import '../widgets/reader/token_widget.dart';
+import '../services/reader_translation_service.dart';
 
 class ReaderScreen extends StatefulWidget {
   const ReaderScreen({Key? key}) : super(key: key);
@@ -33,9 +37,12 @@ class _ReaderScreenState extends State<ReaderScreen>
   bool _showInput = true;
   DictionaryEntry? _expandedEntry;
 
+  late ReaderTranslationService _readerTranslationService;
+
   @override
   void initState() {
     super.initState();
+    _readerTranslationService = ReaderTranslationService(_dictionaryService, _translationService);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Get the storage service from the app state
       final appState = Provider.of<AppState>(context, listen: false);
@@ -88,7 +95,7 @@ class _ReaderScreenState extends State<ReaderScreen>
     try {
       // Split by newlines to handle "PgUp/Dn to go to next line"
       final rawSentences = _textController.text.split('\n');
-      
+
       for (final rawSentence in rawSentences) {
         if (rawSentence.trim().isNotEmpty) {
           final tokens = await _dictionaryService.tokenizeText(rawSentence);
@@ -102,12 +109,12 @@ class _ReaderScreenState extends State<ReaderScreen>
         _currentSentenceIndex = 0;
         _currentWordIndex = 0;
       });
-      
+
       // Request focus for keyboard navigation
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _keyboardFocusNode.requestFocus();
       });
-      
+
     } catch (e) {
       setState(() => _isAnalyzing = false);
       if (mounted) {
@@ -274,7 +281,7 @@ class _ReaderScreenState extends State<ReaderScreen>
 
     try {
       // Detect language of the token text
-      final detectedLanguage = _detectLanguage(token.text);
+      final detectedLanguage = LanguageDetector.detect(token.text);
 
       // Create a translation request for the current token
       // For European languages, translate to English; for Asian languages, use appropriate target
@@ -306,82 +313,46 @@ class _ReaderScreenState extends State<ReaderScreen>
     }
   }
 
-  /// Detect the language/script of input text (similar to dictionary service)
-  String _detectLanguage(String text) {
-    // Check for specific character ranges to determine the language/script
-    if (ChineseUtil.containsChinese(text)) {
-      return 'zh';  // Chinese
-    } else if (RegExp(r'[\u3040-\u309F\u30A0-\u30FF]').hasMatch(text)) {
-      // Contains hiragana or katakana
-      return 'ja';  // Japanese
-    } else if (RegExp(r'[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]').hasMatch(text)) {
-      // Contains Arabic script
-      return 'ar';  // Arabic
-    } else if (RegExp(r'[\u0590-\u05FF]').hasMatch(text)) {
-      // Contains Hebrew script
-      return 'he';  // Hebrew
-    } else if (RegExp(r'[\u0400-\u04FF\u0500-\u052F]').hasMatch(text)) {
-      // Contains Cyrillic script (Russian, etc.)
-      return 'ru';  // Russian as example
-    } else if (RegExp(r'[\uAC00-\uD7AF]').hasMatch(text)) {
-      // Contains Korean Hangul
-      return 'ko';  // Korean
-    } else if (RegExp(r'[\u1780-\u17FF\u19E0-\u19FF]').hasMatch(text)) {
-      // Contains Khmer script
-      return 'km';  // Khmer
-    } else if (RegExp(r'[\u0900-\u097F\u1CD0-\u1CFF]').hasMatch(text)) {
-      // Contains Devanagari script (Hindi, etc.)
-      return 'hi';  // Hindi
-    } else if (RegExp(r'[\u0D80-\u0DFF]').hasMatch(text)) {
-      // Contains Sinhala script
-      return 'si';  // Sinhala
-    } else if (RegExp(r'[\u1000-\u109F]').hasMatch(text)) {
-      // Contains Myanmar script
-      return 'my';  // Myanmar
-    } else {
-      // It's likely a Latin-based script (European languages, English, etc.)
-      // We'll return 'en' as a default for Latin scripts
-      return 'en';
+  Future<void> _getDetailedTranslationForToken(Token token) async {
+    if (!_isValidToken(token)) return;
+
+    final detectedLanguage = LanguageDetector.detect(token.text);
+
+    // Try Wiktionary first
+    final wiktionaryDetails = await _fetchWiktionaryDetails(token.text, detectedLanguage);
+    if (wiktionaryDetails.isNotEmpty) {
+      _showDetailedWordInfo(token.text, detectedLanguage, wiktionaryDetails);
+      return;
+    }
+
+    // Fallback to translation service
+    await _fallbackToTranslation(token.text, detectedLanguage);
+  }
+
+  bool _isValidToken(Token? token) {
+    return token != null && token.text.isNotEmpty;
+  }
+
+  Future<List<String>> _fetchWiktionaryDetails(String text, String language) async {
+    try {
+      return await _dictionaryService.fetchWordDetailsMultiLanguage(text, language);
+    } catch (e) {
+      print('Wiktionary fetch failed: $e');
+      return [];
     }
   }
 
-  /// Enhanced translation method that supports multi-language lookup
-  Future<void> _getDetailedTranslationForToken(Token token) async {
-    if (token == null || token.text.isEmpty) return;
-
+  Future<void> _fallbackToTranslation(String text, String sourceLanguage) async {
     try {
-      // First, detect the language of the token text
-      final detectedLanguage = _detectLanguage(token.text);
-
-      // Check if we should use the enhanced Wiktionary service for detailed information
-      final dictionaryService = DictionaryService();
-      final wiktionaryDetails = await dictionaryService.fetchWordDetailsMultiLanguage(token.text, detectedLanguage);
-
-      if (wiktionaryDetails.isNotEmpty) {
-        // Use Wiktionary details as primary source for multi-language support
-        _showDetailedWordInfo(token.text, detectedLanguage, wiktionaryDetails);
-        return;
-      }
-
-      // Fallback to the existing translation service if no Wiktionary details
       final request = TranslationRequest(
-        sourceText: token.text,
-        sourceLanguage: detectedLanguage,
-        targetLanguage: 'en', // Default to English output
+        sourceText: text,
+        sourceLanguage: sourceLanguage,
+        targetLanguage: 'en',
       );
-
       final result = await _translationService.translate(request);
-
-      if (result.wordTranslations.isNotEmpty) {
-        // Show translation result
-        _showTranslationResult(result);
-      } else {
-        // If no translation found, show a message
-        _showNoTranslationFound(token.text);
-      }
+      _showTranslationResult(result);
     } catch (e) {
-      print('Error getting detailed translation: $e');
-      _showError('Failed to get translation for: ${token.text}');
+      _showError('Translation failed for: $text');
     }
   }
 
@@ -506,7 +477,7 @@ class _ReaderScreenState extends State<ReaderScreen>
 
     try {
       // Detect language of the token text
-      final detectedLanguage = _detectLanguage(token.text);
+      final detectedLanguage = LanguageDetector.detect(token.text);
 
       // Fetch Wiktionary details
       final dictionaryService = DictionaryService();
@@ -613,81 +584,7 @@ class _ReaderScreenState extends State<ReaderScreen>
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Text Reader Mode'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            setState(() {
-              _showInput = true;
-              _sentences = [];
-            });
-          },
-        ),
-        actions: [
-          Consumer<AppState>(
-            builder: (context, appState, child) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Auto Translate',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    Switch(
-                      value: appState.autoTranslate,
-                      onChanged: (value) {
-                        appState.setAutoTranslate(value);
-                      },
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Wiktionary',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    Switch(
-                      value: appState.showWiktionary,
-                      onChanged: (value) {
-                        appState.setShowWiktionary(value);
-                      },
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Shortcuts'),
-                  content: const Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Arrows: Navigate words'),
-                      Text('PgUp/PgDn: Navigate sentences'),
-                      Text('Home/End: Start/End of sentence'),
-                      Text('Space: Show definition'),
-                      Text('Enter: Toggle Anki'),
-                      Text('B: Toggle Favorites'),
-                      Text('Delete: Delete word'),
-                      Text('M: Toggle Auto-paste'),
-                    ],
-                  ),
-                  actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+      appBar: ReaderAppBar(),
       body: RawKeyboardListener(
         focusNode: _keyboardFocusNode,
         onKey: _handleKeyEvent,
@@ -721,7 +618,10 @@ class _ReaderScreenState extends State<ReaderScreen>
                         final isSelected = isCurrentSentence && wordIndex == _currentWordIndex;
                         final isDeleted = token.isWord && isWordDeleted(token.text);
 
-                        return GestureDetector(
+                        return TokenWidget(
+                          token: token,
+                          isSelected: isSelected,
+                          isDeleted: isDeleted,
                           onTap: () async {
                             setState(() {
                               _currentSentenceIndex = sentenceIndex;
@@ -738,50 +638,8 @@ class _ReaderScreenState extends State<ReaderScreen>
                               await _showWiktionaryDefinition(token);
                             }
                           },
-                          child: Container(
-                            margin: const EdgeInsets.only(top: 2),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: isSelected
-                                    ? Colors.purple
-                                    : (token.isWord ? Colors.grey.shade400 : Colors.transparent),
-                              ),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                                  child: Text(
-                                    token.text,
-                                    style: TextStyle(
-                                      color: isSelected ? Colors.white : (isDeleted ? Colors.red : Colors.black),
-                                      fontSize: 24, // Increased from 18 to 24
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                      decoration: isDeleted ? TextDecoration.lineThrough : null,
-                                    ),
-                                  ),
-                                ),
-                                // Show definition below the word if available
-                                if (token.entry != null && token.entry!.definitions.isNotEmpty)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    color: isSelected ? Colors.purple.shade100 : Colors.grey.shade100,
-                                    child: Text(
-                                      token.entry!.definitions.first.length > 80
-                                        ? '${token.entry!.definitions.first.substring(0, 80)}...'
-                                        : token.entry!.definitions.first,
-                                      style: TextStyle(
-                                        fontSize: 16, // Increased from 12 to 16
-                                        color: isSelected ? Colors.purple.shade800 : Colors.grey.shade600,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
+                          fontSize: 24,
+                          definitionFontSize: 16,
                         );
                       }),
                     ),

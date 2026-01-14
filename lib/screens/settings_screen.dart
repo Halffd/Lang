@@ -93,15 +93,6 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
-  String _getValidLanguageCode(String currentCode) {
-    // If the current code is valid, return it
-    if (LanguageOption.all.any((option) => option.code == currentCode)) {
-      return currentCode;
-    }
-    // Otherwise, default to 'ja' (Japanese)
-    return 'ja';
-  }
-
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
@@ -427,15 +418,6 @@ class SettingsScreen extends StatelessWidget {
                       appState.setClipboardMonitor(value);
                     },
                   ),
-                  const Divider(),
-                  SwitchListTile(
-                    title: Text(AppLocalizations.of(context)!.autoKanaConversion),
-                    subtitle: Text(AppLocalizations.of(context)!.convertRomajiToKana),
-                    value: appState.automaticKanaConversion,
-                    onChanged: (value) {
-                      appState.setAutomaticKanaConversion(value);
-                    },
-                  ),
                 ],
               ),
             ),
@@ -539,13 +521,22 @@ class SettingsScreen extends StatelessWidget {
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           ),
-                          value: appState.currentAnkiDeck,
-                          items: appState.ankiDecks.map((deck) {
-                            return DropdownMenuItem(
-                              value: deck,
-                              child: Text(deck),
-                            );
-                          }).toList(),
+                          value: appState.ankiDecks.contains(appState.currentAnkiDeck)
+                              ? appState.currentAnkiDeck
+                              : (appState.ankiDecks.isNotEmpty ? appState.ankiDecks.first : 'Default'),
+                          items: appState.ankiDecks.isNotEmpty
+                              ? appState.ankiDecks.map((deck) {
+                                  return DropdownMenuItem(
+                                    value: deck,
+                                    child: Text(deck),
+                                  );
+                                }).toList()
+                              : [
+                                  const DropdownMenuItem(
+                                    value: 'Default',
+                                    child: Text('Default'),
+                                  )
+                                ],
                           onChanged: (value) {
                             if (value != null) {
                               appState.setCurrentAnkiDeck(value);
@@ -570,13 +561,22 @@ class SettingsScreen extends StatelessWidget {
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           ),
-                          value: appState.currentProfile,
-                          items: appState.profiles.map((profile) {
-                            return DropdownMenuItem(
-                              value: profile,
-                              child: Text(profile),
-                            );
-                          }).toList(),
+                          value: appState.profiles.contains(appState.currentProfile)
+                              ? appState.currentProfile
+                              : (appState.profiles.isNotEmpty ? appState.profiles.first : 'Default'),
+                          items: appState.profiles.isNotEmpty
+                              ? appState.profiles.map((profile) {
+                                  return DropdownMenuItem(
+                                    value: profile,
+                                    child: Text(profile),
+                                  );
+                                }).toList()
+                              : [
+                                  const DropdownMenuItem(
+                                    value: 'Default',
+                                    child: Text('Default'),
+                                  )
+                                ],
                           onChanged: (value) {
                             if (value != null) {
                               appState.setCurrentProfile(value);

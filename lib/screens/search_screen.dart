@@ -10,13 +10,18 @@ import '../models/etymology_model.dart';
 import '../models/tone_model.dart';
 import '../services/dictionary_service.dart';
 import '../services/wiktionary_etymology_service.dart';
+import '../services/wiktionary_integration_service.dart';
 import '../utils/chinese_util.dart';
 import '../utils/character_breakdown.dart';
 import '../utils/json_html_renderer.dart';
+import '../utils/language_detector.dart';
+import '../utils/search_result_merger.dart';
 import 'dart:convert';
 import 'dart:io';
 import '../widgets/character_breakdown_widget.dart';
 import '../widgets/etymology_widget.dart';
+import '../widgets/search/search_bar_widget.dart';
+import '../widgets/search/search_responsive_layout.dart';
 import '../widgets/wiktionary_details_widget.dart';
 
 // Define custom intent classes at top level
@@ -56,6 +61,7 @@ class _SearchScreenState extends State<SearchScreen> {
   final DictionaryService _dictionaryService = DictionaryService();
   final TextEditingController _searchController = TextEditingController();
   final KanaKit _kanaKit = KanaKit();
+  late final WiktionaryIntegrationService _wiktionaryService;
 
   SearchResult? _searchResult;
   bool _isSearching = false;
@@ -104,7 +110,7 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
   
-  Future<void> _performSearch(String query) async {
+  Future<void> _performSearch(String query, {bool append = false}) async {
     if (query.trim().isEmpty) {
       setState(() {
         _searchResult = null;
@@ -112,14 +118,15 @@ class _SearchScreenState extends State<SearchScreen> {
       });
       return;
     }
-    
+
     setState(() {
       _isSearching = true;
       _lastQuery = query;
     });
-    
+
     try {
-      final result = await _dictionaryService.searchTerm(
+      // Base search
+      final baseResult = await _dictionaryService.searchTerm(
         query,
         options: const SearchOptions(
           limit: 50,
@@ -128,49 +135,23 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
       );
 
-      // Also fetch multi-language Wiktionary details for the query
-      final wiktionaryDetails = await _dictionaryService.fetchWordDetailsMultiLanguage(query, _detectLanguage(query));
+      // Enrich with Wiktionary
+      final detectedLanguage = LanguageDetector.detect(query);
+      final enrichedResult = await _wiktionaryService.enrichSearchResult(
+        baseResult,
+        query,
+        detectedLanguage,
+      );
 
-      // If we found Wiktionary details, add them to the search result
-      if (wiktionaryDetails.isNotEmpty) {
-        final updatedWiktionaryDetails = Map<String, List<WiktionaryEntry>>.from(result.wiktionaryDetails);
+      // Merge if appending
+      final finalResult = append
+          ? SearchResultMerger.merge(_searchResult, enrichedResult)
+          : enrichedResult;
 
-        // Create WiktionaryEntry objects from the detailed information
-        final newWiktionaryEntries = wiktionaryDetails.map((detail) => WiktionaryEntry(
-          word: query,
-          language: _detectLanguage(query),
-          definition: detail,
-          partOfSpeech: 'Detailed Info',
-        )).toList();
-
-        if (newWiktionaryEntries.isNotEmpty) {
-          final key = '${query}_'; // Use the query as key
-          updatedWiktionaryDetails[key] = newWiktionaryEntries;
-        }
-
-        // Update the search result with the new Wiktionary details
-        final updatedResult = SearchResult(
-          entries: result.entries,
-          kanji: result.kanji,
-          pitchAccents: result.pitchAccents,
-          toneInfo: result.toneInfo,
-          frequencies: result.frequencies,
-          dictionaries: result.dictionaries,
-          tags: result.tags,
-          etymology: result.etymology,
-          wiktionaryDetails: updatedWiktionaryDetails,
-        );
-
-        setState(() {
-          _searchResult = updatedResult;
-          _isSearching = false;
-        });
-      } else {
-        setState(() {
-          _searchResult = result;
-          _isSearching = false;
-        });
-      }
+      setState(() {
+        _searchResult = finalResult;
+        _isSearching = false;
+      });
     } catch (e) {
       setState(() => _isSearching = false);
       if (mounted) {
@@ -183,174 +164,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   /// Send search and append result to existing results
   Future<void> _sendAndAppendResult() async {
-    final query = _searchController.text.trim();
-    if (query.isEmpty) return;
-
-    setState(() {
-      _isSearching = true;
-    });
-
-    try {
-      final result = await _dictionaryService.searchTerm(
-        query,
-        options: const SearchOptions(
-          limit: 50,
-          exactMatch: false,
-          searchReadings: true,
-        ),
-      );
-
-      // Also fetch multi-language Wiktionary details for the query
-      final wiktionaryDetails = await _dictionaryService.fetchWordDetailsMultiLanguage(query, _detectLanguage(query));
-
-      // If we found Wiktionary details, add them to the search result
-      if (wiktionaryDetails.isNotEmpty) {
-        final updatedWiktionaryDetails = Map<String, List<WiktionaryEntry>>.from(_searchResult?.wiktionaryDetails ?? {});
-
-        // Create WiktionaryEntry objects from the detailed information
-        final newWiktionaryEntries = wiktionaryDetails.map((detail) => WiktionaryEntry(
-          word: query,
-          language: _detectLanguage(query),
-          definition: detail,
-          partOfSpeech: 'Detailed Info',
-        )).toList();
-
-        if (newWiktionaryEntries.isNotEmpty) {
-          final key = '${query}_'; // Use the query as key
-          updatedWiktionaryDetails[key] = newWiktionaryEntries;
-        }
-
-        // Update the search result with the new Wiktionary details
-        final updatedResult = SearchResult(
-          entries: result.entries,
-          kanji: result.kanji,
-          pitchAccents: result.pitchAccents,
-          toneInfo: result.toneInfo,
-          frequencies: result.frequencies,
-          dictionaries: result.dictionaries,
-          tags: result.tags,
-          etymology: result.etymology,
-          wiktionaryDetails: updatedWiktionaryDetails,
-        );
-
-        setState(() {
-          // Append new results to existing ones
-          if (_searchResult != null) {
-            // Combine existing and new entries
-            final combinedEntries = <DictionaryEntry>[
-              ...(_searchResult?.entries ?? []),
-              ...result.entries,
-            ];
-
-            // Remove duplicates
-            final seenTerms = <String>{};
-            final uniqueEntries = <DictionaryEntry>[];
-            for (final entry in combinedEntries) {
-              if (!seenTerms.contains(entry.term)) {
-                seenTerms.add(entry.term);
-                uniqueEntries.add(entry);
-              }
-            }
-
-            // Combine Maps properly
-            final combinedPitchAccents = Map<String, List<PitchAccent>>.from(_searchResult?.pitchAccents ?? {});
-            combinedPitchAccents.addAll(result.pitchAccents);
-
-            final combinedFrequencies = Map<String, List<model.FrequencyData>>.from(_searchResult?.frequencies ?? {});
-            combinedFrequencies.addAll(result.frequencies);
-
-            final combinedDictionaries = Map<int, model.Dictionary>.from(_searchResult?.dictionaries ?? {});
-            combinedDictionaries.addAll(result.dictionaries);
-
-            final combinedTags = Map<String, DictionaryTag>.from(_searchResult?.tags ?? {});
-            combinedTags.addAll(result.tags);
-
-            final combinedEtymology = Map<String, List<EtymologyEntry>>.from(_searchResult?.etymology ?? {});
-            combinedEtymology.addAll(result.etymology);
-
-            final combinedToneInfo = Map<String, List<ToneInfo>>.from(_searchResult?.toneInfo ?? {});
-            combinedToneInfo.addAll(result.toneInfo);
-
-            _searchResult = SearchResult(
-              entries: uniqueEntries,
-              kanji: [...(_searchResult?.kanji ?? []), ...result.kanji],
-              pitchAccents: combinedPitchAccents,
-              toneInfo: combinedToneInfo,
-              frequencies: combinedFrequencies,
-              dictionaries: combinedDictionaries,
-              tags: combinedTags,
-              etymology: combinedEtymology,
-              wiktionaryDetails: updatedResult.wiktionaryDetails,
-            );
-          } else {
-            _searchResult = updatedResult;
-          }
-          _isSearching = false;
-        });
-      } else {
-        setState(() {
-          // Append new results to existing ones
-          if (_searchResult != null) {
-            // Combine existing and new entries
-            final combinedEntries = <DictionaryEntry>[
-              ...(_searchResult?.entries ?? []),
-              ...result.entries,
-            ];
-
-            // Remove duplicates
-            final seenTerms = <String>{};
-            final uniqueEntries = <DictionaryEntry>[];
-            for (final entry in combinedEntries) {
-              if (!seenTerms.contains(entry.term)) {
-                seenTerms.add(entry.term);
-                uniqueEntries.add(entry);
-              }
-            }
-
-            // Combine Maps properly
-            final combinedPitchAccents = Map<String, List<PitchAccent>>.from(_searchResult?.pitchAccents ?? {});
-            combinedPitchAccents.addAll(result.pitchAccents);
-
-            final combinedFrequencies = Map<String, List<model.FrequencyData>>.from(_searchResult?.frequencies ?? {});
-            combinedFrequencies.addAll(result.frequencies);
-
-            final combinedDictionaries = Map<int, model.Dictionary>.from(_searchResult?.dictionaries ?? {});
-            combinedDictionaries.addAll(result.dictionaries);
-
-            final combinedTags = Map<String, DictionaryTag>.from(_searchResult?.tags ?? {});
-            combinedTags.addAll(result.tags);
-
-            final combinedEtymology = Map<String, List<EtymologyEntry>>.from(_searchResult?.etymology ?? {});
-            combinedEtymology.addAll(result.etymology);
-
-            final combinedToneInfo = Map<String, List<ToneInfo>>.from(_searchResult?.toneInfo ?? {});
-            combinedToneInfo.addAll(result.toneInfo);
-
-            _searchResult = SearchResult(
-              entries: uniqueEntries,
-              kanji: [...(_searchResult?.kanji ?? []), ...result.kanji],
-              pitchAccents: combinedPitchAccents,
-              toneInfo: combinedToneInfo,
-              frequencies: combinedFrequencies,
-              dictionaries: combinedDictionaries,
-              tags: combinedTags,
-              etymology: combinedEtymology,
-              wiktionaryDetails: _searchResult?.wiktionaryDetails ?? {},
-            );
-          } else {
-            _searchResult = result;
-          }
-          _isSearching = false;
-        });
-      }
-    } catch (e) {
-      setState(() => _isSearching = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Search error: $e')),
-        );
-      }
-    }
+    await _performSearch(_searchController.text.trim(), append: true);
   }
 
   /// Detect the language/script of input text
@@ -474,6 +288,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
+    _wiktionaryService = WiktionaryIntegrationService(_dictionaryService);
   }
 
   void _showCharacterBreakdown(String word) {
@@ -494,196 +309,136 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return KeyboardListener(
-      focusNode: FocusNode(),
-      onKeyEvent: (KeyEvent event) {
-        if (event.logicalKey == LogicalKeyboardKey.space &&
-            event is KeyDownEvent &&
-            _selectedEntry != null) {
-          _showCharacterBreakdown(_selectedEntry!.term);
-        }
-      },
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxWidth > 900) {
-            return _buildDesktopLayout();
-          }
-          return _buildMobileLayout();
-        },
-      ),
-    );
-  }
-
-  Widget _buildDesktopLayout() {
-    return Scaffold(
-      body: Row(
-        children: [
-          // Left Pane: Search and List
-          Expanded(
-            flex: 2,
-            child: Column(
-              children: [
-                // Desktop Search Bar
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    autofocus: true,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'Search Japanese/Chinese/European languages...',
-                      hintStyle: const TextStyle(color: Colors.white70),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white.withOpacity(0.2),
-                      prefixIcon: const Icon(Icons.search, color: Colors.white70),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear, color: Colors.white70),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() {
-                                  _searchResult = null;
-                                  _lastQuery = '';
-                                  _selectedEntry = null;
-                                });
-                              },
-                            )
-                          : null,
-                    ),
-                    onSubmitted: _performSearch,
-                    textInputAction: TextInputAction.search, // Use search action
-                    keyboardType: TextInputType.text, // Use text instead of multiline
-                    textCapitalization: TextCapitalization.sentences,
-                  ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth <= 900) {
+          // Mobile layout with AppBar
+          return Scaffold(
+            appBar: AppBar(
+              title: TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  hintText: 'Search Japanese/Chinese/European languages...',
+                  hintStyle: TextStyle(color: Colors.white70),
+                  border: InputBorder.none,
                 ),
-                // Results List
-                Expanded(
-                  child: _buildBody(),
+                onSubmitted: _performSearch,
+              ),
+              actions: [
+                if (_searchController.text.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() {
+                        _searchResult = null;
+                        _lastQuery = '';
+                      });
+                    },
+                  ),
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () async {
+                    final appState = Provider.of<AppState>(context, listen: false);
+                    String query = _searchController.text;
+
+                    // Auto-convert to Japanese if enabled and the text is mainly Latin
+                    if (appState.autoConvertJapanese && _isMainlyLatinText(query)) {
+                      try {
+                        query = _kanaKit.toKana(query);
+                      } catch (e) {
+                        // If conversion fails, use original text
+                      }
+                    }
+                    await _performSearch(query);
+                  },
                 ),
               ],
             ),
-          ),
-          // Vertical Divider
-          const VerticalDivider(width: 1, thickness: 1),
-          // Right Pane: Details
-          Expanded(
-            flex: 3,
-            child: _selectedEntry != null
-                ? _buildDetailPanel(_selectedEntry!)
-                : const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.touch_app, size: 64, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text(
-                          'Select an entry to view details',
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMobileLayout() {
-    return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          controller: _searchController,
-          autofocus: true,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(
-            hintText: 'Search Japanese/Chinese/European languages...',
-            hintStyle: TextStyle(color: Colors.white70),
-            border: InputBorder.none,
-          ),
-          onSubmitted: _performSearch,
-        ),
-        actions: [
-          if (_searchController.text.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.clear),
-              onPressed: () {
-                _searchController.clear();
-                setState(() {
-                  _searchResult = null;
-                  _lastQuery = '';
-                });
+            body: Shortcuts(
+              shortcuts: {
+                // Copy word to clipboard (Ctrl+C)
+                LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyC): const _CopyIntent(),
+                // Add to known words (Enter)
+                LogicalKeySet(LogicalKeyboardKey.enter): const _AddToKnownWordsIntent(),
+                // Add to favorites (\ key)
+                LogicalKeySet(LogicalKeyboardKey.backslash): const _AddToFavoritesIntent(),
+                // Delete word (Delete key)
+                LogicalKeySet(LogicalKeyboardKey.delete): const _DeleteIntent(),
+                // Focus on search textbox (Space)
+                LogicalKeySet(LogicalKeyboardKey.space): const _FocusSearchIntent(),
+                // Toggle hide navigation bar (Ctrl+H)
+                LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyH): const _ToggleNavIntent(),
               },
+              child: Actions(
+                actions: {
+                  _CopyIntent: CallbackAction<_CopyIntent>(
+                    onInvoke: (intent) => _copySelectedEntry(),
+                  ),
+                  _AddToKnownWordsIntent: CallbackAction<_AddToKnownWordsIntent>(
+                    onInvoke: (intent) => _addSelectedEntryToKnownWords(),
+                  ),
+                  _AddToFavoritesIntent: CallbackAction<_AddToFavoritesIntent>(
+                    onInvoke: (intent) => _toggleSelectedEntryFavorite(),
+                  ),
+                  _DeleteIntent: CallbackAction<_DeleteIntent>(
+                    onInvoke: (intent) => _deleteSelectedEntry(),
+                  ),
+                  _ToggleNavIntent: CallbackAction<_ToggleNavIntent>(
+                    onInvoke: (intent) => _toggleNavigationVisibility(),
+                  ),
+                },
+                child: _buildBody(),
+              ),
             ),
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () async {
-              final appState = Provider.of<AppState>(context, listen: false);
-              String query = _searchController.text;
-
-              // Auto-convert to Japanese if enabled and the text is mainly Latin
-              if (appState.autoConvertJapanese && _isMainlyLatinText(query)) {
-                try {
-                  query = _kanaKit.toKana(query);
-                } catch (e) {
-                  // If conversion fails, use original text
-                }
+          );
+        } else {
+          // Desktop layout with KeyboardListener
+          return KeyboardListener(
+            focusNode: FocusNode(),
+            onKeyEvent: (KeyEvent event) {
+              if (event.logicalKey == LogicalKeyboardKey.space &&
+                  event is KeyDownEvent &&
+                  _selectedEntry != null) {
+                _showCharacterBreakdown(_selectedEntry!.term);
               }
-              await _performSearch(query);
             },
-          ),
-        ],
-      ),
-      body: Shortcuts(
-        shortcuts: {
-          // Copy word to clipboard (Ctrl+C)
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyC): const _CopyIntent(),
-          // Add to known words (Enter)
-          LogicalKeySet(LogicalKeyboardKey.enter): const _AddToKnownWordsIntent(),
-          // Add to favorites (\ key)
-          LogicalKeySet(LogicalKeyboardKey.backslash): const _AddToFavoritesIntent(),
-          // Delete word (Delete key)
-          LogicalKeySet(LogicalKeyboardKey.delete): const _DeleteIntent(),
-          // Focus on search textbox (Space)
-          LogicalKeySet(LogicalKeyboardKey.space): const _FocusSearchIntent(),
-          // Toggle hide navigation bar (Ctrl+H)
-          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyH): const _ToggleNavIntent(),
-        },
-        child: Actions(
-          actions: {
-            _CopyIntent: CallbackAction<_CopyIntent>(
-              onInvoke: (intent) => _copySelectedEntry(),
+            child: SearchResponsiveLayout(
+              searchBar: SearchBarWidget(
+                controller: _searchController,
+                onSubmitted: _performSearch,
+                hintText: 'Search Japanese/Chinese/European languages...',
+                onClear: () {
+                  _searchController.clear();
+                  setState(() {
+                    _searchResult = null;
+                    _lastQuery = '';
+                    _selectedEntry = null;
+                  });
+                },
+              ),
+              resultsList: _buildBody(),
+              detailsPanel: _selectedEntry != null
+                  ? _buildDetailPanel(_selectedEntry!)
+                  : const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.touch_app, size: 64, color: Colors.grey),
+                          SizedBox(height: 16),
+                          Text(
+                            'Select an entry to view details',
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
             ),
-            _AddToKnownWordsIntent: CallbackAction<_AddToKnownWordsIntent>(
-              onInvoke: (intent) => _addSelectedEntryToKnownWords(),
-            ),
-            _AddToFavoritesIntent: CallbackAction<_AddToFavoritesIntent>(
-              onInvoke: (intent) => _toggleSelectedEntryFavorite(),
-            ),
-            _DeleteIntent: CallbackAction<_DeleteIntent>(
-              onInvoke: (intent) => _deleteSelectedEntry(),
-            ),
-            _ToggleNavIntent: CallbackAction<_ToggleNavIntent>(
-              onInvoke: (intent) => _toggleNavigationVisibility(),
-            ),
-          },
-          child: _buildBody(),
-        ),
-      ),
+          );
+        }
+      },
     );
   }
   

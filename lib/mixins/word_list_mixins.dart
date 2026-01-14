@@ -5,33 +5,38 @@ import '../services/storage_service.dart';
 /// Mixin for managing saved words
 mixin SavedWordsMixin {
   late StorageService _savedWordsStorage;
+  bool _savedWordsStorageInitialized = false;
   final Set<String> _savedWords = {};
   bool _savedWordsLoading = false;
 
   void setStorageService(StorageService storageService) {
     _savedWordsStorage = storageService;
+    _savedWordsStorageInitialized = true;
   }
 
   Set<String> get savedWords => _savedWords;
 
   Future<void> loadSavedWords() async {
+    if (!_savedWordsStorageInitialized) {
+      debugPrint('Warning: Storage service not initialized for saved words');
+      return;
+    }
     _savedWordsLoading = true;
     try {
       final words = await _savedWordsStorage.getSavedWords();
       _savedWords.addAll(words);
     } catch (e) {
-      // Handle the case where StorageService is not initialized
-      if (e.toString().contains('_prefs@') && e.toString().contains('not been initialized')) {
-        debugPrint('Error loading saved words: StorageService not initialized yet');
-      } else {
-        debugPrint('Error loading saved words: $e');
-      }
+      debugPrint('Error loading saved words: $e');
     } finally {
       _savedWordsLoading = false;
     }
   }
 
   Future<void> toggleSavedWord(String word, {required bool isSaved}) async {
+    if (!_savedWordsStorageInitialized) {
+      debugPrint('Warning: Storage service not initialized for saved words');
+      return;
+    }
     try {
       if (isSaved) {
         await _savedWordsStorage.saveWord(word);
@@ -41,11 +46,7 @@ mixin SavedWordsMixin {
         _savedWords.remove(word);
       }
     } catch (e) {
-      if (e.toString().contains('_prefs@') && e.toString().contains('not been initialized')) {
-        debugPrint('Error toggling saved word: StorageService not initialized yet');
-      } else {
-        debugPrint('Error toggling saved word: $e');
-      }
+      debugPrint('Error toggling saved word: $e');
     }
   }
 
@@ -55,55 +56,56 @@ mixin SavedWordsMixin {
 /// Mixin for managing deleted words
 mixin DeletedWordsMixin {
   late StorageService _deletedWordsStorage;
+  bool _deletedWordsStorageInitialized = false;
   final Set<String> _deletedWords = {};
   bool _deletedWordsLoading = false;
 
   void setStorageService(StorageService storageService) {
     _deletedWordsStorage = storageService;
+    _deletedWordsStorageInitialized = true;
   }
 
   Set<String> get deletedWords => _deletedWords;
 
   Future<void> loadDeletedWords() async {
+    if (!_deletedWordsStorageInitialized) {
+      debugPrint('Warning: Storage service not initialized for deleted words');
+      return;
+    }
     _deletedWordsLoading = true;
     try {
       final words = await _deletedWordsStorage.getDeletedWords();
       _deletedWords.addAll(words);
     } catch (e) {
-      // Handle the case where StorageService is not initialized
-      if (e.toString().contains('_prefs@') && e.toString().contains('not been initialized')) {
-        debugPrint('Error loading deleted words: StorageService not initialized yet');
-      } else {
-        debugPrint('Error loading deleted words: $e');
-      }
+      debugPrint('Error loading deleted words: $e');
     } finally {
       _deletedWordsLoading = false;
     }
   }
 
   Future<void> deleteWord(String word) async {
+    if (!_deletedWordsStorageInitialized) {
+      debugPrint('Warning: Storage service not initialized for deleted words');
+      return;
+    }
     try {
       await _deletedWordsStorage.addToDeletedWords(word);
       _deletedWords.add(word);
     } catch (e) {
-      if (e.toString().contains('_prefs@') && e.toString().contains('not been initialized')) {
-        debugPrint('Error deleting word: StorageService not initialized yet');
-      } else {
-        debugPrint('Error deleting word: $e');
-      }
+      debugPrint('Error deleting word: $e');
     }
   }
 
   Future<void> undeleteWord(String word) async {
+    if (!_deletedWordsStorageInitialized) {
+      debugPrint('Warning: Storage service not initialized for deleted words');
+      return;
+    }
     try {
       await _deletedWordsStorage.removeFromDeletedWords(word);
       _deletedWords.remove(word);
     } catch (e) {
-      if (e.runtimeType.toString() == '_LateInitializationError') {
-        debugPrint('Error undeleting word: StorageService not initialized yet');
-      } else {
-        debugPrint('Error undeleting word: $e');
-      }
+      debugPrint('Error undeleting word: $e');
     }
   }
 
@@ -113,33 +115,38 @@ mixin DeletedWordsMixin {
 /// Mixin for managing Anki words
 mixin AnkiWordsMixin {
   late StorageService _ankiWordsStorage;
+  bool _ankiWordsStorageInitialized = false;
   final Set<String> _ankiWords = {};
   bool _ankiWordsLoading = false;
 
   void setStorageService(StorageService storageService) {
     _ankiWordsStorage = storageService;
+    _ankiWordsStorageInitialized = true;
   }
 
   Set<String> get ankiWords => _ankiWords;
 
   Future<void> loadAnkiWords() async {
+    if (!_ankiWordsStorageInitialized) {
+      debugPrint('Warning: Storage service not initialized for Anki words');
+      return;
+    }
     _ankiWordsLoading = true;
     try {
       final words = await _ankiWordsStorage.getAnkiWords();
       _ankiWords.addAll(words);
     } catch (e) {
-      // Handle the case where StorageService is not initialized
-      if (e.toString().contains('_prefs@') && e.toString().contains('not been initialized')) {
-        debugPrint('Error loading Anki words: StorageService not initialized yet');
-      } else {
-        debugPrint('Error loading Anki words: $e');
-      }
+      debugPrint('Error loading Anki words: $e');
     } finally {
       _ankiWordsLoading = false;
     }
   }
 
   Future<void> toggleAnkiWord(String word, {required bool isAnki}) async {
+    if (!_ankiWordsStorageInitialized) {
+      debugPrint('Warning: Storage service not initialized for Anki words');
+      return;
+    }
     try {
       if (isAnki) {
         await _ankiWordsStorage.addToAnkiWords(word);
@@ -149,11 +156,7 @@ mixin AnkiWordsMixin {
         _ankiWords.remove(word);
       }
     } catch (e) {
-      if (e.toString().contains('_prefs@') && e.toString().contains('not been initialized')) {
-        debugPrint('Error toggling Anki word: StorageService not initialized yet');
-      } else {
-        debugPrint('Error toggling Anki word: $e');
-      }
+      debugPrint('Error toggling Anki word: $e');
     }
   }
 
@@ -163,33 +166,38 @@ mixin AnkiWordsMixin {
 /// Mixin for managing favorite words
 mixin FavoriteWordsMixin {
   late StorageService _favoriteWordsStorage;
+  bool _favoriteWordsStorageInitialized = false;
   final Set<String> _favoriteWords = {};
   bool _favoriteWordsLoading = false;
 
   void setStorageService(StorageService storageService) {
     _favoriteWordsStorage = storageService;
+    _favoriteWordsStorageInitialized = true;
   }
 
   Set<String> get favoriteWords => _favoriteWords;
 
   Future<void> loadFavoriteWords() async {
+    if (!_favoriteWordsStorageInitialized) {
+      debugPrint('Warning: Storage service not initialized for favorite words');
+      return;
+    }
     _favoriteWordsLoading = true;
     try {
       final words = await _favoriteWordsStorage.getFavoriteWords();
       _favoriteWords.addAll(words);
     } catch (e) {
-      // Handle the case where StorageService is not initialized
-      if (e.toString().contains('_prefs@') && e.toString().contains('not been initialized')) {
-        debugPrint('Error loading favorite words: StorageService not initialized yet');
-      } else {
-        debugPrint('Error loading favorite words: $e');
-      }
+      debugPrint('Error loading favorite words: $e');
     } finally {
       _favoriteWordsLoading = false;
     }
   }
 
   Future<void> toggleFavoriteWord(String word, {required bool isFavorite}) async {
+    if (!_favoriteWordsStorageInitialized) {
+      debugPrint('Warning: Storage service not initialized for favorite words');
+      return;
+    }
     try {
       if (isFavorite) {
         await _favoriteWordsStorage.addToFavorites(word);
@@ -199,11 +207,7 @@ mixin FavoriteWordsMixin {
         _favoriteWords.remove(word);
       }
     } catch (e) {
-      if (e.toString().contains('_prefs@') && e.toString().contains('not been initialized')) {
-        debugPrint('Error toggling favorite word: StorageService not initialized yet');
-      } else {
-        debugPrint('Error toggling favorite word: $e');
-      }
+      debugPrint('Error toggling favorite word: $e');
     }
   }
 

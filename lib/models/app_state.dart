@@ -7,7 +7,6 @@ class AppState extends ChangeNotifier {
   
   // App settings
   bool _clipboardMonitor = false;
-  bool _automaticKanaConversion = true;
   String _language = 'ja';
   bool _darkMode = false;
   ThemeMode _themeMode = ThemeMode.system; // Default to system theme
@@ -46,7 +45,6 @@ class AppState extends ChangeNotifier {
 
   // Getters
   bool get clipboardMonitor => _clipboardMonitor;
-  bool get automaticKanaConversion => _automaticKanaConversion;
   String get language => _language;
   bool get darkMode => _darkMode;
   ThemeMode get themeMode => _themeMode;
@@ -94,12 +92,6 @@ class AppState extends ChangeNotifier {
   void setClipboardMonitor(bool value) {
     _clipboardMonitor = value;
     _storageService.setBool('clipboard_monitor', value);
-    notifyListeners();
-  }
-  
-  void setAutomaticKanaConversion(bool value) {
-    _automaticKanaConversion = value;
-    _storageService.setBool('automatic_kana_conversion', value);
     notifyListeners();
   }
   
@@ -364,7 +356,6 @@ class AppState extends ChangeNotifier {
   void _loadSettings() {
     try {
       _clipboardMonitor = _storageService.getBool('clipboard_monitor') ?? false;
-      _automaticKanaConversion = _storageService.getBool('automatic_kana_conversion') ?? true;
       _language = _storageService.getString('language') ?? 'ja';
       // Ensure language code is valid - fix any legacy data that might have display names instead of codes
       if (!LanguageOption.all.any((option) => option.code == _language)) {
@@ -451,7 +442,6 @@ class AppState extends ChangeNotifier {
       // Handle the case where preferences are not initialized yet
       // Set default values
       _clipboardMonitor = false;
-      _automaticKanaConversion = true;
       _language = 'ja';
       _darkMode = false;
       _showParticles = true;
