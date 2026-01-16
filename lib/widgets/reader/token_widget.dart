@@ -42,6 +42,7 @@ class TokenWidget extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               child: Text(
                 token.text,
+                softWrap: true,
                 style: TextStyle(
                   color: isSelected ? Colors.white : (isDeleted ? Colors.red : Colors.black),
                   fontSize: fontSize,
@@ -59,6 +60,7 @@ class TokenWidget extends StatelessWidget {
                   token.entry!.definitions.first.length > 80
                     ? '${token.entry!.definitions.first.substring(0, 80)}...'
                     : token.entry!.definitions.first,
+                  softWrap: true,
                   style: TextStyle(
                     fontSize: definitionFontSize,
                     color: isSelected ? Colors.purple.shade800 : Colors.grey.shade600,

@@ -510,127 +510,139 @@ class DictionaryService {
 
   /// Search term (for compatibility)
   Future<SearchResult> searchTerm(String term, {SearchOptions options = const SearchOptions()}) async {
-    // Normalize the search term and get all possible forms
+    // Build a prioritized list of search terms with exact matches first
+    final Map<String, int> searchTermsWithPriority = {};
+    
+    // Highest priority: exact term
+    searchTermsWithPriority[term] = 0;
+    
+    // High priority: normalized forms
     final allForms = JapaneseGrammar.getAllPossibleForms(term);
-
-    // If term contains kanji, also search for kana readings to address the kanji search issue
-    List<String> searchTerms = [term];
+    for (int i = 0; i < allForms.length; i++) {
+      if (allForms[i] != term && !searchTermsWithPriority.containsKey(allForms[i])) {
+        searchTermsWithPriority[allForms[i]] = i + 1;
+      }
+    }
+    
+    // Add kana conversion if available
     if (JapaneseGrammar.hasKanji(term)) {
       try {
         final kanaReading = JapaneseGrammar.kanaKit.toHiragana(term);
-        if (kanaReading != term) {
-          searchTerms.add(kanaReading);
+        if (kanaReading != term && !searchTermsWithPriority.containsKey(kanaReading)) {
+          searchTermsWithPriority[kanaReading] = 1000;
         }
       } catch (e) {
         // If conversion fails, continue with original term
       }
     }
-    // Add normalized verb forms
-    searchTerms.addAll(allForms);
-    // Remove duplicates
-    searchTerms = searchTerms.toSet().toList();
 
-    // Now perform the search with all possible forms
+    // Now perform the search with prioritized forms
     List<YomichanSearchResult> yomichanResults = [];
     List<YomichanKanjiResult> kanjiResults = [];
+    final Set<String> seenEntryIds = {};
+    final Set<String> seenKanjiIds = {};
 
-    // Check if it's an ideographic particle search (single character that could be a radical/component)
-    for (var searchTerm in searchTerms) {
+    // Search in order of priority
+    final sortedTerms = searchTermsWithPriority.entries.toList()..sort((a, b) => a.value.compareTo(b.value));
+    
+    for (var entry in sortedTerms) {
+      final searchTerm = entry.key;
+      
       if (searchTerm.length == 1 && IdeographicUtil.containsIdeographic(searchTerm)) {
-        // First try regular search
+        // Single character - try regular search first
         final results = await searchYomichan(searchTerm);
         final kanji = await searchKanji(searchTerm);
-        yomichanResults.addAll(results);
-        kanjiResults.addAll(kanji);
+        
+        // Add only new results
+        for (final result in results) {
+          if (!seenEntryIds.contains('${result.entry.dictionaryId}_${result.entry.id}')) {
+            yomichanResults.add(result);
+            seenEntryIds.add('${result.entry.dictionaryId}_${result.entry.id}');
+          }
+        }
+        for (final result in kanji) {
+          if (!seenKanjiIds.contains('${result.kanji.dictionaryId}_${result.kanji.id}')) {
+            kanjiResults.add(result);
+            seenKanjiIds.add('${result.kanji.dictionaryId}_${result.kanji.id}');
+          }
+        }
 
-        // If regular search yields few results, also try particle search
+        // If regular search yields results, try particle search only if we have few
         if (yomichanResults.length < 5) {
           final particleResults = await searchByParticle(searchTerm);
           for (final result in particleResults) {
-            if (!yomichanResults.any((r) => r.entry.id == result.entry.id)) {
+            if (!seenEntryIds.contains('${result.entry.dictionaryId}_${result.entry.id}')) {
               yomichanResults.add(result);
+              seenEntryIds.add('${result.entry.dictionaryId}_${result.entry.id}');
             }
           }
         }
-      }
-      // If it's a Chinese character search, search with multiple strategies
-      else if (ChineseUtil.containsChinese(searchTerm)) {
-        // Direct search for Chinese characters
+      } else if (ChineseUtil.containsChinese(searchTerm)) {
+        // Chinese character search
         final results = await searchYomichan(searchTerm);
         final kanji = await searchKanji(searchTerm);
-        yomichanResults.addAll(results);
-        kanjiResults.addAll(kanji);
-
-        // If no results and it looks like Pinyin, also search with Pinyin variations
-        if (results.isEmpty && kanji.isEmpty) {
-          final pinyinVariants = ChineseUtil.getAllSearchVariations(searchTerm);
-          for (final variant in pinyinVariants) {
-            if (variant != searchTerm) {
-              final variantResults = await searchYomichan(variant);
-              final variantKanjiResults = await searchKanji(variant);
-
-              // Add unique results
-              for (final result in variantResults) {
-                if (!yomichanResults.any((r) => r.entry.id == result.entry.id)) {
-                  yomichanResults.add(result);
-                }
-              }
-
-              for (final result in variantKanjiResults) {
-                if (!kanjiResults.any((r) => r.kanji.id == result.kanji.id)) {
-                  kanjiResults.add(result);
-                }
-              }
-            }
+        
+        for (final result in results) {
+          if (!seenEntryIds.contains('${result.entry.dictionaryId}_${result.entry.id}')) {
+            yomichanResults.add(result);
+            seenEntryIds.add('${result.entry.dictionaryId}_${result.entry.id}');
+          }
+        }
+        for (final result in kanji) {
+          if (!seenKanjiIds.contains('${result.kanji.dictionaryId}_${result.kanji.id}')) {
+            kanjiResults.add(result);
+            seenKanjiIds.add('${result.kanji.dictionaryId}_${result.kanji.id}');
+          }
+        }
+      } else {
+        // Regular Japanese or other search
+        final results = await searchYomichan(searchTerm);
+        final kanji = await searchKanji(searchTerm);
+        
+        for (final result in results) {
+          if (!seenEntryIds.contains('${result.entry.dictionaryId}_${result.entry.id}')) {
+            yomichanResults.add(result);
+            seenEntryIds.add('${result.entry.dictionaryId}_${result.entry.id}');
+          }
+        }
+        for (final result in kanji) {
+          if (!seenKanjiIds.contains('${result.kanji.dictionaryId}_${result.kanji.id}')) {
+            kanjiResults.add(result);
+            seenKanjiIds.add('${result.kanji.dictionaryId}_${result.kanji.id}');
           }
         }
       }
-      else if (ChineseUtil.looksLikeChinesePinyin(searchTerm) || _isLikelyPinyin(searchTerm)) {
-      // First search directly
-      final results = await searchYomichan(searchTerm);
-      final kanji = await searchKanji(searchTerm);
-      yomichanResults.addAll(results);
-      kanjiResults.addAll(kanji);
-
-      // Then search with variations
-      final pinyinVariants = [
-        ChineseUtil.toPinyinWithoutTone(searchTerm),
-        ChineseUtil.toPinyinWithToneNumber(searchTerm),
-        ChineseUtil.getPinyinInitials(searchTerm)
-      ];
-
-      for (final variant in pinyinVariants) {
-        if (variant.isNotEmpty && variant != searchTerm) {
-          final variantResults = await searchYomichan(variant);
-          final variantKanjiResults = await searchKanji(variant);
-
-          // Add unique results
-          for (final result in variantResults) {
-            if (!yomichanResults.any((r) => r.entry.id == result.entry.id)) {
-              yomichanResults.add(result);
-            }
-          }
-
-          for (final result in variantKanjiResults) {
-            if (!kanjiResults.any((r) => r.kanji.id == result.kanji.id)) {
-              kanjiResults.add(result);
-            }
-          }
-        }
+      
+      // If we have good results from the primary term, stop searching
+      if (yomichanResults.isNotEmpty || kanjiResults.isNotEmpty) {
+        break;
       }
     }
-    // Default search for Japanese or other content
-    else {
-      final results = await searchYomichan(searchTerm);
-      final kanji = await searchKanji(searchTerm);
-      yomichanResults.addAll(results);
-      kanjiResults.addAll(kanji);
-    }
-  } // End of for loop
 
-  // Remove duplicates if needed
-  yomichanResults = yomichanResults.toSet().toList();
-  kanjiResults = kanjiResults.toSet().toList();
+    // Remove any remaining duplicates (shouldn't happen but just in case)
+    final uniqueYomichan = <YomichanSearchResult>[];
+    final uniqueKanji = <YomichanKanjiResult>[];
+    final seenY = <String>{};
+    final seenK = <String>{};
+    
+    for (final result in yomichanResults) {
+      final key = '${result.entry.dictionaryId}_${result.entry.id}';
+      if (!seenY.contains(key)) {
+        uniqueYomichan.add(result);
+        seenY.add(key);
+      }
+    }
+    
+    for (final result in kanjiResults) {
+      final key = '${result.kanji.dictionaryId}_${result.kanji.id}';
+      if (!seenK.contains(key)) {
+        uniqueKanji.add(result);
+        seenK.add(key);
+      }
+    }
+    
+    yomichanResults = uniqueYomichan;
+    kanjiResults = uniqueKanji;
 
   // Convert to SearchResult format
   final entries = yomichanResults.map((r) => r.entry).toList();

@@ -110,7 +110,7 @@ class WiktionaryEtymologyService {
       final response = await http.get(
         Uri.parse('$baseUrl?action=parse&page=$word&prop=wikitext&format=json'),
         headers: {'User-Agent': 'LangApp/1.0 (contact@langapp.com)'},
-      );
+      ).timeout(const Duration(seconds: 5));
 
       if (response.statusCode != 200) {
         // Fallback to English Wiktionary if the specific language version doesn't exist
@@ -121,9 +121,15 @@ class WiktionaryEtymologyService {
       }
 
       final data = json.decode(response.body);
+      
+      // Check if the page exists
+      if (data['parse'] == null) {
+        return [];
+      }
+      
       final wikitext = data['parse']['wikitext']['*'] as String?;
 
-      if (wikitext == null) {
+      if (wikitext == null || wikitext.isEmpty) {
         return [];
       }
 

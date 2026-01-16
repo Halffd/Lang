@@ -127,6 +127,18 @@ class _ReaderScreenState extends State<ReaderScreen>
 
   void _handleKeyEvent(RawKeyEvent event) {
     if (event is RawKeyDownEvent) {
+      // Check for Ctrl+C (copy)
+      if (event.isControlPressed && event.logicalKey == LogicalKeyboardKey.keyC) {
+        _copyCurrentWord();
+        return;
+      }
+
+      // Check for Ctrl+V (paste)
+      if (event.isControlPressed && event.logicalKey == LogicalKeyboardKey.keyV) {
+        _pasteNewText();
+        return;
+      }
+
       if (_sentences.isEmpty) return;
 
       // Toggle auto-paste with 'm' key
@@ -167,6 +179,43 @@ class _ReaderScreenState extends State<ReaderScreen>
         _addToFavorites();
       } else if (event.logicalKey == LogicalKeyboardKey.delete) {
         _deleteFromDb();
+      }
+    }
+  }
+
+  Future<void> _copyCurrentWord() async {
+    final token = _currentToken;
+    if (token != null) {
+      await Clipboard.setData(ClipboardData(text: token.text));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Copied: ${token.text}'),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _pasteNewText() async {
+    try {
+      final ClipboardData? clipboardData = await Clipboard.getData('text/plain');
+      final text = clipboardData?.text ?? '';
+      if (text.isNotEmpty) {
+        setState(() {
+          _showInput = true;
+          _textController.text = text;
+          _sentences = [];
+          _currentSentenceIndex = 0;
+          _currentWordIndex = 0;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error pasting: $e')),
+        );
       }
     }
   }
