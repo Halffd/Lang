@@ -9,11 +9,14 @@ import '../services/dictionary_service.dart';
 import '../services/translation_service.dart';
 import '../mixins/word_list_mixins.dart';
 import '../widgets/dictionary_entry_card.dart';
-import '../utils/chinese_util.dart';
 import '../utils/language_detector.dart';
 import '../widgets/reader/reader_app_bar.dart';
 import '../widgets/reader/token_widget.dart';
 import '../services/reader_translation_service.dart';
+import '../services/ichi_moe_service.dart';
+import '../utils/html_renderer.dart';
+import 'package:file_picker/file_picker.dart';
+import '../screens/document_reader_screen.dart';
 
 class ReaderScreen extends StatefulWidget {
   const ReaderScreen({Key? key}) : super(key: key);
@@ -588,6 +591,86 @@ class _ReaderScreenState extends State<ReaderScreen>
     }
   }
 
+  /// Show ichi.moe definition for the selected token
+  Future<void> _showIchiMoeDefinition(Token token) async {
+    if (token == null || token.text.isEmpty) return;
+
+    try {
+      // Fetch ichi.moe details
+      final dictionaryService = DictionaryService();
+      final ichiMoeEntries = await dictionaryService.searchIchiMoe(token.text);
+
+      if (ichiMoeEntries.isNotEmpty) {
+        // Show ichi.moe details in a dialog
+        await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Ichi.moe: ${token.text}'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: ichiMoeEntries.length,
+                  itemBuilder: (context, index) {
+                    final entry = ichiMoeEntries[index];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${index + 1}. ${entry.term}',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          ...entry.definitions.asMap().entries.map((defEntry) {
+                            final defIndex = defEntry.key;
+                            final definition = defEntry.value;
+                            return Padding(
+                              padding: const EdgeInsets.only(left: 8.0, bottom: 4.0),
+                              child: HtmlRenderer.renderHtmlSafe(definition),
+                            );
+                          }).toList(),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Close'),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        // Show message if no ichi.moe details found
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('No ichi.moe details found for: ${token.text}'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error fetching ichi.moe definition: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to fetch ichi.moe details for: ${token.text}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   // Scroll logic is tricky with Wrap. For now, we rely on the user seeing the highlight.
   // Ideally, we'd use ScrollablePositionedList, but we have a list of Wraps.
   final ScrollController _scrollController = ScrollController();
@@ -603,7 +686,24 @@ class _ReaderScreenState extends State<ReaderScreen>
   Widget build(BuildContext context) {
     if (_showInput) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Text Reader')),
+        appBar: AppBar(
+          title: const Text('Text Reader'),
+          actions: [
+            PopupMenuButton<String>(
+              onSelected: (String result) {
+                if (result == 'open_document') {
+                  _openDocument();
+                }
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                const PopupMenuItem<String>(
+                  value: 'open_document',
+                  child: Text('Open Document'),
+                ),
+              ],
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -686,6 +786,9 @@ class _ReaderScreenState extends State<ReaderScreen>
                             if (appState.showWiktionary) {
                               await _showWiktionaryDefinition(token);
                             }
+
+                            // Always show ichi.moe details for Japanese terms
+                            await _showIchiMoeDefinition(token);
                           },
                           fontSize: 24,
                           definitionFontSize: 16,
@@ -739,5 +842,37 @@ class _ReaderScreenState extends State<ReaderScreen>
         ),
       ),
     );
+  }
+
+  /// Opens a document file picker to select and read PDF, EPUB, or TXT files
+  Future<void> _openDocument() async {
+    try {
+      // Import file_picker here to avoid circular dependencies
+      final FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'epub', 'txt'],
+      );
+
+      if (result != null && result.files.single.path != null) {
+        final filePath = result.files.single.path!;
+        final fileExtension = result.files.single.extension?.toLowerCase() ?? 'txt';
+
+        // Navigate to the document reader screen
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => DocumentReaderScreen(
+              filePath: filePath,
+              fileType: fileExtension,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error opening document: $e')),
+        );
+      }
+    }
   }
 }

@@ -12,6 +12,7 @@ import '../utils/chinese_util.dart';
 import '../utils/ideographic_util.dart';
 import 'wiktionary_etymology_service.dart';
 import 'wiktionary_service.dart';
+import 'ichi_moe_service.dart';
 
 // Import sqflite for Yomichan functionality
 import 'package:sqflite/sqflite.dart';
@@ -1163,6 +1164,18 @@ class DictionaryService {
       return await service.fetchWordDetailsForAnyLanguage(word, detectedLanguage);
     } catch (e) {
       print('Error fetching multi-language word details: $e');
+      return [];
+    }
+  }
+
+  /// Fetch data from ichi.moe for Japanese terms
+  /// This method implements the JavaScript-originated function logic in Dart
+  Future<List<model.DictionaryEntry>> searchIchiMoe(String term, {bool useRomaji = true}) async {
+    try {
+      final service = IchiMoeService();
+      return await service.searchWithDetails(term, useRomaji: useRomaji);
+    } catch (e) {
+      print('Error fetching ichi.moe data: $e');
       return [];
     }
   }

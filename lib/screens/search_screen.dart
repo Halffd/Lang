@@ -11,13 +11,12 @@ import '../models/tone_model.dart';
 import '../services/dictionary_service.dart';
 import '../services/wiktionary_etymology_service.dart';
 import '../services/wiktionary_integration_service.dart';
+import '../services/ichi_moe_service.dart';
 import '../utils/chinese_util.dart';
 import '../utils/character_breakdown.dart';
-import '../utils/json_html_renderer.dart';
 import '../utils/language_detector.dart';
 import '../utils/search_result_merger.dart';
 import 'dart:convert';
-import 'dart:io';
 import '../widgets/character_breakdown_widget.dart';
 import '../widgets/etymology_widget.dart';
 import '../widgets/search/search_bar_widget.dart';
@@ -143,13 +142,17 @@ class _SearchScreenState extends State<SearchScreen> {
         detectedLanguage,
       );
 
+      // Add ichi.moe results for Japanese terms
+      final ichiMoeEntries = await _dictionaryService.searchIchiMoe(query);
+      final finalResult = _mergeIchiMoeResults(enrichedResult, ichiMoeEntries);
+
       // Merge if appending
-      final finalResult = append
-          ? SearchResultMerger.merge(_searchResult, enrichedResult)
-          : enrichedResult;
+      final mergedResult = append
+          ? SearchResultMerger.merge(_searchResult, finalResult)
+          : finalResult;
 
       setState(() {
-        _searchResult = finalResult;
+        _searchResult = mergedResult;
         _isSearching = false;
       });
     } catch (e) {
@@ -160,6 +163,42 @@ class _SearchScreenState extends State<SearchScreen> {
         );
       }
     }
+  }
+
+  /// Merge ichi.moe results with existing search results
+  SearchResult _mergeIchiMoeResults(SearchResult baseResult, List<model.DictionaryEntry> ichiMoeEntries) {
+    if (ichiMoeEntries.isEmpty) {
+      return baseResult;
+    }
+
+    // Add ichi.moe entries to the existing entries
+    final allEntries = [...baseResult.entries, ...ichiMoeEntries];
+
+    // Create a new dictionary for ichi.moe if it doesn't exist
+    final updatedDictionaries = Map<int, model.Dictionary>.from(baseResult.dictionaries);
+    if (!updatedDictionaries.containsKey(999)) {
+      updatedDictionaries[999] = model.Dictionary(
+        id: 999,
+        title: 'Ichi.moe',
+        revision: 'Latest',
+        priority: 0,
+        enabled: true,
+        importedAt: DateTime.now(),
+        name: 'ichi_moe',
+      );
+    }
+
+    return SearchResult(
+      entries: allEntries,
+      kanji: baseResult.kanji,
+      pitchAccents: baseResult.pitchAccents,
+      toneInfo: baseResult.toneInfo,
+      frequencies: baseResult.frequencies,
+      dictionaries: updatedDictionaries,
+      tags: baseResult.tags,
+      etymology: baseResult.etymology,
+      wiktionaryDetails: baseResult.wiktionaryDetails,
+    );
   }
 
   /// Send search and append result to existing results
