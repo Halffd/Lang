@@ -12,6 +12,7 @@
 .swiftpm/
 migrate_working_dir/
 
+*.lock
 # IntelliJ related
 *.iml
 *.ipr
@@ -43,3 +44,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+# Generated plugin registrants
+lib/generated_plugin_registrant.dart
+**/ios/Runner/GeneratedPluginRegistrant.*
+**/macos/Flutter/GeneratedPluginRegistrant.swift
+**/windows/flutter/generated_plugin_registrant.cc
+**/linux/flutter/generated_plugin_registrant.cc
+**/flutter/generated_plugins.cmake
