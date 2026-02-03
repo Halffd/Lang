@@ -10,9 +10,11 @@ class DictionaryEntryCard extends StatelessWidget {
   final bool isSaved;
   final bool isFavorite;
   final bool isInAnki;
+  final bool isInSRS;
   final VoidCallback onSaveToggle;
   final VoidCallback onFavoriteToggle;
   final VoidCallback onAnkiToggle;
+  final VoidCallback onSRSToggle;
 
   const DictionaryEntryCard({
     super.key,
@@ -20,9 +22,11 @@ class DictionaryEntryCard extends StatelessWidget {
     required this.isSaved,
     required this.isFavorite,
     required this.isInAnki,
+    this.isInSRS = false,
     required this.onSaveToggle,
     required this.onFavoriteToggle,
     required this.onAnkiToggle,
+    required this.onSRSToggle,
   });
 
   Future<void> _launchExternalLink(BuildContext context, String url) async {
@@ -144,6 +148,15 @@ class DictionaryEntryCard extends StatelessWidget {
                       ),
                       onPressed: onAnkiToggle,
                       tooltip: isInAnki ? 'Remove from Anki' : 'Add to Anki',
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        isInSRS ? Icons.school : Icons.school_outlined,
+                        color: isInSRS ? Colors.green : null,
+                        size: 20,
+                      ),
+                      onPressed: onSRSToggle,
+                      tooltip: isInSRS ? 'Remove from SRS' : 'Add to SRS',
                     ),
                     IconButton(
                       icon: Icon(

@@ -102,4 +102,21 @@ class StorageService {
     words.remove(word);
     await _prefs.setStringList('favorite_words', words.toList());
   }
+
+  Future<Set<String>> getSRSWords() async {
+    final words = _prefs.getStringList('srs_words') ?? [];
+    return Set<String>.from(words);
+  }
+
+  Future<void> addToSRSWords(String word) async {
+    final words = await getSRSWords();
+    words.add(word);
+    await _prefs.setStringList('srs_words', words.toList());
+  }
+
+  Future<void> removeFromSRSWords(String word) async {
+    final words = await getSRSWords();
+    words.remove(word);
+    await _prefs.setStringList('srs_words', words.toList());
+  }
 }

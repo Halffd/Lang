@@ -214,15 +214,67 @@ mixin FavoriteWordsMixin {
   bool isWordFavorite(String word) => _favoriteWords.contains(word);
 }
 
+/// Mixin for managing SRS words
+mixin SRSWordsMixin {
+  late StorageService _srsWordsStorage;
+  bool _srsWordsStorageInitialized = false;
+  final Set<String> _srsWords = {};
+  bool _srsWordsLoading = false;
+
+  void setStorageService(StorageService storageService) {
+    _srsWordsStorage = storageService;
+    _srsWordsStorageInitialized = true;
+  }
+
+  Set<String> get srsWords => _srsWords;
+
+  Future<void> loadSRSWords() async {
+    if (!_srsWordsStorageInitialized) {
+      debugPrint('Warning: Storage service not initialized for SRS words');
+      return;
+    }
+    _srsWordsLoading = true;
+    try {
+      final words = await _srsWordsStorage.getSRSWords();
+      _srsWords.addAll(words);
+    } catch (e) {
+      debugPrint('Error loading SRS words: $e');
+    } finally {
+      _srsWordsLoading = false;
+    }
+  }
+
+  Future<void> toggleSRSWord(String word, {required bool isInSRS}) async {
+    if (!_srsWordsStorageInitialized) {
+      debugPrint('Warning: Storage service not initialized for SRS words');
+      return;
+    }
+    try {
+      if (isInSRS) {
+        await _srsWordsStorage.addToSRSWords(word);
+        _srsWords.add(word);
+      } else {
+        await _srsWordsStorage.removeFromSRSWords(word);
+        _srsWords.remove(word);
+      }
+    } catch (e) {
+      debugPrint('Error toggling SRS word: $e');
+    }
+  }
+
+  bool isWordInSRS(String word) => _srsWords.contains(word);
+}
+
 /// Combined mixin that includes all word list functionalities
-mixin AllWordListsMixin on SavedWordsMixin, DeletedWordsMixin, AnkiWordsMixin, FavoriteWordsMixin {
+mixin AllWordListsMixin on SavedWordsMixin, DeletedWordsMixin, AnkiWordsMixin, FavoriteWordsMixin, SRSWordsMixin {
 
   // You can add combined methods here if needed
   bool isWordInAnyList(String word) {
     return isWordSaved(word) ||
            isWordInAnki(word) ||
            isWordFavorite(word) ||
-           isWordDeleted(word);
+           isWordDeleted(word) ||
+           isWordInSRS(word);
   }
 
   Future<void> removeWordFromAllLists(String word) async {
@@ -231,6 +283,7 @@ mixin AllWordListsMixin on SavedWordsMixin, DeletedWordsMixin, AnkiWordsMixin, F
         if (isWordSaved(word)) toggleSavedWord(word, isSaved: false),
         if (isWordInAnki(word)) toggleAnkiWord(word, isAnki: false),
         if (isWordFavorite(word)) toggleFavoriteWord(word, isFavorite: false),
+        if (isWordInSRS(word)) toggleSRSWord(word, isInSRS: false),
         if (!isWordDeleted(word)) deleteWord(word),
       ]);
     } catch (e) {
