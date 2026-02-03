@@ -16,7 +16,7 @@ import '../services/reader_translation_service.dart';
 import '../services/ichi_moe_service.dart';
 import '../utils/html_renderer.dart';
 import 'package:file_picker/file_picker.dart';
-import '../screens/document_reader_screen.dart';
+import 'package:flutter/material.dart' show showMenu, RelativeRect;
 
 class ReaderScreen extends StatefulWidget {
   const ReaderScreen({Key? key}) : super(key: key);
@@ -26,7 +26,7 @@ class ReaderScreen extends StatefulWidget {
 }
 
 class _ReaderScreenState extends State<ReaderScreen>
-    with SavedWordsMixin, AnkiWordsMixin, FavoriteWordsMixin, DeletedWordsMixin {
+    with SavedWordsMixin, AnkiWordsMixin, FavoriteWordsMixin, DeletedWordsMixin, SRSWordsMixin {
   final TextEditingController _textController = TextEditingController();
   final DictionaryService _dictionaryService = DictionaryService();
   final TranslationService _translationService = TranslationService();
@@ -63,6 +63,7 @@ class _ReaderScreenState extends State<ReaderScreen>
     await loadSavedWords();
     await loadAnkiWords();
     await loadFavoriteWords();
+    await loadSRSWords();
     await loadDeletedWords();
   }
 
@@ -790,6 +791,93 @@ class _ReaderScreenState extends State<ReaderScreen>
                             // Always show ichi.moe details for Japanese terms
                             await _showIchiMoeDefinition(token);
                           },
+                          onSecondaryTap: () async {
+                            // Right-click context menu for additional options
+                            await showMenu(
+                              context: context,
+                              position: const RelativeRect.fromLTRB(100, 100, 0, 0),
+                              items: [
+                                const PopupMenuItem(
+                                  value: 'copy',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.copy, size: 18),
+                                      SizedBox(width: 8),
+                                      Text('Copy'),
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'search',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.search, size: 18),
+                                      SizedBox(width: 8),
+                                      Text('Search'),
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'add_favorite',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.favorite, size: 18),
+                                      SizedBox(width: 8),
+                                      Text('Add to Favorites'),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'add_anki',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.star, size: 18),
+                                      const SizedBox(width: 8),
+                                      Text(context.read<AppState>().ankiWords.contains(token.text) ? 'Remove from Anki' : 'Add to Anki'),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ).then((value) async {
+                              if (value != null) {
+                                switch (value) {
+                                  case 'copy':
+                                    await Clipboard.setData(ClipboardData(text: token.text));
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Copied: ${token.text}')),
+                                      );
+                                    }
+                                    break;
+                                  case 'search':
+                                    // Trigger search for the token text
+                                    final results = await _dictionaryService.searchTerm(token.text);
+                                    if (results.entries.isNotEmpty) {
+                                      setState(() {
+                                        _expandedEntry = results.entries[0];
+                                      });
+                                    }
+                                    break;
+                                  case 'add_favorite':
+                                    final appState = context.read<AppState>();
+                                    if (appState.favoriteWords.contains(token.text)) {
+                                      appState.removeFavoriteWord(token.text);
+                                    } else {
+                                      appState.addFavoriteWord(token.text);
+                                    }
+                                    break;
+                                  case 'add_anki':
+                                    final appState = context.read<AppState>();
+                                    if (appState.ankiWords.contains(token.text)) {
+                                      appState.removeAnkiWord(token.text);
+                                    } else {
+                                      appState.addAnkiWord(token.text);
+                                    }
+                                    break;
+                                }
+                              }
+                            });
+                          },
                           fontSize: 24,
                           definitionFontSize: 16,
                         );
@@ -829,9 +917,11 @@ class _ReaderScreenState extends State<ReaderScreen>
                           isSaved: isWordSaved(_expandedEntry!.term),
                           isFavorite: isWordFavorite(_expandedEntry!.term),
                           isInAnki: isWordInAnki(_expandedEntry!.term),
+                          isInSRS: isWordInSRS(_expandedEntry!.term),
                           onSaveToggle: () => toggleSavedWord(_expandedEntry!.term, isSaved: !isWordSaved(_expandedEntry!.term)),
                           onFavoriteToggle: () => toggleFavoriteWord(_expandedEntry!.term, isFavorite: !isWordFavorite(_expandedEntry!.term)),
                           onAnkiToggle: () => toggleAnkiWord(_expandedEntry!.term, isAnki: !isWordInAnki(_expandedEntry!.term)),
+                          onSRSToggle: () => toggleSRSWord(_expandedEntry!.term, isInSRS: !isWordInSRS(_expandedEntry!.term)),
                         ),
                       ),
                     ),
@@ -844,10 +934,9 @@ class _ReaderScreenState extends State<ReaderScreen>
     );
   }
 
-  /// Opens a document file picker to select and read PDF, EPUB, or TXT files
+  /// Opens a file picker to select and read PDF, EPUB, or TXT files
   Future<void> _openDocument() async {
     try {
-      // Import file_picker here to avoid circular dependencies
       final FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'epub', 'txt'],
@@ -857,15 +946,12 @@ class _ReaderScreenState extends State<ReaderScreen>
         final filePath = result.files.single.path!;
         final fileExtension = result.files.single.extension?.toLowerCase() ?? 'txt';
 
-        // Navigate to the document reader screen
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => DocumentReaderScreen(
-              filePath: filePath,
-              fileType: fileExtension,
-            ),
-          ),
-        );
+        // For now, just show a message that the file was selected
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Selected file: $filePath')),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {

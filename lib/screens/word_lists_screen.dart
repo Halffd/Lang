@@ -15,8 +15,8 @@ class WordListsScreen extends StatefulWidget {
 }
 
 class _WordListsScreenState extends State<WordListsScreen>
-    with SavedWordsMixin, DeletedWordsMixin, AnkiWordsMixin, FavoriteWordsMixin
-    implements SavedWordsMixin, DeletedWordsMixin, AnkiWordsMixin, FavoriteWordsMixin {
+    with SavedWordsMixin, DeletedWordsMixin, AnkiWordsMixin, FavoriteWordsMixin, SRSWordsMixin
+    implements SavedWordsMixin, DeletedWordsMixin, AnkiWordsMixin, FavoriteWordsMixin, SRSWordsMixin {
   final TextEditingController _searchController = TextEditingController();
   final DictionaryService _dictionaryService = DictionaryService();
   List<DictionaryEntry> _searchResults = [];
@@ -48,6 +48,7 @@ class _WordListsScreenState extends State<WordListsScreen>
     await loadDeletedWords();
     await loadAnkiWords();
     await loadFavoriteWords();
+    await loadSRSWords();
   }
 
   Future<void> _searchWord(String query) async {
@@ -280,9 +281,11 @@ class _WordListsScreenState extends State<WordListsScreen>
                           isSaved: isWordSaved(entry.word),
                           isFavorite: isWordFavorite(entry.word),
                           isInAnki: isWordInAnki(entry.word),
+                          isInSRS: isWordInSRS(entry.word),
                           onSaveToggle: () => toggleSavedWord(entry.word, isSaved: !isWordSaved(entry.word)),
                           onFavoriteToggle: () => toggleFavoriteWord(entry.word, isFavorite: !isWordFavorite(entry.word)),
                           onAnkiToggle: () => toggleAnkiWord(entry.word, isAnki: !isWordInAnki(entry.word)),
+                          onSRSToggle: () => toggleSRSWord(entry.word, isInSRS: !isWordInSRS(entry.word)),
                         );
                       },
                     ),
