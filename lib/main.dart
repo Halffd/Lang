@@ -3,14 +3,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'models/app_state.dart';
+import 'models/srs_card.dart';
 import 'services/storage_service.dart';
 import 'services/clipboard_monitor_service.dart';
+import 'services/srs_service.dart';
 import 'screens/dictionary_list_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/reader_screen.dart';
 import 'screens/word_lists_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/sentence_translator_screen.dart';
+import 'screens/srs_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'widgets/gesture_zoom_wrapper.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -26,11 +29,14 @@ void main() async {
 
   final storageService = StorageService();
   await storageService.init();
+  final srsService = SRSService(storageService);
+  await srsService.initialize();
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AppState(storageService)),
+        ChangeNotifierProvider.value(value: srsService),
       ],
       child: const LangApp(),
     ),
@@ -114,6 +120,7 @@ class _MainScreenState extends State<MainScreen> {
     WordListsScreen(),
     DictionaryListScreen(),
     SentenceTranslatorScreen(),
+    SRSScreen(),
     SettingsScreen(),
   ];
 
@@ -127,17 +134,16 @@ class _MainScreenState extends State<MainScreen> {
       final appState = Provider.of<AppState>(context, listen: false);
       appState.setCurrentQuery(content);
 
-      // Switch to the search screen (index 0)
-      setState(() {
-        _currentIndex = 0;
-      });
+      // Don't automatically navigate to search screen - just update the query
+      // This allows users to navigate freely between screens without being pulled back
+      // The search results will be available when they return to the search screen
     };
 
     // Set initial index based on app state
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final appState = Provider.of<AppState>(context, listen: false);
       setState(() {
-        _currentIndex = appState.defaultScreenIndex; // 0-5 for the screens
+        _currentIndex = appState.defaultScreenIndex; // 0-6 for the screens
       });
 
       // Start clipboard monitoring based on the setting
@@ -185,6 +191,7 @@ class _MainScreenState extends State<MainScreen> {
         const SingleActivator(LogicalKeyboardKey.digit4, control: true): () => _handleShortcut(3),
         const SingleActivator(LogicalKeyboardKey.digit5, control: true): () => _handleShortcut(4),
         const SingleActivator(LogicalKeyboardKey.digit6, control: true): () => _handleShortcut(5),
+        const SingleActivator(LogicalKeyboardKey.digit7, control: true): () => _handleShortcut(6),
       },
       child: Focus(
         autofocus: true,
@@ -231,6 +238,10 @@ class _MainScreenState extends State<MainScreen> {
                     NavigationDestination(
                       icon: Icon(Icons.translate),
                       label: 'Translator',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.school),
+                      label: 'SRS',
                     ),
                     NavigationDestination(
                       icon: Icon(Icons.settings),
