@@ -274,8 +274,8 @@ class AppState extends ChangeNotifier {
   }
 
   void setDefaultScreenIndex(int value) {
-    // Ensure value is within valid range (0-5 for the 6 screens)
-    if (value >= 0 && value <= 5) {
+    // Ensure value is within valid range (0-6 for the 7 screens)
+    if (value >= 0 && value <= 6) {
       _defaultScreenIndex = value;
       _storageService.setInt('default_screen_index', value);
       notifyListeners();
@@ -434,8 +434,8 @@ class AppState extends ChangeNotifier {
       _defaultScreenIndex = _storageService.getInt('default_screen_index') ?? 0;
       _autoPasteReader = _storageService.getBool('auto_paste_reader') ?? false;
       _showWiktionary = _storageService.getBool('show_wiktionary') ?? true;
-      // Ensure value is within valid range (0-5 for the 6 screens)
-      if (_defaultScreenIndex < 0 || _defaultScreenIndex > 5) {
+      // Ensure value is within valid range (0-6 for the 7 screens)
+      if (_defaultScreenIndex < 0 || _defaultScreenIndex > 6) {
         _defaultScreenIndex = 0;
       }
     } catch (e) {

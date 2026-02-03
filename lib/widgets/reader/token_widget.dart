@@ -7,6 +7,7 @@ class TokenWidget extends StatelessWidget {
   final bool isSelected;
   final bool isDeleted;
   final VoidCallback onTap;
+  final VoidCallback? onSecondaryTap;  // For right-click functionality
   final double fontSize;
   final double definitionFontSize;
 
@@ -16,6 +17,7 @@ class TokenWidget extends StatelessWidget {
     required this.isSelected,
     required this.isDeleted,
     required this.onTap,
+    this.onSecondaryTap,
     this.fontSize = 24,
     this.definitionFontSize = 16,
   }) : super(key: key);
@@ -24,6 +26,7 @@ class TokenWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      onSecondaryTap: onSecondaryTap,  // Add right-click functionality
       child: Container(
         margin: const EdgeInsets.only(top: 2),
         decoration: BoxDecoration(

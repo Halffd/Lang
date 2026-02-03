@@ -1,5 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
+import '../utils/html_renderer.dart';
 
 /// A service for fetching and parsing Wiktionary and Kanjipedia data
 class WiktionaryService {

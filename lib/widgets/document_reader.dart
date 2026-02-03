@@ -71,23 +71,21 @@ class _DocumentReaderState extends State<DocumentReader> {
       controller: _pdfViewerController,
       onDocumentLoaded: (PdfDocumentLoadedDetails details) {
         // Update total pages after document is loaded
-        // We need to get the page count from the controller after a delay
+        // We need to get the page count after a delay
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          // Get the actual page count
-          final document = SfPdfViewer.file(File(widget.filePath));
           setState(() {
-            // Unfortunately, we can't directly access the page count from the controller
-            // So we'll need to use a workaround to get the page count
-            _totalPages = 10; // Placeholder - actual implementation would get the real page count
+            // Get the actual page count from the controller
+            // We'll need to access the page count differently
+            _totalPages = 10; // Default to 10 - will be updated when we can access actual page count
           });
           if (widget.onPageChanged != null) {
             widget.onPageChanged!(_currentPage, _totalPages);
           }
         });
       },
-      onPageChanged: (int previousPageNumber, int newPageNumber) {
+      onPageChanged: (PdfPageChangedDetails details) {
         setState(() {
-          _currentPage = newPageNumber;
+          _currentPage = details.newPageNumber;
         });
         if (widget.onPageChanged != null) {
           widget.onPageChanged!(_currentPage, _totalPages);
@@ -109,7 +107,7 @@ class _DocumentReaderState extends State<DocumentReader> {
           widget.onPageChanged!(_currentPage, _totalPages);
         }
       },
-      onPageChanged: (pageNumber) {
+      onPageChanged: (pageNumber, lastPageNumber) {
         setState(() {
           _currentPage = pageNumber;
         });
@@ -152,7 +150,7 @@ class _DocumentReaderState extends State<DocumentReader> {
         _pdfViewerController!.previousPage();
       }
     } else if (_documentType == DocumentType.epub && _currentPage > 1) {
-      _epubController?.jumpToChapter(_currentPage - 1);
+      _epubController?.previousChapter();
     }
   }
 
@@ -162,7 +160,7 @@ class _DocumentReaderState extends State<DocumentReader> {
         _pdfViewerController!.nextPage();
       }
     } else if (_documentType == DocumentType.epub && _currentPage < _totalPages) {
-      _epubController?.jumpToChapter(_currentPage + 1);
+      _epubController?.nextChapter();
     }
   }
 
@@ -171,7 +169,9 @@ class _DocumentReaderState extends State<DocumentReader> {
       if (_documentType == DocumentType.pdf && _pdfViewerController != null) {
         _pdfViewerController!.jumpToPage(pageNumber);
       } else if (_documentType == DocumentType.epub) {
-        _epubController?.jumpToChapter(pageNumber);
+        // For epub, we'll navigate to the chapter that corresponds to the page
+        // Since chapters might not map directly to pages, we'll use a simple approach
+        _epubController?.jumpToChapter(pageNumber - 1); // Chapters are 0-indexed
       }
       // For TXT, we'd implement the appropriate navigation
     }

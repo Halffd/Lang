@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/wiktionary_etymology_service.dart';
+import '../utils/html_renderer.dart';
 
 class WiktionaryDetailsWidget extends StatelessWidget {
   final List<WiktionaryEntry> wiktionaryEntries;
@@ -78,15 +79,7 @@ class WiktionaryDetailsWidget extends StatelessWidget {
     // Definition
     if (entry.definition.isNotEmpty) {
       children.add(
-        Text(
-          entry.definition,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.blue[900],
-          ),
-          textAlign: TextAlign.left,
-        ),
+        HtmlRenderer.renderHtmlSafe(entry.definition),
       );
       children.add(const SizedBox(height: 8));
     }
@@ -114,14 +107,7 @@ class WiktionaryDetailsWidget extends StatelessWidget {
               children: [
                 Text('• ', style: TextStyle(fontSize: 14)),
                 Expanded(
-                  child: Text(
-                    example,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontStyle: FontStyle.italic,
-                      color: Colors.blue[800],
-                    ),
-                  ),
+                  child: HtmlRenderer.renderHtmlSafe(example),
                 ),
               ],
             ),
