@@ -463,4 +463,52 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsTitle => 'Settings';
+
+  @override
+  String get aiAssistant => 'AI 助手';
+
+  @override
+  String get chatGptMock => 'ChatGPT（模拟）';
+
+  @override
+  String get translate => '翻译';
+
+  @override
+  String get summarize => '摘要';
+
+  @override
+  String get aiBreakdown => 'AI 拆解';
+
+  @override
+  String get askAnything => '随便问...';
+
+  @override
+  String get generateImage => '生成图片';
+
+  @override
+  String get langAnalyze => 'Lang 分析';
+
+  @override
+  String get pasteTextHere => '在此粘贴文本进行分析...';
+
+  @override
+  String get processing => '处理中...';
+
+  @override
+  String perPageRow(int count) {
+    return '每行 $count 个';
+  }
+
+  @override
+  String perPagePage(int count) {
+    return '每页 $count 个';
+  }
+
+  @override
+  String pageOf(int current, int total) {
+    return '第 $current 页，共 $total 页';
+  }
+
+  @override
+  String get pasteYourText => 'Paste your text here to analyze';
 }

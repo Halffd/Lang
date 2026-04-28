@@ -971,6 +971,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Settings'**
   String get settingsTitle;
+
+  /// No description provided for @aiAssistant.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Assistant'**
+  String get aiAssistant;
+
+  /// No description provided for @chatGptMock.
+  ///
+  /// In en, this message translates to:
+  /// **'ChatGPT'**
+  String get chatGptMock;
+
+  /// No description provided for @translate.
+  ///
+  /// In en, this message translates to:
+  /// **'Translate'**
+  String get translate;
+
+  /// No description provided for @summarize.
+  ///
+  /// In en, this message translates to:
+  /// **'Summarize'**
+  String get summarize;
+
+  /// No description provided for @aiBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Breakdown'**
+  String get aiBreakdown;
+
+  /// No description provided for @askAnything.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask anything'**
+  String get askAnything;
+
+  /// No description provided for @generateImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate Image'**
+  String get generateImage;
+
+  /// No description provided for @langAnalyze.
+  ///
+  /// In en, this message translates to:
+  /// **'Lang Analyze'**
+  String get langAnalyze;
+
+  /// No description provided for @pasteTextHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste text here...'**
+  String get pasteTextHere;
+
+  /// No description provided for @processing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing...'**
+  String get processing;
+
+  /// No description provided for @perPageRow.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} per page'**
+  String perPageRow(int count);
+
+  /// No description provided for @perPagePage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} per page'**
+  String perPagePage(int count);
+
+  /// No description provided for @pageOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} of {total}'**
+  String pageOf(int current, int total);
+
+  /// No description provided for @pasteYourText.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste your text here to analyze'**
+  String get pasteYourText;
 }
 
 class _AppLocalizationsDelegate

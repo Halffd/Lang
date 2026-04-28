@@ -463,4 +463,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsTitle => 'Settings';
+
+  @override
+  String get aiAssistant => 'AI Assistant';
+
+  @override
+  String get chatGptMock => 'ChatGPT';
+
+  @override
+  String get translate => 'Translate';
+
+  @override
+  String get summarize => 'Summarize';
+
+  @override
+  String get aiBreakdown => 'AI Breakdown';
+
+  @override
+  String get askAnything => 'Ask anything';
+
+  @override
+  String get generateImage => 'Generate Image';
+
+  @override
+  String get langAnalyze => 'Lang Analyze';
+
+  @override
+  String get pasteTextHere => 'Paste text here...';
+
+  @override
+  String get processing => 'Processing...';
+
+  @override
+  String perPageRow(int count) {
+    return '$count per page';
+  }
+
+  @override
+  String perPagePage(int count) {
+    return '$count per page';
+  }
+
+  @override
+  String pageOf(int current, int total) {
+    return '$current of $total';
+  }
+
+  @override
+  String get pasteYourText => 'Paste your text here to analyze';
 }

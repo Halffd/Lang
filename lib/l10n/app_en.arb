@@ -591,5 +591,40 @@
     "search": "Search",
     "saved": "Saved",
     "history": "History",
-    "ai": "AI"
+    "ai": "AI",
+    "aiAssistant": "AI Assistant",
+    "chatGptMock": "ChatGPT",
+    "translate": "Translate",
+    "summarize": "Summarize",
+    "aiBreakdown": "AI Breakdown",
+    "askAnything": "Ask anything",
+    "generateImage": "Generate Image",
+    "langAnalyze": "Lang Analyze",
+    "pasteTextHere": "Paste text here...",
+    "processing": "Processing...",
+    "perPageRow": "{count} per page",
+    "@perPageRow": {
+      "placeholders": {
+        "count": {"type": "int"}
+      }
+    },
+    "perPagePage": "{count} per page",
+    "@perPagePage": {
+      "placeholders": {
+        "count": {"type": "int"}
+      }
+    },
+    "pageOf": "{current} of {total}",
+    "@pageOf": {
+      "placeholders": {
+        "current": {"type": "int"},
+        "total": {"type": "int"}
+      }
+    },
+    "analyze": "Analyze",
+    "pasteYourText": "Paste your text here to analyze",
+    "enterTextToAnalyze": "Enter text to analyze",
+    "analyzeScreenTitle": "Analyze Screen",
+    "noHistory": "No history yet",
+    "clearHistory": "Clear History"
   }
