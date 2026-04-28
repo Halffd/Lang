@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
-import '../../domain/entities/dictionary.dart';
+import '../../../domain/entities/dictionary.dart';
 import '../../utils/json_html_renderer.dart';
 import 'tag_renderer.dart';
 

@@ -1,4 +1,4 @@
-import '../repositories/dictionary_service.dart';
+import '../data/repositories/dictionary_service.dart';
 
 /// Utility class to merge search results, removing duplicates
 class SearchResultMerger {

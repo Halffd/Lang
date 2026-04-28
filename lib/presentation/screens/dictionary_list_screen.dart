@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../domain/entities/dictionary.dart' as model;
-import '../repositories/dictionary_service.dart';
+import '../../../domain/entities/dictionary.dart' as model;
+import '../../data/repositories/dictionary_service.dart';
 import 'import_screen.dart';
 
 class DictionaryListScreen extends StatefulWidget {

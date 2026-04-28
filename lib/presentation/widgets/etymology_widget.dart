@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../domain/entities/etymology_model.dart';
+import '../../../domain/entities/etymology_model.dart';
 
 class EtymologyWidget extends StatelessWidget {
   final List<EtymologyEntry> etymologyEntries;

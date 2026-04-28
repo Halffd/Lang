@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import '../repositories/import_service.dart';
+import '../../data/repositories/import_service.dart';
 
 class ImportScreen extends StatefulWidget {
   const ImportScreen({Key? key}) : super(key: key);

@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../domain/entities/analyzed_word.dart';
+import '../../../domain/entities/analyzed_word.dart';
 import '../../domain/repositories/analyzer_repository.dart';
 
 class AnalyzerProvider with ChangeNotifier {

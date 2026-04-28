@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../domain/entities/ai_message.dart';
+import '../../../domain/entities/ai_message.dart';
 import '../../domain/repositories/ai_repository.dart';
 
 class AiProvider with ChangeNotifier {

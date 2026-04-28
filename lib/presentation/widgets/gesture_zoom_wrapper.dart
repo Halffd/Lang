@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'dart:io' show Platform;
-import '../../domain/entities/app_state.dart';
+import '../../../domain/entities/app_state.dart';
 
 class GestureZoomWrapper extends StatefulWidget {
   final Widget child;

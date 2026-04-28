@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../domain/entities/translation_model.dart';
-import '../repositories/translation_service.dart';
+import '../../../domain/entities/translation_model.dart';
+import '../../data/repositories/translation_service.dart';
 
 class SentenceTranslatorScreen extends StatefulWidget {
   const SentenceTranslatorScreen({Key? key}) : super(key: key);

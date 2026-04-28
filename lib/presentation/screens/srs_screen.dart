@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../domain/entities/app_state.dart';
-import '../../domain/entities/srs_card.dart';
-import '../repositories/srs_service.dart';
+import '../../../domain/entities/app_state.dart';
+import '../../../domain/entities/srs_card.dart';
+import '../../data/repositories/srs_service.dart';
 import '../widgets/dictionary_entry_card.dart';
 
 class SRSScreen extends StatefulWidget {

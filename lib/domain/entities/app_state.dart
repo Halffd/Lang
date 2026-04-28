@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/storage_service.dart';
+import '../../core/services/storage_service.dart';
 import 'translation_model.dart';
 
 class AppState extends ChangeNotifier {

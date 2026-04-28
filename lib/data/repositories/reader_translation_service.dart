@@ -1,6 +1,6 @@
 import '../../domain/entities/dictionary.dart';
 import '../../domain/entities/translation_model.dart';
-import '../repositories/dictionary_service.dart';
+import 'dictionary_service.dart';
 import '../repositories/translation_service.dart';
 import '../../utils/language_detector.dart';
 

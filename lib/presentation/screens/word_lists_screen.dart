@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../domain/entities/app_state.dart';
-import '../core/utils/word_list_mixins.dart';
-import '../../domain/entities/dictionary.dart';
-import '../repositories/dictionary_service.dart';
-import '../services/storage_service.dart';
+import '../../../domain/entities/app_state.dart';
+import '../../core/utils/word_list_mixins.dart';
+import '../../../domain/entities/dictionary.dart';
+import '../../data/repositories/dictionary_service.dart';
+import '../../core/services/storage_service.dart';
 import '../widgets/dictionary_entry_card.dart';
 
 class WordListsScreen extends StatefulWidget {

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
-import '../../domain/entities/analyzed_word.dart';
+import '../../../domain/entities/analyzed_word.dart';
 import '../providers/analyzer_provider.dart';
 import '../providers/ai_provider.dart';
 import '../../utils/pinyin_util.dart';
