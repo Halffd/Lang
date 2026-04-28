@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import '../../database/database_manager.dart';
 import '../../domain/entities/dictionary.dart';
-import '../data/datasources/local/yomichan_parser.dart';
+import '../datasources/local/yomichan_parser.dart';
 
 enum ImportStatus {
   idle,

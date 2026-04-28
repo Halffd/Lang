@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../domain/entities/dictionary.dart';
-import '../../data/repositories/dictionary_service.dart';
+import '../../../data/repositories/dictionary_service.dart';
 
 class TokenWidget extends StatelessWidget {
   final Token token;
