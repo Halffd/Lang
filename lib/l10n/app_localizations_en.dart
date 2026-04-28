@@ -57,13 +57,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get autoHideNavigation => 'Auto-hide Navigation';
 
   @override
-  String get hideNavigationBottom => 'Hide navigation bar when mouse is not near bottom';
+  String get hideNavigationBottom =>
+      'Hide navigation bar when mouse is not near bottom';
 
   @override
   String get defaultFlexMode => 'Default Flex Mode';
 
   @override
-  String get useFlexibleGrid => 'Use flexible grid layout for word lists by default';
+  String get useFlexibleGrid =>
+      'Use flexible grid layout for word lists by default';
 
   @override
   String get keyboardShortcuts => 'Keyboard Shortcuts';
@@ -93,7 +95,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clipboardMonitor => 'Clipboard Monitor';
 
   @override
-  String get autoSearchClipboard => 'Automatically search for clipboard content';
+  String get autoSearchClipboard =>
+      'Automatically search for clipboard content';
 
   @override
   String get autoKanaConversion => 'Automatic Kana Conversion';
@@ -120,7 +123,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get minFrequency => 'Minimum Frequency';
 
   @override
-  String get filterByFrequency => 'Filter words by frequency (lower = more common)';
+  String get filterByFrequency =>
+      'Filter words by frequency (lower = more common)';
 
   @override
   String get advancedSettings => 'Advanced Settings';
@@ -141,25 +145,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clipboardAutoDetect => 'Clipboard Auto-Detect';
 
   @override
-  String get autoDetectProcessText => 'Automatically detect and process text from clipboard';
+  String get autoDetectProcessText =>
+      'Automatically detect and process text from clipboard';
 
   @override
   String get forvoAudio => 'Forvo Audio';
 
   @override
-  String get enableForvoPronunciations => 'Enable audio pronunciations from Forvo';
+  String get enableForvoPronunciations =>
+      'Enable audio pronunciations from Forvo';
 
   @override
   String get autoTranslation => 'Auto Translation';
 
   @override
-  String get autoTranslateWords => 'Automatically translate words in reader mode';
+  String get autoTranslateWords =>
+      'Automatically translate words in reader mode';
 
   @override
   String get autoPasteReader => 'Auto-paste in Reader Mode';
 
   @override
-  String get autoPasteReaderSubtitle => 'Automatically paste text from clipboard into reader mode';
+  String get autoPasteReaderSubtitle =>
+      'Automatically paste text from clipboard into reader mode';
 
   @override
   String get about => 'About';
@@ -296,19 +304,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get termsOfService => 'Terms of Service';
 
   @override
-  String get multilingualLearningTool => 'A multilingual language learning tool with dictionary and word saving features.';
+  String get multilingualLearningTool =>
+      'A multilingual language learning tool with dictionary and word saving features.';
 
   @override
   String get defaultScreen => 'Default Screen';
 
   @override
-  String get defaultScreenSubtitle => 'Select which screen to show when app starts';
+  String get defaultScreenSubtitle =>
+      'Select which screen to show when app starts';
 
   @override
   String get themeMode => 'Theme Mode';
 
   @override
-  String get themeModeSubtitle => 'Select how the app theme should be determined';
+  String get themeModeSubtitle =>
+      'Select how the app theme should be determined';
 
   @override
   String get systemTheme => 'System Theme';
@@ -330,4 +341,126 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fontSizeSubtitle => 'Adjust the font size multiplier for text';
+
+  @override
+  String get analyze => 'Analyze';
+
+  @override
+  String get saved => 'Saved';
+
+  @override
+  String get history => 'History';
+
+  @override
+  String get ai => 'AI';
+
+  @override
+  String get appTitle => 'Lang';
+
+  @override
+  String frequency(int freq) {
+    return 'Frequency: $freq';
+  }
+
+  @override
+  String get aiInsights => 'AI Insights';
+
+  @override
+  String get runAiBreakdown => 'Run AI Breakdown';
+
+  @override
+  String get context => 'Context';
+
+  @override
+  String get localDictionary => 'Local Dictionary';
+
+  @override
+  String get ichiMoe => 'ichi.moe';
+
+  @override
+  String get kanjiBreakdown => 'Kanji Breakdown';
+
+  @override
+  String readings(String readings) {
+    return 'Readings: $readings';
+  }
+
+  @override
+  String get origin => 'Origin';
+
+  @override
+  String get usage => 'Usage';
+
+  @override
+  String get wiktionary => 'Wiktionary';
+
+  @override
+  String get japaneseKanjiOriginAndUsage => 'Japanese kanji origin and usage';
+
+  @override
+  String reading(String reading) {
+    return 'Reading: $reading';
+  }
+
+  @override
+  String get analyzeIndividualCharacters => 'Analyze Individual Characters';
+
+  @override
+  String get analyzeText => 'Analyze Text';
+
+  @override
+  String get analyzeScreenTitle => 'Analyze Screen';
+
+  @override
+  String get enterTextToAnalyze => 'Enter text to analyze';
+
+  @override
+  String get breakdown => 'Breakdown';
+
+  @override
+  String get chatWithAI => 'Chat with AI';
+
+  @override
+  String get sendMessage => 'Send message';
+
+  @override
+  String get typeMessage => 'Type a message...';
+
+  @override
+  String get aiChatTitle => 'AI Chat';
+
+  @override
+  String get savedWords => 'Saved Words';
+
+  @override
+  String get noSavedWords => 'No saved words yet';
+
+  @override
+  String get historyTitle => 'History';
+
+  @override
+  String get noHistory => 'No history yet';
+
+  @override
+  String get clearHistory => 'Clear History';
+
+  @override
+  String areYouSureYouWantToDelete(Object title) {
+    return 'Are you sure you want to delete?';
+  }
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get add => 'Add';
+
+  @override
+  String get searchHint => 'Search...';
+
+  @override
+  String get settingsTitle => 'Settings';
 }

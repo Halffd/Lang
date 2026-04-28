@@ -64,7 +64,8 @@ import 'app_localizations_zh.dart';
 /// be consistent with the languages listed in the AppLocalizations.supportedLocales
 /// property.
 abstract class AppLocalizations {
-  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -72,7 +73,8 @@ abstract class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
   /// A list of this localizations delegate along with the default localizations
   /// delegates.
@@ -84,19 +86,20 @@ abstract class AppLocalizations {
   /// Additional delegates can be added by appending to this list in
   /// MaterialApp. This list does not have to be used at all if a custom list
   /// of delegates is preferred or required.
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-  ];
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
     Locale('es'),
     Locale('ja'),
-    Locale('zh')
+    Locale('zh'),
   ];
 
   /// No description provided for @appName.
@@ -740,9 +743,238 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Adjust the font size multiplier for text'**
   String get fontSizeSubtitle;
+
+  /// No description provided for @analyze.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze'**
+  String get analyze;
+
+  /// No description provided for @saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get saved;
+
+  /// No description provided for @history.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get history;
+
+  /// No description provided for @ai.
+  ///
+  /// In en, this message translates to:
+  /// **'AI'**
+  String get ai;
+
+  /// No description provided for @appTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lang'**
+  String get appTitle;
+
+  /// No description provided for @frequency.
+  ///
+  /// In en, this message translates to:
+  /// **'Frequency: {freq}'**
+  String frequency(int freq);
+
+  /// No description provided for @aiInsights.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Insights'**
+  String get aiInsights;
+
+  /// No description provided for @runAiBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Run AI Breakdown'**
+  String get runAiBreakdown;
+
+  /// No description provided for @context.
+  ///
+  /// In en, this message translates to:
+  /// **'Context'**
+  String get context;
+
+  /// No description provided for @localDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Dictionary'**
+  String get localDictionary;
+
+  /// No description provided for @ichiMoe.
+  ///
+  /// In en, this message translates to:
+  /// **'ichi.moe'**
+  String get ichiMoe;
+
+  /// No description provided for @kanjiBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Kanji Breakdown'**
+  String get kanjiBreakdown;
+
+  /// No description provided for @readings.
+  ///
+  /// In en, this message translates to:
+  /// **'Readings: {readings}'**
+  String readings(String readings);
+
+  /// No description provided for @origin.
+  ///
+  /// In en, this message translates to:
+  /// **'Origin'**
+  String get origin;
+
+  /// No description provided for @usage.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage'**
+  String get usage;
+
+  /// No description provided for @wiktionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Wiktionary'**
+  String get wiktionary;
+
+  /// No description provided for @japaneseKanjiOriginAndUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Japanese kanji origin and usage'**
+  String get japaneseKanjiOriginAndUsage;
+
+  /// No description provided for @reading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading: {reading}'**
+  String reading(String reading);
+
+  /// No description provided for @analyzeIndividualCharacters.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze Individual Characters'**
+  String get analyzeIndividualCharacters;
+
+  /// No description provided for @analyzeText.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze Text'**
+  String get analyzeText;
+
+  /// No description provided for @analyzeScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze Screen'**
+  String get analyzeScreenTitle;
+
+  /// No description provided for @enterTextToAnalyze.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter text to analyze'**
+  String get enterTextToAnalyze;
+
+  /// No description provided for @breakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Breakdown'**
+  String get breakdown;
+
+  /// No description provided for @chatWithAI.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat with AI'**
+  String get chatWithAI;
+
+  /// No description provided for @sendMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Send message'**
+  String get sendMessage;
+
+  /// No description provided for @typeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a message...'**
+  String get typeMessage;
+
+  /// No description provided for @aiChatTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Chat'**
+  String get aiChatTitle;
+
+  /// No description provided for @savedWords.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved Words'**
+  String get savedWords;
+
+  /// No description provided for @noSavedWords.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved words yet'**
+  String get noSavedWords;
+
+  /// No description provided for @historyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get historyTitle;
+
+  /// No description provided for @noHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No history yet'**
+  String get noHistory;
+
+  /// No description provided for @clearHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear History'**
+  String get clearHistory;
+
+  /// No description provided for @areYouSureYouWantToDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete?'**
+  String areYouSureYouWantToDelete(Object title);
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search...'**
+  String get searchHint;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -751,27 +983,30 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['en', 'es', 'ja', 'zh'].contains(locale.languageCode);
+  bool isSupported(Locale locale) =>
+      <String>['en', 'es', 'ja', 'zh'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
-
-
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
-    case 'en': return AppLocalizationsEn();
-    case 'es': return AppLocalizationsEs();
-    case 'ja': return AppLocalizationsJa();
-    case 'zh': return AppLocalizationsZh();
+    case 'en':
+      return AppLocalizationsEn();
+    case 'es':
+      return AppLocalizationsEs();
+    case 'ja':
+      return AppLocalizationsJa();
+    case 'zh':
+      return AppLocalizationsZh();
   }
 
   throw FlutterError(
     'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
     'an issue with the localizations generation tool. Please file an issue '
     'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.'
+    'that was used.',
   );
 }

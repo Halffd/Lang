@@ -57,13 +57,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get autoHideNavigation => 'Ocultar Navegación Automáticamente';
 
   @override
-  String get hideNavigationBottom => 'Ocultar barra de navegación cuando el mouse no está cerca del fondo';
+  String get hideNavigationBottom =>
+      'Ocultar barra de navegación cuando el mouse no está cerca del fondo';
 
   @override
   String get defaultFlexMode => 'Modo Flexible por Defecto';
 
   @override
-  String get useFlexibleGrid => 'Usar diseño de cuadrícula flexible para listas de palabras por defecto';
+  String get useFlexibleGrid =>
+      'Usar diseño de cuadrícula flexible para listas de palabras por defecto';
 
   @override
   String get keyboardShortcuts => 'Atajos de Teclado';
@@ -93,7 +95,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get clipboardMonitor => 'Monitor del Portapapeles';
 
   @override
-  String get autoSearchClipboard => 'Buscar automáticamente contenido del portapapeles';
+  String get autoSearchClipboard =>
+      'Buscar automáticamente contenido del portapapeles';
 
   @override
   String get autoKanaConversion => 'Conversión Automática de Kana';
@@ -120,7 +123,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get minFrequency => 'Frecuencia Mínima';
 
   @override
-  String get filterByFrequency => 'Filtrar palabras por frecuencia (más bajo = más común)';
+  String get filterByFrequency =>
+      'Filtrar palabras por frecuencia (más bajo = más común)';
 
   @override
   String get advancedSettings => 'Configuración Avanzada';
@@ -141,25 +145,29 @@ class AppLocalizationsEs extends AppLocalizations {
   String get clipboardAutoDetect => 'Detección Automática del Portapapeles';
 
   @override
-  String get autoDetectProcessText => 'Detectar y procesar automáticamente texto del portapapeles';
+  String get autoDetectProcessText =>
+      'Detectar y procesar automáticamente texto del portapapeles';
 
   @override
   String get forvoAudio => 'Audio Forvo';
 
   @override
-  String get enableForvoPronunciations => 'Habilitar pronunciaciones de audio de Forvo';
+  String get enableForvoPronunciations =>
+      'Habilitar pronunciaciones de audio de Forvo';
 
   @override
   String get autoTranslation => 'Traducción Automática';
 
   @override
-  String get autoTranslateWords => 'Traducir automáticamente palabras en modo lector';
+  String get autoTranslateWords =>
+      'Traducir automáticamente palabras en modo lector';
 
   @override
   String get autoPasteReader => 'Pegado automático en modo lector';
 
   @override
-  String get autoPasteReaderSubtitle => 'Pegar automáticamente texto desde el portapapeles en modo lector';
+  String get autoPasteReaderSubtitle =>
+      'Pegar automáticamente texto desde el portapapeles en modo lector';
 
   @override
   String get about => 'Acerca de';
@@ -296,19 +304,22 @@ class AppLocalizationsEs extends AppLocalizations {
   String get termsOfService => 'Términos de Servicio';
 
   @override
-  String get multilingualLearningTool => 'Una herramienta de aprendizaje de idiomas multilingüe con funciones de diccionario y guardado de palabras.';
+  String get multilingualLearningTool =>
+      'Una herramienta de aprendizaje de idiomas multilingüe con funciones de diccionario y guardado de palabras.';
 
   @override
   String get defaultScreen => 'Pantalla predeterminada';
 
   @override
-  String get defaultScreenSubtitle => 'Seleccionar qué pantalla mostrar al iniciar la aplicación';
+  String get defaultScreenSubtitle =>
+      'Seleccionar qué pantalla mostrar al iniciar la aplicación';
 
   @override
   String get themeMode => 'Modo de Tema';
 
   @override
-  String get themeModeSubtitle => 'Seleccionar cómo se debe determinar el tema de la aplicación';
+  String get themeModeSubtitle =>
+      'Seleccionar cómo se debe determinar el tema de la aplicación';
 
   @override
   String get systemTheme => 'Tema del Sistema';
@@ -323,11 +334,135 @@ class AppLocalizationsEs extends AppLocalizations {
   String get zoomLevel => 'Nivel de Zoom';
 
   @override
-  String get zoomLevelSubtitle => 'Ajustar el nivel de zoom para toda la aplicación';
+  String get zoomLevelSubtitle =>
+      'Ajustar el nivel de zoom para toda la aplicación';
 
   @override
   String get fontSize => 'Tamaño de Fuente';
 
   @override
-  String get fontSizeSubtitle => 'Ajustar el multiplicador del tamaño de fuente para el texto';
+  String get fontSizeSubtitle =>
+      'Ajustar el multiplicador del tamaño de fuente para el texto';
+
+  @override
+  String get analyze => 'Analyze';
+
+  @override
+  String get saved => 'Saved';
+
+  @override
+  String get history => 'History';
+
+  @override
+  String get ai => 'AI';
+
+  @override
+  String get appTitle => 'Lang';
+
+  @override
+  String frequency(int freq) {
+    return 'Frequency: $freq';
+  }
+
+  @override
+  String get aiInsights => 'AI Insights';
+
+  @override
+  String get runAiBreakdown => 'Run AI Breakdown';
+
+  @override
+  String get context => 'Context';
+
+  @override
+  String get localDictionary => 'Local Dictionary';
+
+  @override
+  String get ichiMoe => 'ichi.moe';
+
+  @override
+  String get kanjiBreakdown => 'Kanji Breakdown';
+
+  @override
+  String readings(String readings) {
+    return 'Readings: $readings';
+  }
+
+  @override
+  String get origin => 'Origin';
+
+  @override
+  String get usage => 'Usage';
+
+  @override
+  String get wiktionary => 'Wiktionary';
+
+  @override
+  String get japaneseKanjiOriginAndUsage => 'Japanese kanji origin and usage';
+
+  @override
+  String reading(String reading) {
+    return 'Reading: $reading';
+  }
+
+  @override
+  String get analyzeIndividualCharacters => 'Analyze Individual Characters';
+
+  @override
+  String get analyzeText => 'Analyze Text';
+
+  @override
+  String get analyzeScreenTitle => 'Analyze Screen';
+
+  @override
+  String get enterTextToAnalyze => 'Enter text to analyze';
+
+  @override
+  String get breakdown => 'Breakdown';
+
+  @override
+  String get chatWithAI => 'Chat with AI';
+
+  @override
+  String get sendMessage => 'Send message';
+
+  @override
+  String get typeMessage => 'Type a message...';
+
+  @override
+  String get aiChatTitle => 'AI Chat';
+
+  @override
+  String get savedWords => 'Saved Words';
+
+  @override
+  String get noSavedWords => 'No saved words yet';
+
+  @override
+  String get historyTitle => 'History';
+
+  @override
+  String get noHistory => 'No history yet';
+
+  @override
+  String get clearHistory => 'Clear History';
+
+  @override
+  String areYouSureYouWantToDelete(Object title) {
+    return 'Are you sure you want to delete?';
+  }
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get add => 'Add';
+
+  @override
+  String get searchHint => 'Search...';
+
+  @override
+  String get settingsTitle => 'Settings';
 }

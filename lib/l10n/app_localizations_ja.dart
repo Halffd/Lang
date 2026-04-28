@@ -330,4 +330,126 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get fontSizeSubtitle => 'テキストのフォントサイズ倍率を調整する';
+
+  @override
+  String get analyze => 'Analyze';
+
+  @override
+  String get saved => 'Saved';
+
+  @override
+  String get history => 'History';
+
+  @override
+  String get ai => 'AI';
+
+  @override
+  String get appTitle => 'Lang';
+
+  @override
+  String frequency(int freq) {
+    return 'Frequency: $freq';
+  }
+
+  @override
+  String get aiInsights => 'AI Insights';
+
+  @override
+  String get runAiBreakdown => 'Run AI Breakdown';
+
+  @override
+  String get context => 'Context';
+
+  @override
+  String get localDictionary => 'Local Dictionary';
+
+  @override
+  String get ichiMoe => 'ichi.moe';
+
+  @override
+  String get kanjiBreakdown => 'Kanji Breakdown';
+
+  @override
+  String readings(String readings) {
+    return 'Readings: $readings';
+  }
+
+  @override
+  String get origin => 'Origin';
+
+  @override
+  String get usage => 'Usage';
+
+  @override
+  String get wiktionary => 'Wiktionary';
+
+  @override
+  String get japaneseKanjiOriginAndUsage => 'Japanese kanji origin and usage';
+
+  @override
+  String reading(String reading) {
+    return 'Reading: $reading';
+  }
+
+  @override
+  String get analyzeIndividualCharacters => 'Analyze Individual Characters';
+
+  @override
+  String get analyzeText => 'Analyze Text';
+
+  @override
+  String get analyzeScreenTitle => 'Analyze Screen';
+
+  @override
+  String get enterTextToAnalyze => 'Enter text to analyze';
+
+  @override
+  String get breakdown => 'Breakdown';
+
+  @override
+  String get chatWithAI => 'Chat with AI';
+
+  @override
+  String get sendMessage => 'Send message';
+
+  @override
+  String get typeMessage => 'Type a message...';
+
+  @override
+  String get aiChatTitle => 'AI Chat';
+
+  @override
+  String get savedWords => 'Saved Words';
+
+  @override
+  String get noSavedWords => 'No saved words yet';
+
+  @override
+  String get historyTitle => 'History';
+
+  @override
+  String get noHistory => 'No history yet';
+
+  @override
+  String get clearHistory => 'Clear History';
+
+  @override
+  String areYouSureYouWantToDelete(Object title) {
+    return 'Are you sure you want to delete?';
+  }
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get add => 'Add';
+
+  @override
+  String get searchHint => 'Search...';
+
+  @override
+  String get settingsTitle => 'Settings';
 }

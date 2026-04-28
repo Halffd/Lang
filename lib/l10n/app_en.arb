@@ -520,12 +520,76 @@
     "type": "text",
     "placeholders": {}
   },
-  "@fontSize": {
-    "type": "text",
-    "placeholders": {}
-  },
-  "@fontSizeSubtitle": {
-    "type": "text",
-    "placeholders": {}
+"@fontSize": {
+      "type": "text",
+      "placeholders": {}
+    },
+    "@fontSizeSubtitle": {
+      "type": "text",
+      "placeholders": {}
+    },
+    "analyze": "Analyze",
+    "saved": "Saved",
+    "history": "History",
+    "ai": "AI",
+    "appTitle": "Lang",
+    "frequency": "Frequency: {freq}",
+    "@frequency": {
+      "placeholders": {
+        "freq": {
+          "type": "int"
+        }
+      }
+    },
+    "aiInsights": "AI Insights",
+    "runAiBreakdown": "Run AI Breakdown",
+    "context": "Context",
+    "localDictionary": "Local Dictionary",
+    "ichiMoe": "ichi.moe",
+    "kanjiBreakdown": "Kanji Breakdown",
+    "readings": "Readings: {readings}",
+    "@readings": {
+      "placeholders": {
+        "readings": {
+          "type": "String"
+        }
+      }
+    },
+    "origin": "Origin",
+    "usage": "Usage",
+    "wiktionary": "Wiktionary",
+    "japaneseKanjiOriginAndUsage": "Japanese kanji origin and usage",
+    "reading": "Reading: {reading}",
+    "@reading": {
+      "placeholders": {
+        "reading": {
+          "type": "String"
+        }
+      }
+    },
+    "analyzeIndividualCharacters": "Analyze Individual Characters",
+    "analyzeText": "Analyze Text",
+    "analyzeScreenTitle": "Analyze Screen",
+    "enterTextToAnalyze": "Enter text to analyze",
+    "language": "Language",
+    "breakdown": "Breakdown",
+    "chatWithAI": "Chat with AI",
+    "sendMessage": "Send message",
+    "typeMessage": "Type a message...",
+    "aiChatTitle": "AI Chat",
+    "savedWords": "Saved Words",
+    "noSavedWords": "No saved words yet",
+    "historyTitle": "History",
+    "noHistory": "No history yet",
+    "clearHistory": "Clear History",
+    "areYouSureYouWantToDelete": "Are you sure you want to delete?",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "add": "Add",
+    "searchHint": "Search...",
+    "settingsTitle": "Settings",
+    "search": "Search",
+    "saved": "Saved",
+    "history": "History",
+    "ai": "AI"
   }
-}
