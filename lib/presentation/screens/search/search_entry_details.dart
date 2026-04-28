@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import '../../../domain/entities/app_state.dart';
 import '../../../domain/entities/dictionary.dart';
+import '../../../data/repositories/dictionary_service.dart';
 import '../../widgets/etymology_widget.dart';
 import '../../widgets/wiktionary_details_widget.dart';
 import 'search_result_cards.dart';

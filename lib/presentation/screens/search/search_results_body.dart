@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-
 import '../../../domain/entities/dictionary.dart';
+import '../../../data/repositories/dictionary_service.dart';
 import 'search_result_cards.dart';
 
 class SearchResultsList extends StatelessWidget {

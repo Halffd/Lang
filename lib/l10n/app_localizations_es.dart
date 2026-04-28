@@ -513,4 +513,15 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get pasteYourText => 'Paste your text here to analyze';
+
+  @override
+  String get noResultsYet => 'No results yet';
+
+  @override
+  String savedWord(Object word) {
+    return 'Saved word';
+  }
+
+  @override
+  String get noHistoryYet => 'No history yet';
 }

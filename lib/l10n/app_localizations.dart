@@ -1055,6 +1055,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Paste your text here to analyze'**
   String get pasteYourText;
+
+  /// No description provided for @noResultsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No results yet'**
+  String get noResultsYet;
+
+  /// No description provided for @savedWord.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved word'**
+  String savedWord(Object word);
+
+  /// No description provided for @noHistoryYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No history yet'**
+  String get noHistoryYet;
 }
 
 class _AppLocalizationsDelegate

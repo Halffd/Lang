@@ -511,4 +511,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pasteYourText => 'Paste your text here to analyze';
+
+  @override
+  String get noResultsYet => '暂无结果';
+
+  @override
+  String savedWord(Object word) {
+    return '已保存 \"$word\"';
+  }
+
+  @override
+  String get noHistoryYet => '暂无历史记录';
 }

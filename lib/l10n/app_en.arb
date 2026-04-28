@@ -626,5 +626,8 @@
     "enterTextToAnalyze": "Enter text to analyze",
     "analyzeScreenTitle": "Analyze Screen",
     "noHistory": "No history yet",
-    "clearHistory": "Clear History"
+    "clearHistory": "Clear History",
+    "noResultsYet": "No results yet",
+    "savedWord": "Saved word",
+    "noHistoryYet": "No history yet"
   }
