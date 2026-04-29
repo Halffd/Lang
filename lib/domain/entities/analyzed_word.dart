@@ -9,6 +9,7 @@ class AnalyzedWord {
   final Map<String, dynamic> kanjiDetails;
   final Map<String, Map<String, String>> kanjipediaData;
   final List<Map<String, dynamic>> localDefinitions;
+  final MdbgData? mdbgData;
 
   AnalyzedWord({
     required this.word,
@@ -21,6 +22,7 @@ class AnalyzedWord {
     this.kanjiDetails = const {},
     this.kanjipediaData = const {},
     this.localDefinitions = const [],
+    this.mdbgData,
   });
 
   AnalyzedWord copyWith({
@@ -34,6 +36,7 @@ class AnalyzedWord {
     Map<String, dynamic>? kanjiDetails,
     Map<String, Map<String, String>>? kanjipediaData,
     List<Map<String, dynamic>>? localDefinitions,
+    MdbgData? mdbgData,
   }) {
     return AnalyzedWord(
       word: word ?? this.word,
@@ -46,6 +49,21 @@ class AnalyzedWord {
       kanjiDetails: kanjiDetails ?? this.kanjiDetails,
       kanjipediaData: kanjipediaData ?? this.kanjipediaData,
       localDefinitions: localDefinitions ?? this.localDefinitions,
+      mdbgData: mdbgData ?? this.mdbgData,
     );
   }
+}
+
+class MdbgData {
+  final String pinyin;
+  final List<String> definitions;
+  final String? traditional;
+  final String? simplified;
+
+  MdbgData({
+    required this.pinyin,
+    required this.definitions,
+    this.traditional,
+    this.simplified,
+  });
 }

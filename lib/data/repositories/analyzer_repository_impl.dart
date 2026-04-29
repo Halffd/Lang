@@ -8,6 +8,7 @@ import '../datasources/dictionary_local_data_source.dart';
 import '../datasources/dictionary_remote_data_source.dart';
 import '../datasources/kanji_remote_data_source.dart';
 import '../datasources/note_local_data_source.dart';
+import '../datasources/remote/mdbg_service.dart';
 
 class AnalyzerRepositoryImpl implements AnalyzerRepository {
   final AnalysisRemoteDataSource analysisRemoteDataSource;
@@ -16,6 +17,7 @@ class AnalyzerRepositoryImpl implements AnalyzerRepository {
   final KanjiRemoteDataSource kanjiRemoteDataSource;
   final NoteLocalDataSource noteLocalDataSource;
   final AudioService audioService;
+  final MdbgService mdbgService;
 
   AnalyzerRepositoryImpl({
     required this.analysisRemoteDataSource,
@@ -24,7 +26,8 @@ class AnalyzerRepositoryImpl implements AnalyzerRepository {
     required this.kanjiRemoteDataSource,
     required this.noteLocalDataSource,
     required this.audioService,
-  });
+    MdbgService? mdbgService,
+  }) : mdbgService = mdbgService ?? MdbgService();
 
   @override
   Future<void> init() async {
@@ -98,6 +101,7 @@ class AnalyzerRepositoryImpl implements AnalyzerRepository {
     List<String> kanjiList = [];
     Map<String, dynamic> kanjiDetails = {};
     Map<String, Map<String, String>> kanjipediaData = {};
+    MdbgData? mdbgData;
 
     // 1. Local Lookup
     localDefs = await dictionaryLocalDataSource.lookupTerms(word);
@@ -113,7 +117,20 @@ class AnalyzerRepositoryImpl implements AnalyzerRepository {
       moeDefs = await dictionaryRemoteDataSource.ichiMoeLookup(word);
     }
 
-    // 4. Wiktionary
+    // 4. MDBG (Chinese only)
+    if (lang == 'zh') {
+      final mdbgEntry = await mdbgService.lookupWord(word);
+      if (mdbgEntry != null) {
+        mdbgData = MdbgData(
+          pinyin: mdbgEntry.pinyin,
+          definitions: mdbgEntry.definitions,
+          traditional: mdbgEntry.traditional,
+          simplified: mdbgEntry.simplified,
+        );
+      }
+    }
+
+    // 5. Wiktionary
     if (showWiktionary) {
       wikiHtml = await dictionaryRemoteDataSource.wiktionaryLookup(word, lang);
     }
@@ -144,6 +161,7 @@ class AnalyzerRepositoryImpl implements AnalyzerRepository {
       kanjiList: kanjiList,
       kanjiDetails: kanjiDetails,
       kanjipediaData: kanjipediaData,
+      mdbgData: mdbgData,
     );
   }
 
