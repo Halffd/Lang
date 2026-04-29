@@ -16,7 +16,7 @@ class DocumentReaderScreen extends StatefulWidget {
 }
 
 class _DocumentReaderScreenState extends State<DocumentReaderScreen> {
-  final GlobalKey<_DocumentReaderState> _documentReaderKey = GlobalKey<_DocumentReaderState>();
+  final GlobalKey<DocumentReaderState> _documentReaderKey = GlobalKey<DocumentReaderState>();
   final TextEditingController _pageController = TextEditingController();
   int _currentPage = 1;
   int _totalPages = 1;

@@ -209,14 +209,14 @@ class SearchEntryCard extends StatelessWidget {
                   Row(
                     children: [
                       const Icon(Icons.graphic_eq, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Pitch: ${pitches.map((p) => p.pitches.map((pp) => pp.position).join(\", \")).join(\" / \")}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[700],
-                        ),
-                      ),
+const SizedBox(width: 4),
+            Text(
+              'Pitch: ${pitches.map((p) => p.pitches.map((pp) => pp.position).join(", ")).join(" / ")}',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[700],
+              ),
+            ),
                     ],
                   ),
                 ],

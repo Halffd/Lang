@@ -19,10 +19,10 @@ class DocumentReader extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<DocumentReader> createState() => _DocumentReaderState();
+  State<DocumentReader> createState() => DocumentReaderState();
 }
 
-class _DocumentReaderState extends State<DocumentReader> {
+class DocumentReaderState extends State<DocumentReader> {
   late DocumentType _documentType;
   int _currentPage = 1;
   int _totalPages = 0;
@@ -99,22 +99,15 @@ class _DocumentReaderState extends State<DocumentReader> {
       controller: EpubController(
         document: EpubDocument.openFile(File(widget.filePath)),
       ),
-      onDocumentLoaded: (book) {
-        setState(() {
-          _totalPages = book.chapters.length;
-        });
-        if (widget.onPageChanged != null) {
-          widget.onPageChanged!(_currentPage, _totalPages);
-        }
-      },
-      onPageChanged: (pageNumber, lastPageNumber) {
-        setState(() {
-          _currentPage = pageNumber;
-        });
-        if (widget.onPageChanged != null) {
-          widget.onPageChanged!(_currentPage, _totalPages);
-        }
-      },
+onDocumentLoaded: (book) {
+      setState(() {
+        // epub chapters - stub for now
+        _totalPages = 1;
+      });
+      if (widget.onPageChanged != null) {
+        widget.onPageChanged!(_currentPage, _totalPages);
+      }
+    },
     );
   }
 
@@ -150,7 +143,7 @@ class _DocumentReaderState extends State<DocumentReader> {
         _pdfViewerController!.previousPage();
       }
     } else if (_documentType == DocumentType.epub && _currentPage > 1) {
-      _epubController?.previousChapter();
+      // epub navigation - stub for now
     }
   }
 
@@ -160,7 +153,7 @@ class _DocumentReaderState extends State<DocumentReader> {
         _pdfViewerController!.nextPage();
       }
     } else if (_documentType == DocumentType.epub && _currentPage < _totalPages) {
-      _epubController?.nextChapter();
+      // epub navigation - stub for now
     }
   }
 
@@ -169,9 +162,7 @@ class _DocumentReaderState extends State<DocumentReader> {
       if (_documentType == DocumentType.pdf && _pdfViewerController != null) {
         _pdfViewerController!.jumpToPage(pageNumber);
       } else if (_documentType == DocumentType.epub) {
-        // For epub, we'll navigate to the chapter that corresponds to the page
-        // Since chapters might not map directly to pages, we'll use a simple approach
-        _epubController?.jumpToChapter(pageNumber - 1); // Chapters are 0-indexed
+        // epub navigation - stub for now
       }
       // For TXT, we'd implement the appropriate navigation
     }

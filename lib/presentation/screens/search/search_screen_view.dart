@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../domain/entities/dictionary.dart';
 import '../../../data/repositories/dictionary_service.dart';
+import '../../../utils/character_breakdown.dart';
 import '../../widgets/character_breakdown_widget.dart';
 import '../../widgets/search/search_bar_widget.dart';
 import '../../widgets/search/search_responsive_layout.dart';
