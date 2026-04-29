@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
-import 'package:lang/screens/search_screen.dart';
+import 'package:lang/presentation/screens/search_screen.dart';
 import 'package:lang/domain/entities/app_state.dart';
-import 'package:lang/data/repositories/storage_service.dart';
+import 'package:lang/core/services/storage_service.dart';
 
 void main() {
   testWidgets('Search screen shows properly', (WidgetTester tester) async {

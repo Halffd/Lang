@@ -1,5 +1,5 @@
 import 'package:lang/utils/chinese_util.dart';
-import 'package:lang/models/tone_model.dart';
+import 'package:lang/domain/entities/tone_model.dart';
 
 // This is a test file to demonstrate how search terms would be processed
 void main() {

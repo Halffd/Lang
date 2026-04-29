@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lang/data/repositories/ichi_moe_service.dart';
+import 'package:lang/data/datasources/remote/ichi_moe_service.dart';
 import 'package:lang/domain/entities/dictionary.dart';
 
 void main() {

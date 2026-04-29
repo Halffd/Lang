@@ -49,7 +49,7 @@ void main() {
 
     test('searchIchiMoeWithDetails returns DictionaryEntry objects', () async {
       try {
-        final results = await dictionaryService.searchIchiMoeWithDetails('test');
+        final results = await dictionaryService.searchIchiMoe('test');
         expect(results, isA<List<DictionaryEntry>>());
       } catch (e) {
         // Network errors are expected in tests
@@ -59,7 +59,7 @@ void main() {
 
     test('searchIchiMoeWithDetails with romaji option works', () async {
       try {
-        final results = await dictionaryService.searchIchiMoeWithDetails('test', useRomaji: true);
+        final results = await dictionaryService.searchIchiMoe('test', useRomaji: true);
         expect(results, isA<List<DictionaryEntry>>());
       } catch (e) {
         // Network errors are expected in tests
@@ -69,7 +69,7 @@ void main() {
 
     test('searchIchiMoeWithDetails with kana option works', () async {
       try {
-        final results = await dictionaryService.searchIchiMoeWithDetails('test', useRomaji: false);
+        final results = await dictionaryService.searchIchiMoe('test', useRomaji: false);
         expect(results, isA<List<DictionaryEntry>>());
       } catch (e) {
         // Network errors are expected in tests

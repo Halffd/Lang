@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lang/data/repositories/wiktionary_service.dart';
+import 'package:lang/data/datasources/remote/wiktionary_service.dart';
 
 void main() {
   group('Wiktionary Scraping Test - JSON Output', () {

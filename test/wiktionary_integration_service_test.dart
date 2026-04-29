@@ -3,8 +3,8 @@ import 'package:lang/domain/entities/dictionary.dart' as model;
 import 'package:lang/domain/entities/etymology_model.dart';
 import 'package:lang/domain/entities/tone_model.dart';
 import 'package:lang/data/repositories/dictionary_service.dart';
-import 'package:lang/data/repositories/wiktionary_etymology_service.dart';
-import 'package:lang/data/repositories/wiktionary_integration_service.dart';
+import 'package:lang/data/datasources/remote/wiktionary_etymology_service.dart';
+import 'package:lang/data/datasources/remote/wiktionary_integration_service.dart';
 
 void main() {
   group('WiktionaryIntegrationService', () {
