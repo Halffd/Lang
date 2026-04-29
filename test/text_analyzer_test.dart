@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lang/services/text_analyzer.dart';
-import 'package:lang/services/database.dart';
-import 'package:lang/services/dictionary_service.dart';
+import 'package:lang/data/repositories/text_analyzer.dart';
+import 'package:lang/data/repositories/database.dart';
+import 'package:lang/data/repositories/dictionary_service.dart';
 import 'package:drift/drift.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 

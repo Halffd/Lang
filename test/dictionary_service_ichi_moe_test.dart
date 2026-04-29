@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lang/services/dictionary_service.dart';
-import 'package:lang/models/dictionary.dart';
+import 'package:lang/data/repositories/dictionary_service.dart';
+import 'package:lang/domain/entities/dictionary.dart';
 
 void main() {
   group('DictionaryService IchiMoe Integration Tests', () {

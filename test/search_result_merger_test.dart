@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lang/models/dictionary.dart' as model;
-import 'package:lang/models/etymology_model.dart';
-import 'package:lang/models/tone_model.dart';
-import 'package:lang/services/dictionary_service.dart';
-import 'package:lang/services/wiktionary_etymology_service.dart';
+import 'package:lang/domain/entities/dictionary.dart' as model;
+import 'package:lang/domain/entities/etymology_model.dart';
+import 'package:lang/domain/entities/tone_model.dart';
+import 'package:lang/data/repositories/dictionary_service.dart';
+import 'package:lang/data/repositories/wiktionary_etymology_service.dart';
 import 'package:lang/utils/search_result_merger.dart';
 
 void main() {

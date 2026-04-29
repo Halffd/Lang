@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import 'package:lang/models/app_state.dart';
-import 'package:lang/services/storage_service.dart';
+import 'package:lang/domain/entities/app_state.dart';
+import 'package:lang/data/repositories/storage_service.dart';
 
 import 'package:lang/main.dart'; // This imports our modified MainScreen
 

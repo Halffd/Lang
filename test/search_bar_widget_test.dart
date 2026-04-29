@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lang/widgets/search/search_bar_widget.dart';
+import 'package:lang/presentation/widgets/search/search_bar_widget.dart';
 
 void main() {
   group('SearchBarWidget', () {
