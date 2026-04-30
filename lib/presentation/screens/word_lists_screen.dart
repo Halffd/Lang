@@ -23,6 +23,8 @@ class _WordListsScreenState extends State<WordListsScreen>
   List<DictionaryEntry> _searchResults = [];
   bool _isSearching = false;
   bool? _isFlexMode;
+  bool _isSentenceMode = false;
+  int _sentenceColumns = 6;
   int _selectedIndex = 0;
 
   @override
@@ -207,6 +209,53 @@ class _WordListsScreenState extends State<WordListsScreen>
     );
   }
 
+  Widget _buildSentenceWordGrid() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final itemWidth = (constraints.maxWidth / _sentenceColumns) - 8;
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(8),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _searchResults.map((entry) {
+              return SizedBox(
+                width: itemWidth,
+                child: Card(
+                  child: InkWell(
+                    onTap: () => _showWordActions(entry.word),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            entry.word,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (entry.reading.isNotEmpty)
+                            Text(
+                              entry.reading,
+                              style: const TextStyle(fontSize: 10, color: Colors.white70),
+                              textAlign: TextAlign.center,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
   void _showWordActions(String word) {
     showModalBottomSheet(
       context: context,
@@ -285,7 +334,7 @@ class _WordListsScreenState extends State<WordListsScreen>
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 4,
+      length: 5,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Word Lists'),
@@ -318,23 +367,66 @@ class _WordListsScreenState extends State<WordListsScreen>
               children: [
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search for a word...',
-                      suffixIcon: IconButton(
-                        icon: Icon(Icons.search),
-                        onPressed: () => _searchWord(_searchController.text),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Search for a word...',
+                            suffixIcon: IconButton(
+                              icon: Icon(Icons.search),
+                              onPressed: () => _searchWord(_searchController.text),
+                            ),
+                            border: const OutlineInputBorder(),
+                          ),
+                          onSubmitted: _searchWord,
+                        ),
                       ),
-                      border: const OutlineInputBorder(),
-                    ),
-                    onSubmitted: _searchWord,
+                      const SizedBox(width: 8),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              _isSentenceMode ? Icons.view_week : Icons.notes,
+                              color: _isSentenceMode ? Colors.blue : null,
+                            ),
+                            tooltip: _isSentenceMode ? 'Word Mode' : 'Sentence Mode',
+                            onPressed: () {
+                              setState(() {
+                                _isSentenceMode = !_isSentenceMode;
+                              });
+                            },
+                          ),
+                          if (_isSentenceMode)
+                            DropdownButton<int>(
+                              value: _sentenceColumns,
+                              items: [3, 4, 5, 6, 7, 8].map((n) => DropdownMenuItem(
+                                value: n,
+                                child: Text('$n'),
+                              )).toList(),
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() {
+                                    _sentenceColumns = val;
+                                  });
+                                }
+                              },
+                            ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
                 if (_isSearching)
                   const Center(child: CircularProgressIndicator())
                 else if (_searchResults.isEmpty && _searchController.text.isNotEmpty)
                   const Center(child: Text('No results found'))
+                else if (_searchResults.isNotEmpty && _isSentenceMode)
+                  Expanded(
+                    child: _buildSentenceWordGrid(),
+                  )
                 else
                   Expanded(
                     child: ListView.builder(
