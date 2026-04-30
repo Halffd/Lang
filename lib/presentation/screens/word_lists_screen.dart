@@ -6,6 +6,7 @@ import '../../../domain/entities/dictionary.dart';
 import '../../data/repositories/dictionary_service.dart';
 import '../../core/services/storage_service.dart';
 import '../widgets/dictionary_entry_card.dart';
+import '../providers/analyzer_provider.dart';
 
 class WordListsScreen extends StatefulWidget {
   const WordListsScreen({super.key});
@@ -143,6 +144,69 @@ class _WordListsScreenState extends State<WordListsScreen>
     );
   }
 
+  Widget _buildHistoryList() {
+    final history = context.read<AnalyzerProvider>().history;
+
+    if (history.isEmpty) {
+      return Center(
+        child: Text(
+          'No history yet. Look up words to see them here!',
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+      );
+    }
+
+    final recentWords = history.toList().reversed.toList();
+
+    if (_isFlexMode == true) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: recentWords.map((word) {
+            final isFav = isWordFavorite(word);
+            return ActionChip(
+              label: Text(word),
+              avatar: isFav ? Icon(Icons.favorite, size: 16, color: Colors.red) : null,
+              onPressed: () {
+                _showWordActions(word);
+              },
+            );
+          }).toList(),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: recentWords.length,
+      itemBuilder: (context, index) {
+        final word = recentWords[index];
+        return ListTile(
+          title: Text(word),
+          leading: const Icon(Icons.history, size: 20, color: Colors.orange),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: Icon(
+                  isWordFavorite(word) ? Icons.favorite : Icons.favorite_border,
+                  color: Colors.red,
+                ),
+                onPressed: () => toggleFavoriteWord(word, isFavorite: !isWordFavorite(word)),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () => _showDeleteConfirmation(word),
+              ),
+            ],
+          ),
+          onTap: () => _showWordActions(word),
+        );
+      },
+    );
+  }
+
   void _showWordActions(String word) {
     showModalBottomSheet(
       context: context,
@@ -242,6 +306,7 @@ class _WordListsScreenState extends State<WordListsScreen>
               Tab(text: 'Search'),
               Tab(text: 'Saved'),
               Tab(text: 'Favorites'),
+              Tab(text: 'History'),
               Tab(text: 'Anki'),
             ],
           ),
@@ -304,6 +369,9 @@ class _WordListsScreenState extends State<WordListsScreen>
               favoriteWords,
               emptyMessage: 'No favorite words yet. Mark words as favorite to see them here!',
             ),
+
+            // History Tab
+            _buildHistoryList(),
 
             // Anki Words Tab
             _buildWordList(
