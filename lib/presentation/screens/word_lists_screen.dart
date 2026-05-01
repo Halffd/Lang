@@ -131,73 +131,130 @@ class _WordListsScreenState extends State<WordListsScreen>
     );
   }
 
+  Widget _ActionButton({
+    required IconData icon,
+    required Color color,
+    required String tooltip,
+    VoidCallback? onPressed,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: IconButton(
+        icon: Icon(icon, size: 20, color: onPressed != null ? color : Colors.grey[600]),
+        onPressed: onPressed,
+        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+        padding: const EdgeInsets.all(6),
+        splashRadius: 18,
+      ),
+    );
+  }
+
   Widget _buildWordTile(String word, int index, int totalCount, {bool showMoveButtons = false}) {
     final isFav = isWordFavorite(word);
     final isSaved = isWordSaved(word);
 
     return Card(
       key: ValueKey(word),
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      child: ListTile(
-        leading: ReorderableDragStartListener(
-          index: index,
-          child: const Icon(Icons.drag_handle),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          gradient: LinearGradient(
+            colors: [
+              Colors.grey[850]!.withOpacity(0.3),
+              Colors.grey[900]!.withOpacity(0.5),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
-        title: Text(word),
-        subtitle: Row(
-          children: [
-            if (isFav) Icon(Icons.favorite, size: 14, color: Colors.red[300]),
-            if (isSaved) Icon(Icons.bookmark, size: 14, color: Colors.blue[300]),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border, size: 20),
-              tooltip: isSaved ? 'Remove from saved' : 'Save word',
-              onPressed: () => toggleSavedWord(word, isSaved: !isSaved),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+          leading: ReorderableDragStartListener(
+            index: index,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              child: Icon(Icons.drag_indicator, color: Colors.grey[500], size: 22),
             ),
-            IconButton(
-              icon: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: Colors.red, size: 20),
-              tooltip: isFav ? 'Remove from favorites' : 'Add to favorites',
-              onPressed: () => toggleFavoriteWord(word, isFavorite: !isFav),
+          ),
+          title: Text(
+            word,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+              letterSpacing: 0.3,
             ),
-            IconButton(
-              icon: const Icon(Icons.content_copy, size: 20),
-              tooltip: 'Copy word',
-              onPressed: () => _copyWord(word),
-            ),
-            if (showMoveButtons) ...[
-              IconButton(
-                icon: const Icon(Icons.first_page, size: 20),
-                tooltip: 'Move to first',
-                onPressed: index > 0 ? () => _moveWordToPosition(word, 0) : null,
+          ),
+          subtitle: Row(
+            children: [
+              if (isFav)
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: Icon(Icons.favorite, size: 14, color: Colors.red[400]),
+                ),
+              if (isSaved)
+                Icon(Icons.bookmark, size: 14, color: Colors.blue[400]),
+            ],
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _ActionButton(
+                icon: isSaved ? Icons.bookmark : Icons.bookmark_border,
+                color: Colors.blue[300]!,
+                tooltip: isSaved ? 'Saved' : 'Save',
+                onPressed: () => toggleSavedWord(word, isSaved: !isSaved),
               ),
-              IconButton(
-                icon: const Icon(Icons.arrow_upward, size: 20),
-                tooltip: 'Move up',
-                onPressed: index > 0 ? () => _moveWordUp(word) : null,
+              _ActionButton(
+                icon: isFav ? Icons.favorite : Icons.favorite_border,
+                color: Colors.red[400]!,
+                tooltip: isFav ? 'Favorited' : 'Favorite',
+                onPressed: () => toggleFavoriteWord(word, isFavorite: !isFav),
               ),
-              IconButton(
-                icon: const Icon(Icons.arrow_downward, size: 20),
-                tooltip: 'Move down',
-                onPressed: index < totalCount - 1 ? () => _moveWordDown(word) : null,
+              _ActionButton(
+                icon: Icons.content_copy,
+                color: Colors.grey[400]!,
+                tooltip: 'Copy',
+                onPressed: () => _copyWord(word),
               ),
-              IconButton(
-                icon: const Icon(Icons.last_page, size: 20),
-                tooltip: 'Move to last',
-                onPressed: index < totalCount - 1 ? () => _moveWordToPosition(word, totalCount - 1) : null,
+              if (showMoveButtons) ...[
+                _ActionButton(
+                  icon: Icons.first_page,
+                  color: Colors.grey[400]!,
+                  tooltip: 'First',
+                  onPressed: index > 0 ? () => _moveWordToPosition(word, 0) : null,
+                ),
+                _ActionButton(
+                  icon: Icons.arrow_upward,
+                  color: Colors.grey[400]!,
+                  tooltip: 'Up',
+                  onPressed: index > 0 ? () => _moveWordUp(word) : null,
+                ),
+                _ActionButton(
+                  icon: Icons.arrow_downward,
+                  color: Colors.grey[400]!,
+                  tooltip: 'Down',
+                  onPressed: index < totalCount - 1 ? () => _moveWordDown(word) : null,
+                ),
+                _ActionButton(
+                  icon: Icons.last_page,
+                  color: Colors.grey[400]!,
+                  tooltip: 'Last',
+                  onPressed: index < totalCount - 1 ? () => _moveWordToPosition(word, totalCount - 1) : null,
+                ),
+              ],
+              _ActionButton(
+                icon: Icons.delete_outline,
+                color: Colors.red[300]!,
+                tooltip: 'Delete',
+                onPressed: () => _showDeleteConfirmation(word),
               ),
             ],
-            IconButton(
-              icon: const Icon(Icons.delete, size: 20),
-              tooltip: 'Delete word',
-              onPressed: () => _showDeleteConfirmation(word),
-            ),
-          ],
+          ),
+          onTap: () => _showWordActions(word),
         ),
-        onTap: () => _showWordActions(word),
       ),
     );
   }
