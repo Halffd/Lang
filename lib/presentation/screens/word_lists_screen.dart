@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../domain/entities/app_state.dart';
 import '../../core/utils/word_list_mixins.dart';
@@ -202,7 +203,7 @@ class _WordListsScreenState extends State<WordListsScreen>
   }
 
   void _copyWord(String word) {
-    // Implementation would use clipboard - placeholder for now
+    Clipboard.setData(ClipboardData(text: word));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Copied "$word"'), duration: const Duration(seconds: 1)),
     );
