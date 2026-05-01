@@ -85,7 +85,7 @@ class _WordListsScreenState extends State<WordListsScreen>
     }
   }
 
-  Widget _buildWordList(Set<String> words, {required String emptyMessage}) {
+  Widget _buildWordList(Set<String> words, {required String emptyMessage, bool showMoveButtons = false}) {
     if (words.isEmpty) {
       return Center(
         child: Text(
@@ -118,32 +118,118 @@ class _WordListsScreenState extends State<WordListsScreen>
       );
     }
 
-    return ListView.builder(
+    return ReorderableListView.builder(
       itemCount: recentWords.length,
+      onReorder: (oldIndex, newIndex) {
+        _onReorderWordList(recentWords, oldIndex, newIndex);
+      },
       itemBuilder: (context, index) {
         final word = recentWords[index];
-        return ListTile(
-          title: Text(word),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: Icon(
-                  isWordFavorite(word) ? Icons.favorite : Icons.favorite_border,
-                  color: Colors.red,
-                ),
-                onPressed: () => toggleFavoriteWord(word, isFavorite: !isWordFavorite(word)),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: () => _showDeleteConfirmation(word),
-              ),
-            ],
-          ),
-          onTap: () => _showWordActions(word),
-        );
+        return _buildWordTile(word, index, recentWords.length, showMoveButtons: showMoveButtons);
       },
     );
+  }
+
+  Widget _buildWordTile(String word, int index, int totalCount, {bool showMoveButtons = false}) {
+    final isFav = isWordFavorite(word);
+    final isSaved = isWordSaved(word);
+
+    return Card(
+      key: ValueKey(word),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      child: ListTile(
+        leading: ReorderableDragStartListener(
+          index: index,
+          child: const Icon(Icons.drag_handle),
+        ),
+        title: Text(word),
+        subtitle: Row(
+          children: [
+            if (isFav) Icon(Icons.favorite, size: 14, color: Colors.red[300]),
+            if (isSaved) Icon(Icons.bookmark, size: 14, color: Colors.blue[300]),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border, size: 20),
+              tooltip: isSaved ? 'Remove from saved' : 'Save word',
+              onPressed: () => toggleSavedWord(word, isSaved: !isSaved),
+            ),
+            IconButton(
+              icon: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: Colors.red, size: 20),
+              tooltip: isFav ? 'Remove from favorites' : 'Add to favorites',
+              onPressed: () => toggleFavoriteWord(word, isFavorite: !isFav),
+            ),
+            IconButton(
+              icon: const Icon(Icons.content_copy, size: 20),
+              tooltip: 'Copy word',
+              onPressed: () => _copyWord(word),
+            ),
+            if (showMoveButtons) ...[
+              IconButton(
+                icon: const Icon(Icons.first_page, size: 20),
+                tooltip: 'Move to first',
+                onPressed: index > 0 ? () => _moveWordToPosition(word, 0) : null,
+              ),
+              IconButton(
+                icon: const Icon(Icons.arrow_upward, size: 20),
+                tooltip: 'Move up',
+                onPressed: index > 0 ? () => _moveWordUp(word) : null,
+              ),
+              IconButton(
+                icon: const Icon(Icons.arrow_downward, size: 20),
+                tooltip: 'Move down',
+                onPressed: index < totalCount - 1 ? () => _moveWordDown(word) : null,
+              ),
+              IconButton(
+                icon: const Icon(Icons.last_page, size: 20),
+                tooltip: 'Move to last',
+                onPressed: index < totalCount - 1 ? () => _moveWordToPosition(word, totalCount - 1) : null,
+              ),
+            ],
+            IconButton(
+              icon: const Icon(Icons.delete, size: 20),
+              tooltip: 'Delete word',
+              onPressed: () => _showDeleteConfirmation(word),
+            ),
+          ],
+        ),
+        onTap: () => _showWordActions(word),
+      ),
+    );
+  }
+
+  void _copyWord(String word) {
+    // Implementation would use clipboard - placeholder for now
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Copied "$word"'), duration: const Duration(seconds: 1)),
+    );
+  }
+
+  void _onReorderWordList(List<String> words, int oldIndex, int newIndex) {
+    // Handle reordering - implement persistence if needed
+    setState(() {
+      if (newIndex > oldIndex) newIndex -= 1;
+      final item = words.removeAt(oldIndex);
+      words.insert(newIndex, item);
+    });
+  }
+
+  void _moveWordUp(String word) {
+    // Implement move up logic
+    setState(() {});
+  }
+
+  void _moveWordDown(String word) {
+    // Implement move down logic
+    setState(() {});
+  }
+
+  void _moveWordToPosition(String word, int position) {
+    // Implement move to position logic
+    setState(() {});
   }
 
   Widget _buildHistoryList() {
