@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../domain/entities/app_state.dart';
 import '../../domain/entities/translation_model.dart';
 import '../../l10n/app_localizations.dart';
+import '../../utils/screen_size.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -102,8 +103,8 @@ class SettingsScreen extends StatelessWidget {
         title: Text(AppLocalizations.of(context)!.settings),
         centerTitle: true,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
+    body: ListView(
+      padding: ScreenSize.adaptivePadding(context),
         children: [
           // General settings section
           Text(
@@ -507,16 +508,14 @@ class SettingsScreen extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-                  // Anki Deck Selection
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: Text(AppLocalizations.of(context)!.currentAnkiDeck),
-                      ),
-                      Expanded(
-                        flex: 4,
-                        child: DropdownButtonFormField<String>(
+              // Anki Deck Selection
+              ScreenSize.isCompact(context)
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(AppLocalizations.of(context)!.currentAnkiDeck),
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<String>(
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -543,20 +542,55 @@ class SettingsScreen extends StatelessWidget {
                             }
                           },
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // Profile Selection
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: Text(AppLocalizations.of(context)!.currentProfile),
-                      ),
-                      Expanded(
-                        flex: 4,
-                        child: DropdownButtonFormField<String>(
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Text(AppLocalizations.of(context)!.currentAnkiDeck),
+                        ),
+                        Expanded(
+                          flex: 4,
+                          child: DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ),
+                            value: appState.ankiDecks.contains(appState.currentAnkiDeck)
+                                ? appState.currentAnkiDeck
+                                : (appState.ankiDecks.isNotEmpty ? appState.ankiDecks.first : 'Default'),
+                            items: appState.ankiDecks.isNotEmpty
+                                ? appState.ankiDecks.map((deck) {
+                                    return DropdownMenuItem(
+                                      value: deck,
+                                      child: Text(deck),
+                                    );
+                                  }).toList()
+                                : [
+                                    const DropdownMenuItem(
+                                      value: 'Default',
+                                      child: Text('Default'),
+                                    )
+                                  ],
+                            onChanged: (value) {
+                              if (value != null) {
+                                appState.setCurrentAnkiDeck(value);
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+              const SizedBox(height: 16),
+              // Profile Selection
+              ScreenSize.isCompact(context)
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(AppLocalizations.of(context)!.currentProfile),
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<String>(
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -583,13 +617,50 @@ class SettingsScreen extends StatelessWidget {
                             }
                           },
                         ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Text(AppLocalizations.of(context)!.currentProfile),
+                        ),
+                        Expanded(
+                          flex: 4,
+                          child: DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ),
+                            value: appState.profiles.contains(appState.currentProfile)
+                                ? appState.currentProfile
+                                : (appState.profiles.isNotEmpty ? appState.profiles.first : 'Default'),
+                            items: appState.profiles.isNotEmpty
+                                ? appState.profiles.map((profile) {
+                                    return DropdownMenuItem(
+                                      value: profile,
+                                      child: Text(profile),
+                                    );
+                                  }).toList()
+                                : [
+                                    const DropdownMenuItem(
+                                      value: 'Default',
+                                      child: Text('Default'),
+                                    )
+                                  ],
+                            onChanged: (value) {
+                              if (value != null) {
+                                appState.setCurrentProfile(value);
+                              }
+      },
+    ),
+  ),
+      ],
+    ),
+  ],
+),
+),
+),
 
           // Clipboard and Forvo settings
           Card(
@@ -614,14 +685,60 @@ class SettingsScreen extends StatelessWidget {
                     },
                   ),
                   const Divider(),
-                  SwitchListTile(
-                    title: Text(AppLocalizations.of(context)!.forvoAudio),
-                    subtitle: Text(AppLocalizations.of(context)!.enableForvoPronunciations),
-                    value: appState.forvoAudioEnabled,
-                    onChanged: (value) {
-                      appState.setForvoAudioEnabled(value);
-                    },
-                  ),
+        SwitchListTile(
+          title: Text(AppLocalizations.of(context)!.forvoAudio),
+          subtitle: Text(AppLocalizations.of(context)!.enableForvoPronunciations),
+          value: appState.forvoAudioEnabled,
+          onChanged: (value) {
+            appState.setForvoAudioEnabled(value);
+          },
+        ),
+        if (appState.forvoAudioEnabled) ...[
+          const SizedBox(height: 8),
+          ScreenSize.isCompact(context)
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Forvo API Key'),
+                    const SizedBox(height: 8),
+                    TextField(
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'Enter your Forvo API key',
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      obscureText: true,
+                      controller: TextEditingController(text: appState.forvoApiKey),
+                      onChanged: (value) {
+                        appState.setForvoApiKey(value);
+                      },
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    const Expanded(
+                      flex: 3,
+                      child: Text('Forvo API Key'),
+                    ),
+                    Expanded(
+                      flex: 4,
+                      child: TextField(
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: 'Enter your Forvo API key',
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                        obscureText: true,
+                        controller: TextEditingController(text: appState.forvoApiKey),
+                        onChanged: (value) {
+                          appState.setForvoApiKey(value);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+        ],
                   const Divider(),
                   SwitchListTile(
                     title: Text(AppLocalizations.of(context)!.autoTranslation),

@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
 import '../../../domain/entities/dictionary.dart';
 import '../../utils/json_html_renderer.dart';
+import '../../utils/screen_size.dart';
 import 'tag_renderer.dart';
 
 class DictionaryEntryCard extends StatelessWidget {
@@ -99,7 +100,7 @@ class DictionaryEntryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(ScreenSize.isCompact(context) ? 12 : 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -127,9 +128,57 @@ class DictionaryEntryCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Action buttons
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+            // Action buttons
+            ScreenSize.isCompact(context)
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Wrap(
+                        spacing: 0,
+                        runSpacing: 0,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              isFavorite ? Icons.favorite : Icons.favorite_border,
+                              color: isFavorite ? Colors.red : null,
+                              size: 20,
+                            ),
+                            onPressed: onFavoriteToggle,
+                            tooltip: isFavorite ? 'Remove from favorites' : 'Add to favorites',
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              isInAnki ? Icons.book : Icons.book_outlined,
+                              color: isInAnki ? Colors.blue : null,
+                              size: 20,
+                            ),
+                            onPressed: onAnkiToggle,
+                            tooltip: isInAnki ? 'Remove from Anki' : 'Add to Anki',
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              isInSRS ? Icons.school : Icons.school_outlined,
+                              color: isInSRS ? Colors.green : null,
+                              size: 20,
+                            ),
+                            onPressed: onSRSToggle,
+                            tooltip: isInSRS ? 'Remove from SRS' : 'Add to SRS',
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              isSaved ? Icons.bookmark : Icons.bookmark_border,
+                              color: isSaved ? theme.colorScheme.primary : null,
+                              size: 20,
+                            ),
+                            onPressed: onSaveToggle,
+                            tooltip: isSaved ? 'Remove from saved' : 'Save word',
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
                       icon: Icon(
@@ -294,25 +343,45 @@ class DictionaryEntryCard extends StatelessWidget {
               ),
             
             // Action buttons
-            Padding(
-              padding: const EdgeInsets.only(top: 16.0),
-              child: Row(
+      Padding(
+        padding: const EdgeInsets.only(top: 16.0),
+        child: ScreenSize.isCompact(context)
+            ? Wrap(
+                alignment: WrapAlignment.end,
+                runSpacing: 4,
+                children: [
+                  TextButton.icon(
+                    icon: const Icon(Icons.volume_up, size: 18),
+                    label: const Text('Listen'),
+                    onPressed: () {},
+                  ),
+                  TextButton.icon(
+                    icon: const Icon(Icons.copy, size: 18),
+                    label: const Text('Copy'),
+                    onPressed: () {},
+                  ),
+                  TextButton.icon(
+                    icon: const Icon(Icons.more_horiz, size: 18),
+                    label: const Text('More'),
+                    onPressed: () {
+                      _showMoreOptions(context);
+                    },
+                  ),
+                ],
+              )
+            : Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton.icon(
                     icon: const Icon(Icons.volume_up, size: 18),
                     label: const Text('Listen'),
-                    onPressed: () {
-                      // Implement audio playback
-                    },
+                    onPressed: () {},
                   ),
                   const SizedBox(width: 8),
                   TextButton.icon(
                     icon: const Icon(Icons.copy, size: 18),
                     label: const Text('Copy'),
-                    onPressed: () {
-                      // Implement copy functionality
-                    },
+                    onPressed: () {},
                   ),
                   const SizedBox(width: 8),
                   TextButton.icon(
@@ -336,7 +405,7 @@ class DictionaryEntryCard extends StatelessWidget {
       context: context,
       builder: (context) {
         return Container(
-          padding: const EdgeInsets.all(16),
+          padding: ScreenSize.adaptivePadding(context),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

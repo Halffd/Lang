@@ -6,6 +6,7 @@ import '../../../domain/entities/srs_card.dart';
 import '../../data/repositories/srs_service.dart';
 import '../../utils/srs_conversion_utils.dart';
 import '../widgets/dictionary_entry_card.dart';
+import '../../utils/screen_size.dart';
 
 class SavedWordsScreen extends StatefulWidget {
   const SavedWordsScreen({super.key});
@@ -51,9 +52,9 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
       ),
       body: Column(
         children: [
-          // Search bar and actions
-          Padding(
-            padding: const EdgeInsets.all(16.0),
+        // Search bar and actions
+        Padding(
+          padding: ScreenSize.adaptivePadding(context),
             child: Column(
               children: [
                 Row(
@@ -114,9 +115,9 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
           ),
 
           // Stats summary
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
+        Padding(
+          padding: ScreenSize.adaptivePadding(context),
+          child: Row(
               children: [
                 Text(
                   '${filteredWords.length} words',
@@ -162,8 +163,8 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
                     ? Center(
                         child: Text('No words matching "$_searchQuery"'),
                       )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(8.0),
+        : ListView.builder(
+          padding: ScreenSize.adaptivePadding(context),
                         itemCount: filteredWords.length,
                         itemBuilder: (context, index) {
                           final word = filteredWords[index];
@@ -226,7 +227,7 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
       context: context,
       builder: (context) {
         return Container(
-          padding: const EdgeInsets.all(16),
+          padding: ScreenSize.adaptivePadding(context),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
