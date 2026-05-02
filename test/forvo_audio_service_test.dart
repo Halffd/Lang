@@ -9,33 +9,21 @@ void main() {
       service = ForvoAudioService();
     });
 
-    test('searchPronunciations returns list of pronunciations', () async {
-      try {
-        final results = await service.searchPronunciations('test');
-        expect(results, isA<List<ForvoPronunciation>>());
-        expect(results.isNotEmpty, isTrue);
-      } catch (e) {
-        expect(true, isTrue);
-      }
-    });
+  test('searchPronunciations returns empty list without API key', () async {
+    final results = await service.searchPronunciations('test');
+    expect(results, isA<List<ForvoPronunciation>>());
+    expect(results.isEmpty, isTrue);
+  });
 
-    test('searchPronunciations with language parameter works', () async {
-      try {
-        final results = await service.searchPronunciations('test', language: 'ja');
-        expect(results, isA<List<ForvoPronunciation>>());
-      } catch (e) {
-        expect(true, isTrue);
-      }
-    });
+  test('searchPronunciations with language parameter works without key', () async {
+    final results = await service.searchPronunciations('test', language: 'ja');
+    expect(results, isA<List<ForvoPronunciation>>());
+  });
 
-    test('searchPronunciations for Japanese word works', () async {
-      try {
-        final results = await service.searchPronunciations('日本', language: 'ja');
-        expect(results, isA<List<ForvoPronunciation>>());
-      } catch (e) {
-        expect(true, isTrue);
-      }
-    });
+  test('searchPronunciations for Japanese word returns empty without key', () async {
+    final results = await service.searchPronunciations('日本', language: 'ja');
+    expect(results, isA<List<ForvoPronunciation>>());
+  });
 
     test('getAudioUrl returns valid URL format', () {
       final url = service.getAudioUrl('test', 'ja', 'user123');

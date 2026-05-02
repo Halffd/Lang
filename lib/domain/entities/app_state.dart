@@ -69,6 +69,7 @@ class AppState extends ChangeNotifier {
   List<String> get profiles => _profiles;
   bool get clipboardAutoDetect => _clipboardAutoDetect;
   bool get forvoAudioEnabled => _forvoAudioEnabled;
+  String get forvoApiKey => _forvoApiKey;
   bool get autoConvertJapanese => _autoConvertJapanese;
   int get defaultScreenIndex => _defaultScreenIndex;
   bool get autoPasteReader => _autoPasteReader;
@@ -82,6 +83,7 @@ class AppState extends ChangeNotifier {
   String _currentAnkiDeck = 'Default';
   bool _clipboardAutoDetect = false;
   bool _forvoAudioEnabled = false;
+  String _forvoApiKey = '';
   bool _autoConvertJapanese = true; // Default to auto-convert letters to Japanese
   List<String> _profiles = ['Default'];
   bool _autoPasteReader = false; // Auto-paste from clipboard in reader mode
@@ -267,6 +269,12 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setForvoApiKey(String value) {
+    _forvoApiKey = value;
+    _storageService.setString('forvo_api_key', value);
+    notifyListeners();
+  }
+
   void setAutoConvertJapanese(bool value) {
     _autoConvertJapanese = value;
     _storageService.setBool('auto_convert_japanese', value);
@@ -430,6 +438,7 @@ class AppState extends ChangeNotifier {
       _profiles = _storageService.getStringList('profiles') ?? ['Default'];
       _clipboardAutoDetect = _storageService.getBool('clipboard_auto_detect') ?? false;
       _forvoAudioEnabled = _storageService.getBool('forvo_audio_enabled') ?? false;
+    _forvoApiKey = _storageService.getString('forvo_api_key') ?? '';
       _autoConvertJapanese = _storageService.getBool('auto_convert_japanese') ?? true;
       _defaultScreenIndex = _storageService.getInt('default_screen_index') ?? 0;
       _autoPasteReader = _storageService.getBool('auto_paste_reader') ?? false;
@@ -458,6 +467,7 @@ class AppState extends ChangeNotifier {
       _profiles = ['Default'];
       _clipboardAutoDetect = false;
       _forvoAudioEnabled = false;
+      _forvoApiKey = '';
       _showWiktionary = true;
       _defaultScreenIndex = 0;
     }

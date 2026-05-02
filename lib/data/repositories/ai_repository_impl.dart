@@ -6,10 +6,13 @@ import '../../domain/entities/ai_message.dart';
 import '../../domain/repositories/ai_repository.dart';
 
 class AiRepositoryImpl implements AiRepository {
-  static const String _defaultHfKey = "<REDACTED>";
-  static const String _defaultGmKey = "<REDACTED>";
   static const String _historyKey = 'ai_history';
   static const String _customPromptsKey = 'custom_prompts';
+
+  final String? defaultGeminiKey;
+  final String? defaultHfKey;
+
+  AiRepositoryImpl({this.defaultGeminiKey, this.defaultHfKey});
 
   @override
   Future<List<Map<String, String>>> getCustomPrompts() async {
@@ -46,7 +49,10 @@ class AiRepositoryImpl implements AiRepository {
 
   @override
   Future<String> generateText(String prompt, String provider, {String? apiKey}) async {
-    final key = apiKey ?? _defaultGmKey;
+    final key = apiKey ?? defaultGeminiKey;
+    if (key == null || key.isEmpty) {
+      throw Exception('Gemini API key not configured. Set it in Settings > AI.');
+    }
     if (provider == 'Gemini') {
       final url = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$key');
       final response = await http.post(
@@ -71,7 +77,10 @@ class AiRepositoryImpl implements AiRepository {
 
   @override
   Future<String> generateImage(String prompt, {String? negativePrompt, String? apiKey}) async {
-    final key = apiKey ?? _defaultHfKey;
+    final key = apiKey ?? defaultHfKey;
+    if (key == null || key.isEmpty) {
+      throw Exception('HuggingFace API key not configured. Set it in Settings > AI.');
+    }
     final url = Uri.parse('https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0');
     final fullPrompt = negativePrompt != null ? "$prompt [Negative: $negativePrompt]" : prompt;
     

@@ -1,41 +1,54 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ForvoAudioService {
   static const String _baseUrl = 'https://apifree.forvo.com';
-  static const String _apiKey = 'YOUR_FORVO_API_KEY'; // This would be set in a real implementation
+  static const String _forvoApiKeyPref = 'forvo_api_key';
+
+  String? _apiKey;
+
+  String? get apiKey => _apiKey;
+
+  Future<void> loadApiKey() async {
+    final prefs = await SharedPreferences.getInstance();
+    _apiKey = prefs.getString(_forvoApiKeyPref);
+  }
+
+  Future<void> setApiKey(String key) async {
+    _apiKey = key;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_forvoApiKeyPref, key);
+  }
+
+  Future<void> clearApiKey() async {
+    _apiKey = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_forvoApiKeyPref);
+  }
 
   /// Search for pronunciation audio for a given word
   Future<List<ForvoPronunciation>> searchPronunciations(String word, {String language = 'ja'}) async {
+    if (_apiKey == null || _apiKey!.isEmpty) {
+      return [];
+    }
     try {
-      // Note: This is a simulated implementation since we can't include real API keys
-      // In a real implementation, this would make actual API calls to Forvo
-      final pronunciations = <ForvoPronunciation>[];
-      
-      // This is a simulation - in real implementation it would fetch from Forvo API
-      // For demonstration purposes, we'll return mock data
-      pronunciations.add(ForvoPronunciation(
-        word: word,
-        language: language,
-        gender: 'female',
-        country: 'JP',
-        userName: 'sample_user',
-        pronunciation: 'pronunciation_url', // in real implementation this would be the audio URL
-        votes: 5,
-        region: 'Tokyo',
-      ));
-
-      return pronunciations;
+      final url = Uri.parse('$_baseUrl/key/$_apiKey/format/json/action/word-pronunciations/word/$word/language/$language');
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final items = data['items'] as List? ?? [];
+        return items.map((item) => ForvoPronunciation.fromMap(item as Map<String, dynamic>)).toList();
+      }
+      return [];
     } catch (e) {
-      print('Error fetching Forvo pronunciations: $e');
       return [];
     }
   }
 
   /// Get audio URL for a specific pronunciation
   String getAudioUrl(String word, String language, String username) {
-    // In a real implementation, this would construct the actual audio URL
-    return 'https://forvo.example.com/audio/$word/$language/$username.mp3';
+    return '$_baseUrl/key/$_apiKey/format/json/action/word-pronunciations/word/$word/language/$language/user/$username';
   }
 }
 
