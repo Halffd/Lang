@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../domain/entities/dictionary.dart';
 import '../../../domain/entities/app_state.dart';
 import '../../../domain/entities/translation_model.dart';
@@ -18,6 +19,8 @@ import '../../utils/html_renderer.dart';
 import '../../utils/screen_size.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart' show showMenu, RelativeRect;
+import '../../data/datasources/document_text_extractor.dart';
+import '../../data/datasources/local_translation_service.dart';
 
 class ReaderScreen extends StatefulWidget {
   const ReaderScreen({Key? key}) : super(key: key);
@@ -30,7 +33,9 @@ class _ReaderScreenState extends State<ReaderScreen>
     with SavedWordsMixin, AnkiWordsMixin, FavoriteWordsMixin, DeletedWordsMixin, SRSWordsMixin {
   final TextEditingController _textController = TextEditingController();
   final DictionaryService _dictionaryService = DictionaryService();
-  final TranslationService _translationService = TranslationService();
+  final DocumentTextExtractor _textExtractor = DocumentTextExtractor();
+  final LocalTranslationService _localTranslationService = LocalTranslationService();
+  late TranslationService _translationService;
   final FocusNode _keyboardFocusNode = FocusNode();
   
   // State
@@ -46,10 +51,16 @@ class _ReaderScreenState extends State<ReaderScreen>
   @override
   void initState() {
     super.initState();
-    _readerTranslationService = ReaderTranslationService(_dictionaryService, _translationService);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // Get the storage service from the app state
       final appState = Provider.of<AppState>(context, listen: false);
+      final prefs = await SharedPreferences.getInstance();
+      final geminiKey = prefs.getString('geminiApiKey') ?? '';
+      _translationService = TranslationService(
+        localService: _localTranslationService,
+        geminiApiKey: geminiKey.isNotEmpty ? geminiKey : null,
+        provider: appState.translationProvider,
+      );
+      _readerTranslationService = ReaderTranslationService(_dictionaryService, _translationService);
       setStorageService(appState.storageService);
       await _loadData();
 
@@ -765,15 +776,18 @@ class _ReaderScreenState extends State<ReaderScreen>
                       spacing: 4,
                       runSpacing: 4,
                       children: List.generate(sentence.length, (wordIndex) {
-                        final token = sentence[wordIndex];
-                        final isSelected = isCurrentSentence && wordIndex == _currentWordIndex;
-                        final isDeleted = token.isWord && isWordDeleted(token.text);
+              final token = sentence[wordIndex];
+              final isSelected = isCurrentSentence && wordIndex == _currentWordIndex;
+              final isDeleted = token.isWord && isWordDeleted(token.text);
+              final appState = context.watch<AppState>();
 
-                        return TokenWidget(
-                          token: token,
-                          isSelected: isSelected,
-                          isDeleted: isDeleted,
-                          onTap: () async {
+              return TokenWidget(
+              token: token,
+              isSelected: isSelected,
+              isDeleted: isDeleted,
+              showInlineDefinition: appState.showInlineDefinitions,
+              showHoverDefinition: appState.showHoverDefinitions,
+              onTap: () async {
                             setState(() {
                               _currentSentenceIndex = sentenceIndex;
                               _currentWordIndex = wordIndex;
@@ -935,25 +949,35 @@ class _ReaderScreenState extends State<ReaderScreen>
     );
   }
 
-  /// Opens a file picker to select and read PDF, EPUB, or TXT files
   Future<void> _openDocument() async {
     try {
       final FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['pdf', 'epub', 'txt'],
+        allowedExtensions: ['pdf', 'txt'],
       );
 
-      if (result != null && result.files.single.path != null) {
-        final filePath = result.files.single.path!;
-        final fileExtension = result.files.single.extension?.toLowerCase() ?? 'txt';
+      if (result == null || result.files.isEmpty) return;
+      final filePath = result.files.single.path;
+      if (filePath == null) return;
 
-        // For now, just show a message that the file was selected
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Extracting text from document...')),
+      );
+
+      final text = await _textExtractor.extractText(filePath);
+
+      if (text.trim().isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Selected file: $filePath')),
+            const SnackBar(content: Text('No text content found in document')),
           );
         }
+        return;
       }
+
+      _textController.text = text;
+      await _analyzeText();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
