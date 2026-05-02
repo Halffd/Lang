@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../domain/entities/app_state.dart';
 import '../../../domain/entities/translation_model.dart';
 import '../../data/repositories/translation_service.dart';
+import '../../data/datasources/local_translation_service.dart';
 
 class SentenceTranslatorScreen extends StatefulWidget {
   const SentenceTranslatorScreen({Key? key}) : super(key: key);
@@ -10,7 +14,8 @@ class SentenceTranslatorScreen extends StatefulWidget {
 }
 
 class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
-  final TranslationService _translationService = TranslationService();
+  final LocalTranslationService _localTranslationService = LocalTranslationService();
+  late TranslationService _translationService;
   final TextEditingController _sourceController = TextEditingController();
   
   String _sourceLanguage = 'de';  // German by default
@@ -18,6 +23,25 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
   TranslationResult? _translationResult;
   bool _isLoading = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _initTranslationService();
+  }
+
+  Future<void> _initTranslationService() async {
+    final prefs = await SharedPreferences.getInstance();
+    final geminiKey = prefs.getString('geminiApiKey') ?? '';
+    final appState = Provider.of<AppState>(context, listen: false);
+    setState(() {
+      _translationService = TranslationService(
+        localService: _localTranslationService,
+        geminiApiKey: geminiKey.isNotEmpty ? geminiKey : null,
+        provider: appState.translationProvider,
+      );
+    });
+  }
 
   @override
   void dispose() {
