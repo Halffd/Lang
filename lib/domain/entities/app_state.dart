@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/services/storage_service.dart';
+import '../../data/repositories/translation_service.dart';
 import 'translation_model.dart';
 
 class AppState extends ChangeNotifier {
@@ -74,6 +75,10 @@ class AppState extends ChangeNotifier {
   int get defaultScreenIndex => _defaultScreenIndex;
   bool get autoPasteReader => _autoPasteReader;
   bool get showWiktionary => _showWiktionary;
+  bool get showInlineDefinitions => _showInlineDefinitions;
+  bool get showHoverDefinitions => _showHoverDefinitions;
+  bool get useLocalTranslation => _useLocalTranslation;
+  TranslationProvider get translationProvider => _translationProvider;
 
   // Expose storage service for mixins
   StorageService get storageService => _storageService;
@@ -88,6 +93,10 @@ class AppState extends ChangeNotifier {
   List<String> _profiles = ['Default'];
   bool _autoPasteReader = false; // Auto-paste from clipboard in reader mode
   bool _showWiktionary = true; // Show Wiktionary definitions by default
+  bool _showInlineDefinitions = true; // Show definition text below each word
+  bool _showHoverDefinitions = true; // Show definition popup on hover
+  bool _useLocalTranslation = false; // Use on-device ML Kit translation
+  TranslationProvider _translationProvider = TranslationProvider.googleCloud;
 
   // Setters with persistence
 
@@ -302,6 +311,30 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setShowInlineDefinitions(bool value) {
+    _showInlineDefinitions = value;
+    _storageService.setBool('show_inline_definitions', value);
+    notifyListeners();
+  }
+
+  void setShowHoverDefinitions(bool value) {
+    _showHoverDefinitions = value;
+    _storageService.setBool('show_hover_definitions', value);
+    notifyListeners();
+  }
+
+  void setUseLocalTranslation(bool value) {
+    _useLocalTranslation = value;
+    _storageService.setBool('use_local_translation', value);
+    notifyListeners();
+  }
+
+  void setTranslationProvider(TranslationProvider value) {
+    _translationProvider = value;
+    _storageService.setString('translation_provider', value.name);
+    notifyListeners();
+  }
+
   // Word management
   void addSavedWord(String word, {Map<String, dynamic>? details}) {
     if (!_savedWords.contains(word)) {
@@ -443,6 +476,14 @@ class AppState extends ChangeNotifier {
       _defaultScreenIndex = _storageService.getInt('default_screen_index') ?? 0;
       _autoPasteReader = _storageService.getBool('auto_paste_reader') ?? false;
       _showWiktionary = _storageService.getBool('show_wiktionary') ?? true;
+    _showInlineDefinitions = _storageService.getBool('show_inline_definitions') ?? true;
+    _showHoverDefinitions = _storageService.getBool('show_hover_definitions') ?? true;
+    _useLocalTranslation = _storageService.getBool('use_local_translation') ?? false;
+    final savedProvider = _storageService.getString('translation_provider');
+    _translationProvider = TranslationProvider.values.firstWhere(
+      (e) => e.name == savedProvider,
+      orElse: () => TranslationProvider.googleCloud,
+    );
       // Ensure value is within valid range (0-6 for the 7 screens)
       if (_defaultScreenIndex < 0 || _defaultScreenIndex > 6) {
         _defaultScreenIndex = 0;
@@ -469,6 +510,10 @@ class AppState extends ChangeNotifier {
       _forvoAudioEnabled = false;
       _forvoApiKey = '';
       _showWiktionary = true;
+    _showInlineDefinitions = true;
+    _showHoverDefinitions = true;
+      _useLocalTranslation = false;
+      _translationProvider = TranslationProvider.googleCloud;
       _defaultScreenIndex = 0;
     }
   }
