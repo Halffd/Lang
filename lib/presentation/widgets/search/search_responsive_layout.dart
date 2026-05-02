@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../utils/screen_size.dart';
 
-/// Responsive layout widget that adapts to screen size
-/// Shows side-by-side layout on desktop and stacked layout on mobile
 class SearchResponsiveLayout extends StatelessWidget {
   final Widget searchBar;
   final Widget resultsList;
@@ -18,32 +17,53 @@ class SearchResponsiveLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth > 900;
+        final screenType = ScreenSize.type(context);
+        final width = constraints.maxWidth;
 
-        if (isDesktop && detailsPanel != null) {
-          // Desktop: Side-by-side
+        if (width > 900 && detailsPanel != null) {
           return Row(
             children: [
               Expanded(
-                flex: 2,
+                flex: screenType == ScreenType.compact ? 3 : 2,
                 child: Column(
                   children: [searchBar, Expanded(child: resultsList)],
                 ),
               ),
               Expanded(
-                flex: 3,
+                flex: screenType == ScreenType.compact ? 2 : 3,
                 child: detailsPanel!,
               ),
             ],
           );
         }
 
-        // Mobile: Stacked
-        return Column(
-          children: [
-            searchBar,
-            Expanded(child: resultsList),
-          ],
+        if (width > 600 && detailsPanel != null) {
+          return Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: Column(
+                  children: [searchBar, Expanded(child: resultsList)],
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: detailsPanel!,
+              ),
+            ],
+          );
+        }
+
+        final pad = ScreenSize.adaptivePadding(context);
+
+        return Padding(
+          padding: EdgeInsets.only(left: pad.left, right: pad.right),
+          child: Column(
+            children: [
+              searchBar,
+              Expanded(child: resultsList),
+            ],
+          ),
         );
       },
     );

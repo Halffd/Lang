@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../../domain/entities/app_state.dart';
 import '../../../domain/entities/dictionary.dart';
 import '../../../domain/entities/tone_model.dart';
+import '../../../utils/screen_size.dart';
 
 class SearchKanjiCard extends StatelessWidget {
   final KanjiEntry kanji;
@@ -27,9 +28,12 @@ class SearchKanjiCard extends StatelessWidget {
     return GestureDetector(
       onDoubleTap: () => onDoubleTap(kanji.character),
       child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: EdgeInsets.symmetric(
+          horizontal: ScreenSize.isCompact(context) ? 8 : 16,
+          vertical: 8,
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(ScreenSize.isCompact(context) ? 12 : 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -37,8 +41,8 @@ class SearchKanjiCard extends StatelessWidget {
                 children: [
                   Text(
                     kanji.character,
-                    style: const TextStyle(
-                      fontSize: 48,
+                    style: TextStyle(
+                      fontSize: ScreenSize.adaptiveFontSize(context, 48),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -119,20 +123,23 @@ class SearchEntryCard extends StatelessWidget {
 
     return GestureDetector(
       onDoubleTap: () => onDoubleTap(entry),
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        elevation: isSelected ? 4 : 1,
-        shape: isSelected
-            ? RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: Theme.of(context).primaryColor, width: 2),
-              )
-            : null,
-        child: InkWell(
-          onTap: () => onTap(entry),
-          borderRadius: isSelected ? BorderRadius.circular(12) : BorderRadius.circular(4),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
+    child: Card(
+      margin: EdgeInsets.symmetric(
+        horizontal: ScreenSize.isCompact(context) ? 8 : 16,
+        vertical: 8,
+      ),
+      elevation: isSelected ? 4 : 1,
+      shape: isSelected
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+            )
+          : null,
+      child: InkWell(
+        onTap: () => onTap(entry),
+        borderRadius: isSelected ? BorderRadius.circular(12) : BorderRadius.circular(4),
+        child: Padding(
+          padding: EdgeInsets.all(ScreenSize.isCompact(context) ? 12 : 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -142,11 +149,11 @@ class SearchEntryCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            entry.term,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
+                Text(
+                  entry.term,
+                  style: TextStyle(
+                    fontSize: ScreenSize.adaptiveFontSize(context, 24),
+                    fontWeight: FontWeight.bold,
                             ),
                           ),
                           if (entry.reading.isNotEmpty && entry.reading != entry.term)

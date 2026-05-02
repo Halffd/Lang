@@ -7,6 +7,7 @@ import '../../../utils/character_breakdown.dart';
 import '../../widgets/character_breakdown_widget.dart';
 import '../../widgets/search/search_bar_widget.dart';
 import '../../widgets/search/search_responsive_layout.dart';
+import '../../../utils/screen_size.dart';
 import 'search_entry_details.dart';
 import 'search_results_body.dart';
 
@@ -168,19 +169,20 @@ class SearchScreenView extends StatelessWidget {
 
   void _showEntryDetails(BuildContext context, DictionaryEntry entry) {
     onEntrySelected(entry);
-    if (MediaQuery.of(context).size.width > 900) {
+    if (!ScreenSize.isMobile(context)) {
       return;
     }
 
     final result = searchResult;
     if (result == null) return;
 
+    final isCompact = ScreenSize.isCompact(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
+        initialChildSize: isCompact ? 0.8 : 0.7,
+        minChildSize: isCompact ? 0.6 : 0.5,
         maxChildSize: 0.95,
         expand: false,
         builder: (context, scrollController) => Container(
@@ -200,7 +202,7 @@ class SearchScreenView extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth <= 900) {
+        if (ScreenSize.isMobile(context) || constraints.maxWidth <= ScreenSize.mediumMax) {
           return Scaffold(
             appBar: AppBar(
               title: TextField(
@@ -300,20 +302,22 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final iconSize = ScreenSize.adaptiveFontSize(context, 80);
+    final msgFontSize = ScreenSize.adaptiveFontSize(context, 18);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.search,
-            size: 80,
+            size: iconSize,
             color: Colors.grey[400],
           ),
           const SizedBox(height: 16),
           Text(
             'Search for Japanese/Chinese words',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: msgFontSize,
               color: Colors.grey[600],
             ),
           ),
@@ -330,20 +334,22 @@ class _NoResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final iconSize = ScreenSize.adaptiveFontSize(context, 80);
+    final msgFontSize = ScreenSize.adaptiveFontSize(context, 18);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.search_off,
-            size: 80,
+            size: iconSize,
             color: Colors.grey[400],
           ),
           const SizedBox(height: 16),
           Text(
-            'No results for \"$query\"',
+            'No results for "$query"',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: msgFontSize,
               color: Colors.grey[600],
             ),
           ),

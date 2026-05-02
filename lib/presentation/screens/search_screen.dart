@@ -22,6 +22,7 @@ import '../widgets/etymology_widget.dart';
 import '../widgets/search/search_bar_widget.dart';
 import '../widgets/search/search_responsive_layout.dart';
 import '../widgets/wiktionary_details_widget.dart';
+import '../../utils/screen_size.dart';
 
 // Define custom intent classes at top level
 class _CopyIntent extends Intent {
@@ -350,7 +351,11 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth <= 900) {
+        final isCompact = ScreenSize.isCompact(context);
+        final isMobileWidth = constraints.maxWidth <= ScreenSize.mediumMax;
+        final horizontalPad = isCompact ? 8.0 : 16.0;
+
+        if (isMobileWidth) {
           // Mobile layout with AppBar
           return Scaffold(
             appBar: AppBar(
@@ -602,20 +607,22 @@ class _SearchScreenState extends State<SearchScreen> {
   }
   
   Widget _buildEmptyState() {
+    final iconSize = ScreenSize.adaptiveFontSize(context, 80);
+    final msgFontSize = ScreenSize.adaptiveFontSize(context, 18);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.search,
-            size: 80,
+            size: iconSize,
             color: Colors.grey[400],
           ),
           const SizedBox(height: 16),
           Text(
             'Search for Japanese/Chinese words',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: msgFontSize,
               color: Colors.grey[600],
             ),
           ),
@@ -623,22 +630,24 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
     );
   }
-  
+
   Widget _buildNoResults() {
+    final iconSize = ScreenSize.adaptiveFontSize(context, 80);
+    final msgFontSize = ScreenSize.adaptiveFontSize(context, 18);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.search_off,
-            size: 80,
+            size: iconSize,
             color: Colors.grey[400],
           ),
           const SizedBox(height: 16),
           Text(
             'No results for "$_lastQuery"',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: msgFontSize,
               color: Colors.grey[600],
             ),
           ),
@@ -674,8 +683,9 @@ class _SearchScreenState extends State<SearchScreen> {
   }
   
   Widget _buildExternalSearchSection() {
+    final pad = ScreenSize.adaptivePadding(context);
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: pad,
       child: Card(
         elevation: 4,
         child: Padding(
@@ -738,16 +748,17 @@ class _SearchScreenState extends State<SearchScreen> {
   
   Widget _buildKanjiCard(KanjiEntry kanji) {
     final dict = _searchResult!.dictionaries[kanji.dictionaryId];
+    final kanjiFontSize = ScreenSize.adaptiveFontSize(context, 48);
+    final cardPad = ScreenSize.adaptivePadding(context);
 
     return GestureDetector(
       onDoubleTap: () {
-        // For single kanji characters, provide breakdown too (though it will just be the same character)
         _showCharacterBreakdown(kanji.character);
       },
       child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: EdgeInsets.symmetric(horizontal: cardPad.left, vertical: 8),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: cardPad,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -755,8 +766,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 children: [
                   Text(
                     kanji.character,
-                    style: const TextStyle(
-                      fontSize: 48,
+                    style: TextStyle(
+                      fontSize: kanjiFontSize,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -879,13 +890,16 @@ class _SearchScreenState extends State<SearchScreen> {
     final pitches = _searchResult!.pitchAccents[pitchKey];
     final frequencies = _searchResult!.frequencies[pitchKey];
     final isSelected = _selectedEntry == entry;
+    final isCompact = ScreenSize.isCompact(context);
+    final cardPad = isCompact ? 8.0 : 16.0;
+    final termFontSize = ScreenSize.adaptiveFontSize(context, 24);
 
     return GestureDetector(
       onDoubleTap: () {
         _showCharacterBreakdown(entry.term);
       },
       child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: EdgeInsets.symmetric(horizontal: cardPad, vertical: 8),
         elevation: isSelected ? 4 : 1,
         shape: isSelected
             ? RoundedRectangleBorder(
@@ -897,7 +911,7 @@ class _SearchScreenState extends State<SearchScreen> {
           onTap: () => _showEntryDetails(entry),
           borderRadius: isSelected ? BorderRadius.circular(12) : BorderRadius.circular(4),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(cardPad),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -909,11 +923,11 @@ class _SearchScreenState extends State<SearchScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            entry.term,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
+                    entry.term,
+                    style: TextStyle(
+                      fontSize: termFontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
                           ),
                           if (entry.reading.isNotEmpty && entry.reading != entry.term)
                             Text(
@@ -1122,7 +1136,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _showEntryDetails(DictionaryEntry entry) {
-    if (MediaQuery.of(context).size.width > 900) {
+    if (!ScreenSize.isMobile(context)) {
       setState(() {
         _selectedEntry = entry;
       });
@@ -1132,16 +1146,18 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _showMobileEntryDetails(DictionaryEntry entry) {
+    final screenHeight = ScreenSize.height(context);
+    final isCompact = ScreenSize.isCompact(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
+        initialChildSize: isCompact ? 0.8 : 0.7,
+        minChildSize: isCompact ? 0.6 : 0.5,
         maxChildSize: 0.95,
         expand: false,
         builder: (context, scrollController) => Container(
-          padding: const EdgeInsets.all(24),
+          padding: ScreenSize.adaptivePadding(context),
           child: _buildDetailContent(entry, controller: scrollController, showCloseButton: true),
         ),
       ),
@@ -1153,6 +1169,10 @@ class _SearchScreenState extends State<SearchScreen> {
     final pitchKey = '${entry.term}_${entry.reading}';
     final pitches = _searchResult!.pitchAccents[pitchKey];
     final frequencies = _searchResult!.frequencies[pitchKey];
+    final isCompact = ScreenSize.isCompact(context);
+    final termFontSize = ScreenSize.adaptiveFontSize(context, 32);
+    final readingFontSize = ScreenSize.adaptiveFontSize(context, 20);
+    final detailPad = isCompact ? 8.0 : 24.0;
 
     final appState = Provider.of<AppState>(context, listen: false);
     final isSaved = appState.savedWords.contains(entry.term);
@@ -1161,7 +1181,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
     return ListView(
       controller: controller,
-      padding: showCloseButton ? EdgeInsets.zero : const EdgeInsets.all(24),
+      padding: showCloseButton ? EdgeInsets.zero : EdgeInsets.all(detailPad),
       children: [
         // Header
         Row(
@@ -1172,8 +1192,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 children: [
                   Text(
                     entry.term,
-                    style: const TextStyle(
-                      fontSize: 32,
+                    style: TextStyle(
+                      fontSize: termFontSize,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -1181,7 +1201,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     Text(
                       entry.reading,
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: readingFontSize,
                         color: Colors.grey[600],
                       ),
                     ),
@@ -1237,8 +1257,10 @@ class _SearchScreenState extends State<SearchScreen> {
         const SizedBox(height: 16),
 
         // External Links
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        Wrap(
+          alignment: WrapAlignment.spaceEvenly,
+          spacing: 8,
+          runSpacing: 8,
           children: [
             _buildExternalLinkButton(
               Icons.image,
