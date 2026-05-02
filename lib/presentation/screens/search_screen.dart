@@ -23,6 +23,7 @@ import '../widgets/search/search_bar_widget.dart';
 import '../widgets/search/search_responsive_layout.dart';
 import '../widgets/wiktionary_details_widget.dart';
 import '../../utils/screen_size.dart';
+import 'radical_search_screen.dart';
 
 // Define custom intent classes at top level
 class _CopyIntent extends Intent {
@@ -382,23 +383,33 @@ class _SearchScreenState extends State<SearchScreen> {
                       });
                     },
                   ),
-                IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: () async {
-                    final appState = Provider.of<AppState>(context, listen: false);
-                    String query = _searchController.text;
+        IconButton(
+          icon: const Icon(Icons.search),
+          onPressed: () async {
+            final appState = Provider.of<AppState>(context, listen: false);
+            String query = _searchController.text;
 
-                    // Auto-convert to Japanese if enabled and the text is mainly Latin
-                    if (appState.autoConvertJapanese && _isMainlyLatinText(query)) {
-                      try {
-                        query = _kanaKit.toKana(query);
-                      } catch (e) {
-                        // If conversion fails, use original text
-                      }
-                    }
-                    await _performSearch(query);
-                  },
-                ),
+            // Auto-convert to Japanese if enabled and the text is mainly Latin
+            if (appState.autoConvertJapanese && _isMainlyLatinText(query)) {
+              try {
+                query = _kanaKit.toKana(query);
+              } catch (e) {
+                // If conversion fails, use original text
+              }
+            }
+            await _performSearch(query);
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.grid_view),
+          tooltip: 'Radical Search',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const RadicalSearchScreen()),
+            );
+          },
+        ),
               ],
             ),
             body: Shortcuts(

@@ -14,6 +14,7 @@ import 'presentation/screens/word_lists_screen.dart';
 import 'presentation/screens/settings_screen.dart';
 import 'presentation/screens/sentence_translator_screen.dart';
 import 'presentation/screens/srs_screen.dart';
+import 'presentation/screens/radical_search_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'presentation/widgets/gesture_zoom_wrapper.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -120,6 +121,7 @@ class _MainScreenState extends State<MainScreen> {
     WordListsScreen(),
     DictionaryListScreen(),
     SentenceTranslatorScreen(),
+    RadicalSearchScreen(),
     SRSScreen(),
     SettingsScreen(),
   ];
@@ -143,7 +145,7 @@ class _MainScreenState extends State<MainScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final appState = Provider.of<AppState>(context, listen: false);
       setState(() {
-        _currentIndex = appState.defaultScreenIndex; // 0-6 for the screens
+        _currentIndex = appState.defaultScreenIndex.clamp(0, _screens.length - 1);
       });
 
       // Start clipboard monitoring based on the setting
@@ -192,6 +194,7 @@ class _MainScreenState extends State<MainScreen> {
         const SingleActivator(LogicalKeyboardKey.digit5, control: true): () => _handleShortcut(4),
         const SingleActivator(LogicalKeyboardKey.digit6, control: true): () => _handleShortcut(5),
         const SingleActivator(LogicalKeyboardKey.digit7, control: true): () => _handleShortcut(6),
+        const SingleActivator(LogicalKeyboardKey.digit8, control: true): () => _handleShortcut(7),
       },
       child: Focus(
         autofocus: true,
@@ -235,14 +238,18 @@ class _MainScreenState extends State<MainScreen> {
                       icon: Icon(Icons.book),
                       label: 'Dictionaries',
                     ),
-                    NavigationDestination(
-                      icon: Icon(Icons.translate),
-                      label: 'Translator',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.school),
-                      label: 'SRS',
-                    ),
+        NavigationDestination(
+          icon: Icon(Icons.translate),
+          label: 'Translator',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.grid_view),
+          label: 'Radicals',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.school),
+          label: 'SRS',
+        ),
                     NavigationDestination(
                       icon: Icon(Icons.settings),
                       label: 'Settings',
