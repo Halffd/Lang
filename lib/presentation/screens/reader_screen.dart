@@ -15,6 +15,7 @@ import '../widgets/reader/token_widget.dart';
 import '../../data/repositories/reader_translation_service.dart';
 import '../../data/datasources/remote/ichi_moe_service.dart';
 import '../../utils/html_renderer.dart';
+import '../../utils/screen_size.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart' show showMenu, RelativeRect;
 
@@ -887,9 +888,9 @@ class _ReaderScreenState extends State<ReaderScreen>
                 },
               ),
             ),
-            if (_expandedEntry != null)
-              Container(
-                height: 300,
+        if (_expandedEntry != null)
+          Container(
+            height: ScreenSize.isCompact(context) ? 200 : 300,
                 decoration: BoxDecoration(
                   color: Theme.of(context).scaffoldBackgroundColor,
                   boxShadow: [

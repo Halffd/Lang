@@ -6,6 +6,7 @@ import '../providers/analyzer_provider.dart';
 import '../widgets/word_detail_sheet.dart';
 import 'settings_screen.dart';
 import '../../utils/pinyin_util.dart';
+import '../../utils/screen_size.dart';
 
 class AnalyzeScreen extends StatefulWidget {
   const AnalyzeScreen({super.key});
@@ -197,9 +198,14 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                         ],
                       ),
                     )
-                  : LayoutBuilder(
-                      builder: (context, constraints) {
-                        final itemWidth = (constraints.maxWidth / provider.itemsPerRow) - 8;
+        : LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = ScreenSize.isCompact(context)
+                ? 1
+                : ScreenSize.isMobile(context)
+                    ? 2
+                    : provider.itemsPerRow;
+            final itemWidth = (constraints.maxWidth / columns) - 8;
                         final pagedWords = provider.pagedWords;
                         return SingleChildScrollView(
                           padding: const EdgeInsets.only(bottom: 32),

@@ -4,6 +4,7 @@ import '../../../domain/entities/app_state.dart';
 import '../../../domain/entities/srs_card.dart';
 import '../../data/repositories/srs_service.dart';
 import '../widgets/dictionary_entry_card.dart';
+import '../../utils/screen_size.dart';
 
 class SRSScreen extends StatefulWidget {
   const SRSScreen({super.key});
@@ -168,18 +169,18 @@ class _StudyTabState extends State<_StudyTab> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Word/term
-                    Text(
-                      _currentCard?.word ?? '',
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Word/term
+            Text(
+              _currentCard?.word ?? '',
+              style: TextStyle(
+                fontSize: ScreenSize.adaptiveFontSize(context, 32),
+                fontWeight: FontWeight.bold,
+              ),
                     ),
                     const SizedBox(height: 8),
                     
@@ -520,26 +521,26 @@ class _StatsTab extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _StatItem(
-                        label: 'Due',
-                        value: stats['due'].toString(),
-                        color: Colors.red,
-                      ),
-                      _StatItem(
-                        label: 'Total',
-                        value: stats['total'].toString(),
-                        color: Colors.blue,
-                      ),
-                      _StatItem(
-                        label: 'New',
-                        value: stats['new'].toString(),
-                        color: Colors.green,
-                      ),
-                    ],
-                  ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _StatItem(
+              label: 'Due',
+              value: stats['due'].toString(),
+              color: Colors.red,
+            ),
+            _StatItem(
+              label: 'Total',
+              value: stats['total'].toString(),
+              color: Colors.blue,
+            ),
+            _StatItem(
+              label: 'New',
+              value: stats['new'].toString(),
+              color: Colors.green,
+            ),
+          ],
+        ),
                 ],
               ),
             ),
@@ -648,12 +649,13 @@ class _StatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final valueFontSize = ScreenSize.adaptiveFontSize(context, 24);
     return Column(
       children: [
         Text(
           value,
           style: TextStyle(
-            fontSize: 24,
+            fontSize: valueFontSize,
             fontWeight: FontWeight.bold,
             color: color,
           ),

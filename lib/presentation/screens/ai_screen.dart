@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
+import '../../utils/screen_size.dart';
 import '../providers/ai_provider.dart';
 import '../../domain/entities/ai_message.dart';
 
@@ -53,9 +54,9 @@ class _AiScreenState extends State<AiScreen> {
       ),
       body: Column(
         children: [
-          // Templates
-          SizedBox(
-            height: 50,
+        // Templates
+        SizedBox(
+          height: ScreenSize.isCompact(context) ? 40 : 50,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -163,7 +164,11 @@ class _AiScreenState extends State<AiScreen> {
                   child: Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(12),
-                    constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
+                    constraints: BoxConstraints(
+                maxWidth: ScreenSize.isCompact(context)
+                    ? MediaQuery.of(context).size.width * 0.9
+                    : MediaQuery.of(context).size.width * 0.8,
+              ),
                     decoration: BoxDecoration(
                       color: isUser 
                         ? theme.colorScheme.primaryContainer 
@@ -204,10 +209,11 @@ class _AiScreenState extends State<AiScreen> {
               padding: EdgeInsets.all(8.0),
               child: LinearProgressIndicator(),
             ),
-          // Input Area
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
+        // Input Area
+        Padding(
+          padding: ScreenSize.adaptivePadding(context),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Expanded(
                   child: TextField(

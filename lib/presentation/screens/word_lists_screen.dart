@@ -8,6 +8,7 @@ import '../../data/repositories/dictionary_service.dart';
 import '../../core/services/storage_service.dart';
 import '../widgets/dictionary_entry_card.dart';
 import '../providers/analyzer_provider.dart';
+import '../../utils/screen_size.dart';
 
 class WordListsScreen extends StatefulWidget {
   const WordListsScreen({super.key});
@@ -356,7 +357,8 @@ class _WordListsScreenState extends State<WordListsScreen>
   Widget _buildSentenceWordGrid() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final itemWidth = (constraints.maxWidth / _sentenceColumns) - 8;
+        final columns = ScreenSize.adaptiveGridColumns(context, max: _sentenceColumns);
+        final itemWidth = (constraints.maxWidth / columns) - 8;
         return SingleChildScrollView(
           padding: const EdgeInsets.all(8),
           child: Wrap(
