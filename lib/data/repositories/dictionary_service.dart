@@ -1074,7 +1074,6 @@ class DictionaryService {
     while (cursor < text.length) {
       bool matchFound = false;
 
-      // Try to match longest possible word (up to 10 chars) for Japanese
       int maxLength = 10;
       if (cursor + maxLength > text.length) {
         maxLength = text.length - cursor;
@@ -1085,23 +1084,21 @@ class DictionaryService {
         candidates.add(text.substring(cursor, cursor + i));
       }
 
-      // Batch query for all candidates
-      // We prioritize longer matches by checking them in order or sorting results
       if (candidates.isNotEmpty) {
         final placeholders = List.filled(candidates.length, '?').join(',');
         final results = await db.query(
           'entries',
           where: 'term IN ($placeholders)',
           whereArgs: candidates,
-          orderBy: 'length(term) DESC', // Prioritize longer matches
-          limit: 1, // Get the longest one
+          orderBy: 'length(term) DESC',
+          limit: 1,
         );
 
         if (results.isNotEmpty) {
           final row = results.first;
           final entry = model.DictionaryEntry.fromJson(row);
           tokens.add(Token(
-            text: entry.term,
+            text: text.substring(cursor, cursor + entry.term.length),
             entry: entry,
             isWord: true,
           ));
@@ -1110,8 +1107,38 @@ class DictionaryService {
         }
       }
 
+      // If no exact match, try deconjugation on the longest unmatched candidates
+      if (!matchFound && candidates.isNotEmpty) {
+        for (final candidate in candidates) {
+          if (candidate.length < 2) continue;
+          final deconjForms = JapaneseGrammar.getAllPossibleForms(candidate);
+          for (final form in deconjForms) {
+            if (form == candidate) continue;
+            final deconjResults = await db.query(
+              'entries',
+              where: 'term = ?',
+              whereArgs: [form],
+              limit: 1,
+            );
+            if (deconjResults.isNotEmpty) {
+              final row = deconjResults.first;
+              final entry = model.DictionaryEntry.fromJson(row);
+              tokens.add(Token(
+                text: candidate,
+                entry: entry,
+                isWord: true,
+                deconjugatedForm: candidate != form ? form : null,
+              ));
+              cursor += candidate.length;
+              matchFound = true;
+              break;
+            }
+          }
+          if (matchFound) break;
+        }
+      }
+
       if (!matchFound) {
-        // No dictionary match, consume one character
         tokens.add(Token(
           text: text[cursor],
           isWord: false,
@@ -1185,11 +1212,13 @@ class Token {
   final String text;
   final model.DictionaryEntry? entry;
   final bool isWord;
-  
+  final String? deconjugatedForm;
+
   Token({
     required this.text,
     this.entry,
     this.isWord = false,
+    this.deconjugatedForm,
   });
 }
 
