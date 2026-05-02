@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../domain/entities/app_state.dart';
 import '../../domain/entities/translation_model.dart';
+import '../../data/repositories/translation_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../../utils/screen_size.dart';
 
@@ -749,14 +750,64 @@ class SettingsScreen extends StatelessWidget {
                     },
                   ),
                   const Divider(),
-                  SwitchListTile(
-                    title: Text(AppLocalizations.of(context)!.autoPasteReader),
-                    subtitle: Text(AppLocalizations.of(context)!.autoPasteReaderSubtitle),
-                    value: appState.autoPasteReader,
-                    onChanged: (value) {
-                      appState.setAutoPasteReader(value);
-                    },
-                  ),
+        SwitchListTile(
+          title: Text(AppLocalizations.of(context)!.autoPasteReader),
+          subtitle: Text(AppLocalizations.of(context)!.autoPasteReaderSubtitle),
+          value: appState.autoPasteReader,
+          onChanged: (value) {
+            appState.setAutoPasteReader(value);
+          },
+        ),
+        SwitchListTile(
+          title: const Text('Inline Definitions'),
+          subtitle: const Text('Show definition text below each word'),
+          value: appState.showInlineDefinitions,
+          onChanged: (value) {
+            appState.setShowInlineDefinitions(value);
+          },
+        ),
+        SwitchListTile(
+          title: const Text('Hover Definitions'),
+          subtitle: const Text('Show definition popup on hover / long-press'),
+          value: appState.showHoverDefinitions,
+          onChanged: (value) {
+            appState.setShowHoverDefinitions(value);
+          },
+        ),
+        const Divider(),
+        ListTile(
+          title: const Text('Translation Provider'),
+          subtitle: const Text('Choose engine for sentence/word translation'),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: DropdownButtonFormField<TranslationProvider>(
+            value: appState.translationProvider,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+            items: const [
+              DropdownMenuItem(
+                value: TranslationProvider.googleCloud,
+                child: Text('Google Cloud (free, online)'),
+              ),
+              DropdownMenuItem(
+                value: TranslationProvider.mlKit,
+                child: Text('ML Kit (offline, on-device)'),
+              ),
+              DropdownMenuItem(
+                value: TranslationProvider.gemini,
+                child: Text('Gemini AI (requires API key)'),
+              ),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                appState.setTranslationProvider(value);
+              }
+            },
+          ),
+        ),
                 ],
               ),
             ),
