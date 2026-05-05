@@ -5,8 +5,16 @@ import 'package:provider/provider.dart';
 import 'domain/entities/app_state.dart';
 import 'domain/entities/srs_card.dart';
 import 'core/services/storage_service.dart';
+import 'core/services/audio_service.dart';
 import 'core/services/clipboard_monitor_service.dart';
 import 'data/repositories/srs_service.dart';
+import 'data/repositories/analyzer_repository_impl.dart';
+import 'data/datasources/analysis_remote_data_source.dart';
+import 'data/datasources/dictionary_local_data_source.dart';
+import 'data/datasources/dictionary_remote_data_source.dart';
+import 'data/datasources/kanji_remote_data_source.dart';
+import 'data/datasources/note_local_data_source.dart';
+import 'presentation/providers/analyzer_provider.dart';
 import 'presentation/screens/dictionary_list_screen.dart';
 import 'presentation/screens/search_screen.dart';
 import 'presentation/screens/reader_screen.dart';
@@ -33,11 +41,23 @@ void main() async {
   final srsService = SRSService(storageService);
   await srsService.initialize();
 
+  final analyzerRepository = AnalyzerRepositoryImpl(
+    analysisRemoteDataSource: AnalysisRemoteDataSource(),
+    dictionaryLocalDataSource: DictionaryLocalDataSource(),
+    dictionaryRemoteDataSource: DictionaryRemoteDataSource(),
+    kanjiRemoteDataSource: KanjiRemoteDataSource(),
+    noteLocalDataSource: NoteLocalDataSource(),
+    audioService: AudioService(),
+  );
+  final analyzerProvider = AnalyzerProvider(analyzerRepository);
+  await analyzerProvider.init();
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AppState(storageService)),
         ChangeNotifierProvider.value(value: srsService),
+        ChangeNotifierProvider.value(value: analyzerProvider),
       ],
       child: const LangApp(),
     ),
@@ -60,12 +80,12 @@ class LangApp extends StatelessWidget {
             GlobalCupertinoLocalizations.delegate,
           ],
           supportedLocales: const [
-            Locale('en'), // English
-            Locale('es'), // Spanish
-            Locale('ja'), // Japanese
-            Locale('zh'), // Chinese
+            Locale('en'),
+            Locale('es'),
+            Locale('ja'),
+            Locale('zh'),
           ],
-          locale: null, // Use system locale by default
+          locale: null,
           themeMode: appState.themeMode,
           theme: ThemeData(
             brightness: Brightness.light,
@@ -111,7 +131,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0; // Default to 0, but will be set based on app state
+  int _currentIndex = 0;
   bool _isNavBarVisible = true;
   final ClipboardMonitorService _clipboardMonitorService = ClipboardMonitorService();
 
@@ -132,13 +152,8 @@ class _MainScreenState extends State<MainScreen> {
 
     // Set up clipboard change callback
     _clipboardMonitorService.onClipboardChanged = (String content) {
-      // Update the app state with the new clipboard content
       final appState = Provider.of<AppState>(context, listen: false);
       appState.setCurrentQuery(content);
-
-      // Don't automatically navigate to search screen - just update the query
-      // This allows users to navigate freely between screens without being pulled back
-      // The search results will be available when they return to the search screen
     };
 
     // Set initial index based on app state
@@ -148,7 +163,6 @@ class _MainScreenState extends State<MainScreen> {
         _currentIndex = appState.defaultScreenIndex.clamp(0, _screens.length - 1);
       });
 
-      // Start clipboard monitoring based on the setting
       if (appState.clipboardMonitor) {
         _clipboardMonitorService.startMonitoring(appState);
       }
@@ -173,7 +187,6 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
 
-    // Listen to changes in clipboard monitor setting
     if (_clipboardMonitorService.isMonitoring != appState.clipboardMonitor) {
       if (appState.clipboardMonitor) {
         _clipboardMonitorService.startMonitoring(appState);
@@ -182,7 +195,6 @@ class _MainScreenState extends State<MainScreen> {
       }
     }
 
-    // Always show nav bar if auto-hide is disabled
     final shouldShowNavBar = !appState.autoHideNavigation || _isNavBarVisible;
 
     return CallbackShortcuts(
@@ -208,7 +220,6 @@ class _MainScreenState extends State<MainScreen> {
                 onHover: (event) {
                   if (!appState.autoHideNavigation) return;
                   final screenHeight = MediaQuery.of(context).size.height;
-                  // Auto-show nav bar when mouse is near the top
                   final isNearTop = event.position.dy < 60;
                   if (isNearTop != _isNavBarVisible) {
                     setState(() => _isNavBarVisible = isNearTop);
