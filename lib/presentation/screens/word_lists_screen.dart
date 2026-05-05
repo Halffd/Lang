@@ -32,7 +32,8 @@ class _WordListsScreenState extends State<WordListsScreen>
   @override
   void initState() {
     super.initState();
-    // Initialize storage service and load data
+    final appState = Provider.of<AppState>(context, listen: false);
+    setStorageService(appState.storageService);
     _initializeData();
   }
 
@@ -46,9 +47,6 @@ class _WordListsScreenState extends State<WordListsScreen>
   }
 
   Future<void> _initializeData() async {
-    // Get the storage service from the app state instead of creating our own
-    final appState = Provider.of<AppState>(context, listen: false);
-    setStorageService(appState.storageService);
     await loadSavedWords();
     await loadDeletedWords();
     await loadAnkiWords();
