@@ -2,10 +2,14 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'l10n/app_localizations.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'core/services/audio_service.dart';
 import 'core/services/supabase_service.dart';
+import 'core/services/srs_service.dart';
+import 'core/services/realtime_sync_service.dart';
+import 'core/services/storage_service.dart';
 import 'data/datasources/ai_local_data_source.dart';
 import 'data/datasources/ai_remote_data_source.dart';
 import 'data/datasources/analysis_remote_data_source.dart';
@@ -13,10 +17,14 @@ import 'data/datasources/dictionary_local_data_source.dart';
 import 'data/datasources/dictionary_remote_data_source.dart';
 import 'data/datasources/kanji_remote_data_source.dart';
 import 'data/datasources/note_local_data_source.dart';
+import 'data/datasources/supabase_data_source.dart';
 import 'data/repositories/ai_repository_impl.dart';
 import 'data/repositories/analyzer_repository_impl.dart';
+import 'data/repositories/srs_service.dart';
 import 'presentation/providers/analyzer_provider.dart';
 import 'presentation/providers/ai_provider.dart';
+import 'presentation/providers/supabase_provider.dart';
+import 'presentation/providers/srs_provider.dart';
 import 'presentation/screens/analyze_screen.dart';
 import 'presentation/screens/search_screen.dart';
 import 'presentation/screens/saved_words_screen.dart';
@@ -30,31 +38,38 @@ void main() async {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
-  
-  // Initialize Supabase (configure with your Supabase project URL and anon key)
-  // For production, use environment variables or a secure config
+
   const supabaseUrl = String.fromEnvironment('SUPABASE_URL', defaultValue: '');
   const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '');
-  
+
+  final supabaseService = SupabaseService();
+  final syncService = RealtimeSyncService();
+  final storageService = StorageService();
+  SupabaseDataSource? supabaseDataSource;
+  SrsService? srsServiceCore;
+  SRSService? srsServiceLegacy;
+
   if (supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty) {
     try {
-      final supabaseService = SupabaseService();
       await supabaseService.init(url: supabaseUrl, anonKey: supabaseAnonKey);
       await supabaseService.signInAnonymously();
+      supabaseDataSource = SupabaseDataSource(Supabase.instance.client);
+      srsServiceCore = SrsService();
+      syncService.connect();
     } catch (e) {
       debugPrint('Supabase initialization failed: $e');
     }
   }
-  
-  // Initialize Data Sources
+
   final analysisRemoteDataSource = AnalysisRemoteDataSource();
   final dictionaryLocalDataSource = DictionaryLocalDataSource();
   final dictionaryRemoteDataSource = DictionaryRemoteDataSource();
   final kanjiRemoteDataSource = KanjiRemoteDataSource();
   final noteLocalDataSource = NoteLocalDataSource();
   final audioService = AudioService();
+  final aiRemoteDataSource = AiRemoteDataSource();
+  final aiLocalDataSource = AiLocalDataSource();
 
-  // Initialize Repositories
   final repository = AnalyzerRepositoryImpl(
     analysisRemoteDataSource: analysisRemoteDataSource,
     dictionaryLocalDataSource: dictionaryLocalDataSource,
@@ -63,27 +78,46 @@ void main() async {
     noteLocalDataSource: noteLocalDataSource,
     audioService: audioService,
   );
-  
-  final aiRemoteDataSource = AiRemoteDataSource();
-  final aiLocalDataSource = AiLocalDataSource();
 
   final aiRepository = AiRepositoryImpl(
     remoteDataSource: aiRemoteDataSource,
     localDataSource: aiLocalDataSource,
   );
 
-  // Initialize Providers
   final analyzerProvider = AnalyzerProvider(repository);
   await analyzerProvider.init();
-  
+
   final aiProvider = AiProvider(aiRepository);
   await aiProvider.init();
-  
+
+  srsServiceLegacy = SRSService(storageService);
+  await srsServiceLegacy.initialize();
+
+  SupabaseProvider? supabaseProvider;
+  SrsProvider? srsProvider;
+
+  if (supabaseDataSource != null && srsServiceCore != null) {
+    supabaseProvider = SupabaseProvider(
+      supabaseService: supabaseService,
+      syncService: syncService,
+      dataSource: supabaseDataSource,
+    );
+    srsProvider = SrsProvider(
+      srsService: srsServiceCore,
+      supabaseDataSource: supabaseDataSource,
+      syncService: syncService,
+    );
+    await srsProvider.init();
+  }
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: analyzerProvider),
         ChangeNotifierProvider.value(value: aiProvider),
+        ChangeNotifierProvider.value(value: srsServiceLegacy),
+        if (supabaseProvider != null) ChangeNotifierProvider.value(value: supabaseProvider),
+        if (srsProvider != null) ChangeNotifierProvider.value(value: srsProvider),
       ],
       child: const LangApp(),
     ),
