@@ -15,12 +15,18 @@ class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final provider = Provider.of<AnalyzerProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.search),
+        title: Text(AppLocalizations.of(context)!.searchDictionary),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -29,20 +35,24 @@ class _SearchScreenState extends State<SearchScreen> {
             TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: AppLocalizations.of(context)!.searchHint,
+                hintText: AppLocalizations.of(context)!.searchForAWord,
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        provider.clearSearch();
-                      },
-                    )
-                  : null,
+                suffixIcon: ValueListenableBuilder(
+                  valueListenable: _searchController,
+                  builder: (context, value, child) {
+                    return _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            provider.clearSearch();
+                          },
+                        )
+                      : const SizedBox.shrink();
+                  },
+                ),
               ),
               onSubmitted: (query) => provider.searchWord(query),
-              onChanged: (val) => setState(() {}),
             ),
             const SizedBox(height: 16),
             if (provider.isSearching)
@@ -52,8 +62,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 child: provider.searchResults.isEmpty
                   ? Center(
                       child: Text(
-                        _searchController.text.isEmpty ? AppLocalizations.of(context)!.noResultsYet : AppLocalizations.of(context)!.noResultsYet,
-                        style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
+                        _searchController.text.isEmpty ? AppLocalizations.of(context)!.typeSomethingToSearch : AppLocalizations.of(context)!.noResultsFound,
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
                       ),
                     )
                   : ListView.builder(
@@ -63,7 +73,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         return Card(
                           child: ListTile(
                             title: Text(word.word, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text(AppLocalizations.of(context)!.frequency(int.tryParse(word.frequency?.toString() ?? '') ?? 0)),
+                            subtitle: Text(AppLocalizations.of(context)!.freq(word.frequency?.toString() ?? "?")),
                             trailing: const Icon(Icons.chevron_right),
                             onTap: () => WordDetailSheet.show(context, provider, word),
                           ),

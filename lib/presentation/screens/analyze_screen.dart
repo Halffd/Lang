@@ -6,7 +6,85 @@ import '../providers/analyzer_provider.dart';
 import '../widgets/word_detail_sheet.dart';
 import 'settings_screen.dart';
 import '../../utils/pinyin_util.dart';
-import '../../utils/screen_size.dart';
+import '../../domain/entities/analyzed_word.dart';
+
+Color _freqColor(int freq) {
+  if (freq <= 1000) return Colors.greenAccent;
+  if (freq <= 5000) return Colors.lightGreenAccent;
+  if (freq <= 15000) return Colors.yellowAccent;
+  return Colors.orangeAccent;
+}
+
+Widget _readingText(String word, String? reading, String language) {
+  final isZh = language == 'zh';
+  if (isZh && reading != null && reading.isNotEmpty && reading != word) {
+    return Text(reading, style: const TextStyle(fontSize: 12, color: Colors.white70, fontStyle: FontStyle.italic));
+  }
+  if (isZh && PinyinUtil.isChinese(word)) {
+    final pinyin = PinyinUtil.getPinyin(word);
+    if (pinyin != null) {
+      return Padding(padding: const EdgeInsets.only(top: 2), child: Text(pinyin, style: const TextStyle(fontSize: 12, color: Colors.white70, fontStyle: FontStyle.italic)));
+    }
+  }
+  return const SizedBox.shrink();
+}
+
+Widget _buildWordCard(BuildContext context, AnalyzerProvider provider, AnalyzedWord word, double itemWidth) {
+  final l10n = AppLocalizations.of(context)!;
+  final freq = word.frequency;
+  return SizedBox(
+    width: itemWidth,
+    child: Card(
+      child: InkWell(
+        onTap: () => WordDetailSheet.show(context, provider, word),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(word.word, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), overflow: TextOverflow.ellipsis),
+                        _readingText(word.word, word.reading, provider.currentLanguage),
+                      ],
+                    ),
+                  ),
+                  IconButton(icon: const Icon(Icons.volume_up, size: 16), padding: EdgeInsets.zero, constraints: const BoxConstraints(), onPressed: () => provider.playAudio(word.word)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(color: _freqColor(freq ?? 0).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(4)),
+                    child: Text(freq?.toString() ?? '?', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _freqColor(freq ?? 0))),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.bookmark_add_outlined, size: 16),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () {
+                      provider.saveWord(word.word);
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.savedWord(word.word)), duration: const Duration(seconds: 1)));
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
 
 class AnalyzeScreen extends StatefulWidget {
   const AnalyzeScreen({super.key});
@@ -21,6 +99,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
 
   @override
   void dispose() {
+    _controller.dispose();
     _focusNode.dispose();
     super.dispose();
   }
@@ -100,16 +179,19 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                     controller: _controller,
                     maxLines: 6,
                     style: const TextStyle(fontSize: 16),
-        decoration: InputDecoration(
-          hintText: AppLocalizations.of(context)!.pasteTextHere,
+                    decoration: InputDecoration(
+                      hintText: AppLocalizations.of(context)!.pasteTextHere,
                       contentPadding: EdgeInsets.all(16),
                     ),
                   ),
-                  if (_controller.text.isNotEmpty)
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 20),
-                      onPressed: () => setState(() => _controller.clear()),
-                    ),
+                  ValueListenableBuilder(
+                    valueListenable: _controller,
+                    builder: (context, value, child) {
+                      return _controller.text.isNotEmpty
+                        ? IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => _controller.clear())
+                        : const SizedBox.shrink();
+                    },
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -192,123 +274,22 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.description_outlined, size: 64, color: Colors.white.withOpacity(0.2)),
+                          Icon(Icons.description_outlined, size: 64, color: Colors.white.withValues(alpha: 0.2)),
                           const SizedBox(height: 16),
-                          Text(AppLocalizations.of(context)!.noResultsYet, style: TextStyle(color: Colors.white.withOpacity(0.5))),
+                          Text(AppLocalizations.of(context)!.noResultsYet, style: TextStyle(color: Colors.white.withValues(alpha: 0.5))),
                         ],
                       ),
                     )
-        : LayoutBuilder(
-          builder: (context, constraints) {
-            final columns = ScreenSize.isCompact(context)
-                ? 1
-                : ScreenSize.isMobile(context)
-                    ? 2
-                    : provider.itemsPerRow;
-            final itemWidth = (constraints.maxWidth / columns) - 8;
+                  : LayoutBuilder(
+                      builder: (context, constraints) {
+                        final itemWidth = (constraints.maxWidth / provider.itemsPerRow) - 8;
                         final pagedWords = provider.pagedWords;
                         return SingleChildScrollView(
                           padding: const EdgeInsets.only(bottom: 32),
                           child: Wrap(
                             spacing: 8,
                             runSpacing: 8,
-                            children: pagedWords.map((word) {
-                              final freq = word.frequency;
-                              return SizedBox(
-                                width: itemWidth,
-                                child: Card(
-                                  child: InkWell(
-                                    onTap: () => WordDetailSheet.show(context, provider, word),
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    word.word,
-                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                  if (word.reading != null && 
-                                                      word.reading!.isNotEmpty && 
-                                                      provider.currentLanguage == 'zh' &&
-                                                      word.reading != word.word)
-                                                    Text(
-                                                      word.reading!,
-                                                      style: TextStyle(
-                                                        fontSize: 12,
-                                                        color: Colors.white70,
-                                                        fontStyle: FontStyle.italic,
-                                                      ),
-                                                    )
-                                                  else if (word.word != null && 
-                                                           PinyinUtil.isChinese(word.word!) && 
-                                                           provider.currentLanguage == 'zh')
-                                                    Padding(
-                                                      padding: const EdgeInsets.only(top: 2.0),
-                                                      child: Text(
-                                                        PinyinUtil.getPinyin(word.word!) ?? '',
-                                                        style: TextStyle(
-                                                          fontSize: 12,
-                                                          color: Colors.white70,
-                                                          fontStyle: FontStyle.italic,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                ],
-                                              ),
-                                            ),
-                                              IconButton(
-                                                icon: const Icon(Icons.volume_up, size: 16),
-                                                padding: EdgeInsets.zero,
-                                                constraints: const BoxConstraints(),
-                                                onPressed: () => provider.playAudio(word.word),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Row(
-                                            children: [
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: _getFreqColor(freq ?? 0).withOpacity(0.2),
-                                                  borderRadius: BorderRadius.circular(4),
-                                                ),
-                                                child: Text(
-                                                  freq?.toString() ?? '?',
-                                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getFreqColor(freq ?? 0)),
-                                                ),
-                                              ),
-                                              const Spacer(),
-                                              IconButton(
-                                                icon: const Icon(Icons.bookmark_add_outlined, size: 16),
-                                                padding: EdgeInsets.zero,
-                                                constraints: const BoxConstraints(),
-                                                onPressed: () {
-                                                  provider.saveWord(word.word);
-                                                  ScaffoldMessenger.of(context).showSnackBar(
-                                                    SnackBar(content: Text(AppLocalizations.of(context)!.savedWord(word.word)), duration: const Duration(seconds: 1)),
-                                                  );
-                                                },
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
+                            children: pagedWords.map((word) => _buildWordCard(context, provider, word, itemWidth)).toList(),
                           ),
                         );
                       }
@@ -318,13 +299,6 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Color _getFreqColor(int freq) {
-    if (freq <= 1000) return Colors.greenAccent;
-    if (freq <= 5000) return Colors.lightGreenAccent;
-    if (freq <= 15000) return Colors.yellowAccent;
-    return Colors.orangeAccent;
+);
   }
 }

@@ -12,7 +12,6 @@
 .swiftpm/
 migrate_working_dir/
 
-*.lock
 # IntelliJ related
 *.iml
 *.ipr
@@ -28,11 +27,11 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
-.flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
+/coverage/
 
 # Symbolication related
 app.*.symbols
@@ -44,11 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-# Generated plugin registrants
-lib/generated_plugin_registrant.dart
-**/ios/Runner/GeneratedPluginRegistrant.*
-**/macos/Flutter/GeneratedPluginRegistrant.swift
-**/windows/flutter/generated_plugin_registrant.cc
-**/linux/flutter/generated_plugin_registrant.cc
-**/flutter/generated_plugins.cmake
 .opencode
+.codex
+.claude

@@ -1,175 +1,109 @@
-import 'dart:convert';
-
-/// Represents a Spaced Repetition System card
-class SRSCard {
+class SrsCard {
   final String id;
-  final String word;
-  final String reading;
-  final String meaning;
+  final String userId;
+  final String? deckId;
+  final String? wordId;
+  final String front;
+  final String back;
+  final String? reading;
+  final double easeFactor;
+  final int interval;
+  final int repetitions;
+  final DateTime dueDate;
   final DateTime createdAt;
-  final DateTime nextReview;
-  final int interval; // in days
-  final double easeFactor; // E-Factor from SM2 algorithm
-  final int repetition; // number of times reviewed
-  final int languageLevel; // 1-5 difficulty level of the word
-  final int priority; // 1-5 priority level (1=highest priority)
-  final List<DateTime> reviewHistory; // history of review dates
+  final DateTime updatedAt;
+  final DateTime? lastReviewedAt;
 
-  SRSCard({
+  const SrsCard({
     required this.id,
-    required this.word,
-    required this.reading,
-    required this.meaning,
+    required this.userId,
+    this.deckId,
+    this.wordId,
+    required this.front,
+    required this.back,
+    this.reading,
+    this.easeFactor = 2.5,
+    this.interval = 0,
+    this.repetitions = 0,
+    required this.dueDate,
     required this.createdAt,
-    required this.nextReview,
-    required this.interval,
-    required this.easeFactor,
-    required this.repetition,
-    required this.languageLevel,
-    required this.priority,
-    required this.reviewHistory,
+    required this.updatedAt,
+    this.lastReviewedAt,
   });
 
-  /// Create a new card for a word
-  factory SRSCard.newCard({
-    required String id,
-    required String word,
-    required String reading,
-    required String meaning,
-    int languageLevel = 3,
-    int priority = 3,
-  }) {
-    return SRSCard(
-      id: id,
-      word: word,
-      reading: reading,
-      meaning: meaning,
-      createdAt: DateTime.now(),
-      nextReview: DateTime.now(), // First review is today
-      interval: 0, // First review is today
-      easeFactor: 2.5, // Default ease factor
-      repetition: 0, // Not reviewed yet
-      languageLevel: languageLevel,
-      priority: priority,
-      reviewHistory: [],
+  factory SrsCard.fromMap(Map<String, dynamic> map) {
+    return SrsCard(
+      id: map['id'] as String,
+      userId: map['user_id'] as String,
+      deckId: map['deck_id'] as String?,
+      wordId: map['word_id'] as String?,
+      front: map['front'] as String,
+      back: map['back'] as String,
+      reading: map['reading'] as String?,
+      easeFactor: (map['ease_factor'] as num?)?.toDouble() ?? 2.5,
+      interval: map['interval'] as int? ?? 0,
+      repetitions: map['repetitions'] as int? ?? 0,
+      dueDate: DateTime.parse(map['due_date'] as String),
+      createdAt: DateTime.parse(map['created_at'] as String),
+      updatedAt: DateTime.parse(map['updated_at'] as String),
+      lastReviewedAt: map['last_reviewed_at'] != null
+          ? DateTime.parse(map['last_reviewed_at'] as String)
+          : null,
     );
   }
 
-  /// Calculate next review based on SM2 algorithm
-  SRSCard calculateNextReview(int quality) {
-    int newInterval = interval;
-    double newEaseFactor = easeFactor;
-    int newRepetition = repetition;
-    
-    // Quality: 0-5 (0=wrong, 1-2=hard, 3=good, 4-5=easy)
-    if (quality < 3) {
-      // Failed or hard
-      newRepetition = 0;
-      newInterval = 1; // Review tomorrow
-    } else {
-      // Correct
-      if (repetition == 0) {
-        newInterval = 1; // First review after 1 day
-      } else if (repetition == 1) {
-        newInterval = 6; // Second review after 6 days
-      } else {
-        newInterval = (interval * easeFactor).round();
-      }
-      
-      newRepetition = repetition + 1;
-    }
-    
-    // Adjust ease factor based on quality
-    newEaseFactor = (easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))).clamp(1.3, 3.0);
-    
-    // Ensure minimum interval of 1 day
-    newInterval = newInterval > 0 ? newInterval : 1;
-    
-    return SRSCard(
-      id: id,
-      word: word,
-      reading: reading,
-      meaning: meaning,
-      createdAt: createdAt,
-      nextReview: DateTime.now().add(Duration(days: newInterval)),
-      interval: newInterval,
-      easeFactor: newEaseFactor,
-      repetition: newRepetition,
-      languageLevel: languageLevel,
-      priority: priority,
-      reviewHistory: [...reviewHistory, DateTime.now()],
-    );
-  }
-
-  /// Check if card is due for review
-  bool get isDue => DateTime.now().isAfter(nextReview);
-
-  /// Convert to JSON
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'word': word,
+      'user_id': userId,
+      'deck_id': deckId,
+      'word_id': wordId,
+      'front': front,
+      'back': back,
       'reading': reading,
-      'meaning': meaning,
-      'createdAt': createdAt.toIso8601String(),
-      'nextReview': nextReview.toIso8601String(),
+      'ease_factor': easeFactor,
       'interval': interval,
-      'easeFactor': easeFactor,
-      'repetition': repetition,
-      'languageLevel': languageLevel,
-      'priority': priority,
-      'reviewHistory': reviewHistory.map((date) => date.toIso8601String()).toList(),
+      'repetitions': repetitions,
+      'due_date': dueDate.toIso8601String(),
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+      'last_reviewed_at': lastReviewedAt?.toIso8601String(),
     };
   }
 
-  /// Create from JSON
-  factory SRSCard.fromJson(Map<String, dynamic> json) {
-    return SRSCard(
-      id: json['id'] as String,
-      word: json['word'] as String,
-      reading: json['reading'] as String,
-      meaning: json['meaning'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      nextReview: DateTime.parse(json['nextReview'] as String),
-      interval: json['interval'] as int,
-      easeFactor: (json['easeFactor'] as num).toDouble(),
-      repetition: json['repetition'] as int,
-      languageLevel: json['languageLevel'] as int,
-      priority: json['priority'] as int,
-      reviewHistory: (json['reviewHistory'] as List<dynamic>)
-          .map((date) => DateTime.parse(date as String))
-          .toList(),
-    );
-  }
+  bool get isDue => DateTime.now().isAfter(dueDate) || DateTime.now().isAtSameMomentAs(dueDate);
 
-  /// Copy with updated values
-  SRSCard copyWith({
+  SrsCard copyWith({
     String? id,
-    String? word,
+    String? userId,
+    String? deckId,
+    String? wordId,
+    String? front,
+    String? back,
     String? reading,
-    String? meaning,
-    DateTime? createdAt,
-    DateTime? nextReview,
-    int? interval,
     double? easeFactor,
-    int? repetition,
-    int? languageLevel,
-    int? priority,
-    List<DateTime>? reviewHistory,
+    int? interval,
+    int? repetitions,
+    DateTime? dueDate,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    DateTime? lastReviewedAt,
   }) {
-    return SRSCard(
+    return SrsCard(
       id: id ?? this.id,
-      word: word ?? this.word,
+      userId: userId ?? this.userId,
+      deckId: deckId ?? this.deckId,
+      wordId: wordId ?? this.wordId,
+      front: front ?? this.front,
+      back: back ?? this.back,
       reading: reading ?? this.reading,
-      meaning: meaning ?? this.meaning,
-      createdAt: createdAt ?? this.createdAt,
-      nextReview: nextReview ?? this.nextReview,
-      interval: interval ?? this.interval,
       easeFactor: easeFactor ?? this.easeFactor,
-      repetition: repetition ?? this.repetition,
-      languageLevel: languageLevel ?? this.languageLevel,
-      priority: priority ?? this.priority,
-      reviewHistory: reviewHistory ?? this.reviewHistory,
+      interval: interval ?? this.interval,
+      repetitions: repetitions ?? this.repetitions,
+      dueDate: dueDate ?? this.dueDate,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      lastReviewedAt: lastReviewedAt ?? this.lastReviewedAt,
     );
   }
 }
