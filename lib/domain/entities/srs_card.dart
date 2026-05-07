@@ -107,3 +107,104 @@ class SrsCard {
     );
   }
 }
+
+class SRSCard {
+  final String id;
+  final String word;
+  final String? reading;
+  final String meaning;
+  final DateTime nextReview;
+  final int priority;
+  final int languageLevel;
+  final DateTime? lastReviewDate;
+  final int reviewCount;
+  final double easeFactor;
+
+  const SRSCard({
+    required this.id,
+    required this.word,
+    this.reading,
+    required this.meaning,
+    required this.nextReview,
+    this.priority = 3,
+    this.languageLevel = 1,
+    this.lastReviewDate,
+    this.reviewCount = 0,
+    this.easeFactor = 2.5,
+  });
+
+  factory SRSCard.fromJson(Map<String, dynamic> json) {
+    return SRSCard(
+      id: json['id'] as String,
+      word: json['word'] as String,
+      reading: json['reading'] as String?,
+      meaning: json['meaning'] as String,
+      nextReview: DateTime.parse(json['nextReview'] as String),
+      priority: json['priority'] as int? ?? 3,
+      languageLevel: json['languageLevel'] as int? ?? 1,
+      lastReviewDate: json['lastReviewDate'] != null
+          ? DateTime.parse(json['lastReviewDate'] as String)
+          : null,
+      reviewCount: json['reviewCount'] as int? ?? 0,
+      easeFactor: (json['easeFactor'] as num?)?.toDouble() ?? 2.5,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'word': word,
+      'reading': reading,
+      'meaning': meaning,
+      'nextReview': nextReview.toIso8601String(),
+      'priority': priority,
+      'languageLevel': languageLevel,
+      'lastReviewDate': lastReviewDate?.toIso8601String(),
+      'reviewCount': reviewCount,
+      'easeFactor': easeFactor,
+    };
+  }
+
+  SRSCard copyWith({
+    String? id,
+    String? word,
+    String? reading,
+    String? meaning,
+    DateTime? nextReview,
+    int? priority,
+    int? languageLevel,
+    DateTime? lastReviewDate,
+    int? reviewCount,
+    double? easeFactor,
+  }) {
+    return SRSCard(
+      id: id ?? this.id,
+      word: word ?? this.word,
+      reading: reading ?? this.reading,
+      meaning: meaning ?? this.meaning,
+      nextReview: nextReview ?? this.nextReview,
+      priority: priority ?? this.priority,
+      languageLevel: languageLevel ?? this.languageLevel,
+      lastReviewDate: lastReviewDate ?? this.lastReviewDate,
+      reviewCount: reviewCount ?? this.reviewCount,
+      easeFactor: easeFactor ?? this.easeFactor,
+    );
+  }
+
+  static SRSCard newCard({
+    required String id,
+    required String word,
+    String? reading,
+    required String meaning,
+  }) {
+    return SRSCard(
+      id: id,
+      word: word,
+      reading: reading,
+      meaning: meaning,
+      nextReview: DateTime.now(),
+      priority: 3,
+      languageLevel: 1,
+    );
+  }
+}

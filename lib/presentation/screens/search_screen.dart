@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../l10n/app_localizations.dart';
 import '../providers/analyzer_provider.dart';
 import '../widgets/word_detail_sheet.dart';
 
@@ -26,7 +25,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.searchDictionary),
+        title: const Text('Search Dictionary'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -35,7 +34,7 @@ class _SearchScreenState extends State<SearchScreen> {
             TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: AppLocalizations.of(context)!.searchForAWord,
+                hintText: 'Search for a word...',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: ValueListenableBuilder(
                   valueListenable: _searchController,
@@ -62,7 +61,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 child: provider.searchResults.isEmpty
                   ? Center(
                       child: Text(
-                        _searchController.text.isEmpty ? AppLocalizations.of(context)!.typeSomethingToSearch : AppLocalizations.of(context)!.noResultsFound,
+                        _searchController.text.isEmpty ? 'Type something to search' : 'No results found',
                         style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
                       ),
                     )
@@ -73,7 +72,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         return Card(
                           child: ListTile(
                             title: Text(word.word, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text(AppLocalizations.of(context)!.freq(word.frequency?.toString() ?? "?")),
+                            subtitle: Text('Freq: ${word.frequency ?? "?"}'),
                             trailing: const Icon(Icons.chevron_right),
                             onTap: () => WordDetailSheet.show(context, provider, word),
                           ),
