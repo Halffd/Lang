@@ -104,11 +104,9 @@ class SRSService extends ChangeNotifier {
     final card = getCardById(id);
     if (card != null) {
       final resetCard = card.copyWith(
-        interval: 0,
         easeFactor: 2.5,
-        repetition: 0,
+        reviewCount: 0,
         nextReview: DateTime.now(),
-        reviewHistory: [],
       );
       await updateCard(resetCard);
     }

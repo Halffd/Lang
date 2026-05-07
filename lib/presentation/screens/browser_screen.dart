@@ -544,17 +544,12 @@ class _BrowserScreenState extends State<BrowserScreen> {
             child: _menuItemWithCheck(Icons.translate, 'All Readings Panel', _showAllReadings),
           ),
           const PopupMenuDivider(),
-          const PopupMenuItem(value: 'share', child: _menuItem(Icons.share, 'Share')),
-          const PopupMenuItem(value: 'copy', child: _menuItem(Icons.copy, 'Copy URL')),
-          const PopupMenuItem(value: 'open_external', child: _menuItem(Icons.open_in_browser, 'Open in Browser')),
-          const PopupMenuItem(value: 'stop', child: _menuItem(Icons.stop, 'Stop Loading')),
+          PopupMenuItem(value: 'share', child: _menuItem(Icons.share, 'Share')),
+          PopupMenuItem(value: 'copy', child: _menuItem(Icons.copy, 'Copy URL')),
+          PopupMenuItem(value: 'open_external', child: _menuItem(Icons.open_in_browser, 'Open in Browser')),
+          PopupMenuItem(value: 'stop', child: _menuItem(Icons.stop, 'Stop Loading')),
           const PopupMenuDivider(),
-          const PopupMenuItem(value: 'clear_cache', child: _menuItem(Icons.delete_outline, 'Clear Cache')),
-          const PopupMenuItem(value: 'zoom_in', child: _menuItem(Icons.zoom_in, 'Zoom In')),
-          const PopupMenuItem(value: 'zoom_out', child: _menuItem(Icons.zoom_out, 'Zoom Out')),
-          const PopupMenuItem(value: 'reset_zoom', child: _menuItem(Icons.fit_screen, 'Reset Zoom')),
-          const PopupMenuDivider(),
-          _menuItemInfo(Icons.keyboard, 'Keys: \\ Definitions, Shift+R Readings'),
+          PopupMenuItem(value: 'clear_cache', child: _menuItem(Icons.delete_outline, 'Clear Cache')),
         ],
       ),
     ];
@@ -613,7 +608,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
         incognito: false,
         verticalScrollBarEnabled: true,
         horizontalScrollBarEnabled: true,
-        resourceLoadInterval: 10,
         allowFileAccess: true,
         allowContentAccess: true,
         allowUniversalAccessFromFileURLs: true,
@@ -686,9 +680,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
       },
       shouldInterceptFetchRequest: (controller, fetchRequest) async {
         return fetchRequest;
-      },
-      onMouseUp: (controller, mouseUpEvent) {
-        setState(() => _showHoverPopup = false);
       },
       onConsoleMessage: (controller, consoleMessage) {
         debugPrint('Browser console: ${consoleMessage.message}');
@@ -937,21 +928,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cache cleared')));
         }
-        break;
-      case 'zoom_in':
-        final zoom = await _controller?.getZoom();
-        if (zoom != null) {
-          await _controller?.setZoom(zoom + 0.25);
-        }
-        break;
-      case 'zoom_out':
-        final zoom = await _controller?.getZoom();
-        if (zoom != null) {
-          await _controller?.setZoom(zoom - 0.25);
-        }
-        break;
-      case 'reset_zoom':
-        await _controller?.setZoom(1.0);
         break;
     }
   }

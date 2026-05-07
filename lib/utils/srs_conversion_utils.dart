@@ -5,24 +5,22 @@ import '../../domain/entities/dictionary.dart';
 class SRSConversionUtils {
   /// Convert a dictionary entry to an SRS card
   static SRSCard dictionaryEntryToSRSCard(DictionaryEntry entry, {int priority = 3, int difficulty = 3}) {
-    // Extract the first definition as the meaning
     String meaning = entry.definitions.isNotEmpty ? entry.definitions.first : 'No definition available';
     
-    // If there are multiple definitions, join them
     if (entry.definitions.length > 1) {
-      meaning = entry.definitions.take(2).join('; '); // Take first 2 definitions
+      meaning = entry.definitions.take(2).join('; ');
       if (entry.definitions.length > 2) {
-        meaning += '...'; // Indicate there are more definitions
+        meaning += '...';
       }
     }
     
-    return SRSCard.newCard(
-      id: entry.term + (entry.reading ?? ''), // Create unique ID
+    return SRSCard(
+      id: entry.term + (entry.reading ?? ''),
       word: entry.term,
       reading: entry.reading ?? '',
       meaning: meaning,
-      languageLevel: difficulty,
       priority: priority,
+      languageLevel: difficulty,
     );
   }
 
@@ -33,13 +31,13 @@ class SRSConversionUtils {
         ? (details['definitions'] as List).take(2).join('; ') + ((details['definitions'] as List).length > 2 ? '...' : '')
         : 'No definition available';
     
-    return SRSCard.newCard(
+    return SRSCard(
       id: word + reading,
       word: word,
       reading: reading,
       meaning: meaning,
-      languageLevel: difficulty,
       priority: priority,
+      languageLevel: difficulty,
     );
   }
 }

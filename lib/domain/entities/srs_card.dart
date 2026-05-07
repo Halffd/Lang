@@ -165,7 +165,7 @@ class SRSCard {
     };
   }
 
-  SRSCard copyWith({
+SRSCard copyWith({
     String? id,
     String? word,
     String? reading,
@@ -176,6 +176,7 @@ class SRSCard {
     DateTime? lastReviewDate,
     int? reviewCount,
     double? easeFactor,
+    int? repetition,
   }) {
     return SRSCard(
       id: id ?? this.id,
@@ -205,6 +206,40 @@ class SRSCard {
       nextReview: DateTime.now(),
       priority: 3,
       languageLevel: 1,
+    );
+  }
+
+  int get repetition => reviewCount;
+
+  SRSCard calculateNextReview(int quality) {
+    const minEaseFactor = 1.3;
+    double newEaseFactor = easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+    if (newEaseFactor < minEaseFactor) newEaseFactor = minEaseFactor;
+
+    int newInterval;
+    int newRepetition = reviewCount + 1;
+
+    if (quality < 3) {
+      newRepetition = 0;
+      newInterval = 0;
+    } else {
+      if (reviewCount == 0) {
+        newInterval = 1;
+      } else if (reviewCount == 1) {
+        newInterval = 6;
+      } else {
+        newInterval = (reviewCount * newEaseFactor).round();
+      }
+    }
+
+    final now = DateTime.now();
+    final nextReviewDate = DateTime(now.year, now.month, now.day + newInterval);
+
+    return copyWith(
+      easeFactor: newEaseFactor,
+      reviewCount: newRepetition,
+      nextReview: nextReviewDate,
+      lastReviewDate: now,
     );
   }
 }
