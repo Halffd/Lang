@@ -30,6 +30,7 @@ import 'presentation/screens/search_screen.dart';
 import 'presentation/screens/saved_words_screen.dart';
 import 'presentation/screens/history_screen.dart';
 import 'presentation/screens/ai_screen.dart';
+import 'presentation/screens/browser_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -129,6 +130,8 @@ class LangApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const seedColor = Color(0xFF7C3AED);
+
     return MaterialApp(
       onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -139,38 +142,136 @@ class LangApp extends StatelessWidget {
         useMaterial3: true,
         brightness: Brightness.dark,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
+          seedColor: seedColor,
           brightness: Brightness.dark,
           surface: const Color(0xFF1C1B1F),
+        ).copyWith(
+          primary: const Color(0xFF8B5CF6),
+          secondary: const Color(0xFFA78BFA),
+          tertiary: const Color(0xFF06B6D4),
+          surfaceContainerHighest: const Color(0xFF2D2B33),
         ),
         scaffoldBackgroundColor: const Color(0xFF1C1B1F),
-        cardTheme: const CardThemeData(
-          elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
-          margin: EdgeInsets.symmetric(vertical: 6, horizontal: 0),
+        textTheme: const TextTheme(
+          headlineLarge: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5),
+          headlineMedium: TextStyle(fontWeight: FontWeight.w600, letterSpacing: -0.3),
+          titleLarge: TextStyle(fontWeight: FontWeight.w600),
+          titleMedium: TextStyle(fontWeight: FontWeight.w500),
+          bodyLarge: TextStyle(height: 1.5),
+          bodyMedium: TextStyle(height: 1.4),
+        ),
+        cardTheme: CardThemeData(
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+          color: const Color(0xFF2D2B33),
         ),
         appBarTheme: const AppBarTheme(
-          centerTitle: true,
+          centerTitle: false,
           elevation: 0,
           backgroundColor: Color(0xFF1C1B1F),
+          titleTextStyle: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.3,
+          ),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.white.withValues(alpha: 0.05),
+          fillColor: const Color(0xFF2D2B33),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.deepPurpleAccent, width: 2),
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Color(0xFF8B5CF6), width: 2),
           ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1),
+          ),
+          hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            backgroundColor: const Color(0xFF8B5CF6),
+            foregroundColor: Colors.white,
           ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            side: const BorderSide(color: Color(0xFF8B5CF6)),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+        chipTheme: ChipThemeData(
+          backgroundColor: const Color(0xFF2D2B33),
+          selectedColor: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+          labelStyle: const TextStyle(fontSize: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        floatingActionButtonTheme: FloatingActionButtonThemeData(
+          elevation: 2,
+          backgroundColor: const Color(0xFF8B5CF6),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+        navigationBarTheme: NavigationBarThemeData(
+          elevation: 0,
+          height: 70,
+          backgroundColor: const Color(0xFF1C1B1F),
+          indicatorColor: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
+          labelTextStyle: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF8B5CF6));
+            }
+            return TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.6));
+          }),
+        ),
+        dividerTheme: DividerThemeData(
+          color: Colors.white.withValues(alpha: 0.08),
+          thickness: 1,
+          space: 1,
+        ),
+        snackBarTheme: SnackBarThemeData(
+          backgroundColor: const Color(0xFF2D2B33),
+          contentTextStyle: const TextStyle(color: Colors.white),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          behavior: SnackBarBehavior.floating,
+        ),
+        dialogTheme: DialogTheme(
+          backgroundColor: const Color(0xFF2D2B33),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          titleTextStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
+        ),
+        bottomSheetTheme: const BottomSheetThemeData(
+          backgroundColor: Color(0xFF2D2B33),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        ),
+        listTileTheme: const ListTileThemeData(
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          minLeadingWidth: 24,
+        ),
+        iconTheme: const IconThemeData(
+          size: 22,
+          color: Colors.white70,
         ),
       ),
       home: const MainNavigationShell(),
@@ -192,6 +293,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     const SearchScreen(),
     const SavedWordsScreen(),
     const HistoryScreen(),
+    const BrowserScreen(),
     const AiScreen(),
   ];
 
@@ -207,6 +309,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           NavigationDestination(icon: const Icon(Icons.search), label: AppLocalizations.of(context)!.search),
           NavigationDestination(icon: const Icon(Icons.bookmark), label: AppLocalizations.of(context)!.saved),
           NavigationDestination(icon: const Icon(Icons.history), label: AppLocalizations.of(context)!.history),
+          NavigationDestination(icon: const Icon(Icons.language), label: 'Browser'),
           NavigationDestination(icon: const Icon(Icons.auto_awesome), label: AppLocalizations.of(context)!.ai),
         ],
       ),
