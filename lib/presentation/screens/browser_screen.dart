@@ -36,8 +36,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
   List<String> _definitions = [];
   Map<String, List<String>> _readingsMap = {};
 
-  final FocusNode _keyboardFocusNode = FocusNode();
-
   @override
   void initState() {
     super.initState();
@@ -52,7 +50,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
   void dispose() {
     _urlController.dispose();
     _urlFocusNode.dispose();
-    _keyboardFocusNode.dispose();
     super.dispose();
   }
 
@@ -108,18 +105,14 @@ class _BrowserScreenState extends State<BrowserScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return KeyboardListener(
-      focusNode: _keyboardFocusNode..requestFocus(),
-      autofocus: true,
-      onKeyEvent: _handleKeyEvent,
-      child: Scaffold(
-        appBar: AppBar(
-          titleSpacing: 0,
-          title: _buildUrlBar(theme),
-          actions: _buildActions(theme),
-          bottom: _buildStatusBar(theme),
-        ),
-        body: Column(
+    return Scaffold(
+      appBar: AppBar(
+        titleSpacing: 0,
+        title: _buildUrlBar(theme),
+        actions: _buildActions(theme),
+        bottom: _buildStatusBar(theme),
+      ),
+      body: Column(
           children: [
             if (_lastError != null) _buildErrorBanner(theme),
             if (_showDefinitionsPanel) _buildDefinitionsPanel(theme),

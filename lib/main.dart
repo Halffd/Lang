@@ -46,6 +46,7 @@ void main() async {
   final supabaseService = SupabaseService();
   final syncService = RealtimeSyncService();
   final storageService = StorageService();
+  await storageService.init();
   SupabaseDataSource? supabaseDataSource;
   SrsService? srsServiceCore;
   SRSService? srsServiceLegacy;
