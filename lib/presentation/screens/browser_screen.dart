@@ -112,19 +112,22 @@ class _BrowserScreenState extends State<BrowserScreen> {
         actions: _buildActions(theme),
         bottom: _buildStatusBar(theme),
       ),
-      body: Column(
-          children: [
-            if (_lastError != null) _buildErrorBanner(theme),
-            if (_showDefinitionsPanel) _buildDefinitionsPanel(theme),
-            Expanded(
-              child: Stack(
-                children: [
-                  _buildWebView(),
-                  if (_isLoading) _buildLoadingBar(theme),
-                  if (_showHoverPopup && _hoveredUrl != null) _buildHoverPopup(theme),
-                  if (_showAllReadings && _readingsMap.isNotEmpty) _buildReadingsPanel(theme),
-                ],
-              ),
+body: Column(
+        children: [
+          if (_lastError != null) _buildErrorBanner(theme),
+          if (_showDefinitionsPanel) _buildDefinitionsPanel(theme),
+          Expanded(
+            child: Stack(
+              children: [
+                _buildWebView(),
+                if (_isLoading) _buildLoadingBar(theme),
+                if (_showHoverPopup && _hoveredUrl != null) _buildHoverPopup(theme),
+                if (_showAllReadings && _readingsMap.isNotEmpty) _buildReadingsPanel(theme),
+              ],
+            ),
+          ),
+        ],
+      ),
             ),
           ],
         ),
