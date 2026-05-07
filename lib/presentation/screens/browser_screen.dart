@@ -612,9 +612,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
         allowContentAccess: true,
         allowUniversalAccessFromFileURLs: true,
         allowFileAccessFromFileURLs: true,
-        allowInlineMediaPlayback: true,
-        alwaysEmbedVideoInHTMLFullScreen: false,
-        disableCors: false,
         isInspectable: true,
         userAgent: 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
       ),
@@ -687,86 +684,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
       onScrollChanged: (controller, x, y) {
         setState(() => _showHoverPopup = false);
       },
-      contextMenu: ContextMenu(
-        menuItems: [
-          ContextMenuItem(
-            id: 0,
-            title: 'Save to Lang',
-            action: (controller, menuItem) async {
-              final url = await controller.getUrl();
-              if (url != null) {
-                _handleSaveToApp(url.toString());
-              }
-            },
-          ),
-          ContextMenuItem(
-            id: 1,
-            title: 'Add to Anki',
-            action: (controller, menuItem) async {
-              final url = await controller.getUrl();
-              if (url != null) {
-                _handleAddToAnki(url.toString());
-              }
-            },
-          ),
-          ContextMenuItem(
-            id: 2,
-            title: 'Define',
-            action: (controller, menuItem) async {
-              final selectedText = await controller.getSelectedText();
-              if (selectedText != null && selectedText.isNotEmpty) {
-                _handleDefine(selectedText);
-              } else {
-                final url = await controller.getUrl();
-                if (url != null) {
-                  _handleDefine(url.toString());
-                }
-              }
-            },
-          ),
-          ContextMenuItem(
-            id: 3,
-            title: 'Open in new window',
-            action: (controller, menuItem) async {
-              final url = await controller.getUrl();
-              if (url != null) {
-                await launchUrl(url, mode: LaunchMode.externalApplication);
-              }
-            },
-          ),
-          ContextMenuItem(
-            id: 4,
-            title: 'Copy link address',
-            action: (controller, menuItem) async {
-              final url = await controller.getUrl();
-              if (url != null) {
-                // Clipboard.setData(ClipboardData(text: url.toString()));
-              }
-            },
-          ),
-          ContextMenuItem(
-            id: 5,
-            title: 'Open in default browser',
-            action: (controller, menuItem) async {
-              final url = await controller.getUrl();
-              if (url != null) {
-                await launchUrl(url, mode: LaunchMode.externalApplication);
-              }
-            },
-          ),
-          ContextMenuItem(
-            id: 6,
-            title: 'Search with Google',
-            action: (controller, menuItem) async {
-              final url = await controller.getUrl();
-              if (url != null) {
-                final searchUrl = 'https://www.google.com/search?q=${Uri.encodeComponent(url.toString())}';
-                _controller?.loadUrl(urlRequest: URLRequest(url: WebUri(searchUrl)));
-              }
-            },
-          ),
-        ],
-      ),
     );
   }
 

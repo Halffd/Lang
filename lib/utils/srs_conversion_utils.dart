@@ -14,13 +14,11 @@ class SRSConversionUtils {
       }
     }
     
-    return SRSCard(
+    return SRSCard.newCard(
       id: entry.term + (entry.reading ?? ''),
       word: entry.term,
       reading: entry.reading ?? '',
       meaning: meaning,
-      priority: priority,
-      languageLevel: difficulty,
     );
   }
 
@@ -31,13 +29,11 @@ class SRSConversionUtils {
         ? (details['definitions'] as List).take(2).join('; ') + ((details['definitions'] as List).length > 2 ? '...' : '')
         : 'No definition available';
     
-    return SRSCard(
+    return SRSCard.newCard(
       id: word + reading,
       word: word,
       reading: reading,
       meaning: meaning,
-      priority: priority,
-      languageLevel: difficulty,
     );
   }
 }
