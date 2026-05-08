@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -23,7 +22,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
   String? _hoveredUrl;
   Offset _hoverPosition = Offset.zero;
   bool _showHoverPopup = false;
-  String _pageTitle = '';
   bool _canGoBack = false;
   bool _canGoForward = false;
   String? _lastError;
@@ -69,36 +67,44 @@ class _BrowserScreenState extends State<BrowserScreen> {
 
   Future<void> _handleSubmit(String url) async {
     _urlFocusNode.unfocus();
-    String finalUrl = url.trim();
-    if (finalUrl.isEmpty) {
-      finalUrl = 'https://www.google.com';
-    } else if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
-      if (finalUrl.contains('.') && !finalUrl.contains(' ') && finalUrl.contains('.')) {
-        finalUrl = 'https://$finalUrl';
-      } else {
-        finalUrl = 'https://www.google.com/search?q=${Uri.encodeComponent(finalUrl)}';
-      }
-    }
+    final finalUrl = _normalizeUrl(url.trim());
     _controller?.loadUrl(urlRequest: URLRequest(url: WebUri(finalUrl)));
   }
 
-  void _updateHoverInfo(String? url, Offset position) {
-    if (url != null && url.isNotEmpty && (url.startsWith('http') || url.startsWith('/') || url.startsWith('data:'))) {
-      String displayUrl = url;
-      if (url.startsWith('data:')) {
-        displayUrl = 'Data URL';
+  String _normalizeUrl(String url) {
+    if (url.isEmpty) return 'https://www.google.com';
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      if (_looksLikeDomain(url)) {
+        return 'https://$url';
       }
-      setState(() {
-        _hoveredUrl = displayUrl;
-        _hoverPosition = position;
-        _showHoverPopup = true;
-      });
-    } else {
+      return 'https://www.google.com/search?q=${Uri.encodeComponent(url)}';
+    }
+    return url;
+  }
+
+  bool _looksLikeDomain(String text) {
+    return text.contains('.') && !text.contains(' ') && RegExp(r'\.[a-zA-Z]{2,}').hasMatch(text);
+  }
+
+  void _updateHoverInfo(String? url, Offset position) {
+    if (url == null || url.isEmpty) {
       setState(() {
         _showHoverPopup = false;
         _hoveredUrl = null;
       });
+      return;
     }
+
+    if (!url.startsWith('http') && !url.startsWith('/') && !url.startsWith('data:')) {
+      setState(() => _showHoverPopup = false);
+      return;
+    }
+
+    setState(() {
+      _hoveredUrl = url.startsWith('data:') ? 'Data URL' : url;
+      _hoverPosition = position;
+      _showHoverPopup = true;
+    });
   }
 
   @override
@@ -933,7 +939,7 @@ body: Column(
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              final searchUrl = 'https://www.google.com/search?q=define+$text';
+              final searchUrl = 'https://www.google.com/search?q=define+${Uri.encodeComponent(text)}';
               _controller?.loadUrl(urlRequest: URLRequest(url: WebUri(searchUrl)));
             },
             child: const Text('Search'),
