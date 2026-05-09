@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,7 +6,10 @@ import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import '../providers/analyzer_provider.dart';
+import '../providers/ai_provider.dart';
 import '../widgets/word_detail_sheet.dart';
+
+enum OcrMode { mlKit, ai }
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -23,6 +27,7 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _isOcrMode = false;
   bool _isProcessingImage = false;
   int _columnCount = 6;
+  OcrMode _ocrMode = OcrMode.mlKit;
   final _textRecognizer = TextRecognizer();
 
   @override
@@ -104,8 +109,16 @@ class _SearchScreenState extends State<SearchScreen> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (_isOcrMode) _buildColumnCountSelector(theme),
-        const SizedBox(width: 8),
+        if (_isOcrMode) ...[
+          _buildOcrModeToggle(theme),
+          const SizedBox(width: 8),
+          _buildColumnCountSelector(theme),
+          const SizedBox(width: 8),
+        ],
+        if (_isSentenceMode) ...[
+          _buildColumnCountSelector(theme),
+          const SizedBox(width: 8),
+        ],
         SegmentedButton<bool>(
           segments: const [
             ButtonSegment(value: false, icon: Icon(Icons.search, size: 16)),
@@ -123,6 +136,49 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
         const SizedBox(width: 8),
       ],
+    );
+  }
+
+  Widget _buildOcrModeToggle(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<OcrMode>(
+          value: _ocrMode,
+          isDense: true,
+          items: const [
+            DropdownMenuItem(
+              value: OcrMode.mlKit,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.speed, size: 14),
+                  SizedBox(width: 4),
+                  Text('ML Kit', style: TextStyle(fontSize: 12)),
+                ],
+              ),
+            ),
+            DropdownMenuItem(
+              value: OcrMode.ai,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.psychology, size: 14),
+                  SizedBox(width: 4),
+                  Text('AI', style: TextStyle(fontSize: 12)),
+                ],
+              ),
+            ),
+          ],
+          onChanged: (val) {
+            if (val != null) setState(() => _ocrMode = val);
+          },
+        ),
+      ),
     );
   }
 
@@ -472,9 +528,17 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() => _isProcessingImage = true);
 
     try {
-      final inputImage = InputImage.fromFile(imageFile);
-      final recognizedText = await _textRecognizer.processImage(inputImage);
-      _ocrController.text = recognizedText.text;
+      if (_ocrMode == OcrMode.ai) {
+        final bytes = await imageFile.readAsBytes();
+        final base64Image = base64Encode(bytes);
+        final aiProvider = Provider.of<AiProvider>(context, listen: false);
+        final text = await aiProvider.extractTextFromImageAi(base64Image);
+        _ocrController.text = text;
+      } else {
+        final inputImage = InputImage.fromFile(imageFile);
+        final recognizedText = await _textRecognizer.processImage(inputImage);
+        _ocrController.text = recognizedText.text;
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -490,9 +554,16 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() => _isProcessingImage = true);
 
     try {
-      final inputImage = InputImage.fromBytes(bytes: bytes);
-      final recognizedText = await _textRecognizer.processImage(inputImage);
-      _ocrController.text = recognizedText.text;
+      if (_ocrMode == OcrMode.ai) {
+        final base64Image = base64Encode(bytes);
+        final aiProvider = Provider.of<AiProvider>(context, listen: false);
+        final text = await aiProvider.extractTextFromImageAi(base64Image);
+        _ocrController.text = text;
+      } else {
+        final inputImage = InputImage.fromBytes(bytes: bytes);
+        final recognizedText = await _textRecognizer.processImage(inputImage);
+        _ocrController.text = recognizedText.text;
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

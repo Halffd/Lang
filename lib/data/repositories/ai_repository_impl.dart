@@ -59,6 +59,15 @@ class AiRepositoryImpl implements AiRepository {
   }
 
   @override
+  Future<String> extractTextFromImage(String imageBase64, {String? prompt, String? apiKey}) async {
+    final key = _resolveGeminiKey(apiKey);
+    if (key.isEmpty) {
+      throw AiRepositoryException('Gemini API key not configured');
+    }
+    return _remoteDataSource.extractTextFromImage(imageBase64, prompt ?? '', key);
+  }
+
+  @override
   Future<List<Map<String, String>>> breakdown(String text, {String? apiKey}) async {
     final prompt = '''
 Break down each word in the following text.

@@ -211,6 +211,11 @@ class AiProvider with ChangeNotifier {
     }
   }
 
+  Future<String> extractTextFromImageAi(String imageBase64, {String? prompt}) async {
+    if (!_isAiEnabled) throw Exception('AI is disabled');
+    return _repository.extractTextFromImage(imageBase64, prompt: prompt, apiKey: _activeGeminiKey);
+  }
+
   void clearHistory() {
     _messages = [];
     // TODO: Implement persistent clear in repository

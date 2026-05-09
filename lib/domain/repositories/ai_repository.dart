@@ -8,6 +8,7 @@ abstract class AiRepository {
   Future<String> translate(String text, String targetLang, {String? apiKey});
   Future<String> summarize(String text, {String? apiKey});
   Future<List<Map<String, String>>> breakdown(String text, {String? apiKey});
+  Future<String> extractTextFromImage(String imageBase64, {String? prompt, String? apiKey});
 
   // Custom Prompts
   Future<List<Map<String, String>>> getCustomPrompts();
