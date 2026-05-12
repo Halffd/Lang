@@ -1,15 +1,16 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import '../../data/services/ocr_service.dart';
 import '../providers/analyzer_provider.dart';
 import '../providers/ai_provider.dart';
 import '../widgets/word_detail_sheet.dart';
 
-enum OcrMode { mlKit, ai }
+enum OcrMode { mlKit, tesseract, easyOcr, ai }
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -28,7 +29,6 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _isProcessingImage = false;
   int _columnCount = 6;
   OcrMode _ocrMode = OcrMode.mlKit;
-  final _textRecognizer = TextRecognizer();
 
   @override
   void initState() {
@@ -43,7 +43,6 @@ class _SearchScreenState extends State<SearchScreen> {
     _ocrController.dispose();
     _focusNode.removeListener(_onFocusChange);
     _focusNode.dispose();
-    _textRecognizer.close();
     super.dispose();
   }
 
@@ -150,15 +149,37 @@ class _SearchScreenState extends State<SearchScreen> {
         child: DropdownButton<OcrMode>(
           value: _ocrMode,
           isDense: true,
-          items: const [
+          items: [
             DropdownMenuItem(
               value: OcrMode.mlKit,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.speed, size: 14),
-                  SizedBox(width: 4),
+                  const Icon(Icons.speed, size: 14),
+                  const SizedBox(width: 4),
                   Text('ML Kit', style: TextStyle(fontSize: 12)),
+                ],
+              ),
+            ),
+            DropdownMenuItem(
+              value: OcrMode.tesseract,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.document_scanner, size: 14),
+                  const SizedBox(width: 4),
+                  Text('Tesseract', style: TextStyle(fontSize: 12)),
+                ],
+              ),
+            ),
+            DropdownMenuItem(
+              value: OcrMode.easyOcr,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.auto_fix_high, size: 14),
+                  const SizedBox(width: 4),
+                  Text('EasyOCR', style: TextStyle(fontSize: 12)),
                 ],
               ),
             ),
@@ -167,8 +188,8 @@ class _SearchScreenState extends State<SearchScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.psychology, size: 14),
-                  SizedBox(width: 4),
+                  const Icon(Icons.psychology, size: 14),
+                  const SizedBox(width: 4),
                   Text('AI', style: TextStyle(fontSize: 12)),
                 ],
               ),
@@ -526,6 +547,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Future<void> _processImage(File imageFile) async {
     setState(() => _isProcessingImage = true);
+    final ocrService = OcrService();
 
     try {
       if (_ocrMode == OcrMode.ai) {
@@ -535,9 +557,50 @@ class _SearchScreenState extends State<SearchScreen> {
         final text = await aiProvider.extractTextFromImageAi(base64Image);
         _ocrController.text = text;
       } else {
-        final inputImage = InputImage.fromFile(imageFile);
-        final recognizedText = await _textRecognizer.processImage(inputImage);
-        _ocrController.text = recognizedText.text;
+        final OcrEngine engine;
+        switch (_ocrMode) {
+          case OcrMode.mlKit:
+            engine = OcrEngine.mlKit;
+            break;
+          case OcrMode.tesseract:
+            engine = OcrEngine.tesseract;
+            break;
+          case OcrMode.easyOcr:
+            engine = OcrEngine.easyOcr;
+            break;
+          case OcrMode.ai:
+            engine = OcrEngine.mlKit;
+            break;
+        }
+
+        final result = await ocrService.recognizeFromFile(
+          imageFile.path,
+          engine: engine,
+        );
+
+        if (result.isSuccess) {
+          _ocrController.text = result.text;
+        } else if (result.isEasyOcrUnavailable) {
+          _ocrController.text = '';
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('EasyOCR requires a Python backend. Using ML Kit instead...'),
+                action: SnackBarAction(
+                  label: 'Switch',
+                  onPressed: () => setState(() => _ocrMode = OcrMode.mlKit),
+                ),
+              ),
+            );
+          }
+        } else {
+          _ocrController.text = '';
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('OCR Error: ${result.error}')),
+            );
+          }
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -547,11 +610,13 @@ class _SearchScreenState extends State<SearchScreen> {
       }
     } finally {
       setState(() => _isProcessingImage = false);
+      ocrService.dispose();
     }
   }
 
   Future<void> _processImageFromBytes(Uint8List bytes) async {
     setState(() => _isProcessingImage = true);
+    final ocrService = OcrService();
 
     try {
       if (_ocrMode == OcrMode.ai) {
@@ -560,9 +625,50 @@ class _SearchScreenState extends State<SearchScreen> {
         final text = await aiProvider.extractTextFromImageAi(base64Image);
         _ocrController.text = text;
       } else {
-        final inputImage = InputImage.fromBytes(bytes: bytes);
-        final recognizedText = await _textRecognizer.processImage(inputImage);
-        _ocrController.text = recognizedText.text;
+        final OcrEngine engine;
+        switch (_ocrMode) {
+          case OcrMode.mlKit:
+            engine = OcrEngine.mlKit;
+            break;
+          case OcrMode.tesseract:
+            engine = OcrEngine.tesseract;
+            break;
+          case OcrMode.easyOcr:
+            engine = OcrEngine.easyOcr;
+            break;
+          case OcrMode.ai:
+            engine = OcrEngine.mlKit;
+            break;
+        }
+
+        final result = await ocrService.recognizeFromBytes(
+          bytes,
+          engine: engine,
+        );
+
+        if (result.isSuccess) {
+          _ocrController.text = result.text;
+        } else if (result.isEasyOcrUnavailable) {
+          _ocrController.text = '';
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('EasyOCR requires a Python backend. Using ML Kit instead...'),
+                action: SnackBarAction(
+                  label: 'Switch',
+                  onPressed: () => setState(() => _ocrMode = OcrMode.mlKit),
+                ),
+              ),
+            );
+          }
+        } else {
+          _ocrController.text = '';
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('OCR Error: ${result.error}')),
+            );
+          }
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -572,6 +678,7 @@ class _SearchScreenState extends State<SearchScreen> {
       }
     } finally {
       setState(() => _isProcessingImage = false);
+      ocrService.dispose();
     }
   }
 
