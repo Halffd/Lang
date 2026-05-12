@@ -1,7 +1,17 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:screenshot/screenshot.dart';
+import 'package:lang/data/services/ocr_service.dart';
+import 'package:provider/provider.dart';
+import '../providers/analyzer_provider.dart';
+import '../../data/repositories/dictionary_service.dart';
 
 class BrowserScreen extends StatefulWidget {
   final String? initialUrl;
@@ -34,6 +44,24 @@ class _BrowserScreenState extends State<BrowserScreen> {
   List<String> _definitions = [];
   Map<String, List<String>> _readingsMap = {};
 
+  final ScreenshotController _screenshotController = ScreenshotController();
+  final OcrService _ocrService = OcrService();
+  final ImagePicker _imagePicker = ImagePicker();
+  bool _isCapturingOcr = false;
+  bool _showOcrResults = false;
+  String _ocrExtractedText = '';
+  List<String> _detectedWords = [];
+  bool _isMokuroMode = false;
+  final GlobalKey _webViewKey = GlobalKey();
+  Rect? _selectionRect;
+  bool _isSelectingRegion = false;
+  bool _isDarkMode = false;
+  bool _darkModeInvertOnly = false; // pure invert vs dark mode CSS
+  bool _isAdBlockerEnabled = true;
+  int _adsBlockedCount = 0;
+  final Set<String> _blockedDomains = {};
+  final List<String> _blockedUrls = [];
+
   @override
   void initState() {
     super.initState();
@@ -48,6 +76,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
   void dispose() {
     _urlController.dispose();
     _urlFocusNode.dispose();
+    _ocrService.dispose();
     super.dispose();
   }
 
@@ -107,7 +136,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
     });
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
@@ -118,31 +147,68 @@ class _BrowserScreenState extends State<BrowserScreen> {
         actions: _buildActions(theme),
         bottom: _buildStatusBar(theme),
       ),
-body: Column(
+      body: Column(
         children: [
           if (_lastError != null) _buildErrorBanner(theme),
           if (_showDefinitionsPanel) _buildDefinitionsPanel(theme),
+          if (_showOcrResults)
+            Container(
+              height: 50,
+              color: theme.colorScheme.primaryContainer,
+              child: InkWell(
+                onTap: () => _showOcrResultsPanel(theme),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.text_fields, color: theme.colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${_detectedWords.length} words detected - Tap to view',
+                      style: TextStyle(color: theme.colorScheme.primary),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           Expanded(
             child: Stack(
               children: [
-                _buildWebView(),
+                RepaintBoundary(
+                  key: _webViewKey,
+                  child: _buildWebView(),
+                ),
                 if (_isLoading) _buildLoadingBar(theme),
                 if (_showHoverPopup && _hoveredUrl != null) _buildHoverPopup(theme),
                 if (_showAllReadings && _readingsMap.isNotEmpty) _buildReadingsPanel(theme),
+                if (_isCapturingOcr)
+                  Container(
+                    color: Colors.black26,
+                    child: const Center(
+                      child: Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(),
+                              SizedBox(height: 16),
+                              Text('Processing OCR...'),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
         ],
       ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
   PreferredSizeWidget _buildStatusBar(ThemeData theme) {
-    final isActive = _showDefinitionsPanel || _showAllReadings;
+    final isActive = _showDefinitionsPanel || _showAllReadings || _isMokuroMode;
     return PreferredSize(
       preferredSize: const Size.fromHeight(28),
       child: Container(
@@ -165,6 +231,30 @@ body: Column(
               'Readings Shift+R',
               _showAllReadings,
               () => setState(() => _showAllReadings = !_showAllReadings),
+            ),
+            const SizedBox(width: 8),
+            _statusChip(
+              theme,
+              Icons.auto_fix_high,
+              'Mokuro',
+              _isMokuroMode,
+              _toggleMokuroMode,
+            ),
+            const SizedBox(width: 8),
+            _statusChip(
+              theme,
+              Icons.brightness_3,
+              'Dark',
+              _isDarkMode,
+              _showDarkModeOptions,
+            ),
+            const SizedBox(width: 8),
+            _statusChip(
+              theme,
+              Icons.shield,
+              'Ad ${_adsBlockedCount > 0 ? '$_adsBlockedCount' : ''}',
+              _isAdBlockerEnabled,
+              _showAdBlockerOptions,
             ),
             const Spacer(),
             if (_selectedText.isNotEmpty)
@@ -533,6 +623,40 @@ body: Column(
         onPressed: () => _handleSubmit('https://www.google.com'),
         tooltip: 'Home',
       ),
+      IconButton(
+        icon: Icon(_isMokuroMode ? Icons.auto_fix_high : Icons.document_scanner, size: 22, color: _isMokuroMode ? theme.colorScheme.primary : null),
+        onPressed: _toggleMokuroMode,
+        tooltip: 'Mokuro Mode (Screenshot OCR)',
+      ),
+      IconButton(
+        icon: Icon(_isCapturingOcr ? Icons.hourglass_empty : Icons.photo_camera, size: 22),
+        onPressed: _isCapturingOcr ? null : _captureScreenshot,
+        tooltip: 'Capture & OCR',
+      ),
+      if (_isMokuroMode)
+        IconButton(
+          icon: const Icon(Icons.crop_free, size: 22),
+          onPressed: _startRegionSelection,
+          tooltip: 'Select Region',
+        ),
+      IconButton(
+        icon: Icon(_isDarkMode ? Icons.brightness_3 : Icons.brightness_7, size: 22, color: _isDarkMode ? theme.colorScheme.primary : null),
+        onPressed: _showDarkModeOptions,
+        tooltip: 'Dark Mode',
+      ),
+      IconButton(
+        icon: Badge(
+          isLabelVisible: _adsBlockedCount > 0,
+          label: Text('$_adsBlockedCount'),
+          child: Icon(
+            _isAdBlockerEnabled ? Icons.shield : Icons.shield_outlined,
+            size: 22,
+            color: _isAdBlockerEnabled ? Colors.green : null,
+          ),
+        ),
+        onPressed: _showAdBlockerOptions,
+        tooltip: 'Ad Blocker',
+      ),
       PopupMenuButton<String>(
         icon: const Icon(Icons.more_vert, size: 22),
         onSelected: _handleMenuAction,
@@ -544,6 +668,31 @@ body: Column(
           PopupMenuItem(
             value: 'toggle_readings',
             child: _menuItemWithCheck(Icons.translate, 'All Readings Panel', _showAllReadings),
+          ),
+          PopupMenuItem(
+            value: 'toggle_mokuro',
+            child: _menuItemWithCheck(Icons.auto_fix_high, 'Mokuro Mode', _isMokuroMode),
+          ),
+          const PopupMenuDivider(),
+          PopupMenuItem(value: 'ocr_from_camera', child: _menuItem(Icons.camera_alt, 'OCR from Camera')),
+          PopupMenuItem(value: 'ocr_from_gallery', child: _menuItem(Icons.photo_library, 'OCR from Gallery')),
+          const PopupMenuDivider(),
+          PopupMenuItem(
+            value: 'dark_mode_inverted',
+            child: _menuItemWithCheck(Icons.brightness_3, 'Dark Mode (Inverted)', _isDarkMode && !_darkModeInvertOnly),
+          ),
+          PopupMenuItem(
+            value: 'dark_mode_pure',
+            child: _menuItemWithCheck(Icons.brightness_2, 'Dark Mode (Pure)', _isDarkMode && _darkModeInvertOnly),
+          ),
+          const PopupMenuDivider(),
+          PopupMenuItem(
+            value: 'toggle_ad_blocker',
+            child: _menuItemWithCheck(Icons.shield, 'Ad Blocker', _isAdBlockerEnabled),
+          ),
+          PopupMenuItem(
+            value: 'view_blocked',
+            child: _menuItem(Icons.list, 'View Blocked (${_adsBlockedCount})'),
           ),
           const PopupMenuDivider(),
           PopupMenuItem(value: 'share', child: _menuItem(Icons.share, 'Share')),
@@ -678,6 +827,21 @@ body: Column(
         return NavigationActionPolicy.ALLOW;
       },
       shouldInterceptFetchRequest: (controller, fetchRequest) async {
+        if (_isAdBlockerEnabled) {
+          final url = fetchRequest.url?.toString() ?? '';
+          if (_shouldBlockUrl(url)) {
+            _blockedUrls.add(url);
+            if (url.isNotEmpty) {
+              final uri = Uri.tryParse(url);
+              if (uri != null && uri.host.isNotEmpty) {
+                _blockedDomains.add(uri.host);
+              }
+            }
+            setState(() => _adsBlockedCount++);
+            debugPrint('Ad blocked: $url');
+            return WebResourceRequest(url: WebUri('about:blank'));
+          }
+        }
         return fetchRequest;
       },
       onConsoleMessage: (controller, consoleMessage) {
@@ -806,6 +970,974 @@ body: Column(
     );
   }
 
+  void _toggleMokuroMode() {
+    setState(() {
+      _isMokuroMode = !_isMokuroMode;
+      if (!_isMokuroMode) {
+        _showOcrResults = false;
+        _selectionRect = null;
+      }
+    });
+    if (_isMokuroMode) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mokuro Mode: Take screenshot to extract and lookup words'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _startRegionSelection() {
+    setState(() {
+      _isSelectingRegion = true;
+      _selectionRect = null;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Tap and drag to select region'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _captureScreenshot() async {
+    if (_controller == null) return;
+
+    setState(() => _isCapturingOcr = true);
+
+    try {
+      final uri = await _controller?.getUrl();
+      if (uri == null) return;
+
+      final screenshot = await _controller?.takeScreenshot();
+      if (screenshot == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to capture screenshot')),
+          );
+        }
+        return;
+      }
+
+      await _processOcrImage(screenshot);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('OCR Error: $e')),
+        );
+      }
+    } finally {
+      setState(() => _isCapturingOcr = false);
+    }
+  }
+
+  Future<void> _captureFromCamera() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(source: ImageSource.camera);
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        await _processOcrImage(bytes);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Camera error: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _captureFromGallery() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        await _processOcrImage(bytes);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gallery error: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _processOcrImage(Uint8List imageBytes) async {
+    setState(() {
+      _isCapturingOcr = true;
+      _showOcrResults = false;
+    });
+
+    try {
+      final result = await _ocrService.recognizeFromBytes(
+        imageBytes,
+        engine: OcrEngine.mlKit,
+      );
+
+      if (result.isSuccess && result.text.isNotEmpty) {
+        setState(() {
+          _ocrExtractedText = result.text;
+          _detectedWords = _extractJapaneseWords(result.text);
+          _showOcrResults = true;
+        });
+
+        if (_isMokuroMode && _detectedWords.isNotEmpty) {
+          await _performMokuroLookup(_detectedWords);
+        }
+      } else if (result.isEasyOcrUnavailable) {
+        final fallbackResult = await _ocrService.recognizeFromBytes(
+          imageBytes,
+          engine: OcrEngine.easyOcr,
+        );
+        if (fallbackResult.isSuccess) {
+          setState(() {
+            _ocrExtractedText = fallbackResult.text;
+            _detectedWords = _extractJapaneseWords(fallbackResult.text);
+            _showOcrResults = true;
+          });
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('No text found in image${result.error != null ? ': ${result.error}' : ''}')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('OCR processing failed: $e')),
+        );
+      }
+    } finally {
+      setState(() => _isCapturingOcr = false);
+    }
+  }
+
+  List<String> _extractJapaneseWords(String text) {
+    final japaneseRegex = RegExp(r'[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf\u3400-\u4dbf]+');
+    final matches = japaneseRegex.allMatches(text);
+    final words = <String>[];
+    for (final match in matches) {
+      final word = match.group(0);
+      if (word != null && word.isNotEmpty && !words.contains(word)) {
+        words.add(word);
+      }
+    }
+    return words;
+  }
+
+  Future<void> _performMokuroLookup(List<String> words) async {
+    if (words.isEmpty) return;
+
+    final dictionaryService = DictionaryService();
+    final foundEntries = <Map<String, dynamic>>[];
+
+    for (final word in words.take(20)) {
+      try {
+        final entry = await dictionaryService.lookupWord(word);
+        if (entry != null) {
+          foundEntries.add({
+            'word': word,
+            'reading': entry.reading ?? '',
+            'meaning': entry.meaning ?? entry.definition ?? '',
+          });
+        }
+      } catch (e) {
+        // Continue with next word
+      }
+    }
+
+    if (foundEntries.isNotEmpty && mounted) {
+      _showMokuroResultsDialog(foundEntries);
+    }
+  }
+
+  static const List<String> _adDomains = [
+    'googleadservices.com',
+    'googlesyndication.com',
+    'googleadsystem.com',
+    'doubleclick.net',
+    'adnxs.com',
+    'adsrvr.org',
+    'advertising.com',
+    'adform.net',
+    'adcolony.com',
+    'admob.com',
+    'adsense.com',
+    'adsymptotic.com',
+    'advertising.apple.com',
+    'apple.com/safari/extensions/',
+    'amazon-adsystem.com',
+    'aax.amazon.com',
+    'fls.doubleclick.net',
+    'pagead2.googlesyndication.com',
+    'securepubads.g.doubleclick.net',
+    'adclick.g.doubleclick.net',
+    'stats.g.doubleclick.net',
+    'cm.g.doubleclick.net',
+    'adservice.google.com',
+    'partner.googleadservices.com',
+    'pubads.g.doubleclick.net',
+    'facebook.com/tr',
+    'connect.facebook.net/en_US/fbevents.js',
+    'bat.bing.com',
+    'analytics.tiktok.com',
+    'ads.tiktok.com',
+    'adsapi.tiktok.com',
+    'analytics.twitter.com',
+    'ads-twitter.com',
+    'amazon-adsystem.com',
+    'a9.com',
+    'ad.doubleclick.net',
+    's.google.com',
+    'pagead2.googleadservices.com',
+    'appsflyer.com',
+    'adjust.com',
+    'branch.io',
+    'app-measurement.com',
+    'mopub.com',
+    'unity3d.com/ads',
+    'unityads.unity3d.com',
+    'applovin.com',
+    'appsflyer.com',
+    'crashlytics.com',
+    'onesignal.com',
+    'amplitude.com',
+    'mixpanel.com',
+    'segment.io',
+    'heapanalytics.com',
+    'hotjar.com',
+    'crazyegg.com',
+    'optimizely.com',
+    'kissmetrics.com',
+    'intercom.io',
+    'drift.com',
+    'olark.com',
+    'zendesk.com',
+    'freshdesk.com',
+    'bing.com/rti/',
+    'adtech.de',
+    'advertising.apple.com',
+    'nend.net',
+    'i-mobile.co.jp',
+    'geniee.co.jp',
+    'sp广告.com',
+    'ad-strike.com',
+    'adamoads.com',
+    'adblade.com',
+    'adbroad.com',
+    'adcanny.com',
+    'addthis.com',
+    'adfox.ru',
+    'adfuture.com',
+    'ad Geno.com',
+    'adition.com',
+    'adkernel.com',
+    'adnium.com',
+    'adriver.ru',
+    'adsafeprotected.com',
+    'adsafety.net',
+    'adserver.com',
+    'adsrvr.org',
+    'adsymptotic.com',
+    'adtech.fr',
+    'adtech.us',
+    'advertising.com',
+    'adwish.com',
+    'adzerk.com',
+    'appnexus.com',
+    'bidswitch.net',
+    'casalemedia.com',
+    'contextweb.com',
+    'conversantmedia.com',
+    'criteo.com',
+    'criteo.net',
+    'dailymotion.com/ads',
+    'districtm.io',
+    'gumgum.com',
+    'innovid.com',
+    'inner-active.com',
+    'kargo.com',
+    'lijit.com',
+    'liveintent.com',
+    'liveramp.com',
+    'mathtag.com',
+    'media.net',
+    'mgid.com',
+    'mobfox.com',
+    'openx.net',
+    'outbrain.com',
+    'owneriq.net',
+    'popads.net',
+    'pubmatic.com',
+    'rhythmone.com',
+    'richaudience.com',
+    'rubiconproject.com',
+    'sascdn.com',
+    'scorecardresearch.com',
+    'sharethrough.com',
+    'sizmek.com',
+    'smartadserver.com',
+    'spotxchange.com',
+    'taboola.com',
+    'teads.tv',
+    'tidaltv.com',
+    'triplelift.com',
+    'turn.com',
+    'undertone.com',
+    'yieldmo.com',
+    'yahoo.com/ads',
+    'yahooapis.com/ads',
+    'zemanta.com',
+    'zqtk.net',
+    'reklama5.mk',
+    'reklama.com',
+    'reklama.bg',
+    'reklam.com',
+    'adnetwork.net',
+    'adstarecord.com',
+    'adsturn.com',
+    'adv.co',
+    'adventory.com',
+    'adver.com',
+    'adxpremier.com',
+    'blismedia.com',
+    'buysellads.com',
+    'carbonads.com',
+    'cognitivematch.com',
+    'condenast.io',
+    'contador.com',
+    'contaxe.com',
+    'dartsearch.net',
+    'digitalquery.com',
+    'domdex.com',
+    'exponential.com',
+    'extractorpro.com',
+    'eyewonder.com',
+    'fastclick.net',
+    'feed必需品.com',
+    'firm Ads.com',
+    'flashtalking.com',
+    'gw2e.com',
+    'helpads.info',
+    'hurriyet.com.tr/ads',
+    'ignitionads.com',
+    'imrworldwide.com',
+    'indexww.com',
+    'infineon.com/ads',
+    'insightexpress.com',
+    'insightexpressai.com',
+    'interclick.com',
+    'ipredictive.com',
+    'katango.com',
+    'kargo.com',
+    'kimiaws.com',
+    'komoona.com',
+    'liadm.com',
+    'liftdna.com',
+    'liveramp.com',
+    'loadm balancer.com',
+    'lucidswing.com',
+    'm6r.eu',
+    'mailchimp.com/ads',
+    'marchex.io',
+    'marketo.com',
+    'matomy.com',
+    'media8.ca',
+    'mediavine.com',
+    'mediy.qq.com',
+    'meetrics.com',
+    'metaffiliation.com',
+    'mgr.consensu.org',
+    'mindset.media',
+    'mitt Sor.com',
+    'moatads.com',
+    'mobext.com',
+    'moatpixel.com',
+    'mookie1.com',
+    'mybestpro.com',
+    'nativo.com',
+    'nativo.net',
+    'ncaa.com/ads',
+    'neustar.biz',
+    'nexac.com',
+    'onclasrv.com',
+    'onclick.com',
+    'onnxd.com',
+    'openx.org',
+    'opera.com/ads',
+    'outreachmail.com',
+    'p Angle.com',
+    'parsely.com',
+    'perfectaudience.com',
+    'permutive.com',
+    'piano.io',
+    'pinterest.com/ads',
+    'pk afs.com',
+    'plista.com',
+    'popcdn.com',
+    'popcash.net',
+    'popmyads.com',
+    'popt.in',
+    'preludedx.com',
+    'prevent-crime.com',
+    'pro-market.net',
+    'publicidees.com',
+    'quantserve.com',
+    'qu吃的.com',
+    'rdnation.com',
+    'revcontent.com',
+    'revenuemax.com',
+    'rfihub.com',
+    'rkdms.com',
+    'rle.ru',
+    'rtbhouse.com',
+    'rts.sparkoms.com',
+    'samba.tv',
+    'sas9.net',
+    'serving-sys.com',
+    'sextracker.com',
+    'sharethis.com',
+    'shorttailmedia.com',
+    'simpli.fi',
+    'skylightv.com',
+    'smaato.net',
+    'smart Traffik.com',
+    'snigelweb.com',
+    'soccent.com',
+    'sogou.com/ads',
+    'sovrn.com',
+    'sparrowmail.com',
+    'spot.IM',
+    'static.ads-twitter.com',
+    'steelhouse.com',
+    'steelhousemedia.com',
+    'stickyadstv.com',
+    'supership.jp',
+    'syn泄洩.com',
+    'taobao.com/ads',
+    'tappx.com',
+    'target.com/ads',
+    'tattomedia.com',
+    'thetradedesk.com',
+    'timesinternet.in/ads',
+    'tmsfly.com',
+    'traffichunt.com',
+    'trafficrouter.io',
+    'trafficshop.com',
+    'tvsquared.com',
+    'twicher.com',
+    'tvsquared.com',
+    'udnsystems.com',
+    'undertonenetworks.com',
+    'unsubscribes.com',
+    'uy sys.com',
+    'veinteractive.com',
+    'vendemore.com',
+    'verticalmass.com',
+    'vesta.io',
+    'video piggy.com',
+    'videoamp.com',
+    'vieww QR.com',
+    'viral360.com.br/ads',
+    'vk.com/ads',
+    'vmmpxl.com',
+    'volvelle.com',
+    'w55c.net',
+    'webads.eu',
+    'weborama.com',
+    'whi vh.com',
+    'widespace.com',
+    'widgetbox.com',
+    'wootag.com',
+    'xad.com',
+    'xaxis.com',
+    'yadro.ru',
+    'yahoo.com/jm/ads',
+    'ybrant.com',
+    'yieldlab.net',
+    'yldmgrimg.net',
+    'youku.com/ads',
+    'zealotnetworks.com',
+    'zedo.com',
+    'zenithmedia.com',
+    'zerg.com',
+    'zestard.com',
+    'zpryme.com',
+    'zsync.com',
+    'zedo.com',
+    'zqtk.net',
+    'adblockanalytics.com',
+    'blockthrough.com',
+    'adsafefilters.com',
+    'disconnect.me',
+    'ghostery.com',
+    'privacybadger.org',
+    'ublock.org',
+  ];
+
+  static const String _adBlockerCss = '''
+.ads, .advert, .ad-container, .ad-wrapper, .ad-unit, .ad-banner,
+[class*="ad-"], [class*="ads-"], [class*="advert"], [class*="sponsor"],
+[id*="google_ads"], [id*="googleads"], [id*="ad-container"], [id*="ad-wrapper"],
+div[class*="AdBlock"], div[class*="adBlock"], div[id*="AdBlock"], div[id*="adBlock"],
+.advertisement, .sponsored-content, .promoted-content,
+.advertisement-label, .ad-label, .sponsored-label,
+iframe[src*="doubleclick"], iframe[src*="googlesyndication"],
+[src*="ads."], [href*="ads."], a[href*="tracking"],
+.popup-ad, .modal-ad, .interstitial-ad, .overlay-ad,
+.sticky-ad, .floating-ad, .fixed-ad, .scroll-ad {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  position: absolute !important;
+  clip: rect(0, 0, 0, 0) !important;
+}
+''';
+html {
+  filter: invert(90%) hue-rotate(180deg) !important;
+  background-color: #111 !important;
+}
+img, video, canvas, svg, picture, [style*="background-image"] {
+  filter: invert(100%) hue-rotate(180deg) !important;
+}
+[style*="background: url"], [style*="background-url"] {
+  filter: invert(100%) hue-rotate(180deg) !important;
+}
+''';
+
+  static const String _darkModeInvertOnlyCss = '''
+html {
+  filter: invert(100%) !important;
+  background-color: #000 !important;
+}
+img, video, canvas, svg, picture {
+  filter: invert(100%) !important;
+}
+''';
+
+  void _toggleDarkMode() {
+    setState(() {
+      _isDarkMode = !_isDarkMode;
+    });
+    _applyDarkMode();
+  }
+
+  void _toggleDarkModeInvert() {
+    setState(() {
+      _isDarkMode = !_isDarkMode;
+      _darkModeInvertOnly = !_darkModeInvertOnly;
+    });
+    _applyDarkMode();
+  }
+
+  Future<void> _applyDarkMode() async {
+    if (_controller == null) return;
+
+    final css = _darkModeInvertOnly ? _darkModeInvertOnlyCss : _darkModeCss;
+
+    if (_isDarkMode) {
+      await _controller?.evaluateJavascript(source: '''
+        (function() {
+          var style = document.createElement('style');
+          style.id = 'dark-mode-style';
+          style.type = 'text/css';
+          style.innerHTML = \`$css\`;
+          document.head.appendChild(style);
+        })();
+      ''');
+    } else {
+      await _controller?.evaluateJavascript(source: '''
+        (function() {
+          var style = document.getElementById('dark-mode-style');
+          if (style) style.remove();
+        })();
+      ''');
+    }
+  }
+
+  void _showDarkModeOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(_isDarkMode ? Icons.check : Icons.brightness_3),
+              title: const Text('Dark Mode (Inverted)'),
+              subtitle: const Text('Inverts page colors - works on all sites'),
+              trailing: _isDarkMode && !_darkModeInvertOnly
+                  ? const Icon(Icons.check, color: Colors.green)
+                  : null,
+              onTap: () {
+                Navigator.pop(context);
+                _darkModeInvertOnly = false;
+                setState(() => _isDarkMode = true);
+                _applyDarkMode();
+              },
+            ),
+            ListTile(
+              leading: Icon(_isDarkMode ? Icons.check : Icons.brightness_2),
+              title: const Text('Dark Mode (Pure Invert)'),
+              subtitle: const Text('Pure color inversion'),
+              trailing: _isDarkMode && _darkModeInvertOnly
+                  ? const Icon(Icons.check, color: Colors.green)
+                  : null,
+              onTap: () {
+                Navigator.pop(context);
+                _darkModeInvertOnly = true;
+                setState(() => _isDarkMode = true);
+                _applyDarkMode();
+              },
+            ),
+            if (_isDarkMode)
+              ListTile(
+                leading: const Icon(Icons.brightness_5),
+                title: const Text('Turn Off'),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => _isDarkMode = false);
+                  _applyDarkMode();
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _toggleAdBlocker() {
+    setState(() {
+      _isAdBlockerEnabled = !_isAdBlockerEnabled;
+      if (!_isAdBlockerEnabled) {
+        _adsBlockedCount = 0;
+        _blockedDomains.clear();
+        _blockedUrls.clear();
+      }
+    });
+    if (_isAdBlockerEnabled) {
+      _applyAdBlockerCss();
+    } else {
+      _removeAdBlockerCss();
+    }
+  }
+
+  bool _shouldBlockUrl(String url) {
+    if (url.isEmpty || url == 'about:blank' || url.startsWith('data:')) {
+      return false;
+    }
+
+    final lowercaseUrl = url.toLowerCase();
+
+    for (final domain in _adDomains) {
+      if (lowercaseUrl.contains(domain.toLowerCase())) {
+        return true;
+      }
+    }
+
+    if (url.contains('/ads/') ||
+        url.contains('/ad/') ||
+        url.contains('/advert') ||
+        url.contains('track') ||
+        url.contains('pixel') ||
+        url.contains('beacon') ||
+        url.contains('.ads.') ||
+        url.contains('ads_') ||
+        url.contains('_ads_') ||
+        url.contains('sponsor')) {
+      return true;
+    }
+
+    return false;
+  }
+
+  void _showAdBlockerOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SwitchListTile(
+              title: const Text('Ad Blocker'),
+              subtitle: Text(_isAdBlockerEnabled ? 'Blocking ads' : 'Ads are allowed'),
+              value: _isAdBlockerEnabled,
+              onChanged: (value) {
+                Navigator.pop(context);
+                if (value != _isAdBlockerEnabled) {
+                  _toggleAdBlocker();
+                }
+              },
+            ),
+            if (_isAdBlockerEnabled && _adsBlockedCount > 0)
+              ListTile(
+                leading: const Icon(Icons.block),
+                title: Text('$_adsBlockedCount ads blocked'),
+                subtitle: Text('${_blockedDomains.length} domains blocked'),
+              ),
+            if (_isAdBlockerEnabled && _blockedUrls.isNotEmpty)
+              ListTile(
+                leading: const Icon(Icons.list),
+                title: const Text('View Blocked URLs'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showBlockedUrlsList();
+                },
+              ),
+            if (_isAdBlockerEnabled)
+              ListTile(
+                leading: const Icon(Icons.refresh),
+                title: const Text('Reload Page'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _controller?.reload();
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showBlockedUrlsList() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Blocked URLs (${_blockedUrls.length})'),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 300,
+          child: ListView.builder(
+            itemCount: _blockedUrls.length,
+            itemBuilder: (context, index) {
+              return ListTile(
+                dense: true,
+                leading: const Icon(Icons.block, size: 16),
+                title: Text(
+                  _blockedUrls.elementAt(index),
+                  style: const TextStyle(fontSize: 11),
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                _blockedUrls.clear();
+                _blockedDomains.clear();
+                _adsBlockedCount = 0;
+              });
+            },
+            child: const Text('Clear'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _applyAdBlockerCss() async {
+    if (_controller == null) return;
+
+    await _controller?.evaluateJavascript(source: '''
+      (function() {
+        var style = document.createElement('style');
+        style.id = 'ad-blocker-style';
+        style.type = 'text/css';
+        style.innerHTML = \`$_adBlockerCss\`;
+        document.head.appendChild(style);
+      })();
+    ''');
+  }
+
+  Future<void> _removeAdBlockerCss() async {
+    if (_controller == null) return;
+
+    await _controller?.evaluateJavascript(source: '''
+      (function() {
+        var style = document.getElementById('ad-blocker-style');
+        if (style) style.remove();
+      })();
+    ''');
+  }
+
+  void _showMokuroResultsDialog(List<Map<String, dynamic>> entries) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) => Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.auto_fix_high),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Mokuro - ${entries.length} words found',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                controller: scrollController,
+                itemCount: entries.length,
+                itemBuilder: (context, index) {
+                  final entry = entries[index];
+                  return ListTile(
+                    title: Text(
+                      entry['word'] ?? '',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (entry['reading']?.isNotEmpty == true)
+                          Text(entry['reading'], style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                        if (entry['meaning']?.isNotEmpty == true)
+                          Text(entry['meaning'], maxLines: 2, overflow: TextOverflow.ellipsis),
+                      ],
+                    ),
+                    onTap: () {
+                      // Navigate to full definition
+                      Navigator.pop(context);
+                      _searchWord(entry['word'] ?? '');
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _searchWord(String word) {
+    final searchUrl = 'https://www.google.com/search?q=define+${Uri.encodeComponent(word)}';
+    _controller?.loadUrl(urlRequest: URLRequest(url: WebUri(searchUrl)));
+  }
+
+  void _showOcrResultsPanel(ThemeData theme) {
+    if (!_showOcrResults) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.4,
+        minChildSize: 0.2,
+        maxChildSize: 0.8,
+        expand: false,
+        builder: (context, scrollController) => Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.text_fields, color: theme.colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    'OCR Results (${_detectedWords.length} words)',
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: _ocrExtractedText));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Copied to clipboard')),
+                      );
+                    },
+                    child: const Text('Copy'),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      setState(() => _showOcrResults = false);
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                controller: scrollController,
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: SelectableText(
+                        _ocrExtractedText,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (_detectedWords.isNotEmpty) ...[
+                      Text('Detected Words:', style: theme.textTheme.titleSmall),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _detectedWords.map((word) {
+                          return ActionChip(
+                            label: Text(word),
+                            onPressed: () => _searchWord(word),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _handleMenuAction(String action) async {
     switch (action) {
       case 'share':
@@ -840,6 +1972,35 @@ body: Column(
             _extractReadings();
           }
         });
+        break;
+      case 'toggle_mokuro':
+        _toggleMokuroMode();
+        break;
+      case 'dark_mode_inverted':
+        setState(() {
+          _darkModeInvertOnly = false;
+          _isDarkMode = true;
+        });
+        _applyDarkMode();
+        break;
+      case 'dark_mode_pure':
+        setState(() {
+          _darkModeInvertOnly = true;
+          _isDarkMode = true;
+        });
+        _applyDarkMode();
+        break;
+      case 'toggle_ad_blocker':
+        _toggleAdBlocker();
+        break;
+      case 'view_blocked':
+        _showBlockedUrlsList();
+        break;
+      case 'ocr_from_camera':
+        await _captureFromCamera();
+        break;
+      case 'ocr_from_gallery':
+        await _captureFromGallery();
         break;
       case 'clear_cache':
         await _controller?.clearCache();
