@@ -11,15 +11,23 @@ class DictionaryEntry {
   final List<String> definitions;
   final int? sequence;
   final List<String>? termTags;
-  
+
+  // Media support
+  final String? audioUrl;
+  final String? imageUrl;
+  final String? imageCaption;
+
   // Add fields to maintain compatibility with UI
   List<String> get tags => termTags ?? (definitionTags ?? []);
   int get frequency => popularity.toInt();
   List<String> get examples => []; // No examples in Yomichan format, return empty list
-  
+
   // Add convenience getter to maintain compatibility
   String get word => term;
-  
+
+  bool get hasAudio => audioUrl != null && audioUrl!.isNotEmpty;
+  bool get hasImage => imageUrl != null && imageUrl!.isNotEmpty;
+
   DictionaryEntry({
     this.id,
     required this.dictionaryId,
@@ -31,8 +39,11 @@ class DictionaryEntry {
     required this.definitions,
     this.sequence,
     this.termTags,
+    this.audioUrl,
+    this.imageUrl,
+    this.imageCaption,
   });
-  
+
   // Constructor for creating from JSON or other sources where dictionaryId might not be available
   DictionaryEntry.fromData({
     this.id,
@@ -45,6 +56,9 @@ class DictionaryEntry {
     required this.definitions,
     this.sequence,
     this.termTags,
+    this.audioUrl,
+    this.imageUrl,
+    this.imageCaption,
   }) : assert(term.isNotEmpty, 'Term cannot be empty');
 
   factory DictionaryEntry.fromJson(Map<String, dynamic> json) {
@@ -61,6 +75,9 @@ class DictionaryEntry {
       sequence: json['sequence'],
       termTags: _extractStringList(json['termTags']) ??
           _extractStringList(json['term_tags']),
+      audioUrl: json['audioUrl'] as String?,
+      imageUrl: json['imageUrl'] as String?,
+      imageCaption: json['imageCaption'] as String?,
     );
   }
 
@@ -104,24 +121,62 @@ class DictionaryEntry {
       'definitions': definitions,
       'sequence': sequence,
       'termTags': termTags,
+      'audioUrl': audioUrl,
+      'imageUrl': imageUrl,
+      'imageCaption': imageCaption,
     };
   }
-  
+
   Map<String, dynamic> toMap() {
     return {
       if (id != null) 'id': id,
       'dictionary_id': dictionaryId,
       'term': term,
       'reading': reading,
-      'definition_tags': definitionTags != null 
-          ? jsonEncode(definitionTags) 
+      'definition_tags': definitionTags != null
+          ? jsonEncode(definitionTags)
           : null,
       'rules': rules != null ? jsonEncode(rules) : null,
       'popularity': popularity,
       'definitions': jsonEncode(definitions),
       'sequence': sequence,
       'term_tags': termTags != null ? jsonEncode(termTags) : null,
+      'audio_url': audioUrl,
+      'image_url': imageUrl,
+      'image_caption': imageCaption,
     };
+  }
+
+  DictionaryEntry copyWith({
+    int? id,
+    int? dictionaryId,
+    String? term,
+    String? reading,
+    List<String>? definitionTags,
+    List<String>? rules,
+    double? popularity,
+    List<String>? definitions,
+    int? sequence,
+    List<String>? termTags,
+    String? audioUrl,
+    String? imageUrl,
+    String? imageCaption,
+  }) {
+    return DictionaryEntry(
+      id: id ?? this.id,
+      dictionaryId: dictionaryId ?? this.dictionaryId,
+      term: term ?? this.term,
+      reading: reading ?? this.reading,
+      definitionTags: definitionTags ?? this.definitionTags,
+      rules: rules ?? this.rules,
+      popularity: popularity ?? this.popularity,
+      definitions: definitions ?? this.definitions,
+      sequence: sequence ?? this.sequence,
+      termTags: termTags ?? this.termTags,
+      audioUrl: audioUrl ?? this.audioUrl,
+      imageUrl: imageUrl ?? this.imageUrl,
+      imageCaption: imageCaption ?? this.imageCaption,
+    );
   }
 }
 

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
@@ -1279,6 +1280,8 @@ iframe[src*="dable"] {
   visibility: hidden !important;
 }
 ''';
+
+  static const String _darkModeCss = '''
 html {
   filter: invert(90%) hue-rotate(180deg) !important;
   background-color: #111 !important;

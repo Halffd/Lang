@@ -15,13 +15,14 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
   List<model.YomichanDictionary> _dictionaries = [];
   Map<int, model.DictionaryStats> _stats = {};
   bool _isLoading = true;
-  
+  final Set<int> _favoriteIds = {};
+
   @override
   void initState() {
     super.initState();
     _loadDictionaries();
   }
-  
+
   Future<void> _loadDictionaries() async {
     setState(() => _isLoading = true);
 
@@ -32,6 +33,9 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
       for (final dict in dictionaries) {
         stats[dict.id!] = await _dictionaryService.getDictionaryStats(dict.id!);
       }
+
+      // Sort by priority (higher priority first)
+      dictionaries.sort((a, b) => b.priority.compareTo(a.priority));
 
       setState(() {
         _dictionaries = dictionaries;
@@ -47,18 +51,18 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
       }
     }
   }
-  
+
   Future<void> _navigateToImport() async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const ImportScreen()),
     );
-    
+
     if (result == true) {
       _loadDictionaries();
     }
   }
-  
+
   Future<void> _toggleDictionary(model.YomichanDictionary dict) async {
     try {
       await _dictionaryService.updateDictionary(
@@ -72,6 +76,104 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
         );
       }
     }
+  }
+
+  void _toggleFavorite(int id) {
+    setState(() {
+      if (_favoriteIds.contains(id)) {
+        _favoriteIds.remove(id);
+      } else {
+        _favoriteIds.add(id);
+      }
+    });
+  }
+
+  Future<void> _editDictionary(model.YomichanDictionary dict) async {
+    final nameController = TextEditingController(text: dict.title);
+    final descController = TextEditingController(text: dict.description ?? '');
+    final priorityController = TextEditingController(text: dict.priority.toString());
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit Dictionary'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Title'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: descController,
+                decoration: const InputDecoration(labelText: 'Description'),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: priorityController,
+                decoration: const InputDecoration(labelText: 'Priority (higher = first)'),
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final priority = int.tryParse(priorityController.text) ?? dict.priority;
+              await _dictionaryService.updateDictionary(
+                dict.copyWith(
+                  title: nameController.text.trim(),
+                  description: descController.text.trim().isEmpty ? null : descController.text.trim(),
+                  priority: priority,
+                ),
+              );
+              if (mounted) {
+                Navigator.pop(ctx);
+                _loadDictionaries();
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _setPriority(model.YomichanDictionary dict, int delta) async {
+    final newPriority = dict.priority + delta;
+    await _dictionaryService.updateDictionary(
+      dict.copyWith(priority: newPriority),
+    );
+    _loadDictionaries();
+  }
+
+  Future<void> _reorderDictionaries(int oldIndex, int newIndex) async {
+    if (newIndex > oldIndex) newIndex--;
+
+    setState(() {
+      final dict = _dictionaries.removeAt(oldIndex);
+      _dictionaries.insert(newIndex, dict);
+    });
+
+    // Update priorities based on new order (higher index = lower priority)
+    for (int i = 0; i < _dictionaries.length; i++) {
+      final dict = _dictionaries[i];
+      final newPriority = _dictionaries.length - i;
+      if (dict.priority != newPriority) {
+        await _dictionaryService.updateDictionary(
+          dict.copyWith(priority: newPriority),
+        );
+      }
+    }
+    _loadDictionaries();
   }
 
   Future<void> _deleteDictionary(model.YomichanDictionary dict) async {
@@ -113,7 +215,7 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
       }
     }
   }
-  
+
   Future<void> _showDictionaryInfo(model.YomichanDictionary dict) async {
     final stats = _stats[dict.id!];
 
@@ -153,6 +255,8 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
                 _buildInfoRow('Kanji', stats.kanji.toString()),
               ],
               const SizedBox(height: 12),
+              _buildInfoRow('Priority', dict.priority.toString()),
+              const SizedBox(height: 12),
               _buildInfoRow(
                 'Imported',
                 _formatDate(dict.importedAt),
@@ -169,7 +273,7 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
       ),
     );
   }
-  
+
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -188,11 +292,11 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
       ),
     );
   }
-  
+
   String _formatDate(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -217,7 +321,7 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
       ),
     );
   }
-  
+
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
@@ -253,90 +357,163 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
       ),
     );
   }
-  
+
   Widget _buildDictionaryList() {
     return ReorderableListView.builder(
       itemCount: _dictionaries.length,
-      onReorder: (oldIndex, newIndex) {
-        // Implement reordering logic here
-        setState(() {
-          if (newIndex > oldIndex) newIndex--;
-          final dict = _dictionaries.removeAt(oldIndex);
-          _dictionaries.insert(newIndex, dict);
-        });
-      },
+      onReorder: _reorderDictionaries,
       itemBuilder: (context, index) {
         final dict = _dictionaries[index];
         final stats = _stats[dict.id!];
-        
+        final isFavorite = _favoriteIds.contains(dict.id);
+
         return Card(
           key: ValueKey(dict.id),
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: dict.enabled ? Colors.blue : Colors.grey,
-              child: Text(
-                dict.title[0].toUpperCase(),
-                style: const TextStyle(color: Colors.white),
-              ),
-            ),
-            title: Text(
-              dict.title,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: dict.enabled ? null : Colors.grey,
-              ),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (dict.revision != null)
-                  Text('Revision: ${dict.revision}'),
-                if (stats != null)
-                  Text('${stats.entries} entries • ${stats.kanji} kanji'),
-              ],
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Switch(
-                  value: dict.enabled,
-                  onChanged: (_) => _toggleDictionary(dict),
-                ),
-                PopupMenuButton<String>(
-                  onSelected: (value) {
-                    if (value == 'info') {
-                      _showDictionaryInfo(dict);
-                    } else if (value == 'delete') {
-                      _deleteDictionary(dict);
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'info',
-                      child: Row(
-                        children: [
-                          Icon(Icons.info_outline),
-                          SizedBox(width: 12),
-                          Text('Info'),
-                        ],
+          child: Column(
+            children: [
+              ListTile(
+                leading: Stack(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: dict.enabled ? Colors.blue : Colors.grey,
+                      child: Text(
+                        dict.title[0].toUpperCase(),
+                        style: const TextStyle(color: Colors.white),
                       ),
                     ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete_outline, color: Colors.red),
-                          SizedBox(width: 12),
-                          Text('Delete', style: TextStyle(color: Colors.red)),
-                        ],
+                    if (isFavorite)
+                      Positioned(
+                        right: -2,
+                        top: -2,
+                        child: Icon(Icons.star, size: 16, color: Colors.amber[700]),
+                      ),
+                  ],
+                ),
+                title: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        dict.title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: dict.enabled ? null : Colors.grey,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: dict.priority > 0 ? Colors.purple[100] : Colors.grey[200],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '#${dict.priority}',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: dict.priority > 0 ? Colors.purple[700] : Colors.grey[600],
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-            isThreeLine: true,
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (dict.revision != null)
+                      Text('Revision: ${dict.revision}'),
+                    if (stats != null)
+                      Text('${stats.entries} entries • ${stats.kanji} kanji'),
+                  ],
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Priority controls
+                    IconButton(
+                      icon: const Icon(Icons.arrow_upward, size: 18),
+                      tooltip: 'Increase priority',
+                      onPressed: () => _setPriority(dict, 1),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_downward, size: 18),
+                      tooltip: 'Decrease priority',
+                      onPressed: dict.priority > 0 ? () => _setPriority(dict, -1) : null,
+                    ),
+                    Switch(
+                      value: dict.enabled,
+                      onChanged: (_) => _toggleDictionary(dict),
+                    ),
+                    PopupMenuButton<String>(
+                      onSelected: (value) {
+                        if (value == 'info') {
+                          _showDictionaryInfo(dict);
+                        } else if (value == 'edit') {
+                          _editDictionary(dict);
+                        } else if (value == 'delete') {
+                          _deleteDictionary(dict);
+                        } else if (value == 'favorite') {
+                          _toggleFavorite(dict.id!);
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'favorite',
+                          child: Row(
+                            children: [
+                              Icon(isFavorite ? Icons.star : Icons.star_border,
+                                   color: isFavorite ? Colors.amber[700] : null),
+                              const SizedBox(width: 12),
+                              Text(isFavorite ? 'Unfavorite' : 'Favorite'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit),
+                              SizedBox(width: 12),
+                              Text('Edit'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'info',
+                          child: Row(
+                            children: [
+                              Icon(Icons.info_outline),
+                              SizedBox(width: 12),
+                              Text('Info'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete_outline, color: Colors.red),
+                              SizedBox(width: 12),
+                              Text('Delete', style: TextStyle(color: Colors.red)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                isThreeLine: true,
+              ),
+              // Drag handle indicator
+              Container(
+                height: 4,
+                margin: const EdgeInsets.symmetric(horizontal: 60),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
           ),
         );
       },

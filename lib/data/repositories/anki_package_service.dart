@@ -6,6 +6,7 @@ import 'package:archive/archive.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:lang/domain/entities/srs_card.dart';
 import 'package:lang/domain/entities/srs_deck.dart';
+import 'package:lang/data/repositories/srs_service.dart';
 
 class AnkiPackageService {
   final SRSService srsService;

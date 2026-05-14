@@ -1,4 +1,34 @@
-import 'package:kana_kit/kana_kit.dart';
+class KanaKit {
+  String toHiragana(String input) {
+    final buf = StringBuffer();
+    for (int i = 0; i < input.length; i++) {
+      final c = input.codeUnitAt(i);
+      if (c >= 0x30A0 && c <= 0x30F6) {
+        buf.writeCharCode(c - 0x60);
+      } else {
+        buf.writeCharCode(c);
+      }
+    }
+    return buf.toString();
+  }
+
+  String toKatakana(String input) {
+    final buf = StringBuffer();
+    for (int i = 0; i < input.length; i++) {
+      final c = input.codeUnitAt(i);
+      if (c >= 0x3040 && c <= 0x3096) {
+        buf.writeCharCode(c + 0x60);
+      } else {
+        buf.writeCharCode(c);
+      }
+    }
+    return buf.toString();
+  }
+
+  bool isKana(String input) {
+    return input.runes.every((r) => (r >= 0x3040 && r <= 0x309F) || (r >= 0x30A0 && r <= 0x30FF));
+  }
+}
 
 class JapaneseGrammar {
   static KanaKit? _kanaKit;
@@ -124,51 +154,43 @@ class JapaneseGrammar {
       results.add(_irregulars[word]!);
     }
 
-    // Polite negative past
     if (word.endsWith('ませんでした')) {
       final stem = word.substring(0, word.length - 6);
       results.add(stem + 'る');
       _addGodanCandidates(stem, results, _toIStem, 'う');
     }
 
-    // Polite past
     if (word.endsWith('ませんでした')) {
-      // handled above
     } else if (word.endsWith('ました')) {
       final stem = word.substring(0, word.length - 3);
       results.add(stem + 'る');
       _addGodanCandidates(stem, results, _toIStem, 'う');
     }
 
-    // Polite negative
     if (word.endsWith('ません')) {
       final stem = word.substring(0, word.length - 3);
       results.add(stem + 'る');
       _addGodanCandidates(stem, results, _toIStem, 'う');
     }
 
-    // Negative past
     if (word.endsWith('なかった')) {
       final stem = word.substring(0, word.length - 4);
       results.add(stem + 'る');
       _addGodanCandidates(stem, results, _toAStem, 'う');
     }
 
-    // Negative
     if (word.endsWith('ない')) {
       final stem = word.substring(0, word.length - 2);
       results.add(stem + 'る');
       _addGodanCandidates(stem, results, _toAStem, 'う');
     }
 
-    // Negative te
     if (word.endsWith('なくて')) {
       final stem = word.substring(0, word.length - 3);
       results.add(stem + 'る');
       _addGodanCandidates(stem, results, _toAStem, 'う');
     }
 
-    // Te-form with んで
     if (word.endsWith('んで')) {
       final stem = word.substring(0, word.length - 2);
       for (final kana in stem.runes.toList().reversed) {
@@ -186,14 +208,11 @@ class JapaneseGrammar {
           }
         }
       }
-      // Specific: んで -> ぶ/ぬ/む godan
-      final lastChar = stem.isNotEmpty ? stem[stem.length - 1] : '';
       if (stem.isNotEmpty) {
         _addGodanFromNde(stem, results);
       }
     }
 
-    // Te-form with って
     if (word.endsWith('って')) {
       final stem = word.substring(0, word.length - 2);
       if (stem.isNotEmpty) {
@@ -202,31 +221,26 @@ class JapaneseGrammar {
       results.add(stem + 'る');
     }
 
-    // Te-form with いて
     if (word.endsWith('いて')) {
       final stem = word.substring(0, word.length - 2);
       results.add(stem + 'く');
     }
 
-    // Te-form with いで
     if (word.endsWith('いで')) {
       final stem = word.substring(0, word.length - 2);
       results.add(stem + 'ぐ');
     }
 
-    // Te-form with して
     if (word.endsWith('して')) {
       final stem = word.substring(0, word.length - 2);
       results.add(stem + 'する');
     }
 
-    // Simple te
     if (word.endsWith('て') && !word.endsWith('って') && !word.endsWith('ないて') && !word.endsWith('んで') && !word.endsWith('いて') && !word.endsWith('いで') && !word.endsWith('して')) {
       final stem = word.substring(0, word.length - 1);
       results.add(stem + 'る');
     }
 
-    // Past with んだ
     if (word.endsWith('んだ')) {
       final stem = word.substring(0, word.length - 2);
       if (stem.isNotEmpty) {
@@ -234,7 +248,6 @@ class JapaneseGrammar {
       }
     }
 
-    // Past with った
     if (word.endsWith('った')) {
       final stem = word.substring(0, word.length - 2);
       if (stem.isNotEmpty) {
@@ -243,31 +256,26 @@ class JapaneseGrammar {
       results.add(stem + 'る');
     }
 
-    // Past with いた
     if (word.endsWith('いた')) {
       final stem = word.substring(0, word.length - 2);
       results.add(stem + 'く');
     }
 
-    // Past with いだ
     if (word.endsWith('いだ')) {
       final stem = word.substring(0, word.length - 2);
       results.add(stem + 'ぐ');
     }
 
-    // Past with した
     if (word.endsWith('した')) {
       final stem = word.substring(0, word.length - 2);
       results.add(stem + 'する');
     }
 
-    // Simple past た
     if (word.endsWith('た') && !word.endsWith('った') && !word.endsWith('いた') && !word.endsWith('いだ') && !word.endsWith('んだ') && !word.endsWith('した')) {
       final stem = word.substring(0, word.length - 1);
       results.add(stem + 'る');
     }
 
-    // Potential
     if (word.endsWith('える')) {
       final stem = word.substring(0, word.length - 2);
       results.add(stem + 'う');
@@ -280,13 +288,11 @@ class JapaneseGrammar {
       _addGodanCandidates(stem, results, _toEStem, 'う');
     }
 
-    // Passive
     if (word.endsWith('られる')) {
       final stem = word.substring(0, word.length - 3);
       results.add(stem + 'る');
     }
 
-    // Causative
     if (word.endsWith('させる')) {
       final stem = word.substring(0, word.length - 3);
       results.add(stem + 'る');
@@ -298,7 +304,6 @@ class JapaneseGrammar {
       _addGodanCandidates(stem, results, _toAStem, 'う');
     }
 
-    // Conditional
     if (word.endsWith('えば')) {
       final stem = word.substring(0, word.length - 2);
       results.add(stem + 'う');
@@ -315,7 +320,6 @@ class JapaneseGrammar {
       results.add(stem + 'る');
     }
 
-    // Volitional
     if (word.endsWith('よう')) {
       final stem = word.substring(0, word.length - 2);
       results.add(stem + 'る');
@@ -333,7 +337,6 @@ class JapaneseGrammar {
       _addGodanCandidates(stem, results, _toIStem, 'う');
     }
 
-    // Imperative
     if (word.endsWith('ろ')) {
       final stem = word.substring(0, word.length - 1);
       results.add(stem + 'る');
@@ -344,27 +347,22 @@ class JapaneseGrammar {
       results.add(stem + 'く');
     }
 
-    // i-adjective past
     if (word.endsWith('かった')) {
       results.add(word.substring(0, word.length - 3) + 'い');
     }
 
-    // i-adjective negative
     if (word.endsWith('くない')) {
       results.add(word.substring(0, word.length - 3) + 'い');
     }
 
-    // i-adjective negative past
     if (word.endsWith('くなかった')) {
       results.add(word.substring(0, word.length - 5) + 'い');
     }
 
-    // i-adjective te-form
     if (word.endsWith('くて')) {
       results.add(word.substring(0, word.length - 2) + 'い');
     }
 
-    // i-adjective adverbial
     if (word.endsWith('く')) {
       final stem = word.substring(0, word.length - 1);
       if (stem.isNotEmpty && _isHiragana(stem)) {
@@ -372,7 +370,6 @@ class JapaneseGrammar {
       }
     }
 
-    // Polite copula
     if (word.endsWith('です')) {
       results.add(word.substring(0, word.length - 2));
     }
@@ -409,7 +406,6 @@ class JapaneseGrammar {
     final row = _kanaRow(lastChar);
     if (row < 0) return;
 
-    // んで -> ぶ/ぬ/む (ba/na/ma row -> u column)
     final bCol = _kanaAtRowCol(row, 4);
     final nCol = _kanaAtRowCol(row, 0);
     final mCol = _kanaAtRowCol(row, 2);
@@ -419,7 +415,6 @@ class JapaneseGrammar {
     if (nCol.isNotEmpty) results.add(stem.substring(0, stem.length - 1) + _kanaAtRowCol(row, 2) + 'う');
     if (mCol.isNotEmpty) results.add(stem.substring(0, stem.length - 1) + mCol + 'う');
 
-    // Also try: ンデ stems from ぶ, ぬ, む
     final uKana = _kanaAtRowCol(row, 2);
     if (uKana.isNotEmpty) results.add(stem.substring(0, stem.length - 1) + uKana + 'う');
   }
@@ -435,7 +430,6 @@ class JapaneseGrammar {
       results.add(stem.substring(0, stem.length - 1) + uKana + 'う');
     }
 
-    // って can also come from つ/る/う godan
     results.add(stem + 'つ');
     results.add(stem + 'る');
     results.add(stem + 'う');
@@ -445,15 +439,12 @@ class JapaneseGrammar {
     return RegExp(r'^[\u3040-\u309F]+$').hasMatch(text);
   }
 
-  /// Legacy: Try to convert conjugated verb to its dictionary form
-  /// Returns single best guess (for backward compatibility)
   static String normalizeVerb(String word) {
     final forms = deconjugate(word);
     if (forms.length > 1) return forms.first;
     return word;
   }
 
-  /// Get all possible dictionary forms for a word
   static List<String> getAllPossibleForms(String word) {
     final forms = <String>{};
     forms.addAll(deconjugate(word));
@@ -465,7 +456,6 @@ class JapaneseGrammar {
           forms.addAll(deconjugate(hiragana));
         }
       } catch (e) {
-        // ignore
       }
     }
 

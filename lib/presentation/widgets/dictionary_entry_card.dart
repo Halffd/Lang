@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'dart:convert';
 import '../../../domain/entities/dictionary.dart';
 import '../../utils/json_html_renderer.dart';
@@ -41,6 +43,28 @@ class DictionaryEntryCard extends StatelessWidget {
         SnackBar(content: Text('Could not launch url: $e')),
       );
     }
+  }
+
+  Future<void> _playAudio(BuildContext context) async {
+    if (!entry.hasAudio) return;
+    try {
+      final player = AudioPlayer();
+      await player.play(UrlSource(entry.audioUrl!));
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not play audio: $e')),
+        );
+      }
+    }
+  }
+
+  void _copyEntry(BuildContext context) {
+    final text = '${entry.term}\n${entry.reading.isNotEmpty ? '${entry.reading}\n' : ''}${entry.definitions.join('\n\n')}';
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Copied to clipboard'), duration: Duration(seconds: 1)),
+    );
   }
 
   /// Helper method to render definition content that might be plain text or structured JSON
@@ -310,9 +334,56 @@ class DictionaryEntryCard extends StatelessWidget {
                       style: theme.textTheme.bodySmall,
                     ),
                   ],
+),
+              ),
+
+            // Image display
+            if (entry.hasImage)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Image.network(
+                        entry.imageUrl!,
+                        fit: BoxFit.contain,
+                        loadingBuilder: (ctx, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return SizedBox(
+                            height: 100,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                              ),
+                            ),
+                          );
+                        },
+                        errorBuilder: (ctx, error, stackTrace) => Container(
+                          height: 100,
+                          color: Colors.grey[200],
+                          child: const Center(child: Icon(Icons.broken_image)),
+                        ),
+                      ),
+                      if (entry.imageCaption != null && entry.imageCaption!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            entry.imageCaption!,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
-            
+
             // Examples
             if (entry.examples.isNotEmpty)
               Padding(
@@ -341,7 +412,7 @@ class DictionaryEntryCard extends StatelessWidget {
                   ],
                 ),
               ),
-            
+
             // Action buttons
       Padding(
         padding: const EdgeInsets.only(top: 16.0),
@@ -350,15 +421,16 @@ class DictionaryEntryCard extends StatelessWidget {
                 alignment: WrapAlignment.end,
                 runSpacing: 4,
                 children: [
-                  TextButton.icon(
-                    icon: const Icon(Icons.volume_up, size: 18),
-                    label: const Text('Listen'),
-                    onPressed: () {},
-                  ),
+                  if (entry.hasAudio)
+                    TextButton.icon(
+                      icon: const Icon(Icons.volume_up, size: 18),
+                      label: const Text('Listen'),
+                      onPressed: () => _playAudio(context),
+                    ),
                   TextButton.icon(
                     icon: const Icon(Icons.copy, size: 18),
                     label: const Text('Copy'),
-                    onPressed: () {},
+                    onPressed: () => _copyEntry(context),
                   ),
                   TextButton.icon(
                     icon: const Icon(Icons.more_horiz, size: 18),
@@ -372,16 +444,17 @@ class DictionaryEntryCard extends StatelessWidget {
             : Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton.icon(
-                    icon: const Icon(Icons.volume_up, size: 18),
-                    label: const Text('Listen'),
-                    onPressed: () {},
-                  ),
-                  const SizedBox(width: 8),
+                  if (entry.hasAudio)
+                    TextButton.icon(
+                      icon: const Icon(Icons.volume_up, size: 18),
+                      label: const Text('Listen'),
+                      onPressed: () => _playAudio(context),
+                    ),
+                  if (entry.hasAudio) const SizedBox(width: 8),
                   TextButton.icon(
                     icon: const Icon(Icons.copy, size: 18),
                     label: const Text('Copy'),
-                    onPressed: () {},
+                    onPressed: () => _copyEntry(context),
                   ),
                   const SizedBox(width: 8),
                   TextButton.icon(

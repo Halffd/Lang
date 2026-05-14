@@ -53,7 +53,7 @@ dependencies:
   supabase_flutter: ^2.6.0
   supabase_auth_ui: ^0.4.4
   uuid: ^4.5.1
-  google_mlkit_translation: ^0.9.0
+  google_mlkit_translation: ^0.12.0
   google_mlkit_text_recognition: ^0.14.0
   tesseract_ocr: ^0.5.0
   fl_chart: ^0.70.2
@@ -69,6 +69,14 @@ dependencies:
   webview_flutter: ^4.10.0
   flutter_inappwebview: ^6.1.5
   url_launcher: ^6.3.2
+  flutter_html: ^3.0.0-beta.2
+
+  # Desktop IPC packages (Linux/Windows/macOS)
+  tray_manager: ^0.2.3
+  hotkey_manager: ^0.2.3
+  local_notifier: ^0.1.6
+  window_manager: ^0.4.3
+  desktop_drop: ^0.5.0
 
 dev_dependencies:
   flutter_test:
@@ -92,6 +100,9 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   generate: true
+
+  assets:
+    - assets/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

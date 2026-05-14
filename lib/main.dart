@@ -10,6 +10,7 @@ import 'core/services/supabase_service.dart';
 import 'core/services/srs_service.dart';
 import 'core/services/realtime_sync_service.dart';
 import 'core/services/storage_service.dart';
+import 'core/services/desktop_ipc_service.dart';
 import 'data/datasources/ai_local_data_source.dart';
 import 'data/datasources/ai_remote_data_source.dart';
 import 'data/datasources/analysis_remote_data_source.dart';
@@ -31,6 +32,7 @@ import 'presentation/screens/saved_words_screen.dart';
 import 'presentation/screens/history_screen.dart';
 import 'presentation/screens/ai_screen.dart';
 import 'presentation/screens/browser_screen.dart';
+import 'presentation/screens/srs_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +40,11 @@ void main() async {
   if (!kIsWeb && (Platform.isLinux || Platform.isMacOS || Platform.isWindows)) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
+  }
+
+  final desktopIPC = DesktopIPCService();
+  if (!kIsWeb && (Platform.isLinux || Platform.isMacOS || Platform.isWindows)) {
+    await desktopIPC.initialize();
   }
 
   const supabaseUrl = String.fromEnvironment('SUPABASE_URL', defaultValue: '');
@@ -295,8 +302,37 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     const SavedWordsScreen(),
     const HistoryScreen(),
     const BrowserScreen(),
+    const SRSScreen(),
     const AiScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _setupDesktopIPC();
+  }
+
+  void _setupDesktopIPC() {
+    final desktopIPC = DesktopIPCService();
+    if (!desktopIPC.isSupported) return;
+
+    desktopIPC.onStudyRequested = () {
+      if (mounted) setState(() => _currentIndex = 5);
+    };
+    desktopIPC.onBrowserRequested = () {
+      if (mounted) setState(() => _currentIndex = 4);
+    };
+    desktopIPC.onQuitRequested = () {
+      desktopIPC.dispose();
+      exit(0);
+    };
+
+    desktopIPC.registerCommonHotkeys(
+      onShowStudy: () { if (mounted) setState(() => _currentIndex = 5); },
+      onShowBrowser: () { if (mounted) setState(() => _currentIndex = 4); },
+      onToggleWindow: () { desktopIPC.toggleWindow(); },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -311,6 +347,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           NavigationDestination(icon: const Icon(Icons.bookmark), label: AppLocalizations.of(context)!.saved),
           NavigationDestination(icon: const Icon(Icons.history), label: AppLocalizations.of(context)!.history),
           NavigationDestination(icon: const Icon(Icons.language), label: 'Browser'),
+          NavigationDestination(icon: const Icon(Icons.school), label: 'SRS'),
           NavigationDestination(icon: const Icon(Icons.auto_awesome), label: AppLocalizations.of(context)!.ai),
         ],
       ),

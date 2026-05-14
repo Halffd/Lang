@@ -1,7 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:kana_kit/kana_kit.dart';
-import 'package:pinyin/pinyin.dart';
 import '../../domain/entities/dictionary.dart' as model;
 import '../../domain/entities/tone_model.dart';
 import '../../domain/entities/etymology_model.dart';
@@ -14,11 +12,9 @@ import '../datasources/remote/wiktionary_etymology_service.dart';
 import '../datasources/remote/wiktionary_service.dart';
 import '../datasources/remote/ichi_moe_service.dart';
 
-// Import sqflite for Yomichan functionality
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:kana_kit/kana_kit.dart';
 import '../../utils/japanese_grammar.dart';
 
 class SearchOptions {

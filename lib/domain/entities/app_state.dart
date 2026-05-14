@@ -80,6 +80,16 @@ class AppState extends ChangeNotifier {
   bool get useLocalTranslation => _useLocalTranslation;
   TranslationProvider get translationProvider => _translationProvider;
 
+  // Popup settings
+  double get hoverPopupSize => _hoverPopupSize;
+  int get hoverPopupDelay => _hoverPopupDelay;
+  String get hoverPopupModifier => _hoverPopupModifier;
+  List<String> get hoverPopupLanguages => _hoverPopupLanguages;
+
+  // Profile activation
+  String get profileActivationScreen => _profileActivationScreen;
+  String get profileActivationApp => _profileActivationApp;
+
   // Expose storage service for mixins
   StorageService get storageService => _storageService;
 
@@ -97,6 +107,16 @@ class AppState extends ChangeNotifier {
   bool _showHoverDefinitions = true; // Show definition popup on hover
   bool _useLocalTranslation = false; // Use on-device ML Kit translation
   TranslationProvider _translationProvider = TranslationProvider.googleCloud;
+
+  // Popup settings
+  double _hoverPopupSize = 1.0; // 1.0 = normal, 0.5 = half, 2.0 = double
+  int _hoverPopupDelay = 300; // ms before showing popup
+  String _hoverPopupModifier = 'none'; // 'none', 'ctrl', 'shift', 'alt'
+  List<String> _hoverPopupLanguages = []; // empty = all languages
+
+  // Profile activation
+  String _profileActivationScreen = 'all'; // 'all', 'search', 'reader', 'srs', 'browser'
+  String _profileActivationApp = 'default'; // 'default', 'srs', 'browser'
 
   // Setters with persistence
 
@@ -335,6 +355,42 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setHoverPopupSize(double value) {
+    _hoverPopupSize = value;
+    _storageService.setDouble('hover_popup_size', value);
+    notifyListeners();
+  }
+
+  void setHoverPopupDelay(int value) {
+    _hoverPopupDelay = value;
+    _storageService.setInt('hover_popup_delay', value);
+    notifyListeners();
+  }
+
+  void setHoverPopupModifier(String value) {
+    _hoverPopupModifier = value;
+    _storageService.setString('hover_popup_modifier', value);
+    notifyListeners();
+  }
+
+  void setHoverPopupLanguages(List<String> value) {
+    _hoverPopupLanguages = value;
+    _storageService.setStringList('hover_popup_languages', value);
+    notifyListeners();
+  }
+
+  void setProfileActivationScreen(String value) {
+    _profileActivationScreen = value;
+    _storageService.setString('profile_activation_screen', value);
+    notifyListeners();
+  }
+
+  void setProfileActivationApp(String value) {
+    _profileActivationApp = value;
+    _storageService.setString('profile_activation_app', value);
+    notifyListeners();
+  }
+
   // Word management
   void addSavedWord(String word, {Map<String, dynamic>? details}) {
     if (!_savedWords.contains(word)) {
@@ -479,11 +535,19 @@ class AppState extends ChangeNotifier {
     _showInlineDefinitions = _storageService.getBool('show_inline_definitions') ?? true;
     _showHoverDefinitions = _storageService.getBool('show_hover_definitions') ?? true;
     _useLocalTranslation = _storageService.getBool('use_local_translation') ?? false;
-    final savedProvider = _storageService.getString('translation_provider');
-    _translationProvider = TranslationProvider.values.firstWhere(
-      (e) => e.name == savedProvider,
-      orElse: () => TranslationProvider.googleCloud,
-    );
+final savedProvider = _storageService.getString('translation_provider');
+      _translationProvider = TranslationProvider.values.firstWhere(
+        (e) => e.name == savedProvider,
+        orElse: () => TranslationProvider.googleCloud,
+      );
+      // Load popup settings
+      _hoverPopupSize = _storageService.getDouble('hover_popup_size') ?? 1.0;
+      _hoverPopupDelay = _storageService.getInt('hover_popup_delay') ?? 300;
+      _hoverPopupModifier = _storageService.getString('hover_popup_modifier') ?? 'none';
+      _hoverPopupLanguages = _storageService.getStringList('hover_popup_languages') ?? [];
+      // Load profile activation
+      _profileActivationScreen = _storageService.getString('profile_activation_screen') ?? 'all';
+      _profileActivationApp = _storageService.getString('profile_activation_app') ?? 'default';
       // Ensure value is within valid range (0-6 for the 7 screens)
       if (_defaultScreenIndex < 0 || _defaultScreenIndex > 6) {
         _defaultScreenIndex = 0;
@@ -510,11 +574,19 @@ class AppState extends ChangeNotifier {
       _forvoAudioEnabled = false;
       _forvoApiKey = '';
       _showWiktionary = true;
-    _showInlineDefinitions = true;
-    _showHoverDefinitions = true;
+_showInlineDefinitions = true;
+      _showHoverDefinitions = true;
       _useLocalTranslation = false;
       _translationProvider = TranslationProvider.googleCloud;
       _defaultScreenIndex = 0;
+      // Popup defaults
+      _hoverPopupSize = 1.0;
+      _hoverPopupDelay = 300;
+      _hoverPopupModifier = 'none';
+      _hoverPopupLanguages = [];
+      // Profile activation defaults
+      _profileActivationScreen = 'all';
+      _profileActivationApp = 'default';
     }
   }
 
