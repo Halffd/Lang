@@ -29,7 +29,7 @@ class SrsDeck {
     );
   }
 
-  factory SrsDeck.fromMap(Map<String, dynamic> map) => fromJson(map);
+  factory SrsDeck.fromMap(Map<String, dynamic> map) => SrsDeck.fromJson(map);
   Map<String, dynamic> toMap() => toJson();
 
   Map<String, dynamic> toJson() {
