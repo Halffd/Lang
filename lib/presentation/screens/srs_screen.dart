@@ -319,10 +319,10 @@ class _StudyTabState extends State<_StudyTab> with SingleTickerProviderStateMixi
                 ),
                 textAlign: TextAlign.center,
               ),
-              if (card.reading.isNotEmpty) ...[
+              if (card.reading?.isNotEmpty ?? false) ...[
                 const SizedBox(height: 8),
                 Text(
-                  card.reading,
+                  card.reading ?? '',
                   style: TextStyle(fontSize: 20, color: theme.colorScheme.onSurfaceVariant),
                 ),
               ],
@@ -339,10 +339,10 @@ class _StudyTabState extends State<_StudyTab> with SingleTickerProviderStateMixi
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              if (card.reading.isNotEmpty) ...[
+              if (card.reading?.isNotEmpty ?? false) ...[
                 const SizedBox(height: 4),
                 Text(
-                  card.reading,
+                  card.reading ?? '',
                   style: TextStyle(fontSize: 16, color: theme.colorScheme.onSurfaceVariant),
                 ),
               ],
