@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:syncfusion_flutter_pdf/pdf.dart';
 
 class DocumentTextExtractor {
   Future<String> extractText(String filePath) async {
@@ -19,13 +18,7 @@ class DocumentTextExtractor {
     if (!await file.exists()) {
       throw FileSystemException('File not found', filePath);
     }
-
-    final bytes = await file.readAsBytes();
-    final doc = PdfDocument(inputBytes: bytes);
-    final extractor = PdfTextExtractor(doc);
-    final text = extractor.extractText();
-    doc.dispose();
-    return text.trim();
+    throw UnimplementedError('PDF extraction requires syncfusion_flutter_pdf package');
   }
 
   Future<String> _extractFromTxt(String filePath) async {

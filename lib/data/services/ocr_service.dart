@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:tesseract_ocr/tesseract_ocr.dart';
+import 'package:tesseract_ocr/ocr_engine_config.dart';
 
 enum OcrEngine { mlKit, tesseract, easyOcr }
 
@@ -109,8 +110,7 @@ class OcrService {
 
       final result = await TesseractOcr.extractText(
         imagePath,
-        language: tessLanguage,
-        password: '',
+        config: OCRConfig(language: tessLanguage),
       );
 
       return OcrResult(
@@ -127,10 +127,16 @@ class OcrService {
     try {
       final tessLanguage = language ?? 'eng';
 
-      final result = await TesseractOcr.extractTextFromBytes(
-        bytes,
-        language: tessLanguage,
+      final tempDir = Directory.systemTemp;
+      final tempFile = File('${tempDir.path}/ocr_${DateTime.now().millisecondsSinceEpoch}.png');
+      await tempFile.writeAsBytes(bytes);
+
+      final result = await TesseractOcr.extractText(
+        tempFile.path,
+        config: OCRConfig(language: tessLanguage),
       );
+
+      tempFile.deleteSync();
 
       return OcrResult(
         text: result,

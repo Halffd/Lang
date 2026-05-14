@@ -69,14 +69,15 @@ class SrsRepositoryImpl implements SrsRepository {
   Future<SrsDeck> createDeck(String name, {String? description, String? icon, String? color}) async {
     if (_userId == null) throw Exception('Not authenticated');
     
+    final now = DateTime.now();
     final deck = SrsDeck(
       id: SrsService.generateId(),
-      userId: _userId!,
       name: name,
       description: description,
       icon: icon ?? '📚',
       color: color ?? '#3B82F6',
-      createdAt: DateTime.now(),
+      createdAt: now,
+      updatedAt: now,
     );
     
     _decks.add(deck);

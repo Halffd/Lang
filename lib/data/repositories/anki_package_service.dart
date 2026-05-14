@@ -42,7 +42,9 @@ class AnkiPackageService {
   }
 
   Uint8List _createAnkiDb(List<SRSCard> cards, String deckName) {
-    final db = sqlite3.open(':memory:');
+    final tempDir = Directory.systemTemp;
+    final tempFile = File('${tempDir.path}/anki_export_${DateTime.now().millisecondsSinceEpoch}.anki2');
+    final db = sqlite3.open(tempFile.path);
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
     db.execute('''
@@ -152,7 +154,7 @@ class AnkiPackageService {
         "INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum) VALUES ($noteId, '$guid', $modelId, $mod, $usn, '$tags', '$flds', $sfld, $csum)",
       );
 
-      final due = card.dueDate.millisecondsSinceEpoch ~/ 1000;
+      final due = card.nextReview.millisecondsSinceEpoch ~/ 1000;
       final ivl = card.interval;
       final factor = (card.easeFactor * 1000).round();
       final type = card.type == CardType.newCard ? 0 : card.type == CardType.learning ? 1 : 2;
@@ -169,10 +171,11 @@ class AnkiPackageService {
 
     db.execute("UPDATE col SET decks = '{\"1\":{\"name\":\"$deckName\",\"extendRev\":10,\"browserCollapsed\":false,\"collapsed\":false,\"daysSinceAck\":0,\"type\":1,\"mod\":$now,\"id\":1}}' WHERE id = 1");
 
-    final dbBytes = db.export();
     db.dispose();
+    final dbBytes = tempFile.readAsBytesSync();
+    tempFile.deleteSync();
 
-    return Uint8List.fromList(dbBytes);
+    return dbBytes;
   }
 
   String _escapeSqlite(String s) {
@@ -232,7 +235,11 @@ class AnkiPackageService {
     final cards = <SRSCard>[];
 
     try {
-      final db = sqlite3.openDatabase(dbData);
+      final tempDir = Directory.systemTemp;
+      final tempFile = File('${tempDir.path}/anki_import_${DateTime.now().millisecondsSinceEpoch}.anki2');
+      await tempFile.writeAsBytes(dbData);
+      final db = sqlite3.open(tempFile.path);
+      tempFile.deleteSync();
 
       final stmt = db.prepare('SELECT id, flds FROM notes');
       final result = stmt.select();

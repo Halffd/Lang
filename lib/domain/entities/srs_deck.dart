@@ -29,6 +29,9 @@ class SrsDeck {
     );
   }
 
+  factory SrsDeck.fromMap(Map<String, dynamic> map) => fromJson(map);
+  Map<String, dynamic> toMap() => toJson();
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
