@@ -642,8 +642,6 @@ class _CardsTabState extends State<_CardsTab> {
                     ],
                   ),
                 ],
-              ),
-            ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
