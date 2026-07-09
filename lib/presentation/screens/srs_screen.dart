@@ -514,7 +514,7 @@ class _CardsTabState extends State<_CardsTab> {
                     onChanged: (v) => setState(() => _searchQuery = v),
                   ),
                 ),
-              ],
+],
             ),
           ),
           Padding(
