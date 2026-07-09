@@ -22,6 +22,7 @@ import 'data/datasources/supabase_data_source.dart';
 import 'data/repositories/ai_repository_impl.dart';
 import 'data/repositories/analyzer_repository_impl.dart';
 import 'data/repositories/srs_service.dart';
+import 'domain/entities/app_state.dart';
 import 'presentation/providers/analyzer_provider.dart';
 import 'presentation/providers/ai_provider.dart';
 import 'presentation/providers/supabase_provider.dart';
@@ -99,6 +100,8 @@ void main() async {
   final aiProvider = AiProvider(aiRepository);
   await aiProvider.init();
 
+  final appState = AppState(storageService);
+
   srsServiceLegacy = SRSService(storageService);
   await srsServiceLegacy.initialize();
 
@@ -122,6 +125,7 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider.value(value: appState),
         ChangeNotifierProvider.value(value: analyzerProvider),
         ChangeNotifierProvider.value(value: aiProvider),
         ChangeNotifierProvider.value(value: srsServiceLegacy),

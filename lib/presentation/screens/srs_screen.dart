@@ -304,10 +304,10 @@ class _StudyTabState extends State<_StudyTab> with SingleTickerProviderStateMixi
                 ),
                 textAlign: TextAlign.center,
               ),
-              if (card.reading.isNotEmpty) ...[
+              if (card.reading != null && card.reading!.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text(
-                  card.reading,
+                  card.reading!,
                   style: TextStyle(fontSize: 20, color: theme.colorScheme.onSurfaceVariant),
                 ),
               ],
@@ -324,10 +324,10 @@ class _StudyTabState extends State<_StudyTab> with SingleTickerProviderStateMixi
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              if (card.reading.isNotEmpty) ...[
+              if (card.reading != null && card.reading!.isNotEmpty) ...[
                 const SizedBox(height: 4),
                 Text(
-                  card.reading,
+                  card.reading!,
                   style: TextStyle(fontSize: 16, color: theme.colorScheme.onSurfaceVariant),
                 ),
               ],
@@ -582,7 +582,7 @@ class _CardsTabState extends State<_CardsTab> {
                           child: ListTile(
                             title: Text(card.word, style: const TextStyle(fontWeight: FontWeight.bold)),
                             subtitle: Text(
-                              card.meaning.isNotEmpty ? card.meaning : card.reading,
+                              card.meaning.isNotEmpty ? card.meaning : (card.reading ?? ''),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -705,8 +705,6 @@ class _AddCardSheetState extends State<_AddCardSheet> {
             word: _wordController.text.trim(),
             reading: _readingController.text.trim(),
             meaning: _meaningController.text.trim(),
-            priority: _priority,
-            languageLevel: _languageLevel,
           );
     await widget.onSave(card);
   }
@@ -929,7 +927,7 @@ class _CardDetailSheet extends StatelessWidget {
               IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
             ],
           ),
-          if (card.reading.isNotEmpty) Text(card.reading, style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+          if (card.reading != null && card.reading!.isNotEmpty) Text(card.reading!, style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
           const SizedBox(height: 8),
           if (card.meaning.isNotEmpty)
             Container(
@@ -944,11 +942,11 @@ class _CardDetailSheet extends StatelessWidget {
           const SizedBox(height: 16),
           _detailRow('Interval', '${card.interval} days'),
           _detailRow('Ease', card.easeFactor.toStringAsFixed(2)),
-          _detailRow('Repetitions', '${card.repetition}'),
+          _detailRow('Repetitions', '${card.reviewCount}'),
           _detailRow('Next Review', _formatDate(card.nextReview)),
           _detailRow('Priority', '${card.priority}/5'),
           _detailRow('Level', '${card.languageLevel}/5'),
-          _detailRow('Reviews', '${card.reviewHistory.length}'),
+          _detailRow('Reviews', '${card.reviewCount}'),
           const SizedBox(height: 16),
           Row(
             children: [

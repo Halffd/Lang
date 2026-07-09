@@ -840,7 +840,8 @@ class _BrowserScreenState extends State<BrowserScreen> {
             }
             setState(() => _adsBlockedCount++);
             debugPrint('Ad blocked: $url');
-            return WebResourceRequest(url: WebUri('about:blank'));
+            fetchRequest.action = FetchRequestAction.ABORT;
+            return fetchRequest;
           }
         }
         return fetchRequest;
@@ -1138,12 +1139,13 @@ class _BrowserScreenState extends State<BrowserScreen> {
 
     for (final word in words.take(20)) {
       try {
-        final entry = await dictionaryService.lookupWord(word);
-        if (entry != null) {
-          foundEntries.add({
-            'word': word,
-            'reading': entry.reading ?? '',
-            'meaning': entry.meaning ?? entry.definition ?? '',
+        final result = await dictionaryService.searchTerm(word);
+              if (result.entries.isNotEmpty) {
+                final e = result.entries.first;
+                foundEntries.add({
+                  'word': word,
+                  'reading': e.reading,
+                  'meaning': e.definitions.isNotEmpty ? e.definitions.first : '',
           });
         }
       } catch (e) {

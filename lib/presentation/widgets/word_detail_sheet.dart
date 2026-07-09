@@ -2,8 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:provider/provider.dart';
+import '../../data/services/anki_connect_service.dart';
+import '../../domain/entities/app_state.dart';
 import '../../l10n/app_localizations.dart';
-import '../../../domain/entities/analyzed_word.dart';
+import '../../domain/entities/analyzed_word.dart';
 import '../providers/analyzer_provider.dart';
 import '../providers/ai_provider.dart';
 import '../../utils/pinyin_util.dart';
@@ -80,7 +82,53 @@ if (word.word != null &&
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(word.word, style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-            IconButton(icon: const Icon(Icons.volume_up), onPressed: () => provider.playAudio(word.word)),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(icon: const Icon(Icons.volume_up), onPressed: () => provider.playAudio(word.word)),
+                Consumer<AppState>(
+                  builder: (context, appState, _) {
+                    if (!appState.ankiConnectEnabled) return const SizedBox.shrink();
+                    return IconButton(
+                      icon: const Icon(Icons.auto_stories),
+                      tooltip: 'Send to Anki',
+                      onPressed: () async {
+                        final service = AnkiConnectService(appState.ankiConnectUrl);
+                        try {
+                          final fields = <String, String>{
+                            'Front': word.word,
+                            'Back': word.ichiMoeDefinitions?.join(', ')
+                                ?? (word.localDefinitions.isNotEmpty
+                                    ? (json.decode(word.localDefinitions.first['glossary']) as List).join(', ')
+                                    : word.reading ?? ''),
+                          };
+                          final noteId = await service.addNote(
+                            deckName: appState.currentAnkiDeck,
+                            modelName: appState.ankiConnectModel,
+                            fields: fields,
+                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(noteId != null
+                                    ? 'Added to ${appState.currentAnkiDeck} (id: $noteId)'
+                                    : 'Word already exists in deck'),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('AnkiConnect: $e')), 
+                            );
+                          }
+                        }
+                      },
+                    );
+                  },
+                ),
+              ],
+            ),
           ],
         ),
           Text(AppLocalizations.of(context)!.frequency(freq ?? 0), style: TextStyle(color: _getFreqColor(freq ?? 0))),

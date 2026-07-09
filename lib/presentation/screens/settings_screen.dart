@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../data/services/anki_connect_service.dart';
 import '../../domain/entities/app_state.dart';
 import '../../domain/entities/translation_model.dart';
 import '../../data/repositories/translation_service.dart';
@@ -662,6 +663,174 @@ class SettingsScreen extends StatelessWidget {
 ),
 ),
 ),
+
+          // AnkiConnect settings
+          Card(
+            elevation: 1,
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'AnkiConnect',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Switch(
+                        value: appState.ankiConnectEnabled,
+                        onChanged: (v) => appState.setAnkiConnectEnabled(v),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (appState.ankiConnectEnabled) ...[
+                    // Connection URL
+                    const Text('API URL', style: TextStyle(fontSize: 13)),
+                    const SizedBox(height: 4),
+                    TextField(
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'http://127.0.0.1:8765',
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        isDense: true,
+                      ),
+                      controller: TextEditingController(text: appState.ankiConnectUrl),
+                      onChanged: (v) => appState.setAnkiConnectUrl(v),
+                    ),
+                    const SizedBox(height: 12),
+                    // Test connection button + status
+                    ElevatedButton.icon(
+                          onPressed: () async {
+                            final service = AnkiConnectService(appState.ankiConnectUrl);
+                            final ok = await service.testConnection();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(ok ? 'AnkiConnect connected' : 'Connection failed'),
+                                  backgroundColor: ok ? Colors.green : Colors.red,
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.wifi_find, size: 18),
+                          label: const Text('Test Connection'),
+                        ),
+                    const SizedBox(height: 12),
+                    // Deck selection
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              isDense: true,
+                              labelText: 'Deck',
+                            ),
+                            value: appState.ankiDecks.contains(appState.currentAnkiDeck)
+                                ? appState.currentAnkiDeck
+                                : (appState.ankiDecks.isNotEmpty ? appState.ankiDecks.first : 'Default'),
+                            items: appState.ankiDecks.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+                            onChanged: (v) {
+                              if (v != null) appState.setCurrentAnkiDeck(v);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.refresh, size: 20),
+                          tooltip: 'Fetch decks from AnkiConnect',
+                          onPressed: () async {
+                            final service = AnkiConnectService(appState.ankiConnectUrl);
+                            try {
+                              final decks = await service.getDeckNames();
+                              appState.setAnkiDecks(decks);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Found ${decks.length} decks')),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Failed: $e')),
+                                );
+                              }
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    // Note model selection
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              hintText: 'Basic',
+                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              isDense: true,
+                              labelText: 'Note Type',
+                            ),
+                            controller: TextEditingController(text: appState.ankiConnectModel),
+                            onChanged: (v) => appState.setAnkiConnectModel(v),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.refresh, size: 20),
+                          tooltip: 'Fetch note types from AnkiConnect',
+                          onPressed: () async {
+                            final service = AnkiConnectService(appState.ankiConnectUrl);
+                            try {
+                              final models = await service.getModelNames();
+                              if (context.mounted) {
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => SimpleDialog(
+                                    title: const Text('Select Note Type'),
+                                    children: models.map((m) => SimpleDialogOption(
+                                      onPressed: () {
+                                        appState.setAnkiConnectModel(m);
+                                        Navigator.pop(ctx);
+                                      },
+                                      child: Text(m),
+                                    )).toList(),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Failed: $e')),
+                                );
+                              }
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    // Sync on save toggle
+                    SwitchListTile(
+                      title: const Text('Auto-sync to Anki', style: TextStyle(fontSize: 14)),
+                      subtitle: const Text('Send to Anki when saving a word', style: TextStyle(fontSize: 12)),
+                      value: appState.ankiSyncOnSave,
+                      onChanged: (v) => appState.setAnkiSyncOnSave(v),
+                      dense: true,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
 
           // Clipboard and Forvo settings
           Card(

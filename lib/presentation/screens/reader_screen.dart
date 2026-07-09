@@ -7,6 +7,7 @@ import '../../../domain/entities/app_state.dart';
 import '../../../domain/entities/translation_model.dart';
 import '../../data/repositories/dictionary_service.dart';
 import '../../data/repositories/translation_service.dart';
+import '../../data/services/anki_connect_service.dart';
 import '../../core/utils/word_list_mixins.dart';
 import '../widgets/dictionary_entry_card.dart';
 import '../../utils/language_detector.dart';
@@ -458,7 +459,26 @@ class _ReaderScreenState extends State<ReaderScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(isWordInAnki(token.entry!.term) ? 'Added to Anki' : 'Removed from Anki')),
       );
+      final appState = context.read<AppState>();
+      if (appState.ankiConnectEnabled && isWordInAnki(token.entry!.term)) {
+        _sendToAnkiConnect(token, appState);
+      }
     }
+  }
+
+  void _sendToAnkiConnect(Token token, AppState appState) async {
+    final service = AnkiConnectService(appState.ankiConnectUrl);
+    try {
+      final fields = <String, String>{
+        'Front': token.entry!.term,
+        'Back': token.entry!.definitions.isNotEmpty ? token.entry!.definitions.first.meaning : token.text,
+      };
+      await service.addNote(
+        deckName: appState.currentAnkiDeck,
+        modelName: appState.ankiConnectModel,
+        fields: fields,
+      );
+    } catch (_) {}
   }
 
   Future<void> _addToFavorites() async {

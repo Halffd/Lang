@@ -36,6 +36,12 @@ class AppState extends ChangeNotifier {
   // Anki words
   List<String> _ankiWords = [];
 
+  // AnkiConnect
+  String _ankiConnectUrl = 'http://127.0.0.1:8765';
+  bool _ankiConnectEnabled = false;
+  String _ankiConnectModel = 'Basic';
+  bool _ankiSyncOnSave = false;
+
   AppState(this._storageService) {
     _loadSettings();
     _loadSavedWords();
@@ -63,6 +69,10 @@ class AppState extends ChangeNotifier {
   Map<String, dynamic> get savedWordsDetails => _savedWordsDetails;
   List<String> get favoriteWords => _favoriteWords;
   List<String> get ankiWords => _ankiWords;
+  String get ankiConnectUrl => _ankiConnectUrl;
+  bool get ankiConnectEnabled => _ankiConnectEnabled;
+  String get ankiConnectModel => _ankiConnectModel;
+  bool get ankiSyncOnSave => _ankiSyncOnSave;
   List<String> get etymologyLanguages => _etymologyLanguages;
   bool get autoTranslate => _autoTranslate;
   List<String> get ankiDecks => _ankiDecks;
@@ -257,6 +267,30 @@ class AppState extends ChangeNotifier {
       _storageService.setStringList('anki_decks', _ankiDecks);
       notifyListeners();
     }
+  }
+
+  void setAnkiConnectUrl(String value) {
+    _ankiConnectUrl = value;
+    _storageService.setString('anki_connect_url', value);
+    notifyListeners();
+  }
+
+  void setAnkiConnectEnabled(bool value) {
+    _ankiConnectEnabled = value;
+    _storageService.setBool('anki_connect_enabled', value);
+    notifyListeners();
+  }
+
+  void setAnkiConnectModel(String value) {
+    _ankiConnectModel = value;
+    _storageService.setString('anki_connect_model', value);
+    notifyListeners();
+  }
+
+  void setAnkiSyncOnSave(bool value) {
+    _ankiSyncOnSave = value;
+    _storageService.setBool('anki_sync_on_save', value);
+    notifyListeners();
   }
 
   // Profile management
@@ -524,6 +558,10 @@ class AppState extends ChangeNotifier {
       _autoTranslate = _storageService.getBool('auto_translate') ?? false;
       _ankiDecks = _storageService.getStringList('anki_decks') ?? ['Default'];
       _currentAnkiDeck = _storageService.getString('current_anki_deck') ?? 'Default';
+      _ankiConnectUrl = _storageService.getString('anki_connect_url') ?? 'http://127.0.0.1:8765';
+      _ankiConnectEnabled = _storageService.getBool('anki_connect_enabled') ?? false;
+      _ankiConnectModel = _storageService.getString('anki_connect_model') ?? 'Basic';
+      _ankiSyncOnSave = _storageService.getBool('anki_sync_on_save') ?? false;
       _profiles = _storageService.getStringList('profiles') ?? ['Default'];
       _clipboardAutoDetect = _storageService.getBool('clipboard_auto_detect') ?? false;
       _forvoAudioEnabled = _storageService.getBool('forvo_audio_enabled') ?? false;
@@ -569,6 +607,10 @@ final savedProvider = _storageService.getString('translation_provider');
       _autoTranslate = false;
       _ankiDecks = ['Default'];
       _currentAnkiDeck = 'Default';
+      _ankiConnectUrl = 'http://127.0.0.1:8765';
+      _ankiConnectEnabled = false;
+      _ankiConnectModel = 'Basic';
+      _ankiSyncOnSave = false;
       _profiles = ['Default'];
       _clipboardAutoDetect = false;
       _forvoAudioEnabled = false;

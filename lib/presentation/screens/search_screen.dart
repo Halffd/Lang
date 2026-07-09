@@ -521,18 +521,14 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Future<void> _captureFromClipboard() async {
     try {
-      final imageData = await Clipboard.getImage();
-      if (imageData != null) {
-        await _processImageFromBytes(imageData.bytes);
+      final textData = await Clipboard.getData(Clipboard.kTextPlain);
+      if (textData?.text != null && textData!.text!.isNotEmpty) {
+        _ocrController.text = textData.text!;
+        setState(() {});
       } else {
-        final textData = await Clipboard.getData(Clipboard.kTextPlain);
-        if (textData?.text != null && textData!.text!.isNotEmpty) {
-          _ocrController.text = textData.text!;
-          setState(() {});
-        }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No image in clipboard, checking for text...')),
+            const SnackBar(content: Text('No text in clipboard')),
           );
         }
       }
@@ -575,74 +571,6 @@ class _SearchScreenState extends State<SearchScreen> {
 
         final result = await ocrService.recognizeFromFile(
           imageFile.path,
-          engine: engine,
-        );
-
-        if (result.isSuccess) {
-          _ocrController.text = result.text;
-        } else if (result.isEasyOcrUnavailable) {
-          _ocrController.text = '';
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('EasyOCR requires a Python backend. Using ML Kit instead...'),
-                action: SnackBarAction(
-                  label: 'Switch',
-                  onPressed: () => setState(() => _ocrMode = OcrMode.mlKit),
-                ),
-              ),
-            );
-          }
-        } else {
-          _ocrController.text = '';
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('OCR Error: ${result.error}')),
-            );
-          }
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('OCR Error: $e')),
-        );
-      }
-    } finally {
-      setState(() => _isProcessingImage = false);
-      ocrService.dispose();
-    }
-  }
-
-  Future<void> _processImageFromBytes(Uint8List bytes) async {
-    setState(() => _isProcessingImage = true);
-    final ocrService = OcrService();
-
-    try {
-      if (_ocrMode == OcrMode.ai) {
-        final base64Image = base64Encode(bytes);
-        final aiProvider = Provider.of<AiProvider>(context, listen: false);
-        final text = await aiProvider.extractTextFromImageAi(base64Image);
-        _ocrController.text = text;
-      } else {
-        final OcrEngine engine;
-        switch (_ocrMode) {
-          case OcrMode.mlKit:
-            engine = OcrEngine.mlKit;
-            break;
-          case OcrMode.tesseract:
-            engine = OcrEngine.tesseract;
-            break;
-          case OcrMode.easyOcr:
-            engine = OcrEngine.easyOcr;
-            break;
-          case OcrMode.ai:
-            engine = OcrEngine.mlKit;
-            break;
-        }
-
-        final result = await ocrService.recognizeFromBytes(
-          bytes,
           engine: engine,
         );
 

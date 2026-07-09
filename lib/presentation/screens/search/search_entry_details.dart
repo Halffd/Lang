@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../data/services/anki_connect_service.dart';
 import '../../../domain/entities/app_state.dart';
 import '../../../domain/entities/dictionary.dart';
 import '../../../data/repositories/dictionary_service.dart';
@@ -142,6 +143,35 @@ class SearchEntryDetailsContent extends StatelessWidget {
                   tooltip: isAnki ? 'Remove from Anki' : 'Add to Anki',
                   onPressed: () => isAnki ? appState.removeAnkiWord(entry.term) : appState.addAnkiWord(entry.term),
                 ),
+                if (appState.ankiConnectEnabled)
+                  IconButton(
+                    icon: const Icon(Icons.auto_stories),
+                    tooltip: 'Send to AnkiConnect',
+                    onPressed: () async {
+                      final service = AnkiConnectService(appState.ankiConnectUrl);
+                      try {
+                        final meaning = entry.definitions.isNotEmpty
+                            ? entry.definitions.first.meaning
+                            : entry.reading;
+                        await service.addNote(
+                          deckName: appState.currentAnkiDeck,
+                          modelName: appState.ankiConnectModel,
+                          fields: {'Front': entry.term, 'Back': meaning},
+                        );
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Sent to Anki')),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('AnkiConnect: $e')),
+                          );
+                        }
+                      }
+                    },
+                  ),
               ],
             ),
             if (showCloseButton)

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui' show Size;
 import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:tesseract_ocr/tesseract_ocr.dart';
@@ -60,11 +61,21 @@ class OcrService {
         blocks: recognizedText.blocks
             .map((block) => OcrTextBlock(
                   text: block.text,
-                  boundingBox: block.boundingBox,
+                  boundingBox: Rect(
+                    left: block.boundingBox.left,
+                    top: block.boundingBox.top,
+                    right: block.boundingBox.right,
+                    bottom: block.boundingBox.bottom,
+                  ),
                   lines: block.lines
                       .map((line) => OcrLine(
                             text: line.text,
-                            boundingBox: line.boundingBox,
+                            boundingBox: Rect(
+                              left: line.boundingBox.left,
+                              top: line.boundingBox.top,
+                              right: line.boundingBox.right,
+                              bottom: line.boundingBox.bottom,
+                            ),
                             words: line.elements.map((e) => e.text).toList(),
                           ))
                       .toList(),
@@ -79,7 +90,15 @@ class OcrService {
 
   Future<OcrResult> _recognizeWithMlKitFromBytes(Uint8List bytes) async {
     try {
-      final inputImage = InputImage.fromBytes(bytes: bytes);
+      final inputImage = InputImage.fromBytes(
+        bytes: bytes,
+        metadata: InputImageMetadata(
+          size: const Size(0, 0),
+          rotation: InputImageRotation.rotation0deg,
+          format: InputImageFormat.nv21,
+          bytesPerRow: 0,
+        ),
+      );
       final recognizedText = await _mlKitRecognizer.processImage(inputImage);
 
       return OcrResult(
@@ -87,11 +106,21 @@ class OcrService {
         blocks: recognizedText.blocks
             .map((block) => OcrTextBlock(
                   text: block.text,
-                  boundingBox: block.boundingBox,
+                  boundingBox: Rect(
+                    left: block.boundingBox.left,
+                    top: block.boundingBox.top,
+                    right: block.boundingBox.right,
+                    bottom: block.boundingBox.bottom,
+                  ),
                   lines: block.lines
                       .map((line) => OcrLine(
                             text: line.text,
-                            boundingBox: line.boundingBox,
+                            boundingBox: Rect(
+                              left: line.boundingBox.left,
+                              top: line.boundingBox.top,
+                              right: line.boundingBox.right,
+                              bottom: line.boundingBox.bottom,
+                            ),
                             words: line.elements.map((e) => e.text).toList(),
                           ))
                       .toList(),
