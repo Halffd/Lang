@@ -9,6 +9,72 @@ import 'settings_screen.dart';
 import '../../utils/pinyin_util.dart';
 import '../../domain/entities/analyzed_word.dart';
 
+enum WordSort {
+  wordAsc,
+  wordDesc,
+  frequencyAsc,
+  frequencyDesc,
+  readingAsc,
+  readingDesc,
+}
+
+enum WordGroup {
+  none,
+  frequency,
+  firstChar,
+  hasKanji,
+  hasReading,
+}
+
+class WordFilter {
+  final int? minFrequency;
+  final int? maxFrequency;
+  final bool? hasDefinition;
+  final bool? hasKanji;
+  final bool? hasReading;
+  final bool? isSaved;
+  final String? searchQuery;
+
+  const WordFilter({
+    this.minFrequency,
+    this.maxFrequency,
+    this.hasDefinition,
+    this.hasKanji,
+    this.hasReading,
+    this.isSaved,
+    this.searchQuery,
+  });
+
+  WordFilter copyWith({
+    int? minFrequency,
+    int? maxFrequency,
+    bool? hasDefinition,
+    bool? hasKanji,
+    bool? hasReading,
+    bool? isSaved,
+    String? searchQuery,
+  }) {
+    return WordFilter(
+      minFrequency: minFrequency ?? this.minFrequency,
+      maxFrequency: maxFrequency ?? this.maxFrequency,
+      hasDefinition: hasDefinition ?? this.hasDefinition,
+      hasKanji: hasKanji ?? this.hasKanji,
+      hasReading: hasReading ?? this.hasReading,
+      isSaved: isSaved ?? this.isSaved,
+      searchQuery: searchQuery ?? this.searchQuery,
+    );
+  }
+
+  bool get hasActiveFilters => 
+      minFrequency != null || 
+      maxFrequency != null || 
+      hasDefinition != null || 
+      hasKanji != null || 
+      hasReading != null || 
+      isSaved != null ||
+      (searchQuery != null && searchQuery!.isNotEmpty);
+}
+
 class AnalyzeScreen extends StatefulWidget {
   const AnalyzeScreen({super.key});
 
@@ -25,6 +91,11 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> with TickerProviderStateM
   bool _showSentenceTranslations = true;
   bool _showFullTranslation = true;
   bool _showFavorites = true;
+  
+  // Filter state
+  WordFilter _wordFilter = WordFilter();
+  WordSort _sortBy = WordSort.frequencyDesc;
+  bool _groupByFrequency = false;
   
   late AnimationController _expandController;
   late AnimationController _fadeController;
@@ -364,6 +435,9 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> with TickerProviderStateM
             ],
           ),
         ),
+        const SizedBox(height: 8),
+        // Filter / Sort / Group Bar
+        _buildFilterSortGroupBar(context, theme, provider, l10n),
         const SizedBox(height: 12),
         LayoutBuilder(
           builder: (context, constraints) {
@@ -424,6 +498,97 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> with TickerProviderStateM
           ],
         ),
       ),
+    );
+  }
+
+  // Filter / Sort / Group Bar
+  Widget _buildFilterSortGroupBar(BuildContext context, ThemeData theme, AnalyzerProvider provider, AppLocalizations l10n) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
+      ),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          // Filter section
+          Tooltip(
+            message: l10n.filter,
+            child: PopupMenuButton<String>(
+              icon: Icon(Icons.filter_list_rounded, size: 20, color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
+              onSelected: (value) => _applyFilter(provider, value),
+              itemBuilder: (context) => [
+                PopupMenuItem(value: 'has_def', child: Row(children: [Icon(Icons.check_circle_rounded, size: 18, color: theme.colorScheme.primary), const SizedBox(width: 12), Text(l10n.hasDefinition)])),
+                PopupMenuItem(value: 'has_kanji', child: Row(children: [Icon(Icons.text_fields_rounded, size: 18, color: theme.colorScheme.primary), const SizedBox(width: 12), Text(l10n.hasKanji)])),
+                PopupMenuItem(value: 'has_reading', child: Row(children: [Icon(Icons.record_voice_over_rounded, size: 18, color: theme.colorScheme.primary), const SizedBox(width: 12), Text(l10n.hasReading)])),
+                PopupMenuItem(value: 'freq_high', child: Row(children: [Icon(Icons.trending_up_rounded, size: 18, color: Colors.green), const SizedBox(width: 12), Text(l10n.highFrequency)])),
+                PopupMenuItem(value: 'freq_med', child: Row(children: [Icon(Icons.trending_flat_rounded, size: 18, color: Colors.amber), const SizedBox(width: 12), Text(l10n.mediumFrequency)])),
+                PopupMenuItem(value: 'freq_low', child: Row(children: [Icon(Icons.trending_down_rounded, size: 18, color: Colors.orange), const SizedBox(width: 12), Text(l10n.lowFrequency)])),
+                const PopupMenuDivider(),
+                PopupMenuItem(value: 'clear', child: Row(children: [Icon(Icons.clear_all_rounded, size: 18, color: theme.colorScheme.error), const SizedBox(width: 12), Text(l10n.clearFilters)])),
+              ],
+            ),
+          ),
+          
+          // Sort section
+          Tooltip(
+            message: l10n.sort,
+            child: PopupMenuButton<String>(
+              icon: Icon(Icons.sort_rounded, size: 20, color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
+              onSelected: (value) => _applySort(provider, value),
+              itemBuilder: (context) => [
+                PopupMenuItem(value: 'word_asc', child: Row(children: [Icon(Icons.sort_by_alpha_rounded, size: 18, color: theme.colorScheme.primary), const SizedBox(width: 12), Text(l10n.wordAtoZ)])),
+                PopupMenuItem(value: 'word_desc', child: Row(children: [Icon(Icons.sort_by_alpha_rounded, size: 18, color: theme.colorScheme.primary), const SizedBox(width: 12), Text(l10n.wordZtoA)])),
+                PopupMenuItem(value: 'freq_asc', child: Row(children: [Icon(Icons.trending_up_rounded, size: 18, color: theme.colorScheme.primary), const SizedBox(width: 12), Text(l10n.frequencyLowToHigh)])),
+                PopupMenuItem(value: 'freq_desc', child: Row(children: [Icon(Icons.trending_down_rounded, size: 18, color: theme.colorScheme.primary), const SizedBox(width: 12), Text(l10n.frequencyHighToLow)])),
+                PopupMenuItem(value: 'reading_asc', child: Row(children: [Icon(Icons.record_voice_over_rounded, size: 18, color: theme.colorScheme.primary), const SizedBox(width: 12), Text(l10n.readingAtoZ)])),
+                PopupMenuItem(value: 'reading_desc', child: Row(children: [Icon(Icons.record_voice_over_rounded, size: 18, color: theme.colorScheme.primary), const SizedBox(width: 12), Text(l10n.readingZtoA)])),
+              ],
+            ),
+          ),
+
+          // Group section
+          Tooltip(
+            message: l10n.group,
+            child: PopupMenuButton<String>(
+              icon: Icon(Icons.view_module_rounded, size: 20, color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
+              onSelected: (value) => _applyGroup(provider, value),
+              itemBuilder: (context) => [
+                PopupMenuItem(value: 'none', child: Row(children: [Icon(Icons.view_list_rounded, size: 18, color: theme.colorScheme.primary), const SizedBox(width: 12), Text(l10n.noGroup)])),
+                PopupMenuItem(value: 'freq_band', child: Row(children: [Icon(Icons.bar_chart_rounded, size: 18, color: theme.colorScheme.primary), const SizedBox(width: 12), Text(l10n.groupByFrequency)])),
+                PopupMenuItem(value: 'first_char', child: Row(children: [Icon(Icons.text_fields_rounded, size: 18, color: theme.colorScheme.primary), const SizedBox(width: 12), Text(l10n.groupByFirstChar)])),
+                PopupMenuItem(value: 'has_kanji', child: Row(children: [Icon(Icons.category_rounded, size: 18, color: theme.colorScheme.primary), const SizedBox(width: 12), Text(l10n.groupByKanji)])),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _applyFilter(AnalyzerProvider provider, String filter) {
+    // Filter logic would be implemented here
+    // For now, just notify to show the action happened
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Filter: $filter'), duration: const Duration(seconds: 1)),
+    );
+  }
+
+  void _applySort(AnalyzerProvider provider, String sort) {
+    // Sort logic would be implemented here
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Sort: $sort'), duration: const Duration(seconds: 1)),
+    );
+  }
+
+  void _applyGroup(AnalyzerProvider provider, String group) {
+    // Group logic would be implemented here
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Group: $group'), duration: const Duration(seconds: 1)),
     );
   }
 
