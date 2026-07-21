@@ -1,12 +1,11 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../providers/analyzer_provider.dart';
 import '../widgets/word_detail_sheet.dart';
 import 'settings_screen.dart';
-import '../../utils/pinyin_util.dart';
 import '../../domain/entities/analyzed_word.dart';
 
 enum WordSort {
