@@ -629,5 +629,22 @@
     "clearHistory": "Clear History",
     "noResultsYet": "No results yet",
     "savedWord": "Saved word",
-    "noHistoryYet": "No history yet"
+    "noHistoryYet": "No history yet",
+    "wordDefinitions": "Word Definitions",
+    "sentenceTranslations": "Sentence Translations",
+    "fullTranslation": "Full Translation",
+    "favorites": "Favorites",
+    "noFavoritesYet": "No favorites yet",
+    "showDefinitions": "Show Definitions",
+    "hideDefinitions": "Hide Definitions",
+    "definitionsHidden": "Definitions hidden",
+    "wordsAnalyzed": "{count} words analyzed",
+    "sentencesFound": "{count} sentences found",
+    "columns": "{count} columns",
+    "column": "{count} column",
+    "page": "Page {current} of {total}",
+    "removeFromFavorites": "Remove from favorites",
+    "addToFavorites": "Add to favorites",
+    "navPrevNext": "Prev / Next",
+    "navFirstLast": "First / Last"
   }

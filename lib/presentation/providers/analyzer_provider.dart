@@ -61,6 +61,9 @@ class AnalyzerProvider with ChangeNotifier {
     return _analyzedWords.sublist(start, end);
   }
 
+  List<AnalyzedWord> get analyzedWords => _analyzedWords;
+  Map<String, String> get sentences => _sentences;
+
   // Dictionary Management
   List<Map<String, dynamic>> _installedDictionaries = [];
   List<Map<String, dynamic>> get installedDictionaries => _installedDictionaries;
@@ -290,5 +293,20 @@ class AnalyzerProvider with ChangeNotifier {
 
   Future<void> playAudio(String text) async {
     await _repository.playAudio(text, _currentLanguage);
+  }
+
+  // --- Translation Methods ---
+
+  String getSentenceTranslation(String sentence) {
+    // This would typically use a translation service
+    // For now, return empty string as placeholder
+    // In a real implementation, this would call a translation API
+    return '';
+  }
+
+  String getFullTranslation() {
+    if (_sentences.isEmpty) return '';
+    // Return concatenated translations
+    return _sentences.values.join('\n\n');
   }
 }
