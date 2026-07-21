@@ -258,7 +258,7 @@ class DictionaryEntryCard extends StatelessWidget {
                       tag,
                       style: TextStyle(
                         fontSize: 12,
-                        color: theme.colorScheme.onSurface.withOpacity(0.8),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                       ),
                     ),
                     backgroundColor: theme.colorScheme.surfaceVariant,

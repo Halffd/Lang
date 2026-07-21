@@ -295,7 +295,7 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
                                         : Colors.grey[200],
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                      color: Theme.of(context).primaryColor.withOpacity(0.5),
+                                      color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
                                       width: 1,
                                     ),
                                   ),

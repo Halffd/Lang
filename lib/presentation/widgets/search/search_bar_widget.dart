@@ -27,7 +27,7 @@ class SearchBarWidget extends StatelessWidget {
         color: Theme.of(context).primaryColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -46,7 +46,7 @@ class SearchBarWidget extends StatelessWidget {
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: Colors.white.withOpacity(0.2),
+          fillColor: Colors.white.withValues(alpha: 0.2),
           prefixIcon: const Icon(Icons.search, color: Colors.white70),
           suffixIcon: controller.text.isNotEmpty
               ? IconButton(

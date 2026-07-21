@@ -180,7 +180,7 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
         if (_selectedRadicals.isNotEmpty) ...[
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -283,7 +283,7 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
           decoration: BoxDecoration(
             color: isSelected
                 ? Theme.of(context).primaryColor
-                : Theme.of(context).unselectedWidgetColor.withOpacity(0.08),
+                : Theme.of(context).unselectedWidgetColor.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(8),
             border: isSelected
                 ? Border.all(color: Theme.of(context).primaryColorDark, width: 2)
@@ -334,7 +334,7 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
         if (_currentDecomposition != null) ...[
           Container(
             padding: const EdgeInsets.all(12),
-            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -549,7 +549,7 @@ class _KanjiDetailSheet extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: const Text('音', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
@@ -566,7 +566,7 @@ class _KanjiDetailSheet extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).hintColor.withOpacity(0.1),
+                                  color: Theme.of(context).hintColor.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: const Text('訓', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),

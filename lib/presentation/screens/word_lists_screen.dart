@@ -162,8 +162,8 @@ class _WordListsScreenState extends State<WordListsScreen>
           borderRadius: BorderRadius.circular(10),
           gradient: LinearGradient(
             colors: [
-              Colors.grey[850]!.withOpacity(0.3),
-              Colors.grey[900]!.withOpacity(0.5),
+              Colors.grey[850]!.withValues(alpha: 0.3),
+              Colors.grey[900]!.withValues(alpha: 0.5),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,

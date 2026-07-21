@@ -736,9 +736,9 @@ class _ReaderScreenState extends State<ReaderScreen>
                   return Container(
                     decoration: isCurrentSentence
                         ? BoxDecoration(
-                            border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.3)),
+                            border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.3)),
                             borderRadius: BorderRadius.circular(8),
-                            color: Theme.of(context).primaryColor.withOpacity(0.05),
+                            color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
                           )
                         : null,
                     padding: const EdgeInsets.all(8),
@@ -874,7 +874,7 @@ class _ReaderScreenState extends State<ReaderScreen>
                   color: Theme.of(context).scaffoldBackgroundColor,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 4,
                       offset: const Offset(0, -2),
                     ),

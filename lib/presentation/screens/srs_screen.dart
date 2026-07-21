@@ -628,44 +628,14 @@ class _CardsTabState extends State<_CardsTab> {
                           crossAxisSpacing: 8,
                           mainAxisSpacing: 8,
                         ),
-                        child: Card(
-                          margin: const EdgeInsets.only(bottom: 6),
-                          child: ListTile(
-                            title: Text(card.word, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text(
-                              card.meaning.isNotEmpty ? card.meaning : (card.reading ?? ''),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: card.isDue ? Colors.orange : Colors.grey,
-                              ),
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (card.isDue)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red[100],
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: const Text('Due', style: TextStyle(color: Colors.red, fontSize: 12)),
-                                  ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${card.interval}d',
-                                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                                ),
-                              ],
-                            ),
-                            onTap: () => _showCardDetailSheet(card),
-                            onLongPress: () => _showAddCardSheet(editCard: card),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                        itemCount: cards.length,
+                        itemBuilder: (context, index) => _buildGridCard(cards[index]),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        itemCount: cards.length,
+                        itemBuilder: (context, index) => _buildListCard(cards[index]),
+                      ),
           ),
         ],
       ),
@@ -1269,7 +1239,7 @@ class _DeckManagerSheetState extends State<_DeckManagerSheet> {
 
                       return ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: deckColor.withOpacity(0.2),
+                          backgroundColor: deckColor.withValues(alpha: 0.2),
                           child: Text(deck.icon, style: const TextStyle(fontSize: 20)),
                         ),
                         title: Text(deck.name),
@@ -1777,6 +1747,7 @@ class _AddCardSheetState extends State<_AddCardSheet> {
         ),
       ),
     );
+      );
   }
 }
 
@@ -1941,7 +1912,7 @@ class _MediaButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: hasMedia ? Colors.green.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+          color: hasMedia ? Colors.green.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1),
           border: Border.all(color: hasMedia ? Colors.green : Colors.grey),
           borderRadius: BorderRadius.circular(8),
         ),
@@ -2132,6 +2103,9 @@ class _CardDetailSheet extends StatelessWidget {
           ],
           const SizedBox(height: 16),
           Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
               OutlinedButton.icon(onPressed: onEdit, icon: const Icon(Icons.edit), label: const Text('Edit')),
               OutlinedButton.icon(onPressed: onReset, icon: const Icon(Icons.refresh), label: const Text('Reset')),
               OutlinedButton.icon(
@@ -2144,6 +2118,7 @@ class _CardDetailSheet extends StatelessWidget {
           ),
         ],
       ),
+    );
     );
   }
 
