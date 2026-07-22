@@ -1,18 +1,28 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:screenshot/screenshot.dart';
-import 'package:lang/data/services/ocr_service.dart';
 import 'package:provider/provider.dart';
-import '../providers/analyzer_provider.dart';
+import 'package:lang/data/services/ocr_service.dart';
+import '../providers/analyzer_provider.dart'
 import '../../data/repositories/dictionary_service.dart';
+import 'browser/panels/definitions_panel.dart';
+import 'browser/panels/readings_panel.dart';
+import 'browser/panels/ocr_results_panel.dart';
+import 'browser/panels/hover_popup.dart';
+import 'browser/panels/status_bar.dart';
+import 'browser/widgets/web_view_widget.dart';
+import 'browser/widgets/url_bar.dart';
+import 'browser/widgets/loading_bar.dart';
+import 'browser/sheets/dark_mode_sheet.dart';
+import 'browser/sheets/ad_blocker_sheet.dart';
+import 'browser/sheets/blocked_urls_dialog.dart';
+import 'browser/sheets/mokuro_results_dialog.dart';
+import 'browser/sheets/menu_actions.dart';
 
 class BrowserScreen extends StatefulWidget {
   final String? initialUrl;
@@ -57,7 +67,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
   Rect? _selectionRect;
   bool _isSelectingRegion = false;
   bool _isDarkMode = false;
-  bool _darkModeInvertOnly = false; // pure invert vs dark mode CSS
+  bool _darkModeInvertOnly = false;
   bool _isAdBlockerEnabled = true;
   int _adsBlockedCount = 0;
   final Set<String> _blockedDomains = {};
@@ -137,161 +147,199 @@ class _BrowserScreenState extends State<BrowserScreen> {
     });
   }
 
-@override
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 0,
-        title: _buildUrlBar(theme),
-        actions: _buildActions(theme),
-        bottom: _buildStatusBar(theme),
-      ),
-      body: Column(
-        children: [
-          if (_lastError != null) _buildErrorBanner(theme),
-          if (_showDefinitionsPanel) _buildDefinitionsPanel(theme),
-          if (_showOcrResults)
-            Container(
-              height: 50,
-              color: theme.colorScheme.primaryContainer,
-              child: InkWell(
-                onTap: () => _showOcrResultsPanel(theme),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.text_fields, color: theme.colorScheme.primary),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${_detectedWords.length} words detected - Tap to view',
-                      style: TextStyle(color: theme.colorScheme.primary),
-                    ),
-                  ],
-                ),
+    return KeyboardListener(
+      focusNode: FocusNode(),
+      autofocus: true,
+      onKeyEvent: _handleKeyEvent,
+      child: Scaffold(
+        appBar: AppBar(
+          titleSpacing: 0,
+          title: UrlBar(
+            controller: _urlController,
+            focusNode: _urlFocusNode,
+            onSubmitted: _handleSubmit,
+            isLoading: _isLoading,
+          ),
+          actions: _buildActions(theme),
+          bottom: StatusBar(
+            showDefinitionsPanel: _showDefinitionsPanel,
+            showAllReadings: _showAllReadings,
+            isMokuroMode: _isMokuroMode,
+            isDarkMode: _isDarkMode,
+            isAdBlockerEnabled: _isAdBlockerEnabled,
+            adsBlockedCount: _adsBlockedCount,
+            selectedText: _selectedText,
+            onToggleDefinitions: () => setState(() {
+              _showDefinitionsPanel = !_showDefinitionsPanel;
+              if (_showDefinitionsPanel) _extractDefinitions();
+            }),
+            onToggleReadings: () => setState(() {
+              _showAllReadings = !_showAllReadings;
+              if (_showAllReadings) _extractReadings();
+            }),
+            onToggleMokuro: _toggleMokuroMode,
+            onToggleDarkMode: _showDarkModeOptions,
+            onToggleAdBlocker: _showAdBlockerOptions,
+          ),
+        ),
+        body: Column(
+          children: [
+            if (_lastError != null) _buildErrorBanner(theme),
+            if (_showDefinitionsPanel) DefinitionsPanel(
+              definitions: _definitions,
+              selectedText: _selectedText,
+              onSearchDefinition: _searchWordDefinition,
+            ),
+            if (_showOcrResults) OcrResultsPanel(
+              detectedWords: _detectedWords,
+              onTap: _showOcrResultsPanel,
+            ),
+            Expanded(
+              child: Stack(
+                children: [
+                  WebViewWidget(
+                    key: _webViewKey,
+                    controller: _controller,
+                    initialUrl: widget.initialUrl,
+                    onWebViewCreated: (controller) => _controller = controller,
+                    onLoadStart: (controller, url) {
+                      setState(() {
+                        _isLoading = true;
+                        _lastError = null;
+                        if (url != null) _urlController.text = url.toString();
+                      });
+                      _updateNavigationState();
+                    },
+                    onLoadStop: (controller, url) {
+                      setState(() {
+                        _isLoading = false;
+                        _loadProgress = 0;
+                        if (url != null) _urlController.text = url.toString();
+                      });
+                      _updateNavigationState();
+                    },
+                    onProgressChanged: (controller, progress) {
+                      setState(() => _loadProgress = progress / 100);
+                    },
+                    onReceivedError: (controller, request, error) {
+                      setState(() {
+                        _isLoading = false;
+                        _loadProgress = 0;
+                        _lastError = 'Failed to load: ${request.url}';
+                      });
+                    },
+                    onReceivedHttpError: (controller, request, errorResponse) {
+                      if (errorResponse.statusCode != 200 && errorResponse.statusCode != 204) {
+                        setState(() => _lastError = 'HTTP Error: ${errorResponse.statusCode}');
+                      }
+                    },
+                    shouldOverrideUrlLoading: (controller, navigationAction) async {
+                      return _shouldOverrideUrlLoading(navigationAction);
+                    },
+                    shouldInterceptFetchRequest: (controller, fetchRequest) async {
+                      return _shouldInterceptFetchRequest(fetchRequest);
+                    },
+                    onConsoleMessage: (controller, consoleMessage) {
+                      debugPrint('Browser console: ${consoleMessage.message}');
+                    },
+                    onScrollChanged: (controller, x, y) {
+                      setState(() => _showHoverPopup = false);
+                    },
+                  ),
+                  if (_isLoading) LoadingBar(progress: _loadProgress),
+                  if (_showHoverPopup && _hoveredUrl != null) HoverPopup(
+                    hoveredUrl: _hoveredUrl!,
+                    hoverPosition: _hoverPosition,
+                    onSave: (url) => _handleSaveToApp(url),
+                    onAnki: (url) => _handleAddToAnki(url),
+                    onDefine: (url) => _handleDefine(url),
+                    onOpen: (url) => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
+                    onClose: () => setState(() => _showHoverPopup = false),
+                  ),
+                  if (_showAllReadings) ReadingsPanel(
+                    readingsMap: _readingsMap,
+                    onSearch: _searchWordDefinition,
+                    onClose: () => setState(() => _showAllReadings = false),
+                  ),
+                  if (_isCapturingOcr) _buildOcrLoadingOverlay(theme),
+                ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildStatusBar(ThemeData theme) {
+    return StatusBar(
+      showDefinitionsPanel: _showDefinitionsPanel,
+      showAllReadings: _showAllReadings,
+      isMokuroMode: _isMokuroMode,
+      isDarkMode: _isDarkMode,
+      isAdBlockerEnabled: _isAdBlockerEnabled,
+      adsBlockedCount: _adsBlockedCount,
+      selectedText: _selectedText,
+      onToggleDefinitions: () => setState(() {
+        _showDefinitionsPanel = !_showDefinitionsPanel;
+        if (_showDefinitionsPanel) _extractDefinitions();
+      }),
+      onToggleReadings: () => setState(() {
+        _showAllReadings = !_showAllReadings;
+        if (_showAllReadings) _extractReadings();
+      }),
+      onToggleMokuro: _toggleMokuroMode,
+      onToggleDarkMode: _showDarkModeOptions,
+      onToggleAdBlocker: _showAdBlockerOptions,
+    );
+  }
+
+  Widget _buildErrorBanner(ThemeData theme) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: theme.colorScheme.errorContainer,
+      child: Row(
+        children: [
+          Icon(Icons.warning_amber, size: 18, color: theme.colorScheme.onErrorContainer),
+          const SizedBox(width: 8),
           Expanded(
-            child: Stack(
-              children: [
-                RepaintBoundary(
-                  key: _webViewKey,
-                  child: _buildWebView(),
-                ),
-                if (_isLoading) _buildLoadingBar(theme),
-                if (_showHoverPopup && _hoveredUrl != null) _buildHoverPopup(theme),
-                if (_showAllReadings && _readingsMap.isNotEmpty) _buildReadingsPanel(theme),
-                if (_isCapturingOcr)
-                  Container(
-                    color: Colors.black26,
-                    child: const Center(
-                      child: Card(
-                        child: Padding(
-                          padding: EdgeInsets.all(24),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              CircularProgressIndicator(),
-                              SizedBox(height: 16),
-                              Text('Processing OCR...'),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
+            child: Text(
+              _lastError!,
+              style: TextStyle(fontSize: 12, color: theme.colorScheme.onErrorContainer),
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, size: 16),
+            onPressed: () => setState(() => _lastError = null),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
           ),
         ],
       ),
     );
   }
 
-  PreferredSizeWidget _buildStatusBar(ThemeData theme) {
-    final isActive = _showDefinitionsPanel || _showAllReadings || _isMokuroMode;
-    return PreferredSize(
-      preferredSize: const Size.fromHeight(28),
-      child: Container(
-        height: 28,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        color: theme.colorScheme.surfaceContainerHighest,
-        child: Row(
-          children: [
-            _statusChip(
-              theme,
-              Icons.album,
-              'Definitions \\',
-              _showDefinitionsPanel,
-              () => setState(() => _showDefinitionsPanel = !_showDefinitionsPanel),
+  Widget _buildOcrLoadingOverlay(ThemeData theme) {
+    return Container(
+      color: Colors.black26,
+      child: const Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Processing OCR...'),
+              ],
             ),
-            const SizedBox(width: 8),
-            _statusChip(
-              theme,
-              Icons.translate,
-              'Readings Shift+R',
-              _showAllReadings,
-              () => setState(() => _showAllReadings = !_showAllReadings),
-            ),
-            const SizedBox(width: 8),
-            _statusChip(
-              theme,
-              Icons.auto_fix_high,
-              'Mokuro',
-              _isMokuroMode,
-              _toggleMokuroMode,
-            ),
-            const SizedBox(width: 8),
-            _statusChip(
-              theme,
-              Icons.brightness_3,
-              'Dark',
-              _isDarkMode,
-              _showDarkModeOptions,
-            ),
-            const SizedBox(width: 8),
-            _statusChip(
-              theme,
-              Icons.shield,
-              'Ad ${_adsBlockedCount > 0 ? '$_adsBlockedCount' : ''}',
-              _isAdBlockerEnabled,
-              _showAdBlockerOptions,
-            ),
-            const Spacer(),
-            if (_selectedText.isNotEmpty)
-              Text(
-                'Selected: ${_selectedText.length > 20 ? '${_selectedText.substring(0, 20)}...' : _selectedText}',
-                style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _statusChip(ThemeData theme, IconData icon, String label, bool isActive, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: isActive ? theme.colorScheme.primary.withValues(alpha: 0.2) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isActive ? theme.colorScheme.primary : theme.colorScheme.outline.withValues(alpha: 0.3),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 12, color: isActive ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(fontSize: 10, color: isActive ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-            ),
-          ],
         ),
       ),
     );
@@ -306,16 +354,12 @@ class _BrowserScreenState extends State<BrowserScreen> {
     if (key == LogicalKeyboardKey.backslash) {
       setState(() {
         _showDefinitionsPanel = !_showDefinitionsPanel;
-        if (_showDefinitionsPanel) {
-          _extractDefinitions();
-        }
+        if (_showDefinitionsPanel) _extractDefinitions();
       });
     } else if (isShift && key == LogicalKeyboardKey.keyR) {
       setState(() {
         _showAllReadings = !_showAllReadings;
-        if (_showAllReadings) {
-          _extractReadings();
-        }
+        if (_showAllReadings) _extractReadings();
       });
     }
   }
@@ -361,7 +405,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
     final readings = <String, List<String>>{};
     final japaneseReadingRegex = RegExp(r'([一-龯ヶ革命]+)\s*\[([^\]]+)\]');
     final chinesePinyinRegex = RegExp(r'([一-龯]+)\s*(pinyin[:\s]*([^<,\n]+))', caseSensitive: false);
-    final koreanRegex = RegExp(r'([가-힣]+)\s*\( ([^)]+) \)');
+    final koreanRegex = RegExp(r'([가-힣]+)\s*\(([^)]+)\)');
 
     for (final match in japaneseReadingRegex.allMatches(html)) {
       final word = match.group(1) ?? '';
@@ -390,586 +434,9 @@ class _BrowserScreenState extends State<BrowserScreen> {
     return readings;
   }
 
-  Widget _buildDefinitionsPanel(ThemeData theme) {
-    return Container(
-      height: 120,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        border: Border(bottom: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2))),
-      ),
-      child: _definitions.isEmpty && _selectedText.isEmpty
-          ? Center(child: Text('Select text on page and press \\ to see definitions', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5))))
-          : ListView.builder(
-              padding: const EdgeInsets.all(12),
-              scrollDirection: Axis.horizontal,
-              itemCount: _definitions.isEmpty ? 1 : _definitions.length,
-              itemBuilder: (context, index) {
-                if (_definitions.isEmpty) {
-                  return Center(child: Text('No definitions found for "$_selectedText"', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5))));
-                }
-                final word = _definitions[index];
-                return Card(
-                  margin: const EdgeInsets.only(right: 8),
-                  child: InkWell(
-                    onTap: () => _searchWordDefinition(word),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(word, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          const SizedBox(height: 4),
-                          Text('Tap to define', style: TextStyle(fontSize: 10, color: theme.colorScheme.primary)),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-    );
-  }
-
   void _searchWordDefinition(String word) {
     final searchUrl = 'https://www.google.com/search?q=define+$word';
     _controller?.loadUrl(urlRequest: URLRequest(url: WebUri(searchUrl)));
-  }
-
-  Widget _buildReadingsPanel(ThemeData theme) {
-    final screenSize = MediaQuery.of(context).size;
-    final panelWidth = screenSize.width * 0.35;
-    final panelHeight = screenSize.height * 0.6;
-
-    return Positioned(
-      right: 10,
-      top: 10,
-      child: Material(
-        elevation: 8,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: panelWidth.clamp(280.0, 400.0),
-          height: panelHeight.clamp(200.0, 500.0),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.translate, size: 18, color: theme.colorScheme.primary),
-                    const SizedBox(width: 8),
-                    Text(
-                      'All Readings (${_readingsMap.length} words)',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 18),
-                      onPressed: () => setState(() => _showAllReadings = false),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: _readingsMap.length,
-                  itemBuilder: (context, index) {
-                    final word = _readingsMap.keys.elementAt(index);
-                    final readings = _readingsMap[word]!;
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 6),
-                      child: Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    word,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                  ),
-                                ),
-                                InkWell(
-                                  onTap: () => _searchWordDefinition(word),
-                                  child: Icon(Icons.search, size: 16, color: theme.colorScheme.primary),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 4,
-                              children: readings.map((reading) {
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    reading,
-                                    style: TextStyle(fontSize: 10, color: theme.colorScheme.primary),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-
-  Widget _buildErrorBanner(ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: theme.colorScheme.errorContainer,
-      child: Row(
-        children: [
-          Icon(Icons.warning_amber, size: 18, color: theme.colorScheme.onErrorContainer),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              _lastError!,
-              style: TextStyle(fontSize: 12, color: theme.colorScheme.onErrorContainer),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.close, size: 16),
-            onPressed: () => setState(() => _lastError = null),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUrlBar(ThemeData theme) {
-    return Container(
-      height: 40,
-      margin: const EdgeInsets.only(right: 8),
-      child: TextField(
-        controller: _urlController,
-        focusNode: _urlFocusNode,
-        style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface),
-        decoration: InputDecoration(
-          hintText: 'Search or enter URL',
-          hintStyle: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
-          prefixIcon: Icon(Icons.search, size: 18, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-          filled: true,
-          fillColor: theme.colorScheme.surfaceContainerHighest,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(24),
-            borderSide: BorderSide.none,
-          ),
-        ),
-        onSubmitted: _handleSubmit,
-        onTap: () {
-          if (_urlController.text.isNotEmpty) {
-            _urlController.selection = TextSelection(baseOffset: 0, extentOffset: _urlController.text.length);
-          }
-        },
-      ),
-    );
-  }
-
-  List<Widget> _buildActions(ThemeData theme) {
-    return [
-      IconButton(
-        icon: const Icon(Icons.arrow_back_ios, size: 20),
-        onPressed: _canGoBack ? () => _controller?.goBack() : null,
-        tooltip: 'Back',
-      ),
-      IconButton(
-        icon: const Icon(Icons.arrow_forward_ios, size: 20),
-        onPressed: _canGoForward ? () => _controller?.goForward() : null,
-        tooltip: 'Forward',
-      ),
-      IconButton(
-        icon: const Icon(Icons.refresh, size: 22),
-        onPressed: () => _controller?.reload(),
-        tooltip: 'Refresh',
-      ),
-      IconButton(
-        icon: const Icon(Icons.home, size: 22),
-        onPressed: () => _handleSubmit('https://www.google.com'),
-        tooltip: 'Home',
-      ),
-      IconButton(
-        icon: Icon(_isMokuroMode ? Icons.auto_fix_high : Icons.document_scanner, size: 22, color: _isMokuroMode ? theme.colorScheme.primary : null),
-        onPressed: _toggleMokuroMode,
-        tooltip: 'Mokuro Mode (Screenshot OCR)',
-      ),
-      IconButton(
-        icon: Icon(_isCapturingOcr ? Icons.hourglass_empty : Icons.photo_camera, size: 22),
-        onPressed: _isCapturingOcr ? null : _captureScreenshot,
-        tooltip: 'Capture & OCR',
-      ),
-      if (_isMokuroMode)
-        IconButton(
-          icon: const Icon(Icons.crop_free, size: 22),
-          onPressed: _startRegionSelection,
-          tooltip: 'Select Region',
-        ),
-      IconButton(
-        icon: Icon(_isDarkMode ? Icons.brightness_3 : Icons.brightness_7, size: 22, color: _isDarkMode ? theme.colorScheme.primary : null),
-        onPressed: _showDarkModeOptions,
-        tooltip: 'Dark Mode',
-      ),
-      IconButton(
-        icon: Badge(
-          isLabelVisible: _adsBlockedCount > 0,
-          label: Text('$_adsBlockedCount'),
-          child: Icon(
-            _isAdBlockerEnabled ? Icons.shield : Icons.shield_outlined,
-            size: 22,
-            color: _isAdBlockerEnabled ? Colors.green : null,
-          ),
-        ),
-        onPressed: _showAdBlockerOptions,
-        tooltip: 'Ad Blocker',
-      ),
-      PopupMenuButton<String>(
-        icon: const Icon(Icons.more_vert, size: 22),
-        onSelected: _handleMenuAction,
-        itemBuilder: (context) => [
-          PopupMenuItem(
-            value: 'toggle_definitions',
-            child: _menuItemWithCheck(Icons.album, 'Definitions Panel', _showDefinitionsPanel),
-          ),
-          PopupMenuItem(
-            value: 'toggle_readings',
-            child: _menuItemWithCheck(Icons.translate, 'All Readings Panel', _showAllReadings),
-          ),
-          PopupMenuItem(
-            value: 'toggle_mokuro',
-            child: _menuItemWithCheck(Icons.auto_fix_high, 'Mokuro Mode', _isMokuroMode),
-          ),
-          const PopupMenuDivider(),
-          PopupMenuItem(value: 'ocr_from_camera', child: _menuItem(Icons.camera_alt, 'OCR from Camera')),
-          PopupMenuItem(value: 'ocr_from_gallery', child: _menuItem(Icons.photo_library, 'OCR from Gallery')),
-          const PopupMenuDivider(),
-          PopupMenuItem(
-            value: 'dark_mode_inverted',
-            child: _menuItemWithCheck(Icons.brightness_3, 'Dark Mode (Inverted)', _isDarkMode && !_darkModeInvertOnly),
-          ),
-          PopupMenuItem(
-            value: 'dark_mode_pure',
-            child: _menuItemWithCheck(Icons.brightness_2, 'Dark Mode (Pure)', _isDarkMode && _darkModeInvertOnly),
-          ),
-          const PopupMenuDivider(),
-          PopupMenuItem(
-            value: 'toggle_ad_blocker',
-            child: _menuItemWithCheck(Icons.shield, 'Ad Blocker', _isAdBlockerEnabled),
-          ),
-          PopupMenuItem(
-            value: 'view_blocked',
-            child: _menuItem(Icons.list, 'View Blocked (${_adsBlockedCount})'),
-          ),
-          const PopupMenuDivider(),
-          PopupMenuItem(value: 'share', child: _menuItem(Icons.share, 'Share')),
-          PopupMenuItem(value: 'copy', child: _menuItem(Icons.copy, 'Copy URL')),
-          PopupMenuItem(value: 'open_external', child: _menuItem(Icons.open_in_browser, 'Open in Browser')),
-          PopupMenuItem(value: 'stop', child: _menuItem(Icons.stop, 'Stop Loading')),
-          const PopupMenuDivider(),
-          PopupMenuItem(value: 'clear_cache', child: _menuItem(Icons.delete_outline, 'Clear Cache')),
-        ],
-      ),
-    ];
-  }
-
-  Widget _menuItem(IconData icon, String label) {
-    return Row(
-      children: [
-        Icon(icon, size: 20),
-        const SizedBox(width: 12),
-        Text(label),
-      ],
-    );
-  }
-
-  Widget _menuItemWithCheck(IconData icon, String label, bool isChecked) {
-    return Row(
-      children: [
-        Icon(icon, size: 20),
-        const SizedBox(width: 12),
-        Expanded(child: Text(label)),
-        if (isChecked) const Icon(Icons.check, size: 16),
-      ],
-    );
-  }
-
-  Widget _menuItemInfo(IconData icon, String label) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: Colors.grey),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.grey),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildWebView() {
-    return InAppWebView(
-      initialUrlRequest: URLRequest(
-        url: WebUri(widget.initialUrl ?? 'https://www.google.com'),
-      ),
-      initialSettings: InAppWebViewSettings(
-        javaScriptEnabled: true,
-        javaScriptCanOpenWindowsAutomatically: true,
-        mediaPlaybackRequiresUserGesture: false,
-        useShouldOverrideUrlLoading: true,
-        useShouldInterceptFetchRequest: true,
-        supportZoom: true,
-        transparentBackground: false,
-        cacheEnabled: true,
-        incognito: false,
-        verticalScrollBarEnabled: true,
-        horizontalScrollBarEnabled: true,
-        allowFileAccess: true,
-        allowContentAccess: true,
-        allowUniversalAccessFromFileURLs: true,
-        allowFileAccessFromFileURLs: true,
-        isInspectable: true,
-        userAgent: 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
-      ),
-      onWebViewCreated: (controller) {
-        _controller = controller;
-      },
-      onLoadStart: (controller, url) {
-        setState(() {
-          _isLoading = true;
-          _lastError = null;
-          if (url != null) _urlController.text = url.toString();
-        });
-        _updateNavigationState();
-      },
-      onLoadStop: (controller, url) {
-        setState(() {
-          _isLoading = false;
-          _loadProgress = 0;
-          if (url != null) _urlController.text = url.toString();
-        });
-        _updateNavigationState();
-      },
-      onProgressChanged: (controller, progress) {
-        setState(() {
-          _loadProgress = progress / 100;
-        });
-      },
-      onReceivedError: (controller, request, error) {
-        setState(() {
-          _isLoading = false;
-          _loadProgress = 0;
-          _lastError = 'Failed to load: ${request.url}';
-        });
-      },
-      onReceivedHttpError: (controller, request, errorResponse) {
-        if (errorResponse.statusCode != 200 && errorResponse.statusCode != 204) {
-          setState(() {
-            _lastError = 'HTTP Error: ${errorResponse.statusCode}';
-          });
-        }
-      },
-      shouldOverrideUrlLoading: (controller, navigationAction) async {
-        final url = navigationAction.request.url?.toString() ?? '';
-        final uri = navigationAction.request.url;
-
-        if (uri == null) return NavigationActionPolicy.CANCEL;
-
-        if (url.startsWith('tel:') || url.startsWith('mailto:') || url.startsWith('sms:') || url.startsWith('tg:')) {
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri);
-            return NavigationActionPolicy.CANCEL;
-          }
-        }
-
-        if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('file://') && !url.startsWith('data:')) {
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-            return NavigationActionPolicy.CANCEL;
-          }
-        }
-
-        return NavigationActionPolicy.ALLOW;
-      },
-      shouldInterceptFetchRequest: (controller, fetchRequest) async {
-        if (_isAdBlockerEnabled) {
-          final url = fetchRequest.url?.toString() ?? '';
-          if (_shouldBlockUrl(url)) {
-            _blockedUrls.add(url);
-            if (url.isNotEmpty) {
-              final uri = Uri.tryParse(url);
-              if (uri != null && uri.host.isNotEmpty) {
-                _blockedDomains.add(uri.host);
-              }
-            }
-            setState(() => _adsBlockedCount++);
-            debugPrint('Ad blocked: $url');
-            fetchRequest.action = FetchRequestAction.ABORT;
-            return fetchRequest;
-          }
-        }
-        return fetchRequest;
-      },
-      onConsoleMessage: (controller, consoleMessage) {
-        debugPrint('Browser console: ${consoleMessage.message}');
-      },
-      onScrollChanged: (controller, x, y) {
-        setState(() => _showHoverPopup = false);
-      },
-    );
-  }
-
-  Widget _buildLoadingBar(ThemeData theme) {
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      child: LinearProgressIndicator(
-        value: _loadProgress > 0 ? _loadProgress : null,
-        minHeight: 3,
-        backgroundColor: Colors.transparent,
-        valueColor: AlwaysStoppedAnimation(theme.colorScheme.primary),
-      ),
-    );
-  }
-
-  Widget _buildHoverPopup(ThemeData theme) {
-    final screenSize = MediaQuery.of(context).size;
-    const popupWidth = 340.0;
-    const popupHeight = 130.0;
-
-    double left = _hoverPosition.dx;
-    double top = _hoverPosition.dy + 10;
-
-    if (left + popupWidth > screenSize.width - 20) {
-      left = screenSize.width - popupWidth - 20;
-    }
-    if (top + popupHeight > screenSize.height - 20) {
-      top = _hoverPosition.dy - popupHeight - 20;
-    }
-
-    return Positioned(
-      left: left.clamp(10, screenSize.width - popupWidth - 10),
-      top: top.clamp(10, screenSize.height - popupHeight - 60),
-      child: Material(
-        elevation: 8,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: popupWidth,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.link, size: 16, color: theme.colorScheme.primary),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _hoveredUrl ?? '',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: theme.colorScheme.primary,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _hoverButton(theme, Icons.bookmark_add, 'Save', () {
-                    if (_hoveredUrl != null) _handleSaveToApp(_hoveredUrl!);
-                    setState(() => _showHoverPopup = false);
-                  }),
-                  _hoverButton(theme, Icons.style, 'Anki', () {
-                    if (_hoveredUrl != null) _handleAddToAnki(_hoveredUrl!);
-                    setState(() => _showHoverPopup = false);
-                  }),
-                  _hoverButton(theme, Icons.menu_book, 'Define', () {
-                    if (_hoveredUrl != null) _handleDefine(_hoveredUrl!);
-                    setState(() => _showHoverPopup = false);
-                  }),
-                  _hoverButton(theme, Icons.open_in_new, 'Open', () async {
-                    if (_hoveredUrl != null && !_hoveredUrl!.startsWith('data:')) {
-                      await launchUrl(Uri.parse(_hoveredUrl!), mode: LaunchMode.externalApplication);
-                    }
-                    setState(() => _showHoverPopup = false);
-                  }),
-                  _hoverButton(theme, Icons.close, 'Close', () {
-                    setState(() => _showHoverPopup = false);
-                  }),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _hoverButton(ThemeData theme, IconData icon, String label, VoidCallback onPressed) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: theme.colorScheme.primary),
-            const SizedBox(height: 2),
-            Text(label, style: TextStyle(fontSize: 10, color: theme.colorScheme.primary)),
-          ],
-        ),
-      ),
-    );
   }
 
   void _toggleMokuroMode() {
@@ -990,17 +457,230 @@ class _BrowserScreenState extends State<BrowserScreen> {
     }
   }
 
-  void _startRegionSelection() {
-    setState(() {
-      _isSelectingRegion = true;
-      _selectionRect = null;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Tap and drag to select region'),
-        duration: Duration(seconds: 2),
+  void _showDarkModeOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => DarkModeSheet(
+        isDarkMode: _isDarkMode,
+        darkModeInvertOnly: _darkModeInvertOnly,
+        onChanged: (enabled, invertOnly) {
+          setState(() {
+            _isDarkMode = enabled;
+            _darkModeInvertOnly = invertOnly;
+          });
+          _applyDarkMode();
+        },
       ),
     );
+  }
+
+  void _toggleAdBlocker() {
+    setState(() {
+      _isAdBlockerEnabled = !_isAdBlockerEnabled;
+      if (!_isAdBlockerEnabled) {
+        _adsBlockedCount = 0;
+        _blockedDomains.clear();
+        _blockedUrls.clear();
+      }
+    });
+    if (_isAdBlockerEnabled) {
+      _applyAdBlockerCss();
+    } else {
+      _removeAdBlockerCss();
+    }
+  }
+
+  void _showAdBlockerOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => AdBlockerSheet(
+        isAdBlockerEnabled: _isAdBlockerEnabled,
+        adsBlockedCount: _adsBlockedCount,
+        blockedDomainsCount: _blockedDomains.length,
+        blockedUrls: _blockedUrls,
+        onToggle: _toggleAdBlocker,
+        onViewBlocked: _showBlockedUrlsList,
+        onReload: () => _controller?.reload(),
+      ),
+    );
+  }
+
+  void _showBlockedUrlsList() {
+    showDialog(
+      context: context,
+      builder: (context) => BlockedUrlsDialog(
+        blockedUrls: _blockedUrls,
+        onClear: () {
+          setState(() {
+            _blockedUrls.clear();
+            _blockedDomains.clear();
+            _adsBlockedCount = 0;
+          });
+        },
+      ),
+    );
+  }
+
+  NavigationActionPolicy _shouldOverrideUrlLoading(NavigationAction navigationAction) {
+    final url = navigationAction.request.url?.toString() ?? '';
+    final uri = navigationAction.request.url;
+
+    if (uri == null) return NavigationActionPolicy.CANCEL;
+
+    if (url.startsWith('tel:') || url.startsWith('mailto:') || url.startsWith('sms:') || url.startsWith('tg:')) {
+      if (canLaunchUrl(uri)) {
+        launchUrl(uri);
+        return NavigationActionPolicy.CANCEL;
+      }
+    }
+
+    if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('file://') && !url.startsWith('data:')) {
+      if (canLaunchUrl(uri)) {
+        launchUrl(uri, mode: LaunchMode.externalApplication);
+        return NavigationActionPolicy.CANCEL;
+      }
+    }
+
+    return NavigationActionPolicy.ALLOW;
+  }
+
+  FetchRequest _shouldInterceptFetchRequest(FetchRequest fetchRequest) {
+    if (_isAdBlockerEnabled) {
+      final url = fetchRequest.url?.toString() ?? '';
+      if (_shouldBlockUrl(url)) {
+        _blockedUrls.add(url);
+        if (url.isNotEmpty) {
+          final uri = Uri.tryParse(url);
+          if (uri != null && uri.host.isNotEmpty) {
+            _blockedDomains.add(uri.host);
+          }
+        }
+        setState(() => _adsBlockedCount++);
+        debugPrint('Ad blocked: $url');
+        fetchRequest.action = FetchRequestAction.ABORT;
+        return fetchRequest;
+      }
+    }
+    return fetchRequest;
+  }
+
+  bool _shouldBlockUrl(String url) {
+    if (url.isEmpty || url == 'about:blank' || url.startsWith('data:')) {
+      return false;
+    }
+
+    try {
+      final uri = Uri.parse(url);
+      final host = uri.host.toLowerCase();
+
+      for (final adDomain in _adDomains) {
+        if (host == adDomain ||
+            host.endsWith('.$adDomain') ||
+            host == 'www.$adDomain') {
+          return true;
+        }
+      }
+
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static const Set<String> _adDomains = {
+    // Google
+    'doubleclick.net', 'googlesyndication.com', 'googleadservices.com',
+    'googleadsystem.com', 'googletag.com', 'googletagmanager.com',
+    'google-analytics.com', 'googletagservices.com', 'adservice.google.com',
+    'pagead2.googlesyndication.com', 'pubads.g.doubleclick.net',
+
+    // Facebook/Meta
+    'facebook.net', 'facebook.com/tr', 'connect.facebook.net', 'pixel.facebook.com',
+
+    // Microsoft
+    'bing.com', 'msn.com', 'clarity.ms',
+
+    // Twitter/X
+    't.co', 'analytics.twitter.com', 'ads-twitter.com',
+
+    // TikTok
+    'tiktok.com', 'tiktokcdn.com',
+
+    // Amazon
+    'amazon-adsystem.com', 'a9.com', 'amazon.com/ads',
+
+    // Apple
+    'apple.com/safari/privacy', 'iadsdk.apple.com',
+
+    // Major ad networks
+    'adnxs.com', 'adsrvr.org', 'advertising.com', 'adform.net', 'adcolony.com',
+    'admob.com', 'moatads.com', 'rubiconproject.com', 'pubmatic.com', 'openx.net',
+    'criteo.com', 'criteo.net', 'outbrain.com', 'taboola.com', 'teads.tv',
+    'sharethrough.com', 'triplelift.com', 'yieldmo.com', 'indexww.com',
+    'casalemedia.com', 'contextweb.com', 'smartadserver.com', 'sizmek.com',
+    'lijit.com', 'sovrn.com', 'bidswitch.net',
+
+    // Analytics/tracking
+    'analytics.google.com', 'segment.io', 'segment.com', 'mixpanel.com',
+    'amplitude.com', 'hotjar.com', 'crazyegg.com', 'optimizely.com',
+    'branch.io', 'adjust.com', 'appsflyer.com', 'app-measurement.com',
+    'heapanalytics.com', 'intercom.io', 'drift.com', 'zendesk.com', 'freshdesk.com',
+
+    // Mobile ad SDKs
+    'mopub.com', 'unity3d.com/ads', 'unityads.unity3d.com', 'applovin.com',
+    'vungle.com', 'chartboost.com', 'ironsource.com', 'mintegral.com',
+
+    // Pop-up/redirect
+    'popads.net', 'popcash.net', 'propellerads.com', 'exoclick.com',
+    'zedo.com', 'outbivo.com', 'blip.com',
+  };
+
+  Future<void> _applyDarkMode() async {
+    if (_controller == null) return;
+
+    final css = _darkModeInvertOnly ? _darkModeInvertOnlyCss : _darkModeCss;
+
+    if (_isDarkMode) {
+      await _controller?.evaluateJavascript(source: '''
+        (function() {
+          var style = document.createElement('style');
+          style.id = 'dark-mode-style';
+          style.type = 'text/css';
+          style.innerHTML = \`$css\`;
+          document.head.appendChild(style);
+        })();
+      ''');
+    } else {
+      await _controller?.evaluateJavascript(source: '''
+        (function() {
+          var style = document.getElementById('dark-mode-style');
+          if (style) style.remove();
+        })();
+      ''');
+    }
+  }
+
+  Future<void> _applyAdBlockerCss() async {
+    if (_controller == null) return;
+    await _controller?.evaluateJavascript(source: '''
+      (function() {
+        var style = document.createElement('style');
+        style.id = 'ad-blocker-style';
+        style.type = 'text/css';
+        style.innerHTML = `$_adBlockerCss`;
+        document.head.appendChild(style);
+      })();
+    ''');
+  }
+
+  Future<void> _removeAdBlockerCss() async {
+    if (_controller == null) return;
+    await _controller?.evaluateJavascript(source: '''
+      (function() {
+        var style = document.getElementById('ad-blocker-style');
+        if (style) style.remove();
+      })();
+    ''');
   }
 
   Future<void> _captureScreenshot() async {
@@ -1140,12 +820,12 @@ class _BrowserScreenState extends State<BrowserScreen> {
     for (final word in words.take(20)) {
       try {
         final result = await dictionaryService.searchTerm(word);
-              if (result.entries.isNotEmpty) {
-                final e = result.entries.first;
-                foundEntries.add({
-                  'word': word,
-                  'reading': e.reading,
-                  'meaning': e.definitions.isNotEmpty ? e.definitions.first : '',
+        if (result.entries.isNotEmpty) {
+          final e = result.entries.first;
+          foundEntries.add({
+            'word': word,
+            'reading': e.reading,
+            'meaning': e.definitions.isNotEmpty ? e.definitions.first : '',
           });
         }
       } catch (e) {
@@ -1156,736 +836,107 @@ class _BrowserScreenState extends State<BrowserScreen> {
     if (foundEntries.isNotEmpty && mounted) {
       _showMokuroResultsDialog(foundEntries);
     }
-}
-
-  // Only actual ad/tracking domains - matched exactly against host
-  static const Set<String> _adDomains = {
-    // Google
-    'doubleclick.net',
-    'googlesyndication.com',
-    'googleadservices.com',
-    'googleadsystem.com',
-    'googletag.com',
-    'googletagmanager.com',
-    'google-analytics.com',
-    'googletagservices.com',
-    'adservice.google.com',
-    'pagead2.googlesyndication.com',
-    'pubads.g.doubleclick.net',
-
-    // Facebook/Meta
-    'facebook.net',
-    'facebook.com/tr',
-    'connect.facebook.net',
-    'pixel.facebook.com',
-
-    // Microsoft
-    'bing.com',
-    'msn.com',
-    'clarity.ms',
-
-    // Twitter/X
-    't.co',
-    'analytics.twitter.com',
-    'ads-twitter.com',
-
-    // TikTok
-    'tiktok.com',
-    'tiktokcdn.com',
-
-    // Amazon
-    'amazon-adsystem.com',
-    'a9.com',
-    'amazon.com/ads',
-
-    // Apple
-    'apple.com/safari/privacy',
-    'iadsdk.apple.com',
-
-    // Major ad networks
-    'adnxs.com',
-    'adsrvr.org',
-    'advertising.com',
-    'adform.net',
-    'adcolony.com',
-    'admob.com',
-    'moatads.com',
-    'rubiconproject.com',
-    'pubmatic.com',
-    'openx.net',
-    'criteo.com',
-    'criteo.net',
-    'outbrain.com',
-    'taboola.com',
-    'teads.tv',
-    'sharethrough.com',
-    'triplelift.com',
-    'yieldmo.com',
-    'indexww.com',
-    'casalemedia.com',
-    'contextweb.com',
-    'smartadserver.com',
-    'sizmek.com',
-    'lijit.com',
-    'sovrn.com',
-    'bidswitch.net',
-
-    // Analytics/tracking (blocked as they often serve ads)
-    'analytics.google.com',
-    'segment.io',
-    'segment.com',
-    'mixpanel.com',
-    'amplitude.com',
-    'hotjar.com',
-    'crazyegg.com',
-    'optimizely.com',
-    'branch.io',
-    'adjust.com',
-    'appsflyer.com',
-    'app-measurement.com',
-    'heapanalytics.com',
-    'intercom.io',
-    'drift.com',
-    'zendesk.com',
-    'freshdesk.com',
-
-    // Mobile ad SDKs
-    'mopub.com',
-    'unity3d.com/ads',
-    'unityads.unity3d.com',
-    'applovin.com',
-    'vungle.com',
-    'chartboost.com',
-    'ironsource.com',
-    'mintegral.com',
-
-    // Pop-up/redirect networks
-    'popads.net',
-    'popcash.net',
-    'propellerads.com',
-    'exoclick.com',
-    'zedo.com',
-    'outbivo.com',
-    'blip.com',
-  };
-
-  // Only block the most common ad container selectors - be conservative
-  // to avoid hiding legitimate content
-  static const String _adBlockerCss = '''
-/* Hide common ad containers by class */
-.ads, .advert, .ad-container, .ad-wrapper, .ad-unit, .ad-banner,
-.advertisement, .sponsored, .promoted,
-[class*="google_ads"], [id*="google_ads"],
-iframe[src*="doubleclick"], iframe[src*="googlesyndication"],
-iframe[src*="dable"] {
-  display: none !important;
-  visibility: hidden !important;
-}
-''';
-
-  static const String _darkModeCss = '''
-html {
-  filter: invert(90%) hue-rotate(180deg) !important;
-  background-color: #111 !important;
-}
-img, video, canvas, svg, picture, [style*="background-image"] {
-  filter: invert(100%) hue-rotate(180deg) !important;
-}
-[style*="background: url"], [style*="background-url"] {
-  filter: invert(100%) hue-rotate(180deg) !important;
-}
-''';
-
-  static const String _darkModeInvertOnlyCss = '''
-html {
-  filter: invert(100%) !important;
-  background-color: #000 !important;
-}
-img, video, canvas, svg, picture {
-  filter: invert(100%) !important;
-}
-''';
-
-  void _toggleDarkMode() {
-    setState(() {
-      _isDarkMode = !_isDarkMode;
-    });
-    _applyDarkMode();
-  }
-
-  void _toggleDarkModeInvert() {
-    setState(() {
-      _isDarkMode = !_isDarkMode;
-      _darkModeInvertOnly = !_darkModeInvertOnly;
-    });
-    _applyDarkMode();
-  }
-
-  Future<void> _applyDarkMode() async {
-    if (_controller == null) return;
-
-    final css = _darkModeInvertOnly ? _darkModeInvertOnlyCss : _darkModeCss;
-
-    if (_isDarkMode) {
-      await _controller?.evaluateJavascript(source: '''
-        (function() {
-          var style = document.createElement('style');
-          style.id = 'dark-mode-style';
-          style.type = 'text/css';
-          style.innerHTML = \`$css\`;
-          document.head.appendChild(style);
-        })();
-      ''');
-    } else {
-      await _controller?.evaluateJavascript(source: '''
-        (function() {
-          var style = document.getElementById('dark-mode-style');
-          if (style) style.remove();
-        })();
-      ''');
-    }
-  }
-
-  void _showDarkModeOptions() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Icon(_isDarkMode ? Icons.check : Icons.brightness_3),
-              title: const Text('Dark Mode (Inverted)'),
-              subtitle: const Text('Inverts page colors - works on all sites'),
-              trailing: _isDarkMode && !_darkModeInvertOnly
-                  ? const Icon(Icons.check, color: Colors.green)
-                  : null,
-              onTap: () {
-                Navigator.pop(context);
-                _darkModeInvertOnly = false;
-                setState(() => _isDarkMode = true);
-                _applyDarkMode();
-              },
-            ),
-            ListTile(
-              leading: Icon(_isDarkMode ? Icons.check : Icons.brightness_2),
-              title: const Text('Dark Mode (Pure Invert)'),
-              subtitle: const Text('Pure color inversion'),
-              trailing: _isDarkMode && _darkModeInvertOnly
-                  ? const Icon(Icons.check, color: Colors.green)
-                  : null,
-              onTap: () {
-                Navigator.pop(context);
-                _darkModeInvertOnly = true;
-                setState(() => _isDarkMode = true);
-                _applyDarkMode();
-              },
-            ),
-            if (_isDarkMode)
-              ListTile(
-                leading: const Icon(Icons.brightness_5),
-                title: const Text('Turn Off'),
-                onTap: () {
-                  Navigator.pop(context);
-                  setState(() => _isDarkMode = false);
-                  _applyDarkMode();
-                },
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _toggleAdBlocker() {
-    setState(() {
-      _isAdBlockerEnabled = !_isAdBlockerEnabled;
-      if (!_isAdBlockerEnabled) {
-        _adsBlockedCount = 0;
-        _blockedDomains.clear();
-        _blockedUrls.clear();
-      }
-    });
-    if (_isAdBlockerEnabled) {
-      _applyAdBlockerCss();
-    } else {
-      _removeAdBlockerCss();
-    }
-  }
-
-  bool _shouldBlockUrl(String url) {
-    if (url.isEmpty || url == 'about:blank' || url.startsWith('data:')) {
-      return false;
-    }
-
-    try {
-      final uri = Uri.parse(url);
-      final host = uri.host.toLowerCase();
-
-      // Block exact domain matches and subdomains of known ad domains
-      for (final adDomain in _adDomains) {
-        if (host == adDomain ||
-            host.endsWith('.$adDomain') ||
-            host == 'www.$adDomain') {
-          return true;
-        }
-      }
-
-      return false;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  void _showAdBlockerOptions() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SwitchListTile(
-              title: const Text('Ad Blocker'),
-              subtitle: Text(_isAdBlockerEnabled ? 'Blocking ads' : 'Ads are allowed'),
-              value: _isAdBlockerEnabled,
-              onChanged: (value) {
-                Navigator.pop(context);
-                if (value != _isAdBlockerEnabled) {
-                  _toggleAdBlocker();
-                }
-              },
-            ),
-            if (_isAdBlockerEnabled && _adsBlockedCount > 0)
-              ListTile(
-                leading: const Icon(Icons.block),
-                title: Text('$_adsBlockedCount ads blocked'),
-                subtitle: Text('${_blockedDomains.length} domains blocked'),
-              ),
-            if (_isAdBlockerEnabled && _blockedUrls.isNotEmpty)
-              ListTile(
-                leading: const Icon(Icons.list),
-                title: const Text('View Blocked URLs'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showBlockedUrlsList();
-                },
-              ),
-            if (_isAdBlockerEnabled)
-              ListTile(
-                leading: const Icon(Icons.refresh),
-                title: const Text('Reload Page'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _controller?.reload();
-                },
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showBlockedUrlsList() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Blocked URLs (${_blockedUrls.length})'),
-        content: SizedBox(
-          width: double.maxFinite,
-          height: 300,
-          child: ListView.builder(
-            itemCount: _blockedUrls.length,
-            itemBuilder: (context, index) {
-              return ListTile(
-                dense: true,
-                leading: const Icon(Icons.block, size: 16),
-                title: Text(
-                  _blockedUrls.elementAt(index),
-                  style: const TextStyle(fontSize: 11),
-                ),
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              setState(() {
-                _blockedUrls.clear();
-                _blockedDomains.clear();
-                _adsBlockedCount = 0;
-              });
-            },
-            child: const Text('Clear'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _applyAdBlockerCss() async {
-    if (_controller == null) return;
-
-    await _controller?.evaluateJavascript(source: '''
-      (function() {
-        var style = document.createElement('style');
-        style.id = 'ad-blocker-style';
-        style.type = 'text/css';
-        style.innerHTML = \`$_adBlockerCss\`;
-        document.head.appendChild(style);
-      })();
-    ''');
-  }
-
-  Future<void> _removeAdBlockerCss() async {
-    if (_controller == null) return;
-
-    await _controller?.evaluateJavascript(source: '''
-      (function() {
-        var style = document.getElementById('ad-blocker-style');
-        if (style) style.remove();
-      })();
-    ''');
   }
 
   void _showMokuroResultsDialog(List<Map<String, dynamic>> entries) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.3,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) => Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.auto_fix_high),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Mokuro - ${entries.length} words found',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                controller: scrollController,
-                itemCount: entries.length,
-                itemBuilder: (context, index) {
-                  final entry = entries[index];
-                  return ListTile(
-                    title: Text(
-                      entry['word'] ?? '',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (entry['reading']?.isNotEmpty == true)
-                          Text(entry['reading'], style: TextStyle(color: Theme.of(context).colorScheme.primary)),
-                        if (entry['meaning']?.isNotEmpty == true)
-                          Text(entry['meaning'], maxLines: 2, overflow: TextOverflow.ellipsis),
-                      ],
-                    ),
-                    onTap: () {
-                      // Navigate to full definition
-                      Navigator.pop(context);
-                      _searchWord(entry['word'] ?? '');
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _searchWord(String word) {
-    final searchUrl = 'https://www.google.com/search?q=define+${Uri.encodeComponent(word)}';
-    _controller?.loadUrl(urlRequest: URLRequest(url: WebUri(searchUrl)));
-  }
-
-  void _showOcrResultsPanel(ThemeData theme) {
-    if (!_showOcrResults) return;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.4,
-        minChildSize: 0.2,
-        maxChildSize: 0.8,
-        expand: false,
-        builder: (context, scrollController) => Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.text_fields, color: theme.colorScheme.primary),
-                  const SizedBox(width: 8),
-                  Text(
-                    'OCR Results (${_detectedWords.length} words)',
-                    style: theme.textTheme.titleSmall,
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: _ocrExtractedText));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Copied to clipboard')),
-                      );
-                    },
-                    child: const Text('Copy'),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
-                      setState(() => _showOcrResults = false);
-                      Navigator.pop(context);
-                    },
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                controller: scrollController,
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: SelectableText(
-                        _ocrExtractedText,
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    if (_detectedWords.isNotEmpty) ...[
-                      Text('Detected Words:', style: theme.textTheme.titleSmall),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _detectedWords.map((word) {
-                          return ActionChip(
-                            label: Text(word),
-                            onPressed: () => _searchWord(word),
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _handleMenuAction(String action) async {
-    switch (action) {
-      case 'share':
-        if (_currentUrl != null) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Share: $_currentUrl')));
-        }
-        break;
-      case 'copy':
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('URL copied to clipboard')));
-        break;
-      case 'open_external':
-        if (_currentUrl != null) {
-          await launchUrl(_currentUrl!, mode: LaunchMode.externalApplication);
-        }
-        break;
-      case 'stop':
-        _controller?.stopLoading();
-        setState(() => _isLoading = false);
-        break;
-      case 'toggle_definitions':
-        setState(() {
-          _showDefinitionsPanel = !_showDefinitionsPanel;
-          if (_showDefinitionsPanel) {
-            _extractDefinitions();
-          }
-        });
-        break;
-      case 'toggle_readings':
-        setState(() {
-          _showAllReadings = !_showAllReadings;
-          if (_showAllReadings) {
-            _extractReadings();
-          }
-        });
-        break;
-      case 'toggle_mokuro':
-        _toggleMokuroMode();
-        break;
-      case 'dark_mode_inverted':
-        setState(() {
-          _darkModeInvertOnly = false;
-          _isDarkMode = true;
-        });
-        _applyDarkMode();
-        break;
-      case 'dark_mode_pure':
-        setState(() {
-          _darkModeInvertOnly = true;
-          _isDarkMode = true;
-        });
-        _applyDarkMode();
-        break;
-      case 'toggle_ad_blocker':
-        _toggleAdBlocker();
-        break;
-      case 'view_blocked':
-        _showBlockedUrlsList();
-        break;
-      case 'ocr_from_camera':
-        await _captureFromCamera();
-        break;
-      case 'ocr_from_gallery':
-        await _captureFromGallery();
-        break;
-      case 'clear_cache':
-        await _controller?.clearCache();
-        await InAppWebViewController.clearAllCache();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cache cleared')));
-        }
-        break;
-    }
-  }
-
-  void _handleSaveToApp(String url) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Save to Lang'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('URL: $url', style: const TextStyle(fontSize: 12)),
-            const SizedBox(height: 16),
-            const Text('Save this link to your app collection?'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Saved to Lang!')),
-              );
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+      builder: (context) => MokuroResultsDialog(entries: entries),
     );
   }
 
-  void _handleAddToAnki(String url) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add to Anki'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('URL: $url', style: const TextStyle(fontSize: 12)),
-            const SizedBox(height: 16),
-            const Text('Add this to your Anki deck?'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Added to Anki!')),
-              );
-            },
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
+  Future<void> _handleSaveToApp(String url) async {
+    // Handle saving URL to app
   }
 
-  void _handleDefine(String text) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Define'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Looking up: $text', style: const TextStyle(fontSize: 12)),
-            const SizedBox(height: 16),
-            const Text('Definition would appear here...'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              final searchUrl = 'https://www.google.com/search?q=define+${Uri.encodeComponent(text)}';
-              _controller?.loadUrl(urlRequest: URLRequest(url: WebUri(searchUrl)));
-            },
-            child: const Text('Search'),
-          ),
-        ],
-      ),
-    );
+  Future<void> _handleAddToAnki(String url) async {
+    // Handle adding to Anki
   }
+
+  Future<void> _handleDefine(String url) async {
+    // Handle definition lookup
+  }
+
+  static const String _adBlockerCss = '''
+  /* Hide common ad containers by class */
+  .ads, .advert, .ad-container, .ad-wrapper, .ad-unit, .ad-banner,
+  .advertisement, .sponsored, .promoted,
+  [class*="google_ads"], [id*="google_ads"],
+  iframe[src*="doubleclick"], iframe[src*="googlesyndication"],
+  iframe[src*="dable"] {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  ''';
+
+  static const String _darkModeCss = '''
+  html {
+    filter: invert(90%) hue-rotate(180deg) !important;
+    background-color: #111 !important;
+  }
+  img, video, canvas, svg, picture, [style*="background-image"] {
+    filter: invert(100%) hue-rotate(180deg) !important;
+  }
+  [style*="background: url"], [style*="background-url"] {
+    filter: invert(100%) hue-rotate(180deg) !important;
+  }
+  ''';
+
+  static const String _darkModeInvertOnlyCss = '''
+  html {
+    filter: invert(100%) !important;
+    background-color: #000 !important;
+  }
+  img, video, canvas, svg, picture {
+    filter: invert(100%) !important;
+  }
+  ''';
+
+  static const Set<String> _adDomains = {
+    // Google
+    'doubleclick.net', 'googlesyndication.com', 'googleadservices.com',
+    'googleadsystem.com', 'googletag.com', 'googletagmanager.com',
+    'google-analytics.com', 'googletagservices.com', 'adservice.google.com',
+    'pagead2.googlesyndication.com', 'pubads.g.doubleclick.net',
+
+    // Facebook/Meta
+    'facebook.net', 'facebook.com/tr', 'connect.facebook.net', 'pixel.facebook.com',
+
+    // Microsoft
+    'bing.com', 'msn.com', 'clarity.ms',
+
+    // Twitter/X
+    't.co', 'analytics.twitter.com', 'ads-twitter.com',
+
+    // TikTok
+    'tiktok.com', 'tiktokcdn.com',
+
+    // Amazon
+    'amazon-adsystem.com', 'a9.com', 'amazon.com/ads',
+
+    // Apple
+    'apple.com/safari/privacy', 'iadsdk.apple.com',
+
+    // Major ad networks
+    'adnxs.com', 'adsrvr.org', 'advertising.com', 'adform.net', 'adcolony.com',
+    'admob.com', 'moatads.com', 'rubiconproject.com', 'pubmatic.com', 'openx.net',
+    'criteo.com', 'criteo.net', 'outbrain.com', 'taboola.com', 'teads.tv',
+    'sharethrough.com', 'triplelift.com', 'yieldmo.com', 'indexww.com',
+    'casalemedia.com', 'contextweb.com', 'smartadserver.com', 'sizmek.com',
+    'lijit.com', 'sovrn.com', 'bidswitch.net',
+
+    // Analytics/tracking
+    'analytics.google.com', 'segment.io', 'segment.com', 'mixpanel.com',
+    'amplitude.com', 'hotjar.com', 'crazyegg.com', 'optimizely.com',
+    'branch.io', 'adjust.com', 'appsflyer.com', 'app-measurement.com',
+    'heapanalytics.com', 'intercom.io', 'drift.com', 'zendesk.com', 'freshdesk.com',
+
+    // Mobile ad SDKs
+    'mopub.com', 'unity3d.com/ads', 'unityads.unity3d.com', 'applovin.com',
+    'vungle.com', 'chartboost.com', 'ironsource.com', 'mintegral.com',
+
+    // Pop-up/redirect
+    'popads.net', 'popcash.net', 'propellerads.com', 'exoclick.com',
+    'zedo.com', 'outbivo.com', 'blip.com',
+  };
 }
