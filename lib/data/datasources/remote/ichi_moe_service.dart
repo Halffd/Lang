@@ -2,6 +2,7 @@ import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:html/dom.dart';
 import '../../../domain/entities/dictionary.dart' as model;
+import '../../../utils/html_sanitizer.dart';
 
 /// Service for scraping data from ichi.moe
 class IchiMoeService {
@@ -49,10 +50,11 @@ class IchiMoeService {
           if (dtElement == null) continue;
           
           String termReading = dtElement.innerHtml;
-          String extractedTerm = termReading;
+          final sanitizedTermReading = HtmlSanitizer.sanitize(termReading);
+          String extractedTerm = sanitizedTermReading;
           
           // Extract the actual term from the dt element (removing numbers if present)
-          final parts = termReading.split(' ');
+          final parts = sanitizedTermReading.split(' ');
           if (parts.length > 1 && int.tryParse(parts[0].substring(0, 1)) != null) {
             extractedTerm = parts[1];
           } else {
@@ -65,7 +67,7 @@ class IchiMoeService {
           
           for (final defElement in definitionElements) {
             if (defElement.innerHtml.isNotEmpty) {
-              definitions.add(defElement.innerHtml);
+              definitions.add(HtmlSanitizer.sanitize(defElement.innerHtml));
             }
           }
 
@@ -157,10 +159,11 @@ class IchiMoeService {
           if (dtElement == null) continue;
           
           String termReading = dtElement.innerHtml;
-          String extractedTerm = termReading;
+          final sanitizedTermReading = HtmlSanitizer.sanitize(termReading);
+          String extractedTerm = sanitizedTermReading;
           
           // Extract the actual term from the dt element (removing numbers if present)
-          final parts = termReading.split(' ');
+          final parts = sanitizedTermReading.split(' ');
           if (parts.length > 1 && int.tryParse(parts[0].substring(0, 1)) != null) {
             extractedTerm = parts[1];
           } else {
@@ -174,7 +177,7 @@ class IchiMoeService {
           // Check if we have compound information
           if (compoundElement != null && compoundSection != null && compoundDescWord != null) {
             // Use compound information as main content
-            mainContent = compoundSection.innerHtml;
+            mainContent = HtmlSanitizer.sanitize(compoundSection.innerHtml);
             // Process meanings separately
             for (final u in meaningElements) {
               if (u.innerHtml != null) {
@@ -191,10 +194,10 @@ class IchiMoeService {
               ddElement.innerHtml = '';
               for (final u in meaningElements) {
                 if (u.innerHtml != null) {
-                  ddElement.innerHtml += '<li>${u.innerHtml}</li>';
+                  ddElement.innerHtml += '<li>${HtmlSanitizer.sanitize(u.innerHtml)}</li>';
                 }
               }
-              mainContent = ddElement.innerHtml;
+              mainContent = HtmlSanitizer.sanitize(ddElement.innerHtml);
             }
           } 
           // Check if we have compound gloss
@@ -205,17 +208,17 @@ class IchiMoeService {
               ddElement.innerHtml = '';
               for (final u in meaningElements) {
                 if (u.innerHtml != null) {
-                  ddElement.innerHtml += '<li>${u.innerHtml}</li>';
+                  ddElement.innerHtml += '<li>${HtmlSanitizer.sanitize(u.innerHtml)}</li>';
                 }
               }
-              mainContent = ddElement.innerHtml;
+              mainContent = HtmlSanitizer.sanitize(ddElement.innerHtml);
             }
           } 
           // Default: just use the meanings
           else {
             for (final u in meaningElements) {
               if (u.innerHtml != null) {
-                mainContent += '<li>${u.innerHtml}</li>';
+                mainContent += '<li>${HtmlSanitizer.sanitize(u.innerHtml)}</li>';
               }
             }
           }
@@ -259,5 +262,6 @@ class IchiMoeService {
       print('Error fetching ichi.moe data with details: $e');
       return [];
     }
+  }
   }
 }

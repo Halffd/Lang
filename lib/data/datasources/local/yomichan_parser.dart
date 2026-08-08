@@ -273,11 +273,26 @@ class YomichanParser {
     return allMeta;
   }
   
-  /// Find file in archive (case-insensitive)
+  /// Find file in archive (case-insensitive) with path traversal protection
   ArchiveFile? _findFile(String fileName) {
+    // Validate filename for path traversal
+    if (_containsPathTraversal(fileName)) {
+      throw YomichanParseException(
+        'Potential path traversal detected in filename: $fileName',
+        file: fileName,
+      );
+    }
+
     // Try exact match first
     for (final file in _archive.files) {
       if (file.name == fileName) {
+        // Additional check on archive file name
+        if (_containsPathTraversal(file.name)) {
+          throw YomichanParseException(
+            'Potential path traversal detected in archive entry: ${file.name}',
+            file: file.name,
+          );
+        }
         return file;
       }
     }
@@ -286,11 +301,41 @@ class YomichanParser {
     final lowerFileName = fileName.toLowerCase();
     for (final file in _archive.files) {
       if (file.name.toLowerCase() == lowerFileName) {
+        // Additional check on archive file name
+        if (_containsPathTraversal(file.name)) {
+          throw YomichanParseException(
+            'Potential path traversal detected in archive entry: ${file.name}',
+            file: file.name,
+          );
+        }
         return file;
       }
     }
     
     return null;
+  }
+
+  /// Check for path traversal sequences in filename
+  bool _containsPathTraversal(String path) {
+    // Check for directory traversal sequences
+    if (path.contains('..') || path.contains('~') || path.startsWith('/')) {
+      return true;
+    }
+    
+    // Check for URL encoded traversal
+    final lowerPath = path.toLowerCase();
+    if (lowerPath.contains('%2e%2e') ||  // .. encoded
+        lowerPath.contains('%2e%2e%2f') ||  // ../ encoded
+        lowerPath.contains('%2e%2e%5c')) {   // ..\ encoded
+      return true;
+    }
+    
+    // Check for multiple slashes that could indicate traversal
+    if (path.contains('//') || path.contains('\\\\')) {
+      return true;
+    }
+    
+    return false;
   }
   
   /// Sanitize dictionary name for use as identifier

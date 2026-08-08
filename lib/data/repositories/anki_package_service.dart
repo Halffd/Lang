@@ -116,18 +116,20 @@ class AnkiPackageService {
     ''');
 
     db.execute(
-      "INSERT INTO col VALUES (1, $now, $now, $now, 11, 0, "
+      "INSERT INTO col VALUES (?, ?, ?, ?, ?, ?, "
       "'{\"curDeck\":1,\"lsrp\":1,\"timeLim\":0}', "
       "'{}', "
-      "'{\"1\":{\"name\":\"$deckName\",\"extendRev\":10,\"browserCollapsed\":false,\"collapsed\":false,\"daysSinceAck\":0,\"type\":1,\"mod\":$now}}', "
+      "'{\"1\":{\"name\":?,\"extendRev\":10,\"browserCollapsed\":false,\"collapsed\":false,\"daysSinceAck\":0,\"type\":1,\"mod\":?}}', "
       "'{\"1\":{\"name\":\"Default\",\"revs\":5,\"lapse\":8,\"leeches\":1,\"stop\":0,\"mult\":0,\"minIvl\":1,\"maxIvl\":36500,\"hardfactor\":1300}}', "
       "'[]')",
+      [1, now, now, now, 11, 0, deckName, now],
     );
 
     const modelId = 1730000000000;
     final modelJson = _generateModelJson(modelId);
     db.execute(
-      "UPDATE col SET models = '{\"$modelId\":$modelJson}' WHERE id = 1",
+      "UPDATE col SET models = ? WHERE id = 1",
+      ['{"$modelId":$modelJson}'],
     );
 
     const deckId = 1;
@@ -151,7 +153,8 @@ class AnkiPackageService {
       final tags = '';
 
       db.execute(
-        "INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum) VALUES ($noteId, '$guid', $modelId, $mod, $usn, '$tags', '$flds', $sfld, $csum)",
+        "INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [noteId, guid, modelId, mod, usn, tags, flds, sfld, csum],
       );
 
       final due = card.nextReview.millisecondsSinceEpoch ~/ 1000;
@@ -162,14 +165,18 @@ class AnkiPackageService {
 
       db.execute(
         "INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid) "
-        "VALUES ($cardId, $noteId, $deckId, 0, $mod, $usn, $type, $queue, $due, $ivl, $factor, ${card.reviewCount}, 0, 0, 0, 0)",
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [cardId, noteId, deckId, 0, mod, usn, type, queue, due, ivl, factor, card.reviewCount, 0, 0, 0, 0],
       );
 
       noteId++;
       cardId++;
     }
 
-    db.execute("UPDATE col SET decks = '{\"1\":{\"name\":\"$deckName\",\"extendRev\":10,\"browserCollapsed\":false,\"collapsed\":false,\"daysSinceAck\":0,\"type\":1,\"mod\":$now,\"id\":1}}' WHERE id = 1");
+    db.execute(
+      "UPDATE col SET decks = ? WHERE id = 1",
+      ['{"1":{"name":"$deckName","extendRev":10,"browserCollapsed":false,"collapsed":false,"daysSinceAck":0,"type":1,"mod":$now,"id":1}}'],
+    );
 
     db.dispose();
     final dbBytes = tempFile.readAsBytesSync();

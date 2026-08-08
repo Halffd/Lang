@@ -1,30 +1,29 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ForvoAudioService {
   static const String _baseUrl = 'https://apifree.forvo.com';
   static const String _forvoApiKeyPref = 'forvo_api_key';
+
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   String? _apiKey;
 
   String? get apiKey => _apiKey;
 
   Future<void> loadApiKey() async {
-    final prefs = await SharedPreferences.getInstance();
-    _apiKey = prefs.getString(_forvoApiKeyPref);
+    _apiKey = await _secureStorage.read(key: _forvoApiKeyPref);
   }
 
   Future<void> setApiKey(String key) async {
     _apiKey = key;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_forvoApiKeyPref, key);
+    await _secureStorage.write(key: _forvoApiKeyPref, value: key);
   }
 
   Future<void> clearApiKey() async {
     _apiKey = null;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_forvoApiKeyPref);
+    await _secureStorage.delete(key: _forvoApiKeyPref);
   }
 
   /// Search for pronunciation audio for a given word

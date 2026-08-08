@@ -2,13 +2,53 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class AnalysisRemoteDataSource {
-  final String apiUrl = 'http://localhost:5000';
+  static const String _defaultApiUrl = 'http://localhost:5000';
+  static const List<String> _allowedHosts = [
+    'localhost',
+    '127.0.0.1',
+    '[::1]',
+  ];
+
+  final String _apiUrl;
+
+  AnalysisRemoteDataSource({String? apiUrl}) : _apiUrl = _validateAndSanitizeUrl(apiUrl ?? _defaultApiUrl);
+
+  static String _validateAndSanitizeUrl(String url) {
+    try {
+      final uri = Uri.parse(url);
+      
+      // Validate scheme
+      if (uri.scheme != 'http' && uri.scheme != 'https') {
+        throw ArgumentError('Invalid scheme: ${uri.scheme}. Only http/https allowed.');
+      }
+      
+      // Validate host against allowlist
+      final host = uri.host;
+      if (!_allowedHosts.contains(host)) {
+        throw ArgumentError('Host not allowed: $host. Allowed: $_allowedHosts');
+      }
+      
+      // Validate port (optional but recommended)
+      if (uri.port != 80 && uri.port != 443 && uri.port != 5000) {
+        // Warn but allow for development
+        // In production, restrict to specific ports
+      }
+      
+      // Reconstruct URL to prevent injection
+      return uri.toString();
+    } catch (e) {
+      if (e is ArgumentError) rethrow;
+      throw ArgumentError('Invalid URL: $url');
+    }
+  }
+
+  String get apiUrl => _apiUrl;
 
   Future<List<String>> tokenize(String text, String lang) async {
     if (lang == 'zh') {
       try {
         final response = await http.post(
-          Uri.parse('$apiUrl/tokenize_zh'),
+          Uri.parse('$_apiUrl/tokenize_zh'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode({'text': text}),
         );
@@ -23,7 +63,7 @@ class AnalysisRemoteDataSource {
     } else if (lang == 'ja') {
       try {
         final response = await http.post(
-          Uri.parse('$apiUrl/analyze'),
+          Uri.parse('$_apiUrl/analyze'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode({'text': text}),
         );

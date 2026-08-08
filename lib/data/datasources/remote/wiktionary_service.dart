@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import '../../../utils/html_renderer.dart';
+import '../../../utils/html_sanitizer.dart';
 
 /// A service for fetching and parsing Wiktionary and Kanjipedia data
 class WiktionaryService {
@@ -143,6 +144,7 @@ class WiktionaryService {
       for (final element in elements) {
         final tagName = element.localName?.toLowerCase() ?? '';
         final innerHtml = element.innerHtml;
+        final sanitizedHtml = HtmlSanitizer.sanitize(innerHtml);
         final textContent = element.text.trim();
 
         // Check if this is a heading element that indicates a language section
@@ -169,15 +171,15 @@ class WiktionaryService {
         }
 
         // Add content to appropriate section based on flags
-        if (isInJapaneseSection && innerHtml.isNotEmpty) {
-          japaneseContent.add(innerHtml);
-        } else if (isInOriginSection && innerHtml.isNotEmpty && !textContent.contains('Chinese') && !textContent.contains('Glyph origin')) {
-          originContent.add(innerHtml);
-        } else if (isInAlternativeSection && innerHtml.isNotEmpty) {
-          alternativeContent.add(innerHtml);
-        } else if (innerHtml.isNotEmpty) {
-          allContent.add(innerHtml);
-          otherContent.add(innerHtml);
+        if (isInJapaneseSection && sanitizedHtml.isNotEmpty) {
+          japaneseContent.add(sanitizedHtml);
+        } else if (isInOriginSection && sanitizedHtml.isNotEmpty && !textContent.contains('Chinese') && !textContent.contains('Glyph origin')) {
+          originContent.add(sanitizedHtml);
+        } else if (isInAlternativeSection && sanitizedHtml.isNotEmpty) {
+          alternativeContent.add(sanitizedHtml);
+        } else if (sanitizedHtml.isNotEmpty) {
+          allContent.add(sanitizedHtml);
+          otherContent.add(sanitizedHtml);
         }
       }
     } catch (e) {
