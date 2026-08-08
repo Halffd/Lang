@@ -7,6 +7,7 @@ import '../../../domain/entities/dictionary.dart';
 import '../../../data/repositories/dictionary_service.dart';
 import '../../widgets/etymology_widget.dart';
 import '../../widgets/wiktionary_details_widget.dart';
+import '../../widgets/wikipedia_article_sheet.dart';
 import 'search_result_cards.dart';
 
 class SearchEntryDetailsPanel extends StatelessWidget {
@@ -69,6 +70,29 @@ class SearchEntryDetailsContent extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               label,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWikipediaButton(BuildContext context, DictionaryEntry entry) {
+    return InkWell(
+      onTap: () => showWikipediaArticle(context, entry.term, languageCode: 'ja'),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Column(
+          children: [
+            Icon(Icons.language, size: 24, color: Theme.of(context).primaryColor),
+            const SizedBox(height: 4),
+            Text(
+              'Wikipedia',
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).primaryColor,
@@ -197,12 +221,7 @@ class SearchEntryDetailsContent extends StatelessWidget {
               'Images',
               'https://www.google.com/search?tbm=isch&q=${Uri.encodeComponent(entry.term)}',
             ),
-            _buildExternalLinkButton(
-              context,
-              Icons.language,
-              'Wikipedia',
-              'https://ja.wikipedia.org/wiki/${Uri.encodeComponent(entry.term)}',
-            ),
+            _buildWikipediaButton(context, entry),
             _buildExternalLinkButton(
               context,
               Icons.menu_book,
