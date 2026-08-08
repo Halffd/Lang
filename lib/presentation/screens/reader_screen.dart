@@ -21,6 +21,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart' show showMenu, RelativeRect;
 import '../../data/datasources/document_text_extractor.dart';
 import '../../data/datasources/local_translation_service.dart';
+import '../../data/datasources/remote/wikipedia_service.dart';
+import '../widgets/wikipedia_article_sheet.dart';
 
 class ReaderScreen extends StatefulWidget {
   const ReaderScreen({Key? key}) : super(key: key);
@@ -585,6 +587,11 @@ class _ReaderScreenState extends State<ReaderScreen>
     }
   }
 
+  Future<void> _showWikipediaArticle(Token token) async {
+    if (token == null || token.text.isEmpty) return;
+    showWikipediaArticle(context, token.text, languageCode: 'ja');
+  }
+
   Future<void> _showIchiMoeDefinition(Token token) async {
     if (token == null || token.text.isEmpty) return;
 
@@ -818,6 +825,16 @@ class _ReaderScreenState extends State<ReaderScreen>
                                     ],
                                   ),
                                 ),
+                                const PopupMenuItem(
+                                  value: 'wikipedia',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.language, size: 18),
+                                      SizedBox(width: 8),
+                                      Text('Wikipedia'),
+                                    ],
+                                  ),
+                                ),
                               ],
                             ).then((value) async {
                               if (value != null) {
@@ -853,6 +870,9 @@ class _ReaderScreenState extends State<ReaderScreen>
                                     } else {
                                       appState.addAnkiWord(token.text);
                                     }
+                                    break;
+                                  case 'wikipedia':
+                                    await _showWikipediaArticle(token);
                                     break;
                                 }
                               }
