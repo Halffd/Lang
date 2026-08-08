@@ -47,6 +47,8 @@ class _ReaderScreenState extends State<ReaderScreen>
   int _currentWordIndex = 0;
   bool _showInput = true;
   DictionaryEntry? _expandedEntry;
+  Uint8List? _coverImage;
+  int _documentPageCount = 0;
 
   late ReaderTranslationService _readerTranslationService;
 
@@ -730,6 +732,35 @@ class _ReaderScreenState extends State<ReaderScreen>
         autofocus: true,
         child: Column(
           children: [
+            // Cover image display
+            if (!_showInput && _coverImage != null)
+              Container(
+                width: double.infinity,
+                constraints: const BoxConstraints(maxHeight: 200),
+                padding: const EdgeInsets.all(16),
+                child: Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.memory(
+                      _coverImage!,
+                      fit: BoxFit.contain,
+                      width: double.infinity,
+                      height: 200,
+                    ),
+                  ),
+                ),
+              ),
+            // Page count indicator
+            if (!_showInput && _documentPageCount > 0)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  '$_documentPageCount pages',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
             Expanded(
               child: ListView.separated(
                 controller: _scrollController,
@@ -950,9 +981,9 @@ class _ReaderScreenState extends State<ReaderScreen>
         const SnackBar(content: Text('Extracting text from document...')),
       );
 
-      final text = await _textExtractor.extractText(filePath);
+      final extracted = await _textExtractor.extractDocument(filePath);
 
-      if (text.trim().isEmpty) {
+      if (extracted.text.trim().isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No text content found in document')),
@@ -961,7 +992,12 @@ class _ReaderScreenState extends State<ReaderScreen>
         return;
       }
 
-      _textController.text = text;
+      setState(() {
+        _coverImage = extracted.coverImage;
+        _documentPageCount = extracted.pageCount;
+      });
+
+      _textController.text = extracted.text;
       await _analyzeText();
     } catch (e) {
       if (mounted) {

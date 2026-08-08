@@ -61,6 +61,7 @@ dependencies:
   video_player: ^2.9.2
   audioplayers: ^6.1.0
   record: ^5.1.2
+  pdfx: ^2.4.0
   permission_handler: ^11.3.1
   screenshot: ^3.0.0
   path_provider: ^2.1.5
