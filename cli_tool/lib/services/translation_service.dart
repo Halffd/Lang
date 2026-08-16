@@ -22,12 +22,19 @@ class TranslationResult {
   @override
   String toString() {
     final buffer = StringBuffer();
-    buffer.writeln('Translation: $fullTranslation');
     if (wordTranslations.isNotEmpty) {
+      final maxSourceLen = wordTranslations.map((w) => w.source.length).reduce((a, b) => a > b ? a : b);
+      final colWidth = maxSourceLen + 2;
+      buffer.writeln('${wordTranslations.map((w) => w.source).join(' ')}');
+      buffer.writeln(fullTranslation);
+      buffer.writeln('');
       buffer.writeln('Word-by-word:');
       for (final w in wordTranslations) {
-        buffer.writeln('  ${w.source} -> ${w.translation}');
+        final padded = w.source.padRight(colWidth);
+        buffer.writeln('$padded ${w.translation}');
       }
+    } else {
+      buffer.writeln(fullTranslation);
     }
     return buffer.toString();
   }
