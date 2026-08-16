@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../data/repositories/srs_service.dart';
+import 'package:lang/data/repositories/srs_service.dart';
 
 class SettingsTab extends StatefulWidget {
   final SRSService srsService;

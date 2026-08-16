@@ -2,13 +2,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:provider/provider.dart';
-import '../../data/services/anki_connect_service.dart';
-import '../../domain/entities/app_state.dart';
-import '../../l10n/app_localizations.dart';
-import '../../domain/entities/analyzed_word.dart';
-import '../providers/analyzer_provider.dart';
-import '../providers/ai_provider.dart';
-import '../../utils/pinyin_util.dart';
+import 'package:lang/data/services/anki_connect_service.dart';
+import 'package:lang/domain/entities/app_state.dart';
+import 'package:lang/l10n/app_localizations.dart';
+import 'package:lang/domain/entities/analyzed_word.dart';
+import 'package:lang/presentation/providers/analyzer_provider.dart';
+import 'package:lang/presentation/providers/ai_provider.dart';
+import 'package:lang/utils/pinyin_util.dart';
 
 class WordDetailSheet extends StatelessWidget {
   final AnalyzedWord word;

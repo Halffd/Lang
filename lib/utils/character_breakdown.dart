@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'chinese_util.dart';
-import '../../domain/entities/dictionary.dart' as model;
+import 'package:lang/domain/entities/dictionary.dart' as model;
 
 class CharacterBreakdown {
   /// Break down a compound word into individual characters with their meanings

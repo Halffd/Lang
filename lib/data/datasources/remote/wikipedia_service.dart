@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:html/dom.dart';
-import '../../utils/html_sanitizer.dart';
+import 'package:lang/utils/html_sanitizer.dart';
 
 /// A service for fetching and parsing Wikipedia content
 class WikipediaService {

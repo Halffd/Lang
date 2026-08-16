@@ -1,5 +1,5 @@
 import '../../domain/entities/srs_card.dart';
-import '../../domain/entities/dictionary.dart';
+import 'package:lang/domain/entities/dictionary.dart';
 
 /// Utility functions for converting between different data types and SRS cards
 class SRSConversionUtils {

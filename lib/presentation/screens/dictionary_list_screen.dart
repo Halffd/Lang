@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../domain/entities/dictionary.dart' as model;
-import '../../data/repositories/dictionary_service.dart';
-import 'import_screen.dart';
+import 'package:lang/domain/entities/dictionary.dart' as model;
+import 'package:lang/data/repositories/dictionary_service.dart';
+import 'package:lang/presentation/screens/import_screen.dart';
 
 class DictionaryListScreen extends StatefulWidget {
   const DictionaryListScreen({Key? key}) : super(key: key);

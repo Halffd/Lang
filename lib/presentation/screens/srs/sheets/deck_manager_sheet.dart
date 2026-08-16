@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../domain/entities/srs_card.dart';
-import '../../domain/entities/srs_deck.dart';
-import '../../data/repositories/srs_service.dart';
+import 'package:lang/domain/entities/srs_card.dart';
+import 'package:lang/domain/entities/srs_deck.dart';
+import 'package:lang/data/repositories/srs_service.dart';
 
 class DeckManagerSheet extends StatefulWidget {
   final SRSService srsService;
@@ -213,7 +213,6 @@ class _DeckManagerSheetState extends State<DeckManagerSheet> {
                     },
                   ),
             ),
-          ),
         ],
       ),
     );

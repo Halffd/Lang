@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/services/supabase_service.dart';
-import '../../core/services/realtime_sync_service.dart';
-import '../../data/datasources/supabase_data_source.dart';
+import 'package:lang/core/services/supabase_service.dart';
+import 'package:lang/core/services/realtime_sync_service.dart';
+import 'package:lang/data/datasources/supabase_data_source.dart';
 
 class SupabaseProvider with ChangeNotifier {
   final SupabaseService _supabaseService;

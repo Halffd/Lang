@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../domain/entities/srs_card.dart';
-import '../../data/repositories/srs_service.dart';
-import '../../utils/screen_size.dart';
+import 'package:lang/domain/entities/srs_card.dart';
+import 'package:lang/data/repositories/srs_service.dart';
+import 'package:lang/utils/screen_size.dart';
 
 class StudyTab extends StatefulWidget {
   final SRSService srsService;
@@ -215,6 +215,7 @@ class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin
                     child: _buildCardFace(card, showAnswer: true),
                   )
                 : _buildCardFace(card, showAnswer: false),
+          );
         },
       ),
     );
@@ -310,10 +311,5 @@ class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin
       style: ElevatedButton.styleFrom(backgroundColor: color, foregroundColor: Colors.white),
       child: Text('$label ($key)'),
     );
-  }
-
-  void _rateCard(int quality) {
-    // This is a stub - the actual implementation is in _rateCard with async
-    // We keep this for the UI callbacks
   }
 }

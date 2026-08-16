@@ -15,17 +15,17 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../../l10n/app_localizations.dart';
-import '../../domain/entities/srs_card.dart';
-import '../../domain/entities/srs_deck.dart';
-import '../../data/repositories/srs_service.dart';
-import '../../data/repositories/anki_package_service.dart';
-import '../providers/analyzer_provider.dart';
-import '../../utils/screen_size.dart';
-import 'srs/tabs/study_tab.dart';
-import 'srs/tabs/cards_tab.dart';
-import 'srs/tabs/stats_tab.dart';
-import 'srs/tabs/settings_tab.dart';
+import 'package:lang/l10n/app_localizations.dart';
+import 'package:lang/domain/entities/srs_card.dart';
+import 'package:lang/domain/entities/srs_deck.dart';
+import 'package:lang/data/repositories/srs_service.dart';
+import 'package:lang/data/repositories/anki_package_service.dart';
+import 'package:lang/presentation/providers/analyzer_provider.dart';
+import 'package:lang/utils/screen_size.dart';
+import 'package:lang/presentation/screens/srs/tabs/study_tab.dart';
+import 'package:lang/presentation/screens/srs/tabs/cards_tab.dart';
+import 'package:lang/presentation/screens/srs/tabs/stats_tab.dart';
+import 'package:lang/presentation/screens/srs/tabs/settings_tab.dart';
 
 class SRSScreen extends StatefulWidget {
   const SRSScreen({super.key});

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../domain/entities/srs_card.dart';
-import '../../data/repositories/srs_service.dart';
+import 'package:lang/domain/entities/srs_card.dart';
+import 'package:lang/data/repositories/srs_service.dart';
 
 class StatsTab extends StatelessWidget {
   final SRSService srsService;
@@ -17,13 +17,13 @@ class StatsTab extends StatelessWidget {
     final suspended = cards.where((c) => c.type == CardType.suspended).length;
 
     final avgEase = cards.isNotEmpty
-        ? (cards.map((c) => c.easeFactor).reduce((a, b) => a + b) / cards.length)
+        ? (cards.map((c) => c.easeFactor).reduce((a, b) => a + b) / cards.length).toDouble()
         : 2.5;
 
     final intervals = cards.map((c) => c.interval).where((i) => i > 0).toList();
     final avgInterval = intervals.isNotEmpty
-        ? intervals.reduce((a, b) => a + b) / intervals.length
-        : 0;
+        ? (intervals.reduce((a, b) => a + b) / intervals.length).toDouble()
+        : 0.0;
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -60,10 +60,18 @@ class StatsTab extends StatelessWidget {
 
   Widget _buildProgressSection(List<SRSCard> cards) {
     final due = cards.where((c) => c.isDue && c.type != CardType.suspended).length;
-    const _ProgressRow('Due', due, cards.length, Colors.orange),
-    const _ProgressRow('Learning', 0, cards.length, Colors.blue),
-    const _ProgressRow('Review', 0, cards.length, Colors.green),
-    const _ProgressRow('Mature', 0, cards.length, Colors.purple),
+    final learning = cards.where((c) => c.type == CardType.learning).length;
+    final review = cards.where((c) => c.type == CardType.review).length;
+    final mature = cards.where((c) => c.type == CardType.review && c.reviewCount > 8).length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _ProgressRow('Due', due, cards.length, Colors.orange),
+        _ProgressRow('Learning', learning, cards.length, Colors.blue),
+        _ProgressRow('Review', review, cards.length, Colors.green),
+        _ProgressRow('Mature', mature, cards.length, Colors.purple),
+      ],
+    );
   }
 
   Widget _buildStatsSummary(

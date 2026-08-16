@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../../domain/entities/app_state.dart';
-import '../../core/utils/word_list_mixins.dart';
-import '../../../domain/entities/dictionary.dart';
-import '../../data/repositories/dictionary_service.dart';
-import '../../core/services/storage_service.dart';
-import '../widgets/dictionary_entry_card.dart';
-import '../providers/analyzer_provider.dart';
-import '../../utils/screen_size.dart';
+import 'package:lang/domain/entities/app_state.dart';
+import 'package:lang/core/utils/word_list_mixins.dart';
+import 'package:lang/domain/entities/dictionary.dart';
+import 'package:lang/data/repositories/dictionary_service.dart';
+import 'package:lang/core/services/storage_service.dart';
+import 'package:lang/presentation/widgets/dictionary_entry_card.dart';
+import 'package:lang/presentation/providers/analyzer_provider.dart';
+import 'package:lang/utils/screen_size.dart';
 
 class WordListsScreen extends StatefulWidget {
   const WordListsScreen({super.key});

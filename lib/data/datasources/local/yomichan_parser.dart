@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:archive/archive_io.dart';
 import 'package:path/path.dart' as path;
-import '../../../domain/entities/dictionary.dart';
+import 'package:lang/domain/entities/dictionary.dart';
 
 class YomichanParseException implements Exception {
   final String message;

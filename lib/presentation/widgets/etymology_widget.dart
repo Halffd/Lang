@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../domain/entities/etymology_model.dart';
+import 'package:lang/domain/entities/etymology_model.dart';
 
 class EtymologyWidget extends StatelessWidget {
   final List<EtymologyEntry> etymologyEntries;
@@ -18,96 +18,57 @@ class EtymologyWidget extends StatelessWidget {
     }
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: Colors.grey[50],
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.history, color: Colors.orange),
-                const SizedBox(width: 8),
-                Text(
-                  'Etymology',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.orange[800],
-                      ),
-                ),
-              ],
+            Text(
+              'Etymology',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            ...etymologyEntries.asMap().entries.map((entry) {
-              final index = entry.key;
-              final etymology = entry.value;
-              return _buildEtymologyEntry(context, etymology, index);
-            }).toList(),
+            ...etymologyEntries.map((entry) => _buildEntry(context, entry)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildEtymologyEntry(BuildContext context, EtymologyEntry entry, int index) {
+  Widget _buildEntry(BuildContext context, EtymologyEntry entry) {
+    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.orange[100],
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              entry.originalLanguage.isEmpty ? 'Origin' : entry.originalLanguage,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Colors.orange[800],
+          if (entry.language != null) ...[
+            Text(
+              entry.language!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w600,
               ),
             ),
-          ),
-          const SizedBox(height: 8),
+            const SizedBox(height: 4),
+          ],
           Text(
-            entry.content,
-            style: const TextStyle(
-              fontSize: 14,
-              height: 1.5,
-            ),
+            entry.text,
+            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
           ),
-          if (entry.additionalLanguages.isNotEmpty) ...[
+          if (entry.cognates != null && entry.cognates!.isNotEmpty) ...[
             const SizedBox(height: 8),
-            ...entry.additionalLanguages.entries.map((langEntry) {
-              return Padding(
-                padding: const EdgeInsets.only(top: 4.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${langEntry.key}: ',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        langEntry.value,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: entry.cognates!.map((cognate) => Chip(
+                label: Text(cognate, style: const TextStyle(fontSize: 11)),
+                backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                labelPadding: EdgeInsets.zero,
+              )).toList(),
+            ),
           ],
         ],
       ),

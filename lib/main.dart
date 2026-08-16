@@ -94,7 +94,7 @@ void main() async {
     localDataSource: aiLocalDataSource,
   );
 
-  final analyzerProvider = AnalyzerProvider(repository);
+  final analyzerProvider = AnalyzerProvider();
   await analyzerProvider.init();
 
   final aiProvider = AiProvider(aiRepository);

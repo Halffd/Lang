@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../l10n/app_localizations.dart';
-import '../../domain/entities/app_state.dart';
+import 'package:lang/l10n/app_localizations.dart';
+import 'package:lang/domain/entities/app_state.dart';
 
 class DisplayOptionsSection extends StatelessWidget {
   const DisplayOptionsSection({super.key});
@@ -28,46 +28,19 @@ class DisplayOptionsSection extends StatelessWidget {
                   title: Text(localizations.showParticles),
                   subtitle: Text(localizations.highlightParticles),
                   value: appState.showParticles,
-                  onChanged: (value) {
-                    appState.setShowParticles(value);
-                  },
+                  onChanged: (value) => appState.setShowParticles(value),
                 ),
-                const Divider(),
                 SwitchListTile(
-                  title: Text(localizations.showKanji),
-                  subtitle: Text(localizations.displayKanjiInfo),
-                  value: appState.showKanji,
-                  onChanged: (value) {
-                    appState.setShowKanji(value);
-                  },
-                ),
-                const Divider(),
-                ListTile(
-                  title: Text(localizations.minFrequency),
-                  subtitle: Text(localizations.filterByFrequency),
-                  trailing: SizedBox(
-                    width: 100,
-                    child: TextField(
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                      controller: TextEditingController(text: appState.minFrequency.toString()),
-                      onChanged: (value) {
-                        final intValue = int.tryParse(value);
-                        if (intValue != null) {
-                          appState.setMinFrequency(intValue);
-                        }
-                      },
-                    ),
-                  ),
+                  title: Text(localizations.displayKanjiInfo),
+                  subtitle: Text(localizations.japaneseKanjiOriginAndUsage),
+                  value: appState.displayKanjiInfo,
+                  onChanged: (value) => appState.setDisplayKanjiInfo(value),
                 ),
               ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

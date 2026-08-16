@@ -74,6 +74,10 @@ set_target_properties(${BINARY_NAME}
 # them to the application.
 include(flutter/generated_plugins.cmake)
 
+# Disable deprecated literal operator warnings for flutter_secure_storage_linux
+# due to deprecated literal operator declarations in json.hpp
+target_compile_options(flutter_secure_storage_linux_plugin PRIVATE -Wno-deprecated-literal-operator)
+
 
 # === Installation ===
 # By default, "installing" just makes a relocatable bundle in the build

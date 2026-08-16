@@ -3,10 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'dart:convert';
-import '../../../domain/entities/dictionary.dart';
-import '../../utils/json_html_renderer.dart';
-import '../../utils/screen_size.dart';
-import 'tag_renderer.dart';
+import 'package:lang/domain/entities/dictionary.dart';
+import 'package:lang/utils/json_html_renderer.dart';
+import 'package:lang/utils/screen_size.dart';
+import 'package:lang/presentation/widgets/tag_renderer.dart';
 
 class DictionaryEntryCard extends StatelessWidget {
   final DictionaryEntry entry;

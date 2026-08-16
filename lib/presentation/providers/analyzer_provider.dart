@@ -1,14 +1,14 @@
-import 'package:provider/provider.dart';
-import '../data/services/dictionary/local_dictionary_service.dart';
-import '../data/services/dictionary/yomichan_service.dart';
-import '../data/services/dictionary/remote_dictionary_service.dart';
-import '../data/services/dictionary/language_detector.dart';
-import '../data/services/dictionary/search_service.dart';
-import '../data/services/dictionary/tokenizer_service.dart';
-import '../domain/entities/dictionary.dart' as model;
+import 'package:flutter/material.dart';
+import 'package:lang/data/services/dictionary/local_dictionary_service.dart';
+import 'package:lang/data/services/dictionary/yomichan_service.dart';
+import 'package:lang/data/services/dictionary/remote_dictionary_service.dart';
+import 'package:lang/data/services/dictionary/language_detector.dart';
+import 'package:lang/data/services/dictionary/search_service.dart';
+import 'package:lang/data/services/dictionary/tokenizer_service.dart';
+import 'package:lang/domain/entities/analyzed_word.dart';
 
 /// Unified dictionary service that delegates to specialized services
-class DictionaryService {
+class AnalyzerProvider extends ChangeNotifier {
   final LocalDictionaryService _localService = LocalDictionaryService();
   final YomichanService _yomichanService = YomichanService();
   final RemoteDictionaryService _remoteService = RemoteDictionaryService();
@@ -27,9 +27,9 @@ class DictionaryService {
   int _searchLimit = 100;
 
   // State
-  List<model.AnalyzedWord> _analyzedWords = [];
+  List<AnalyzedWord> _analyzedWords = [];
   Map<String, String> _sentences = {};
-  List<model.AnalyzedWord> _searchResults = [];
+  List<AnalyzedWord> _searchResults = [];
   bool _isSearching = false;
   bool _isLoading = false;
 
@@ -57,13 +57,14 @@ class DictionaryService {
   bool get showEtymology => _showEtymology;
   int get searchLimit => _searchLimit;
 
-  List<model.AnalyzedWord> get analyzedWords => _analyzedWords;
+  List<AnalyzedWord> get analyzedWords => _analyzedWords;
   Map<String, String> get sentences => _sentences;
-  List<model.AnalyzedWord> get searchResults => _searchResults;
+  List<AnalyzedWord> get searchResults => _searchResults;
   bool get isSearching => _isSearching;
   bool get isLoading => _isLoading;
   int get currentPage => _currentPage;
-  List<Map<String, dynamic>> get installedDictionaries => _installedDictionaries;
+  List<Map<String, dynamic>> get installedDictionaries =>
+      _installedDictionaries;
   List<Map<String, dynamic>> get savedWords => _savedWords;
   List<String> get history => _history;
 
@@ -73,25 +74,57 @@ class DictionaryService {
   WordGroupBy get groupBy => _groupBy;
 
   // Computed: filtered, sorted, grouped words
-  List<model.AnalyzedWord> get _filteredSortedWords {
-    var words = List<model.AnalyzedWord>.from(_analyzedWords);
+  List<AnalyzedWord> get _filteredSortedWords {
+    var words = List<AnalyzedWord>.from(_analyzedWords);
 
     // Apply filters
     if (_filter.minFrequency != null) {
-      words = words.where((w) => (w.frequency ?? 999999) >= _filter.minFrequency!).toList();
+      words = words
+          .where((w) => (w.frequency ?? 999999) >= _filter.minFrequency!)
+          .toList();
     }
     if (_filter.maxFrequency != null) {
-      words = words.where((w) => (w.frequency ?? 0) <= _filter.maxFrequency!).toList();
+      words = words
+          .where((w) => (w.frequency ?? 0) <= _filter.maxFrequency!)
+          .toList();
     }
     if (_filter.hasDefinition == true) {
-      words = words.where((w) => w.definitions.isNotEmpty || w.ichiMoeDefinitions.isNotEmpty || w.wiktionaryHtml != null).toList();
+      words = words
+          .where(
+            (w) =>
+                w.ichiMoeDefinitions.isNotEmpty ||
+                w.localDefinitions.isNotEmpty ||
+                (w.mdbgData?.definitions.isNotEmpty ?? false) ||
+                w.wiktionaryHtml != null,
+          )
+          .toList();
     } else if (_filter.hasDefinition == false) {
-      words = words.where((w) => w.definitions.isEmpty && w.ichiMoeDefinitions.isEmpty && w.wiktionaryHtml == null).toList();
+      words = words
+          .where(
+            (w) =>
+                w.ichiMoeDefinitions.isEmpty &&
+                w.localDefinitions.isEmpty &&
+                (w.mdbgData?.definitions.isEmpty ?? true) &&
+                w.wiktionaryHtml == null,
+          )
+          .toList();
     }
     if (_filter.hasReading == true) {
-      words = words.where((w) => (w.reading?.isNotEmpty ?? false) || (w.mdbgData?.pinyin.isNotEmpty ?? false)).toList();
+      words = words
+          .where(
+            (w) =>
+                (w.reading?.isNotEmpty ?? false) ||
+                (w.mdbgData?.pinyin?.isNotEmpty ?? false),
+          )
+          .toList();
     } else if (_filter.hasReading == false) {
-      words = words.where((w) => (w.reading?.isEmpty ?? true) && (w.mdbgData?.pinyin.isEmpty ?? true)).toList();
+      words = words
+          .where(
+            (w) =>
+                (w.reading?.isEmpty ?? true) &&
+                (w.mdbgData?.pinyin?.isEmpty ?? true),
+          )
+          .toList();
     }
     if (_filter.hasKanji == true) {
       words = words.where((w) => w.kanjiList.isNotEmpty).toList();
@@ -107,21 +140,37 @@ class DictionaryService {
     }
     if (_filter.query?.isNotEmpty ?? false) {
       final q = _filter.query!.toLowerCase();
-      words = words.where((w) => 
-        w.word.toLowerCase().contains(q) || 
-        (w.reading?.toLowerCase().contains(q) ?? false) ||
-        (w.mdbgData?.pinyin.toLowerCase().contains(q) ?? false) ||
-        w.definitions.any((d) => d.toLowerCase().contains(q))
-      ).toList();
+      words = words
+          .where(
+            (w) =>
+                w.word.toLowerCase().contains(q) ||
+                (w.reading?.toLowerCase().contains(q) ?? false) ||
+                (w.mdbgData?.pinyin?.toLowerCase().contains(q) ?? false) ||
+                w.ichiMoeDefinitions.any((d) => d.toLowerCase().contains(q)) ||
+                w.localDefinitions.any(
+                  (d) => (d['definition'] as String? ?? '')
+                      .toLowerCase()
+                      .contains(q),
+                ) ||
+                (w.mdbgData?.definitions.any(
+                      (d) => d.toLowerCase().contains(q),
+                    ) ??
+                    false),
+          )
+          .toList();
     }
     if (_filter.frequencyBands?.isNotEmpty ?? false) {
       words = words.where((w) {
         final freq = w.frequency ?? 999999;
         int band;
-        if (freq <= 1000) band = 0;
-        else if (freq <= 5000) band = 1;
-        else if (freq <= 15000) band = 2;
-        else band = 3;
+        if (freq <= 1000)
+          band = 0;
+        else if (freq <= 5000)
+          band = 1;
+        else if (freq <= 15000)
+          band = 2;
+        else
+          band = 3;
         return _filter.frequencyBands!.contains(band);
       }).toList();
     }
@@ -143,7 +192,15 @@ class DictionaryService {
           cmp = a.kanjiList.length.compareTo(b.kanjiList.length);
           break;
         case WordSortBy.definitionCount:
-          cmp = a.definitions.length.compareTo(b.definitions.length);
+          final aCount =
+              a.ichiMoeDefinitions.length +
+              a.localDefinitions.length +
+              (a.mdbgData?.definitions.length ?? 0);
+          final bCount =
+              b.ichiMoeDefinitions.length +
+              b.localDefinitions.length +
+              (b.mdbgData?.definitions.length ?? 0);
+          cmp = aCount.compareTo(bCount);
           break;
         case WordSortBy.wordLength:
           cmp = a.word.length.compareTo(b.word.length);
@@ -155,11 +212,13 @@ class DictionaryService {
     return words;
   }
 
-  List<model.AnalyzedWord> get pagedWords {
+  List<AnalyzedWord> get pagedWords {
     final words = _filteredSortedWords;
     if (words.isEmpty) return [];
     final start = _currentPage * _itemsPerPage;
-    final end = (start + _itemsPerPage > words.length) ? words.length : start + _itemsPerPage;
+    final end = (start + _itemsPerPage > words.length)
+        ? words.length
+        : start + _itemsPerPage;
     if (start >= words.length) return [];
     return words.sublist(start, end);
   }
@@ -171,20 +230,24 @@ class DictionaryService {
   }
 
   // Grouped words for display
-  Map<String, List<model.AnalyzedWord>> get groupedWords {
+  Map<String, List<AnalyzedWord>> get groupedWords {
     final words = _filteredSortedWords;
     if (_groupBy == WordGroupBy.none) return {'All': words};
 
-    final groups = <String, List<model.AnalyzedWord>>{};
+    final groups = <String, List<AnalyzedWord>>{};
     for (final word in words) {
       String key;
       switch (_groupBy) {
         case WordGroupBy.frequencyBand:
           final freq = word.frequency ?? 999999;
-          if (freq <= 1000) key = 'Top 1K (Very Common)';
-          else if (freq <= 5000) key = '1K-5K (Common)';
-          else if (freq <= 15000) key = '5K-15K (Uncommon)';
-          else key = '15K+ (Rare)';
+          if (freq <= 1000)
+            key = 'Top 1K (Very Common)';
+          else if (freq <= 5000)
+            key = '1K-5K (Common)';
+          else if (freq <= 15000)
+            key = '5K-15K (Uncommon)';
+          else
+            key = '15K+ (Rare)';
           break;
         case WordGroupBy.firstChar:
           key = word.word.isNotEmpty ? word.word[0].toUpperCase() : '?';
@@ -193,10 +256,19 @@ class DictionaryService {
           key = '${word.kanjiList.length} Kanji';
           break;
         case WordGroupBy.hasReading:
-          key = (word.reading?.isNotEmpty ?? false) || (word.mdbgData?.pinyin.isNotEmpty ?? false) ? 'Has Reading' : 'No Reading';
+          key =
+              (word.reading?.isNotEmpty ?? false) ||
+                  (word.mdbgData?.pinyin?.isNotEmpty ?? false)
+              ? 'Has Reading'
+              : 'No Reading';
           break;
         case WordGroupBy.hasDefinition:
-          key = (word.definitions.isNotEmpty || word.ichiMoeDefinitions.isNotEmpty || word.wiktionaryHtml != null) ? 'Has Definition' : 'No Definition';
+          final hasDef =
+              word.ichiMoeDefinitions.isNotEmpty ||
+              word.localDefinitions.isNotEmpty ||
+              (word.mdbgData?.definitions.isNotEmpty ?? false) ||
+              word.wiktionaryHtml != null;
+          key = hasDef ? 'Has Definition' : 'No Definition';
           break;
         default:
           key = 'All';
@@ -283,35 +355,6 @@ class DictionaryService {
     }
   }
 
-  // --- Filter, Sort, Group Methods ---
-
-  void setFilter(WordFilter filter) {
-    _filter = filter;
-    _currentPage = 0;
-    notifyListeners();
-  }
-
-  void clearFilters() {
-    _filter = WordFilter();
-    _currentPage = 0;
-    notifyListeners();
-  }
-
-  void setSortBy(WordSortBy sortBy, {bool? ascending}) {
-    if (_sortBy == sortBy && ascending == null) {
-      _sortAscending = !_sortAscending;
-    } else {
-      _sortBy = sortBy;
-      if (ascending != null) _sortAscending = ascending;
-    }
-    notifyListeners();
-  }
-
-  void setGroupBy(WordGroupBy groupBy) {
-    _groupBy = groupBy;
-    notifyListeners();
-  }
-
   // --- Search Methods ---
 
   Future<void> searchWord(String query) async {
@@ -321,7 +364,22 @@ class DictionaryService {
 
     try {
       await addToHistory(query);
-      _searchResults = await _yomichanService.lookupWord(query, _currentLanguage);
+      final results = await _yomichanService.lookupWord(
+        query,
+        _currentLanguage,
+      );
+      _searchResults = results
+          .map(
+            (r) => AnalyzedWord(
+              word: r.entry.word,
+              reading: r.entry.reading,
+              frequency: r.entry.frequency,
+              ichiMoeDefinitions: r.entry.definitions
+                  .where((d) => d.isNotEmpty)
+                  .toList(),
+            ),
+          )
+          .toList();
     } catch (e) {
       debugPrint('Search error: $e');
       _searchResults = [];
@@ -331,7 +389,7 @@ class DictionaryService {
     }
   }
 
-  Future<model.AnalyzedWord?> lookupHistoryWord(String word) async {
+  Future<AnalyzedWord?> lookupHistoryWord(String word) async {
     try {
       return await _yomichanService.enrichWord(
         word,
@@ -361,33 +419,46 @@ class DictionaryService {
     try {
       if (text.length < 50) await addToHistory(text);
 
-      final tokens = await _tokenizerService.tokenizeText(text, _currentLanguage);
+      final tokens = await _tokenizerService.tokenize(text);
       _sentences = _tokenizerService.splitSentences(tokens);
 
-      final uniqueTokens = tokens.toSet().toList().where((t) {
-        final trimmed = t.trim();
-        return trimmed.isNotEmpty && !RegExp(r'^\d+$').hasMatch(trimmed);
-      }).toList().take(_searchLimit).toList();
+      final uniqueTokens = tokens
+          .toSet()
+          .toList()
+          .where((t) {
+            final trimmed = t.surface.trim();
+            return trimmed.isNotEmpty && !RegExp(r'^\d+$').hasMatch(trimmed);
+          })
+          .toList()
+          .take(_searchLimit)
+          .toList();
 
       _analyzedWords = [];
 
       const chunkSize = 5;
       for (var i = 0; i < uniqueTokens.length; i += chunkSize) {
-        final chunk = uniqueTokens.sublist(i, i + chunkSize > uniqueTokens.length ? uniqueTokens.length : i + chunkSize);
+        final chunk = uniqueTokens.sublist(
+          i,
+          i + chunkSize > uniqueTokens.length
+              ? uniqueTokens.length
+              : i + chunkSize,
+        );
 
-        final chunkResults = await Future.wait(chunk.map((token) async {
-          final result = await _yomichanService.enrichWord(
-            token,
-            _currentLanguage,
-            showIchiMoe: _showIchiMoe,
-            showWiktionary: _showWiktionary,
-            showKanji: _showKanji,
-            showEtymology: _showEtymology,
-          );
-          return result.copyWith(sentence: _sentences[token]);
-        }));
+        final chunkResults = await Future.wait(
+          chunk.map((token) async {
+            final result = await _yomichanService.enrichWord(
+              token.surface,
+              _currentLanguage,
+              showIchiMoe: _showIchiMoe,
+              showWiktionary: _showWiktionary,
+              showKanji: _showKanji,
+              showEtymology: _showEtymology,
+            );
+            return result?.copyWith(sentence: _sentences[token.surface]);
+          }),
+        );
 
-        _analyzedWords.addAll(chunkResults);
+        _analyzedWords.addAll(chunkResults.whereType<AnalyzedWord>());
         notifyListeners();
       }
     } catch (e) {
@@ -401,7 +472,8 @@ class DictionaryService {
   // --- Dictionary Management ---
 
   Future<void> refreshDictionaries() async {
-    _installedDictionaries = await _yomichanService.getDictionaries();
+    final dicts = await _yomichanService.getDictionaries();
+    _installedDictionaries = dicts.map((d) => d.toMap()).toList();
     notifyListeners();
   }
 
@@ -409,8 +481,8 @@ class DictionaryService {
     // Implementation would use file picker
   }
 
-  Future<void> deleteDictionary(String title) async {
-    await _yomichanService.deleteDictionary(title);
+  Future<void> deleteDictionary(int id) async {
+    await _yomichanService.deleteDictionary(id);
     await refreshDictionaries();
   }
 
@@ -445,14 +517,14 @@ class DictionaryService {
   }
 
   Future<void> init() async {
-    await _yomichanService.init();
-    await refreshDictionaries();
-    await refreshUserData();
+    try {
+      await _yomichanService.init();
+      await refreshDictionaries();
+      await refreshUserData();
+    } catch (e) {
+      debugPrint('AnalyzerProvider init error: $e');
+    }
     notifyListeners();
-  }
-
-  Future<void> playAudio(String text) async {
-    await _yomichanService.playAudio(text, _currentLanguage);
   }
 
   // --- Translation Methods ---
@@ -468,8 +540,6 @@ class DictionaryService {
   }
 
   // --- Filter, Sort, Group Enums ---
-
-  // Filter, Sort, Group state moved to separate classes
 }
 
 class WordFilter {
@@ -539,9 +609,20 @@ class WordFilter {
   }
 }
 
-enum WordSortBy { word, frequency, reading, kanjiCount, definitionCount, wordLength }
-enum WordGroupBy { none, frequencyBand, firstChar, kanjiCount, hasReading, hasDefinition }
+enum WordSortBy {
+  word,
+  frequency,
+  reading,
+  kanjiCount,
+  definitionCount,
+  wordLength,
+}
 
-mixin ChangeNotifier {
-  void notifyListeners() {}
+enum WordGroupBy {
+  none,
+  frequencyBand,
+  firstChar,
+  kanjiCount,
+  hasReading,
+  hasDefinition,
 }

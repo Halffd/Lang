@@ -1,12 +1,12 @@
-import 'package:chinese/chinese.dart';
-import '../../utils/ideographic_util.dart';
-import '../../utils/japanese_grammar.dart';
+import 'package:lang/utils/ideographic_util.dart';
+import 'package:lang/utils/chinese_util.dart';
+import 'package:lang/utils/japanese_utils.dart';
 
 /// Service for detecting the language/script of input text
 class LanguageDetector {
-  static const LanguageDetector _instance = LanguageDetector._internal();
+  static final LanguageDetector _instance = LanguageDetector._internal();
   factory LanguageDetector() => _instance;
-  const LanguageDetector._internal();
+  LanguageDetector._internal();
 
   final KanaKit _kanaKit = KanaKit();
 

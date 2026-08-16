@@ -38,7 +38,7 @@ class DocumentTextExtractor {
       
       for (int i = 1; i <= pageCount; i++) {
         final page = await pdfDocument.getPage(i);
-        final text = await page.getText();
+        final text = await page.text; // pdfx uses .text property
         textBuffer.write(text);
         textBuffer.write('\n\n');
         await page.close();
@@ -53,10 +53,10 @@ class DocumentTextExtractor {
           height: 550,
           format: PdfPageImageFormat.png,
         );
-        coverImage = pageImage.bytes;
+        coverImage = pageImage.bytes; // bytes is nullable
         await firstPage.close();
       } catch (e) {
-        debugPrint('Failed to extract cover image: $e');
+        print('Failed to extract cover image: $e');
       }
       
       await pdfDocument.close();
@@ -100,10 +100,11 @@ class DocumentTextExtractor {
       Uint8List? coverImage;
       try {
         if (epubBook.CoverImage != null) {
+          // EpubByteContentFile has Content property
           coverImage = epubBook.CoverImage!.Content;
         }
       } catch (e) {
-        debugPrint('Failed to extract EPUB cover: $e');
+        print('Failed to extract EPUB cover: $e');
       }
       
       return ExtractedDocument(
@@ -125,7 +126,25 @@ class DocumentTextExtractor {
     try {
       // CBR is a RAR archive containing images
       final bytes = await file.readAsBytes();
-      final archive = RarDecoder().decodeBytes(bytes);
+      
+      // Try RAR first, then ZIP (some CBR files are actually ZIP)
+      Archive? archive;
+      try {
+        archive = ZipDecoder().decodeBytes(bytes);
+        // If RAR decoder is available, try it first
+        // For now use ZIP decoder as fallback
+      } catch (e) {
+        // Try with RAR decoder if available
+        try {
+          archive = Archive.fromBytes(bytes, decoder: RarDecoder());
+        } catch (e2) {
+          archive = null;
+        }
+      }
+      
+      if (archive == null) {
+        throw Exception('Failed to decode CBR archive');
+      }
       
       // Get all image files and sort them
       final imageFiles = archive.files
@@ -142,7 +161,12 @@ class DocumentTextExtractor {
       // For CBR, we don't extract text (it's images), but we can extract cover
       Uint8List? coverImage;
       if (imageFiles.isNotEmpty) {
-        coverImage = imageFiles.first.content as Uint8List?;
+        final content = imageFiles.first.content;
+        if (content is Uint8List) {
+          coverImage = content;
+        } else if (content is List<int>) {
+          coverImage = Uint8List.fromList(content);
+        }
       }
       
       return ExtractedDocument(

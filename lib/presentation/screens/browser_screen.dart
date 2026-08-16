@@ -11,8 +11,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:lang/data/services/ocr_service.dart';
 import 'package:provider/provider.dart';
-import '../providers/analyzer_provider.dart';
-import '../../data/repositories/dictionary_service.dart';
+import 'package:lang/presentation/providers/analyzer_provider.dart';
+import 'package:lang/data/repositories/dictionary_service.dart';
 
 class BrowserScreen extends StatefulWidget {
   final String? initialUrl;

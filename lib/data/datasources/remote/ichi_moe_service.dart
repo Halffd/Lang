@@ -1,8 +1,8 @@
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:html/dom.dart';
-import '../../../domain/entities/dictionary.dart' as model;
-import '../../../utils/html_sanitizer.dart';
+import 'package:lang/domain/entities/dictionary.dart' as model;
+import 'package:lang/utils/html_sanitizer.dart';
 
 /// Service for scraping data from ichi.moe
 class IchiMoeService {
@@ -262,6 +262,5 @@ class IchiMoeService {
       print('Error fetching ichi.moe data with details: $e');
       return [];
     }
-  }
   }
 }

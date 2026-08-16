@@ -6,12 +6,14 @@ list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_linux
   desktop_drop
   file_selector_linux
+  flutter_secure_storage_linux
   gtk
   hotkey_manager_linux
   local_notifier
   record_linux
   screen_retriever_linux
   sqlite3_flutter_libs
+  syncfusion_pdfviewer_linux
   tray_manager
   url_launcher_linux
   window_manager

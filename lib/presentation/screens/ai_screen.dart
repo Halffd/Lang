@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../l10n/app_localizations.dart';
-import '../../utils/screen_size.dart';
-import '../providers/ai_provider.dart';
-import '../../domain/entities/ai_message.dart';
+import 'package:lang/l10n/app_localizations.dart';
+import 'package:lang/utils/screen_size.dart';
+import 'package:lang/presentation/providers/ai_provider.dart';
+import 'package:lang/domain/entities/ai_message.dart';
 
 class AiScreen extends StatefulWidget {
   const AiScreen({super.key});

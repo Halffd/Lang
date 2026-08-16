@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../domain/entities/app_state.dart';
+import 'package:lang/domain/entities/app_state.dart';
 
 class ReaderAppBar extends StatelessWidget implements PreferredSizeWidget {
   const ReaderAppBar({Key? key}) : super(key: key);

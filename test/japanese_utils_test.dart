@@ -16,7 +16,7 @@ void main() {
     });
 
     test('toHiragana converts katakana to hiragana', () {
-      expect(JapaneseUtils.toHiragana('katakana'), equals('かたかな'));
+      expect(JapaneseUtils.toHiragana('カタカナ'), equals('かたかな'));
       expect(JapaneseUtils.toHiragana('テスト'), equals('てすと'));
     });
 

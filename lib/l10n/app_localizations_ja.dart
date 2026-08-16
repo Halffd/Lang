@@ -9,64 +9,141 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get about => 'アプリについて';
+
+  @override
+  String get add => 'Add';
+
+  @override
+  String get addToFavorites => 'Add to favorites';
+
+  @override
+  String get advancedSettings => '詳細設定';
+
+  @override
+  String get afrikaans => 'アフリカーンス語';
+
+  @override
+  String get ai => 'AI';
+
+  @override
+  String get aiAssistant => 'AI Assistant';
+
+  @override
+  String get aiBreakdown => 'AI Breakdown';
+
+  @override
+  String get aiChatTitle => 'AI Chat';
+
+  @override
+  String get aiInsights => 'AI Insights';
+
+  @override
+  String get analyze => 'Analyze';
+
+  @override
+  String get analyzeIndividualCharacters => 'Analyze Individual Characters';
+
+  @override
+  String get analyzeScreenTitle => 'Analyze Screen';
+
+  @override
+  String get analyzeText => 'Analyze Text';
+
+  @override
+  String get ankiProfiles => 'Ankiとプロファイル';
+
+  @override
   String get appName => 'Lang';
 
   @override
-  String get search => '検索';
-
-  @override
-  String get reader => 'リーダー';
-
-  @override
-  String get lists => 'リスト';
-
-  @override
-  String get wordLists => '単語リスト';
-
-  @override
-  String get dictionaries => '辞書';
-
-  @override
-  String get translator => '翻訳';
-
-  @override
-  String get settings => '設定';
-
-  @override
-  String get language => '言語';
-
-  @override
-  String get generalSettings => '一般設定';
-
-  @override
-  String get dictionaryLanguage => '辞書言語';
+  String get appTitle => 'Lang';
 
   @override
   String get appearance => '外観';
 
   @override
-  String get darkMode => 'ダークモード';
+  String get arabic => 'アラビア語';
 
   @override
-  String get useDarkTheme => 'ダークテーマを使用する';
+  String areYouSureYouWantToDelete(Object title) {
+    return 'Are you sure you want to delete?';
+  }
 
   @override
-  String get uiAndNavigation => 'UIとナビゲーション';
+  String get askAnything => 'Ask anything';
+
+  @override
+  String get autoDetectProcessText => 'クリップボードからテキストを自動検出・処理';
 
   @override
   String get autoHideNavigation => 'ナビゲーションを自動非表示';
 
   @override
-  String get hideNavigationBottom => 'マウスが下部にないときにナビゲーションバーを非表示';
+  String get autoKanaConversion => 'かな自動変換';
 
   @override
-  String get defaultFlexMode => 'デフォルトのフレックスモード';
+  String get autoPasteReader => 'リーダーモード自動貼り付け';
 
   @override
-  String get useFlexibleGrid => '単語リストにデフォルトで柔軟グリッドレイアウトを使用';
+  String get autoPasteReaderSubtitle => 'クリップボードからテキストを自動的にリーダーモードに貼り付け';
 
   @override
-  String get keyboardShortcuts => 'キーボードショートカット';
+  String get autoSearchClipboard => 'クリップボードの内容を自動検索';
+
+  @override
+  String get autoTranslateWords => 'リーダーモードで単語を自動翻訳';
+
+  @override
+  String get autoTranslation => '自動翻訳';
+
+  @override
+  String get breakdown => 'Breakdown';
+
+  @override
+  String get bulgarian => 'ブルガリア語';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get catalan => 'カタロニア語';
+
+  @override
+  String get chatGptMock => 'ChatGPT';
+
+  @override
+  String get chatWithAI => 'Chat with AI';
+
+  @override
+  String get chinese => '中国語';
+
+  @override
+  String get clearFilters => 'Clear Filters';
+
+  @override
+  String get clearHistory => 'Clear History';
+
+  @override
+  String get clipboardAutoDetect => 'クリップボード自動検出';
+
+  @override
+  String get clipboardMonitor => 'クリップボードモニター';
+
+  @override
+  String get column => 'Column';
+
+  @override
+  String get columns => 'Columns';
+
+  @override
+  String get context => 'Context';
+
+  @override
+  String get convertRomajiToKana => '入力中にローマ字をかなに変換';
+
+  @override
+  String get croatian => 'クロアチア語';
 
   @override
   String get ctrl1Search => 'Ctrl + 1: 検索';
@@ -87,138 +164,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get ctrl6Settings => 'Ctrl + 6: 設定';
 
   @override
-  String get searchSettings => '検索設定';
-
-  @override
-  String get clipboardMonitor => 'クリップボードモニター';
-
-  @override
-  String get autoSearchClipboard => 'クリップボードの内容を自動検索';
-
-  @override
-  String get autoKanaConversion => 'かな自動変換';
-
-  @override
-  String get convertRomajiToKana => '入力中にローマ字をかなに変換';
-
-  @override
-  String get displayOptions => '表示オプション';
-
-  @override
-  String get showParticles => '助詞を表示';
-
-  @override
-  String get highlightParticles => 'テキスト内の日本語の助詞をハイライト表示';
-
-  @override
-  String get showKanji => '漢字を表示';
-
-  @override
-  String get displayKanjiInfo => '漢字情報を表示';
-
-  @override
-  String get minFrequency => '最小頻度';
-
-  @override
-  String get filterByFrequency => '頻度で単語をフィルター（低いほど一般的）';
-
-  @override
-  String get advancedSettings => '詳細設定';
-
-  @override
-  String get ankiProfiles => 'Ankiとプロファイル';
-
-  @override
   String get currentAnkiDeck => '現在のAnkiデッキ';
 
   @override
   String get currentProfile => '現在のプロファイル';
-
-  @override
-  String get enhancedFeatures => '拡張機能';
-
-  @override
-  String get clipboardAutoDetect => 'クリップボード自動検出';
-
-  @override
-  String get autoDetectProcessText => 'クリップボードからテキストを自動検出・処理';
-
-  @override
-  String get forvoAudio => 'Forvo音声';
-
-  @override
-  String get enableForvoPronunciations => 'Forvoからの音声発音を有効化';
-
-  @override
-  String get autoTranslation => '自動翻訳';
-
-  @override
-  String get autoTranslateWords => 'リーダーモードで単語を自動翻訳';
-
-  @override
-  String get autoPasteReader => 'リーダーモード自動貼り付け';
-
-  @override
-  String get autoPasteReaderSubtitle => 'クリップボードからテキストを自動的にリーダーモードに貼り付け';
-
-  @override
-  String get about => 'アプリについて';
-
-  @override
-  String version(Object version) {
-    return 'バージョン $version';
-  }
-
-  @override
-  String get japanese => '日本語';
-
-  @override
-  String get chinese => '中国語';
-
-  @override
-  String get korean => '韓国語';
-
-  @override
-  String get english => '英語';
-
-  @override
-  String get searchOptions => '検索オプション';
-
-  @override
-  String get french => 'フランス語';
-
-  @override
-  String get spanish => 'スペイン語';
-
-  @override
-  String get german => 'ドイツ語';
-
-  @override
-  String get italian => 'イタリア語';
-
-  @override
-  String get portuguese => 'ポルトガル語';
-
-  @override
-  String get russian => 'ロシア語';
-
-  @override
-  String get arabic => 'アラビア語';
-
-  @override
-  String get hindi => 'ヒンディー語';
-
-  @override
-  String get afrikaans => 'アフリカーンス語';
-
-  @override
-  String get bulgarian => 'ブルガリア語';
-
-  @override
-  String get catalan => 'カタロニア語';
-
-  @override
-  String get croatian => 'クロアチア語';
 
   @override
   String get czech => 'チェコ語';
@@ -227,76 +176,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get danish => 'デンマーク語';
 
   @override
-  String get dutch => 'オランダ語';
+  String get darkMode => 'ダークモード';
 
   @override
-  String get estonian => 'エストニア語';
+  String get darkTheme => 'ダークテーマ';
 
   @override
-  String get filipino => 'フィリピノ語';
-
-  @override
-  String get finnish => 'フィンランド語';
-
-  @override
-  String get greek => 'ギリシャ語';
-
-  @override
-  String get hebrew => 'ヘブライ語';
-
-  @override
-  String get hungarian => 'ハンガリー語';
-
-  @override
-  String get indonesian => 'インドネシア語';
-
-  @override
-  String get latvian => 'ラトビア語';
-
-  @override
-  String get lithuanian => 'リトアニア語';
-
-  @override
-  String get norwegian => 'ノルウェー語';
-
-  @override
-  String get polish => 'ポーランド語';
-
-  @override
-  String get romanian => 'ルーマニア語';
-
-  @override
-  String get serbian => 'セルビア語';
-
-  @override
-  String get slovak => 'スロバキア語';
-
-  @override
-  String get slovenian => 'スロベニア語';
-
-  @override
-  String get swedish => 'スウェーデン語';
-
-  @override
-  String get thai => 'タイ語';
-
-  @override
-  String get turkish => 'トルコ語';
-
-  @override
-  String get ukrainian => 'ウクライナ語';
-
-  @override
-  String get vietnamese => 'ベトナム語';
-
-  @override
-  String get privacyPolicy => 'プライバシーポリシー';
-
-  @override
-  String get termsOfService => '利用規約';
-
-  @override
-  String get multilingualLearningTool => '辞書機能と単語保存機能を備えた多言語対応の言語学習ツール。';
+  String get defaultFlexMode => 'デフォルトのフレックスモード';
 
   @override
   String get defaultScreen => 'デフォルト画面';
@@ -305,25 +191,52 @@ class AppLocalizationsJa extends AppLocalizations {
   String get defaultScreenSubtitle => 'アプリ起動時に表示する画面を選択';
 
   @override
-  String get themeMode => 'テーマモード';
+  String get definitionsHidden => 'Definitions hidden';
 
   @override
-  String get themeModeSubtitle => 'アプリテーマの決定方法を選択してください';
+  String get delete => 'Delete';
 
   @override
-  String get systemTheme => 'システムテーマ';
+  String get dictionaries => '辞書';
 
   @override
-  String get lightTheme => 'ライトテーマ';
+  String get dictionaryLanguage => '辞書言語';
 
   @override
-  String get darkTheme => 'ダークテーマ';
+  String get displayKanjiInfo => '漢字情報を表示';
 
   @override
-  String get zoomLevel => 'ズームレベル';
+  String get displayOptions => '表示オプション';
 
   @override
-  String get zoomLevelSubtitle => 'アプリ全体のズームレベルを調整する';
+  String get dutch => 'オランダ語';
+
+  @override
+  String get enableForvoPronunciations => 'Forvoからの音声発音を有効化';
+
+  @override
+  String get english => '英語';
+
+  @override
+  String get enhancedFeatures => '拡張機能';
+
+  @override
+  String get enterTextToAnalyze => 'Enter text to analyze';
+
+  @override
+  String get estonian => 'エストニア語';
+
+  @override
+  String get favorites => 'Favorites';
+
+  @override
+  String get filipino => 'フィリピノ語';
+
+  @override
+  String get filterByFrequency => '頻度で単語をフィルター（低いほど一般的）';
+
+  @override
+  String get finnish => 'フィンランド語';
 
   @override
   String get fontSize => 'フォントサイズ';
@@ -332,177 +245,270 @@ class AppLocalizationsJa extends AppLocalizations {
   String get fontSizeSubtitle => 'テキストのフォントサイズ倍率を調整する';
 
   @override
-  String get analyze => 'Analyze';
+  String get forvoAudio => 'Forvo音声';
 
   @override
-  String get saved => 'Saved';
+  String get french => 'フランス語';
 
   @override
-  String get history => 'History';
-
-  @override
-  String get ai => 'AI';
-
-  @override
-  String get appTitle => 'Lang';
-
-  @override
-  String frequency(int freq) {
+  String frequency(Object freq) {
     return 'Frequency: $freq';
   }
 
   @override
-  String get aiInsights => 'AI Insights';
+  String get frequencyHighToLow => 'Frequency High to Low';
 
   @override
-  String get runAiBreakdown => 'Run AI Breakdown';
+  String get frequencyLowToHigh => 'Frequency Low to High';
 
   @override
-  String get context => 'Context';
+  String get fullTranslation => 'Full Translation';
 
   @override
-  String get localDictionary => 'Local Dictionary';
-
-  @override
-  String get ichiMoe => 'ichi.moe';
-
-  @override
-  String get kanjiBreakdown => 'Kanji Breakdown';
-
-  @override
-  String readings(String readings) {
-    return 'Readings: $readings';
-  }
-
-  @override
-  String get origin => 'Origin';
-
-  @override
-  String get usage => 'Usage';
-
-  @override
-  String get wiktionary => 'Wiktionary';
-
-  @override
-  String get japaneseKanjiOriginAndUsage => 'Japanese kanji origin and usage';
-
-  @override
-  String reading(String reading) {
-    return 'Reading: $reading';
-  }
-
-  @override
-  String get analyzeIndividualCharacters => 'Analyze Individual Characters';
-
-  @override
-  String get analyzeText => 'Analyze Text';
-
-  @override
-  String get analyzeScreenTitle => 'Analyze Screen';
-
-  @override
-  String get enterTextToAnalyze => 'Enter text to analyze';
-
-  @override
-  String get breakdown => 'Breakdown';
-
-  @override
-  String get chatWithAI => 'Chat with AI';
-
-  @override
-  String get sendMessage => 'Send message';
-
-  @override
-  String get typeMessage => 'Type a message...';
-
-  @override
-  String get aiChatTitle => 'AI Chat';
-
-  @override
-  String get savedWords => 'Saved Words';
-
-  @override
-  String get noSavedWords => 'No saved words yet';
-
-  @override
-  String get historyTitle => 'History';
-
-  @override
-  String get noHistory => 'No history yet';
-
-  @override
-  String get clearHistory => 'Clear History';
-
-  @override
-  String areYouSureYouWantToDelete(Object title) {
-    return 'Are you sure you want to delete?';
-  }
-
-  @override
-  String get delete => 'Delete';
-
-  @override
-  String get cancel => 'Cancel';
-
-  @override
-  String get add => 'Add';
-
-  @override
-  String get searchHint => 'Search...';
-
-  @override
-  String get settingsTitle => 'Settings';
-
-  @override
-  String get aiAssistant => 'AI Assistant';
-
-  @override
-  String get chatGptMock => 'ChatGPT';
-
-  @override
-  String get translate => 'Translate';
-
-  @override
-  String get summarize => 'Summarize';
-
-  @override
-  String get aiBreakdown => 'AI Breakdown';
-
-  @override
-  String get askAnything => 'Ask anything';
+  String get generalSettings => '一般設定';
 
   @override
   String get generateImage => 'Generate Image';
 
   @override
+  String get german => 'ドイツ語';
+
+  @override
+  String get greek => 'ギリシャ語';
+
+  @override
+  String get group => 'Group';
+
+  @override
+  String get groupByFirstChar => 'Group by First Character';
+
+  @override
+  String get groupByFrequency => 'Group by Frequency';
+
+  @override
+  String get groupByKanji => 'Group by Kanji';
+
+  @override
+  String get hasDefinition => 'Has Definition';
+
+  @override
+  String get hasKanji => 'Has Kanji';
+
+  @override
+  String get hasReading => 'Has Reading';
+
+  @override
+  String get hebrew => 'ヘブライ語';
+
+  @override
+  String get hideDefinitions => 'Hide Definitions';
+
+  @override
+  String get hideNavigationBottom => 'マウスが下部にないときにナビゲーションバーを非表示';
+
+  @override
+  String get highFrequency => 'High Frequency (1-1K)';
+
+  @override
+  String get highlightParticles => 'テキスト内の日本語の助詞をハイライト表示';
+
+  @override
+  String get hindi => 'ヒンディー語';
+
+  @override
+  String get history => 'History';
+
+  @override
+  String get historyTitle => 'History';
+
+  @override
+  String get hungarian => 'ハンガリー語';
+
+  @override
+  String get ichiMoe => 'ichi.moe';
+
+  @override
+  String get indonesian => 'インドネシア語';
+
+  @override
+  String get italian => 'イタリア語';
+
+  @override
+  String get japanese => '日本語';
+
+  @override
+  String get japaneseKanjiOriginAndUsage => 'Japanese kanji origin and usage';
+
+  @override
+  String get kanjiBreakdown => 'Kanji Breakdown';
+
+  @override
+  String get keyboardShortcuts => 'キーボードショートカット';
+
+  @override
+  String get korean => '韓国語';
+
+  @override
   String get langAnalyze => 'Lang Analyze';
+
+  @override
+  String get language => '言語';
+
+  @override
+  String get latvian => 'ラトビア語';
+
+  @override
+  String get lightTheme => 'ライトテーマ';
+
+  @override
+  String get lists => 'リスト';
+
+  @override
+  String get lithuanian => 'リトアニア語';
+
+  @override
+  String get localDictionary => 'Local Dictionary';
+
+  @override
+  String get lowFrequency => 'Low Frequency';
+
+  @override
+  String get mediumFrequency => 'Medium Frequency (1K-5K)';
+
+  @override
+  String get minFrequency => '最小頻度';
+
+  @override
+  String get multilingualLearningTool => '辞書機能と単語保存機能を備えた多言語対応の言語学習ツール。';
+
+  @override
+  String get collapse => 'Collapse';
+
+  @override
+  String get expand => 'Expand';
+
+  @override
+  String get filter => 'Filter';
+
+  @override
+  String get first => 'First';
+
+  @override
+  String get last => 'Last';
+
+  @override
+  String get navFirstLast => 'First / Last';
+
+  @override
+  String get navPrevNext => 'Prev / Next';
+
+  @override
+  String get next => 'Next';
+
+  @override
+  String get noFavoritesYet => 'No favorites yet';
+
+  @override
+  String get noGroup => 'No Group';
+
+  @override
+  String get previous => 'Previous';
+
+  @override
+  String get noHistory => 'No history yet';
+
+  @override
+  String get noHistoryYet => 'No history yet';
+
+  @override
+  String get noResultsYet => 'No results yet';
+
+  @override
+  String get noSavedWords => 'No saved words yet';
+
+  @override
+  String get norwegian => 'ノルウェー語';
+
+  @override
+  String get ofStatic => 'of';
+
+  @override
+  String get origin => 'Origin';
+
+  @override
+  String page(Object current, Object total) {
+    return 'Page $current of $total';
+  }
+
+  @override
+  String pageOf(Object current, Object total) {
+    return '$current of $total';
+  }
 
   @override
   String get pasteTextHere => 'Paste text here...';
 
   @override
-  String get processing => 'Processing...';
-
-  @override
-  String perPageRow(int count) {
-    return '$count per page';
-  }
-
-  @override
-  String perPagePage(int count) {
-    return '$count per page';
-  }
-
-  @override
-  String pageOf(int current, int total) {
-    return '$current of $total';
-  }
-
-  @override
   String get pasteYourText => 'Paste your text here to analyze';
 
   @override
-  String get noResultsYet => 'No results yet';
+  String perPagePage(Object count) {
+    return '$count per page';
+  }
+
+  @override
+  String perPageRow(Object count) {
+    return '$count per row';
+  }
+
+  @override
+  String get polish => 'ポーランド語';
+
+  @override
+  String get portuguese => 'ポルトガル語';
+
+  @override
+  String get privacyPolicy => 'プライバシーポリシー';
+
+  @override
+  String get processing => 'Processing...';
+
+  @override
+  String get reader => 'リーダー';
+
+  @override
+  String reading(Object reading) {
+    return 'Reading: $reading';
+  }
+
+  @override
+  String get readingAtoZ => 'Reading A-Z';
+
+  @override
+  String get readingZtoA => 'Reading Z-A';
+
+  @override
+  String readings(Object readings) {
+    return 'Readings: $readings';
+  }
+
+  @override
+  String get removeFromFavorites => 'Remove from favorites';
+
+  @override
+  String get romanian => 'ルーマニア語';
+
+  @override
+  String get runAiBreakdown => 'Run AI Breakdown';
+
+  @override
+  String get russian => 'ロシア語';
+
+  @override
+  String get saveWordsToSeeThemHere => 'Save words to see them here';
+
+  @override
+  String get saved => 'Saved';
 
   @override
   String savedWord(Object word) {
@@ -510,5 +516,146 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get noHistoryYet => 'No history yet';
+  String get savedWords => 'Saved Words';
+
+  @override
+  String get search => '検索';
+
+  @override
+  String get searchHint => 'Search...';
+
+  @override
+  String get searchOptions => '検索オプション';
+
+  @override
+  String get searchSettings => '検索設定';
+
+  @override
+  String get sendMessage => 'Send message';
+
+  @override
+  String get sentenceTranslations => 'Sentence Translations';
+
+  @override
+  String sentencesFound(Object count) {
+    return '$count sentences found';
+  }
+
+  @override
+  String get serbian => 'セルビア語';
+
+  @override
+  String get settings => '設定';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get showDefinitions => 'Show Definitions';
+
+  @override
+  String get showKanji => '漢字を表示';
+
+  @override
+  String get showParticles => '助詞を表示';
+
+  @override
+  String get slovak => 'スロバキア語';
+
+  @override
+  String get slovenian => 'スロベニア語';
+
+  @override
+  String get sort => 'Sort';
+
+  @override
+  String get spanish => 'スペイン語';
+
+  @override
+  String get summarize => 'Summarize';
+
+  @override
+  String get swedish => 'スウェーデン語';
+
+  @override
+  String get systemTheme => 'システムテーマ';
+
+  @override
+  String get termsOfService => '利用規約';
+
+  @override
+  String get thai => 'タイ語';
+
+  @override
+  String get themeMode => 'テーマモード';
+
+  @override
+  String get themeModeSubtitle => 'アプリテーマの決定方法を選択してください';
+
+  @override
+  String get translate => 'Translate';
+
+  @override
+  String get translator => '翻訳';
+
+  @override
+  String get translationUnavailable => 'Translation unavailable';
+
+  @override
+  String get turkish => 'トルコ語';
+
+  @override
+  String get type => 'String';
+
+  @override
+  String get typeMessage => 'Type a message...';
+
+  @override
+  String get uiAndNavigation => 'UIとナビゲーション';
+
+  @override
+  String get ukrainian => 'ウクライナ語';
+
+  @override
+  String get usage => 'Usage';
+
+  @override
+  String get useDarkTheme => 'ダークテーマを使用する';
+
+  @override
+  String get useFlexibleGrid => '単語リストにデフォルトで柔軟グリッドレイアウトを使用';
+
+  @override
+  String version(Object version) {
+    return 'バージョン $version';
+  }
+
+  @override
+  String get vietnamese => 'ベトナム語';
+
+  @override
+  String get wiktionary => 'Wiktionary';
+
+  @override
+  String get wordAtoZ => 'Word A-Z';
+
+  @override
+  String get wordDefinitions => 'Word Definitions';
+
+  @override
+  String get wordLists => '単語リスト';
+
+  @override
+  String get wordZtoA => 'Word Z-A';
+
+  @override
+  String wordsAnalyzed(Object count) {
+    return '$count words analyzed';
+  }
+
+  @override
+  String get zoomLevel => 'ズームレベル';
+
+  @override
+  String get zoomLevelSubtitle => 'アプリ全体のズームレベルを調整する';
 }

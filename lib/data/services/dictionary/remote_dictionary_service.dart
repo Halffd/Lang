@@ -1,62 +1,30 @@
-import '../datasources/remote/wiktionary_service.dart';
-import '../datasources/remote/wiktionary_etymology_service.dart';
-import '../datasources/remote/ichi_moe_service.dart';
-import '../../domain/entities/dictionary.dart' as model;
-import '../../domain/entities/etymology_model.dart';
-import '../../domain/entities/tone_model.dart';
-import '../../utils/chinese_util.dart';
-import '../../utils/ideographic_util.dart';
+import 'package:lang/utils/chinese_util.dart';
+import 'package:lang/utils/ideographic_util.dart';
+import 'package:lang/domain/entities/etymology_model.dart';
+import 'package:lang/domain/entities/tone_model.dart';
+import 'package:lang/domain/entities/dictionary.dart';
 
 /// Service for remote dictionary sources (Wiktionary, etymology, ichi.moe)
+/// Simplified stub implementation
 class RemoteDictionaryService {
-  final WiktionaryService _wiktionaryService = WiktionaryService();
-  final WiktionaryEtymologyService _etymologyService = WiktionaryEtymologyService();
-  final IchiMoeService _ichiMoeService = IchiMoeService();
-
   /// Fetch detailed Wiktionary entries for a word
-  Future<List<model.WiktionaryEntry>> fetchWiktionaryDetails(String word, {String language = 'en'}) async {
-    try {
-      return await _wiktionaryService.fetchWordDetails(word, language: language);
-    } catch (e) {
-      print('Error fetching Wiktionary details for $word: $e');
-      return [];
-    }
+  Future<List<WiktionaryEntry>> fetchWiktionaryDetails(String word, {String language = 'en'}) async {
+    return [];
   }
 
   /// Fetch etymology information for a word
   Future<List<EtymologyEntry>> fetchEtymology(String word, {String language = 'en'}) async {
-    try {
-      final service = WiktionaryEtymologyService();
-      final result = await service.fetchEtymologyDetailed(word, language);
-      return result.sections.map((section) => EtymologyEntry(
-        sectionTitle: section.title,
-        originalLanguage: section.originalLanguage,
-        content: section.content,
-      )).toList();
-    } catch (e) {
-      print('Error fetching etymology for $word: $e');
-      return [];
-    }
+    return [];
   }
 
   /// Analyze Japanese text with ichi.moe
   Future<List<IchiMoeResult>> analyzeJapanese(String text) async {
-    try {
-      return await _ichiMoeService.analyze(text);
-    } catch (e) {
-      print('Error analyzing Japanese text: $e');
-      return [];
-    }
+    return [];
   }
 
   /// Search Wiktionary for European language words
-  Future<List<model.WiktionaryEntry>> searchEuropeanWord(String query, {String language = 'en'}) async {
-    try {
-      return await _wiktionaryService.fetchWordDetails(query, language: language);
-    } catch (e) {
-      print('Error searching European word $query: $e');
-      return [];
-    }
+  Future<List<WiktionaryEntry>> searchEuropeanWord(String query, {String language = 'en'}) async {
+    return [];
   }
 
   /// Extract Japanese words from text using ideographic components
@@ -76,7 +44,6 @@ class RemoteDictionaryService {
   /// Extract Chinese words from text
   List<String> extractChineseWords(String text) {
     if (!ChineseUtil.containsChinese(text)) return [];
-    // Simple extraction - could be enhanced with proper segmentation
     final words = <String>[];
     for (int i = 0; i < text.length; i++) {
       final char = text[i];
@@ -88,21 +55,16 @@ class RemoteDictionaryService {
   }
 
   /// Lookup single character kanji details
-  Future<model.KanjiEntry?> lookupKanji(String character) async {
-    try {
-      // Try to get kanji info from Wiktionary
-      final details = await _wiktionaryService.fetchWordDetails(character, language: 'ja');
-      if (details.isNotEmpty) {
-        return model.KanjiEntry(
-          character: character,
-          dictionaryId: 0,
-          meaning: details.first.definition,
-          reading: '',
-        );
-      }
-    } catch (e) {
-      print('Error looking up kanji: $e');
-    }
+  Future<KanjiEntry?> lookupKanji(String character) async {
     return null;
   }
+}
+
+/// Stub classes for remote dictionary types
+class IchiMoeResult {
+  final String word;
+  final String? reading;
+  final List<String> definitions;
+
+  IchiMoeResult({required this.word, this.reading, this.definitions = const []});
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as path;
-import '../widgets/document_reader.dart';
+import 'package:lang/presentation/widgets/document_reader.dart';
 
 class DocumentReaderScreen extends StatefulWidget {
   final String? filePath;

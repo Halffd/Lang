@@ -91,7 +91,10 @@ void main() {
         type: CardType.learning,
       );
 
-      final updated = original.copyWith(word: 'updated', meaning: 'updated meaning');
+      final updated = original.copyWith(
+        word: 'updated',
+        meaning: 'updated meaning',
+      );
 
       expect(updated.id, 'copy_1');
       expect(updated.word, 'updated');
@@ -104,10 +107,20 @@ void main() {
     });
 
     test('copyWith supports media fields', () {
-      final original = SRSCard.newCard(id: 'media', word: 'test', meaning: 'test');
-      final withImage = original.copyWith(imageBase64: 'data:image/png;base64,abc');
-      final withAudio = original.copyWith(audioBase64: 'data:audio/mp3;base64,xyz');
-      final withVideo = original.copyWith(videoBase64: 'data:video/mp4;base64,vid');
+      final original = SRSCard.newCard(
+        id: 'media',
+        word: 'test',
+        meaning: 'test',
+      );
+      final withImage = original.copyWith(
+        imageBase64: 'data:image/png;base64,abc',
+      );
+      final withAudio = original.copyWith(
+        audioBase64: 'data:audio/mp3;base64,xyz',
+      );
+      final withVideo = original.copyWith(
+        videoBase64: 'data:video/mp4;base64,vid',
+      );
 
       expect(withImage.imageBase64, 'data:image/png;base64,abc');
       expect(withAudio.audioBase64, 'data:audio/mp3;base64,xyz');
@@ -174,7 +187,7 @@ void main() {
           reviewCount: 5,
           easeFactor: 2.5,
         );
-        expect(card.interval, 12); // 5 * 2.5 = 12.5 rounded to 12
+        expect(card.interval, 13); // 5 * 2.5 = 12.5 rounds to 13
       });
     });
 
@@ -213,8 +226,18 @@ void main() {
 
     group('hasMedia getters', () {
       test('hasImage returns true when imageBase64 is set', () {
-        final withBase64 = SRSCard.newCard(id: '1', word: 'w', meaning: 'm', imageBase64: 'data:image/png;base64,abc');
-        final emptyBase64 = SRSCard.newCard(id: '2', word: 'w', meaning: 'm', imageBase64: '');
+        final withBase64 = SRSCard.newCard(
+          id: '1',
+          word: 'w',
+          meaning: 'm',
+          imageBase64: 'data:image/png;base64,abc',
+        );
+        final emptyBase64 = SRSCard.newCard(
+          id: '2',
+          word: 'w',
+          meaning: 'm',
+          imageBase64: '',
+        );
         final noImage = SRSCard.newCard(id: '3', word: 'w', meaning: 'm');
 
         expect(withBase64.hasImage, true);
@@ -223,8 +246,18 @@ void main() {
       });
 
       test('hasAudio returns true for base64 or url', () {
-        final withBase64 = SRSCard.newCard(id: '1', word: 'w', meaning: 'm', audioBase64: 'data:audio/mp3;base64,abc');
-        final withUrl = SRSCard.newCard(id: '2', word: 'w', meaning: 'm', audioUrl: 'https://example.com/audio.mp3');
+        final withBase64 = SRSCard.newCard(
+          id: '1',
+          word: 'w',
+          meaning: 'm',
+          audioBase64: 'data:audio/mp3;base64,abc',
+        );
+        final withUrl = SRSCard.newCard(
+          id: '2',
+          word: 'w',
+          meaning: 'm',
+          audioUrl: 'https://example.com/audio.mp3',
+        );
         final noAudio = SRSCard.newCard(id: '3', word: 'w', meaning: 'm');
 
         expect(withBase64.hasAudio, true);
@@ -233,8 +266,18 @@ void main() {
       });
 
       test('hasVideo returns true for base64 or url', () {
-        final withBase64 = SRSCard.newCard(id: '1', word: 'w', meaning: 'm', videoBase64: 'data:video/mp4;base64,abc');
-        final withUrl = SRSCard.newCard(id: '2', word: 'w', meaning: 'm', videoUrl: 'https://example.com/video.mp4');
+        final withBase64 = SRSCard.newCard(
+          id: '1',
+          word: 'w',
+          meaning: 'm',
+          videoBase64: 'data:video/mp4;base64,abc',
+        );
+        final withUrl = SRSCard.newCard(
+          id: '2',
+          word: 'w',
+          meaning: 'm',
+          videoUrl: 'https://example.com/video.mp4',
+        );
         final noVideo = SRSCard.newCard(id: '3', word: 'w', meaning: 'm');
 
         expect(withBase64.hasVideo, true);
@@ -294,7 +337,11 @@ void main() {
       });
 
       test('first successful review sets interval to 1 day', () {
-        final card = SRSCard.newCard(id: 'calc_4', word: 'test', meaning: 'test');
+        final card = SRSCard.newCard(
+          id: 'calc_4',
+          word: 'test',
+          meaning: 'test',
+        );
 
         final result = card.calculateNextReview(4);
 
@@ -326,7 +373,11 @@ void main() {
       });
 
       test('unsuspend changes type based on reviewCount', () {
-        final newCard = SRSCard.newCard(id: 'u1', word: 'test', meaning: 'test');
+        final newCard = SRSCard.newCard(
+          id: 'u1',
+          word: 'test',
+          meaning: 'test',
+        );
         expect(newCard.unsuspend().type, CardType.newCard);
 
         final learningCard = SRSCard(
@@ -430,7 +481,15 @@ void main() {
 
   group('CardType enum', () {
     test('has all expected values', () {
-      expect(CardType.values, containsAll([CardType.newCard, CardType.learning, CardType.review, CardType.suspended]));
+      expect(
+        CardType.values,
+        containsAll([
+          CardType.newCard,
+          CardType.learning,
+          CardType.review,
+          CardType.suspended,
+        ]),
+      );
     });
   });
 }

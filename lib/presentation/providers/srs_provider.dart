@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/services/srs_service.dart';
-import '../../core/services/realtime_sync_service.dart';
-import '../../data/datasources/supabase_data_source.dart';
-import '../../domain/entities/srs_card.dart';
-import '../../domain/entities/srs_deck.dart';
-import '../../domain/entities/srs_review.dart';
+import 'package:lang/core/services/srs_service.dart';
+import 'package:lang/core/services/realtime_sync_service.dart';
+import 'package:lang/data/datasources/supabase_data_source.dart';
+import 'package:lang/domain/entities/srs_card.dart';
+import 'package:lang/domain/entities/srs_deck.dart';
+import 'package:lang/domain/entities/srs_review.dart';
 
 class SrsProvider with ChangeNotifier {
   final SrsService _srsService;

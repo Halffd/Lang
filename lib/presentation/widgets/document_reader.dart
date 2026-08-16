@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart' as widgets;
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:epub_view/epub_view.dart';
 import 'package:advance_pdf_viewer/advance_pdf_viewer.dart';
@@ -95,12 +96,24 @@ class DocumentReaderState extends State<DocumentReader> {
         final dir = Directory(widget.filePath);
         if (await dir.exists()) {
           final files = await dir.list().toList();
-          final imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
-          final imageFiles = files
-              .whereType<File>()
-              .where((f) => imageExtensions.any((ext) => f.path.toLowerCase().endsWith(ext)))
-              .toList()
-            ..sort((a, b) => a.path.compareTo(b.path));
+          final imageExtensions = [
+            '.jpg',
+            '.jpeg',
+            '.png',
+            '.gif',
+            '.webp',
+            '.bmp',
+          ];
+          final imageFiles =
+              files
+                  .whereType<File>()
+                  .where(
+                    (f) => imageExtensions.any(
+                      (ext) => f.path.toLowerCase().endsWith(ext),
+                    ),
+                  )
+                  .toList()
+                ..sort((a, b) => a.path.compareTo(b.path));
 
           for (final file in imageFiles) {
             pages.add(await file.readAsBytes());
@@ -112,11 +125,25 @@ class DocumentReaderState extends State<DocumentReader> {
           final bytes = await file.readAsBytes();
           final archive = ZipDecoder().decodeBytes(bytes);
 
-          final imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
-          final imageFiles = archive.files
-              .where((f) => !f.isFile || imageExtensions.any((ext) => f.name.toLowerCase().endsWith(ext)))
-              .toList()
-            ..sort((a, b) => a.name.compareTo(b.name));
+          final imageExtensions = [
+            '.jpg',
+            '.jpeg',
+            '.png',
+            '.gif',
+            '.webp',
+            '.bmp',
+          ];
+          final imageFiles =
+              archive.files
+                  .where(
+                    (f) =>
+                        !f.isFile ||
+                        imageExtensions.any(
+                          (ext) => f.name.toLowerCase().endsWith(ext),
+                        ),
+                  )
+                  .toList()
+                ..sort((a, b) => a.name.compareTo(b.name));
 
           for (final archiveFile in imageFiles) {
             if (archiveFile.isFile) {
@@ -294,7 +321,7 @@ class DocumentReaderState extends State<DocumentReader> {
             return InteractiveViewer(
               minScale: 1.0,
               maxScale: 4.0,
-              child: Image.memory(
+              child: widgets.Image.memory(
                 _mangaPages[index],
                 fit: BoxFit.contain,
                 width: double.infinity,
@@ -354,7 +381,7 @@ class DocumentReaderState extends State<DocumentReader> {
               return InteractiveViewer(
                 minScale: 1.0,
                 maxScale: 4.0,
-                child: Image.memory(
+                child: widgets.Image.memory(
                   _mangaPages[index],
                   fit: BoxFit.fitWidth,
                   width: double.infinity,
@@ -394,7 +421,9 @@ class DocumentReaderState extends State<DocumentReader> {
   }
 
   String _convertFb2ToHtml(String fb2Content) {
-    final titleMatch = RegExp(r'<book-title>([^<]+)</book-title>').firstMatch(fb2Content);
+    final titleMatch = RegExp(
+      r'<book-title>([^<]+)</book-title>',
+    ).firstMatch(fb2Content);
     final title = titleMatch?.group(1) ?? 'Book';
 
     String body = fb2Content
@@ -442,7 +471,8 @@ class DocumentReaderState extends State<DocumentReader> {
           curve: Curves.easeInOut,
         );
       }
-    } else if (_documentType == DocumentType.epub && _currentPage < _totalPages) {
+    } else if (_documentType == DocumentType.epub &&
+        _currentPage < _totalPages) {
       // epub navigation
     }
   }

@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../core/services/audio_service.dart';
-import '../../domain/entities/analyzed_word.dart';
-import '../../domain/repositories/analyzer_repository.dart';
+import 'package:lang/core/services/audio_service.dart';
+import 'package:lang/domain/entities/analyzed_word.dart';
+import 'package:lang/domain/repositories/analyzer_repository.dart';
 import '../datasources/analysis_remote_data_source.dart';
 import '../datasources/dictionary_local_data_source.dart';
 import '../datasources/dictionary_remote_data_source.dart';

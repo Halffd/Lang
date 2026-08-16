@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../domain/entities/srs_card.dart';
-import '../../data/repositories/srs_service.dart';
+import 'package:lang/domain/entities/srs_card.dart';
+import 'package:lang/data/repositories/srs_service.dart';
 
 class CardDetailSheet extends StatefulWidget {
   final SRSCard card;
@@ -115,8 +115,6 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
                     Text('Card Info', style: theme.textTheme.titleMedium),
                     const SizedBox(height: 12),
                     _detailRow('ID', _card.id),
-                    _detailRow('Created', _formatDateTime(_card.createdAt)),
-                    _detailRow('Updated', _formatDateTime(_card.updatedAt)),
                     _detailRow('Type', _card.type.toString().split('.').last),
                     _detailRow('Ease Factor', _card.easeFactor.toStringAsFixed(2)),
                     _detailRow('Interval', '${_card.interval} days'),
@@ -127,8 +125,11 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
                       _detailRow('Last Review', _formatDateTime(_card.lastReviewDate!)),
                     _detailRow('Next Review', _formatDateTime(_card.nextReview)),
                     if (_card.deck != null) ...[
-                      final deck = widget.srsService.getDeckById(_card.deck!);
-                      if (deck != null) _detailRow('Deck', deck.name),
+                      (() {
+                        final deck = widget.srsService.getDeckById(_card.deck!);
+                        if (deck != null) return _detailRow('Deck', deck.name);
+                        return const SizedBox.shrink();
+                      })(),
                     ],
                     if (_card.tags.isNotEmpty)
                       _detailRow('Tags', _card.tags.join(', ')),

@@ -1,5 +1,5 @@
 import 'package:google_mlkit_translation/google_mlkit_translation.dart';
-import '../../domain/entities/translation_model.dart';
+import 'package:lang/domain/entities/translation_model.dart';
 
 class LocalTranslationService {
   final OnDeviceTranslatorModelManager _modelManager = OnDeviceTranslatorModelManager();

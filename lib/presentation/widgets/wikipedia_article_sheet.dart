@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
-import '../../../data/datasources/remote/wikipedia_service.dart';
+import 'package:lang/data/datasources/remote/wikipedia_service.dart';
 
 class WikipediaArticleSheet extends StatefulWidget {
   final String term;

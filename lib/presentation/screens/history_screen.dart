@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../l10n/app_localizations.dart';
-import '../providers/analyzer_provider.dart';
-import '../widgets/word_detail_sheet.dart';
+import 'package:lang/l10n/app_localizations.dart';
+import 'package:lang/presentation/providers/analyzer_provider.dart';
+import 'package:lang/presentation/widgets/word_detail_sheet.dart';
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});

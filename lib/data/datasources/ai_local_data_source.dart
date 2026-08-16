@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../domain/entities/ai_message.dart';
+import 'package:lang/domain/entities/ai_message.dart';
 
 class AiLocalDataSource {
   static const String _historyKey = 'ai_history';

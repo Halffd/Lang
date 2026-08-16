@@ -19,7 +19,10 @@ void main() {
     group('deck management', () {
       test('creates default decks on first init', () {
         expect(srsService.decks.length, 3);
-        expect(srsService.decks.map((d) => d.name), containsAll(['Default', 'Vocabulary', 'Kanji']));
+        expect(
+          srsService.decks.map((d) => d.name),
+          containsAll(['Default', 'Vocabulary', 'Kanji']),
+        );
       });
 
       test('getDeckById returns correct deck', () {
@@ -48,7 +51,10 @@ void main() {
 
       test('updateDeck modifies existing deck', () async {
         final original = srsService.getDeckById('default')!;
-        final updated = original.copyWith(name: 'Updated Default', updatedAt: DateTime.now());
+        final updated = original.copyWith(
+          name: 'Updated Default',
+          updatedAt: DateTime.now(),
+        );
 
         await srsService.updateDeck(updated);
 
@@ -56,12 +62,14 @@ void main() {
       });
 
       test('deleteDeck removes deck', () async {
-        await srsService.addDeck(SrsDeck(
-          id: 'to_delete',
-          name: 'To Delete',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ));
+        await srsService.addDeck(
+          SrsDeck(
+            id: 'to_delete',
+            name: 'To Delete',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        );
         expect(srsService.decks.length, 4);
 
         await srsService.deleteDeck('to_delete');
@@ -72,7 +80,11 @@ void main() {
 
     group('card management', () {
       test('addCard adds new card', () async {
-        final card = SRSCard.newCard(id: 'card_1', word: 'test', meaning: 'test');
+        final card = SRSCard.newCard(
+          id: 'card_1',
+          word: 'test',
+          meaning: 'test',
+        );
         await srsService.addCard(card);
 
         expect(srsService.getCardById('card_1'), isNotNull);
@@ -80,8 +92,16 @@ void main() {
       });
 
       test('addCard updates existing card with same id', () async {
-        final card1 = SRSCard.newCard(id: 'card_2', word: 'original', meaning: 'meaning');
-        final card2 = SRSCard.newCard(id: 'card_2', word: 'updated', meaning: 'meaning');
+        final card1 = SRSCard.newCard(
+          id: 'card_2',
+          word: 'original',
+          meaning: 'meaning',
+        );
+        final card2 = SRSCard.newCard(
+          id: 'card_2',
+          word: 'updated',
+          meaning: 'meaning',
+        );
 
         await srsService.addCard(card1);
         await srsService.addCard(card2);
@@ -91,7 +111,11 @@ void main() {
       });
 
       test('removeCard removes card', () async {
-        final card = SRSCard.newCard(id: 'to_remove', word: 'test', meaning: 'test');
+        final card = SRSCard.newCard(
+          id: 'to_remove',
+          word: 'test',
+          meaning: 'test',
+        );
         await srsService.addCard(card);
         expect(srsService.totalCount, 1);
 
@@ -112,7 +136,11 @@ void main() {
       });
 
       test('suspendCard changes card type to suspended', () async {
-        final card = SRSCard.newCard(id: 'suspend_1', word: 'test', meaning: 'test');
+        final card = SRSCard.newCard(
+          id: 'suspend_1',
+          word: 'test',
+          meaning: 'test',
+        );
         await srsService.addCard(card);
         await srsService.suspendCard('suspend_1');
 
@@ -120,7 +148,11 @@ void main() {
       });
 
       test('unsuspendCard changes card type back to learning', () async {
-        final card = SRSCard.newCard(id: 'unsuspend_1', word: 'test', meaning: 'test');
+        final card = SRSCard.newCard(
+          id: 'unsuspend_1',
+          word: 'test',
+          meaning: 'test',
+        );
         await srsService.addCard(card);
         await srsService.suspendCard('unsuspend_1');
         await srsService.unsuspendCard('unsuspend_1');
@@ -211,17 +243,37 @@ void main() {
 
     group('getCardsByDeck', () {
       test('returns all cards when deckId is null', () async {
-        await srsService.addCard(SRSCard.newCard(id: 'c1', word: 'one', meaning: '1', deck: 'deck1'));
-        await srsService.addCard(SRSCard.newCard(id: 'c2', word: 'two', meaning: '2', deck: 'deck2'));
+        await srsService.addCard(
+          SRSCard.newCard(id: 'c1', word: 'one', meaning: '1', deck: 'deck1'),
+        );
+        await srsService.addCard(
+          SRSCard.newCard(id: 'c2', word: 'two', meaning: '2', deck: 'deck2'),
+        );
 
         final all = srsService.getCardsByDeck(null);
         expect(all.length, 2);
       });
 
       test('returns only cards for specific deck', () async {
-        await srsService.addCard(SRSCard.newCard(id: 'd1', word: 'one', meaning: '1', deck: 'vocabulary'));
-        await srsService.addCard(SRSCard.newCard(id: 'd2', word: 'two', meaning: '2', deck: 'kanji'));
-        await srsService.addCard(SRSCard.newCard(id: 'd3', word: 'three', meaning: '3', deck: 'vocabulary'));
+        await srsService.addCard(
+          SRSCard.newCard(
+            id: 'd1',
+            word: 'one',
+            meaning: '1',
+            deck: 'vocabulary',
+          ),
+        );
+        await srsService.addCard(
+          SRSCard.newCard(id: 'd2', word: 'two', meaning: '2', deck: 'kanji'),
+        );
+        await srsService.addCard(
+          SRSCard.newCard(
+            id: 'd3',
+            word: 'three',
+            meaning: '3',
+            deck: 'vocabulary',
+          ),
+        );
 
         final vocabCards = srsService.getCardsByDeck('vocabulary');
         expect(vocabCards.length, 2);
@@ -231,29 +283,49 @@ void main() {
 
     group('deck stats', () {
       test('getDeckCardCount returns correct count', () async {
-        await srsService.addCard(SRSCard.newCard(id: 'cnt1', word: 'c1', meaning: 'm', deck: 'test_deck'));
-        await srsService.addCard(SRSCard.newCard(id: 'cnt2', word: 'c2', meaning: 'm', deck: 'test_deck'));
-        await srsService.addCard(SRSCard.newCard(id: 'cnt3', word: 'c3', meaning: 'm', deck: 'other'));
+        await srsService.addCard(
+          SRSCard.newCard(
+            id: 'cnt1',
+            word: 'c1',
+            meaning: 'm',
+            deck: 'test_deck',
+          ),
+        );
+        await srsService.addCard(
+          SRSCard.newCard(
+            id: 'cnt2',
+            word: 'c2',
+            meaning: 'm',
+            deck: 'test_deck',
+          ),
+        );
+        await srsService.addCard(
+          SRSCard.newCard(id: 'cnt3', word: 'c3', meaning: 'm', deck: 'other'),
+        );
 
         expect(srsService.getDeckCardCount('test_deck'), 2);
         expect(srsService.getDeckCardCount('other'), 1);
       });
 
       test('getDeckDueCount returns correct count', () async {
-        await srsService.addCard(SRSCard(
-          id: 'dc1',
-          word: 'c1',
-          meaning: 'm',
-          deck: 'due_deck',
-          nextReview: DateTime.now().subtract(const Duration(days: 1)),
-        ));
-        await srsService.addCard(SRSCard(
-          id: 'dc2',
-          word: 'c2',
-          meaning: 'm',
-          deck: 'due_deck',
-          nextReview: DateTime.now().add(const Duration(days: 1)),
-        ));
+        await srsService.addCard(
+          SRSCard(
+            id: 'dc1',
+            word: 'c1',
+            meaning: 'm',
+            deck: 'due_deck',
+            nextReview: DateTime.now().subtract(const Duration(days: 1)),
+          ),
+        );
+        await srsService.addCard(
+          SRSCard(
+            id: 'dc2',
+            word: 'c2',
+            meaning: 'm',
+            deck: 'due_deck',
+            nextReview: DateTime.now().add(const Duration(days: 1)),
+          ),
+        );
 
         expect(srsService.getDeckDueCount('due_deck'), 1);
       });
@@ -261,7 +333,11 @@ void main() {
 
     group('reviewCard', () {
       test('calls calculateNextReview on card', () async {
-        final card = SRSCard.newCard(id: 'review_1', word: 'test', meaning: 'test');
+        final card = SRSCard.newCard(
+          id: 'review_1',
+          word: 'test',
+          meaning: 'test',
+        );
         await srsService.addCard(card);
         await srsService.reviewCard('review_1', 4);
 
@@ -282,12 +358,13 @@ class MockStorageService extends StorageService {
   Future<String?> getString(String key) async => _data[key] as String?;
 
   @override
-  Future<void> setString(String key, String value) async {
+  Future<bool> setString(String key, String value) async {
     _data[key] = value;
+    return true;
   }
 
   @override
-  Future<List<String>?> getStringList(String key) async {
+  List<String>? getStringList(String key) {
     final value = _data[key];
     if (value == null) return null;
     if (value is List) return value.cast<String>();
@@ -295,8 +372,9 @@ class MockStorageService extends StorageService {
   }
 
   @override
-  Future<void> setStringList(String key, List<String> value) async {
+  Future<bool> setStringList(String key, List<String> value) async {
     _data[key] = value;
+    return true;
   }
 
   @override
@@ -309,7 +387,10 @@ class MockStorageService extends StorageService {
   Future<Set<String>> getAnkiWords() async => <String>{};
 
   @override
-  Future<void> addSavedWord(String word, {Map<String, dynamic>? details}) async {}
+  Future<void> addSavedWord(
+    String word, {
+    Map<String, dynamic>? details,
+  }) async {}
 
   @override
   Future<void> removeSavedWord(String word) async {}
@@ -347,8 +428,9 @@ class MockStorageService extends StorageService {
   }
 
   @override
-  Future<void> setJson(String key, Map<String, dynamic> value) async {
+  Future<bool> setJson(String key, Map<String, dynamic> value) async {
     _data[key] = value;
+    return true;
   }
 
   @override

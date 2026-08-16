@@ -1,13 +1,11 @@
 import 'dart:convert';
-import '../../../data/repositories/dictionary_service.dart';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-import '../../../domain/entities/app_state.dart';
-import '../../../domain/entities/dictionary.dart';
-import '../../../domain/entities/tone_model.dart';
-import '../../../utils/screen_size.dart';
+import 'package:lang/data/repositories/dictionary_service.dart';
+import 'package:lang/domain/entities/app_state.dart';
+import 'package:lang/domain/entities/dictionary.dart';
+import 'package:lang/domain/entities/tone_model.dart';
+import 'package:lang/utils/screen_size.dart';
 
 class SearchKanjiCard extends StatelessWidget {
   final KanjiEntry kanji;

@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../data/services/ocr_service.dart';
-import '../providers/analyzer_provider.dart';
-import '../providers/ai_provider.dart';
-import '../widgets/word_detail_sheet.dart';
+import 'package:lang/data/services/ocr_service.dart';
+import 'package:lang/presentation/providers/analyzer_provider.dart';
+import 'package:lang/presentation/providers/ai_provider.dart';
+import 'package:lang/presentation/widgets/word_detail_sheet.dart';
 
 enum OcrMode { mlKit, tesseract, easyOcr, ai }
 

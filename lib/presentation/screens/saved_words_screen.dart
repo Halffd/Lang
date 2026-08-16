@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../domain/entities/app_state.dart';
-import '../../../domain/entities/dictionary.dart';
-import '../../../domain/entities/srs_card.dart';
-import '../../data/repositories/srs_service.dart';
-import '../../utils/srs_conversion_utils.dart';
-import '../widgets/dictionary_entry_card.dart';
-import '../../utils/screen_size.dart';
+import 'package:lang/domain/entities/app_state.dart';
+import 'package:lang/domain/entities/dictionary.dart';
+import 'package:lang/domain/entities/srs_card.dart';
+import 'package:lang/data/repositories/srs_service.dart';
+import 'package:lang/utils/srs_conversion_utils.dart';
+import 'package:lang/presentation/widgets/dictionary_entry_card.dart';
+import 'package:lang/utils/screen_size.dart';
 
 class SavedWordsScreen extends StatefulWidget {
   const SavedWordsScreen({super.key});

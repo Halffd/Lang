@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../data/datasources/remote/wiktionary_etymology_service.dart';
-import '../../utils/html_renderer.dart';
+import 'package:lang/data/datasources/remote/wiktionary_etymology_service.dart';
+import 'package:lang/utils/html_renderer.dart';
 
 class WiktionaryDetailsWidget extends StatelessWidget {
   final List<WiktionaryEntry> wiktionaryEntries;

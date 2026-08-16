@@ -13,15 +13,15 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../../domain/entities/srs_card.dart';
-import '../../domain/entities/srs_deck.dart';
-import '../../data/repositories/srs_service.dart';
-import '../../data/repositories/anki_package_service.dart';
-import '../../utils/screen_size.dart';
-import '../srs/sheets/deck_manager_sheet.dart';
-import '../srs/sheets/add_card_sheet.dart';
-import '../srs/sheets/card_detail_sheet.dart';
-import '../srs/sheets/import_words_sheet.dart';
+import 'package:lang/domain/entities/srs_card.dart';
+import 'package:lang/domain/entities/srs_deck.dart';
+import 'package:lang/data/repositories/srs_service.dart';
+import 'package:lang/data/repositories/anki_package_service.dart';
+import 'package:lang/utils/screen_size.dart';
+import 'package:lang/presentation/screens/srs/sheets/deck_manager_sheet.dart';
+import 'package:lang/presentation/screens/srs/sheets/add_card_sheet.dart';
+import 'package:lang/presentation/screens/srs/sheets/card_detail_sheet.dart';
+import 'package:lang/presentation/screens/srs/sheets/import_words_sheet.dart';
 
 class CardsTab extends StatefulWidget {
   final SRSService srsService;

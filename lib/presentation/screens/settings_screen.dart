@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../data/services/anki_connect_service.dart';
-import '../../domain/entities/app_state.dart';
-import '../../domain/entities/translation_model.dart';
-import '../../data/repositories/translation_service.dart';
-import '../../l10n/app_localizations.dart';
-import '../../utils/screen_size.dart';
+import 'package:lang/data/services/anki_connect_service.dart';
+import 'package:lang/domain/entities/app_state.dart';
+import 'package:lang/domain/entities/translation_model.dart';
+import 'package:lang/data/repositories/translation_service.dart';
+import 'package:lang/l10n/app_localizations.dart';
+import 'package:lang/utils/screen_size.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});

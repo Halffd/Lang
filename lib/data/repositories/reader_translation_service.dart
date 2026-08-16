@@ -1,8 +1,8 @@
-import '../../domain/entities/dictionary.dart';
-import '../../domain/entities/translation_model.dart';
+import 'package:lang/domain/entities/dictionary.dart';
+import 'package:lang/domain/entities/translation_model.dart';
 import 'dictionary_service.dart';
 import '../repositories/translation_service.dart';
-import '../../utils/language_detector.dart';
+import 'package:lang/utils/language_detector.dart';
 
 class ReaderTranslationService {
   final DictionaryService _dictionaryService;

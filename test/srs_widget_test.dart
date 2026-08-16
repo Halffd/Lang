@@ -22,17 +22,25 @@ void main() {
       final service = SRSService(mockStorage);
       await service.initialize();
 
-      await service.addCard(SRSCard.newCard(id: 'persist_1', word: 'test', meaning: 'test'));
+      await service.addCard(
+        SRSCard.newCard(id: 'persist_1', word: 'test', meaning: 'test'),
+      );
       expect(service.totalCount, 1);
 
-      await service.addCard(SRSCard.newCard(id: 'persist_2', word: 'test2', meaning: 'test2'));
+      await service.addCard(
+        SRSCard.newCard(id: 'persist_2', word: 'test2', meaning: 'test2'),
+      );
       expect(service.totalCount, 2);
     });
   });
 
   group('SRSCard display', () {
     testWidgets('Card shows word and meaning', (WidgetTester tester) async {
-      final card = SRSCard.newCard(id: 'display_1', word: '日本語', meaning: 'Japanese language');
+      final card = SRSCard.newCard(
+        id: 'display_1',
+        word: '日本語',
+        meaning: 'Japanese language',
+      );
 
       await tester.pumpWidget(
         MaterialApp(
@@ -51,7 +59,9 @@ void main() {
       expect(find.text('Japanese language'), findsOneWidget);
     });
 
-    testWidgets('Due badge shows for past due cards', (WidgetTester tester) async {
+    testWidgets('Due badge shows for past due cards', (
+      WidgetTester tester,
+    ) async {
       final dueCard = SRSCard(
         id: 'due_card',
         word: 'test',
@@ -67,9 +77,18 @@ void main() {
                 title: Text(dueCard.word),
                 trailing: dueCard.isDue
                     ? Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(color: Colors.red[100], borderRadius: BorderRadius.circular(8)),
-                        child: const Text('Due', style: TextStyle(color: Colors.red, fontSize: 12)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.red[100],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'Due',
+                          style: TextStyle(color: Colors.red, fontSize: 12),
+                        ),
                       )
                     : Text('${dueCard.interval}d'),
               ),
@@ -82,7 +101,12 @@ void main() {
     });
 
     testWidgets('Tags display correctly', (WidgetTester tester) async {
-      final card = SRSCard.newCard(id: 'tags_1', word: 'test', meaning: 'test', tags: ['jlpt-n5', 'noun', 'beginner']);
+      final card = SRSCard.newCard(
+        id: 'tags_1',
+        word: 'test',
+        meaning: 'test',
+        tags: ['jlpt-n5', 'noun', 'beginner'],
+      );
 
       await tester.pumpWidget(
         MaterialApp(
@@ -117,7 +141,9 @@ void main() {
           home: Scaffold(
             body: ListTile(
               leading: CircleAvatar(
-                backgroundColor: Color(int.parse(deck.color.replaceFirst('#', '0xFF'))).withOpacity(0.2),
+                backgroundColor: Color(
+                  int.parse(deck.color.replaceFirst('#', '0xFF')),
+                ).withOpacity(0.2),
                 child: Text(deck.icon),
               ),
               title: Text(deck.name),
@@ -144,12 +170,13 @@ class MockStorageService extends StorageService {
   Future<String?> getString(String key) async => _data[key] as String?;
 
   @override
-  Future<void> setString(String key, String value) async {
+  Future<bool> setString(String key, String value) async {
     _data[key] = value;
+    return true;
   }
 
   @override
-  Future<List<String>?> getStringList(String key) async {
+  List<String>? getStringList(String key) {
     final value = _data[key];
     if (value == null) return null;
     if (value is List) return value.cast<String>();
@@ -157,8 +184,9 @@ class MockStorageService extends StorageService {
   }
 
   @override
-  Future<void> setStringList(String key, List<String> value) async {
+  Future<bool> setStringList(String key, List<String> value) async {
     _data[key] = value;
+    return true;
   }
 
   @override
@@ -171,7 +199,10 @@ class MockStorageService extends StorageService {
   Future<Set<String>> getAnkiWords() async => <String>{};
 
   @override
-  Future<void> addSavedWord(String word, {Map<String, dynamic>? details}) async {}
+  Future<void> addSavedWord(
+    String word, {
+    Map<String, dynamic>? details,
+  }) async {}
 
   @override
   Future<void> removeSavedWord(String word) async {}

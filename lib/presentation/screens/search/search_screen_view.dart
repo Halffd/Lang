@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../domain/entities/dictionary.dart';
-import '../../../data/repositories/dictionary_service.dart';
-import '../../../utils/character_breakdown.dart';
-import '../../widgets/character_breakdown_widget.dart';
-import '../../widgets/search/search_bar_widget.dart';
-import '../../widgets/search/search_responsive_layout.dart';
-import '../../../utils/screen_size.dart';
-import 'search_entry_details.dart';
-import 'search_results_body.dart';
+import 'package:lang/domain/entities/dictionary.dart';
+import 'package:lang/data/repositories/dictionary_service.dart';
+import 'package:lang/utils/character_breakdown.dart';
+import 'package:lang/presentation/widgets/character_breakdown_widget.dart';
+import 'package:lang/presentation/widgets/search/search_bar_widget.dart';
+import 'package:lang/presentation/widgets/search/search_responsive_layout.dart';
+import 'package:lang/utils/screen_size.dart';
+import 'package:lang/presentation/screens/search/search_entry_details.dart';
+import 'package:lang/presentation/screens/search/search_results_body.dart';
 
 class _CopyIntent extends Intent {
   const _CopyIntent();

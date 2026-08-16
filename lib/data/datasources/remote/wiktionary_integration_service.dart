@@ -1,4 +1,4 @@
-import '../../repositories/dictionary_service.dart';
+import 'package:lang/data/repositories/dictionary_service.dart';
 import 'wiktionary_etymology_service.dart';
 
 /// Service to handle Wiktionary integration and enrichment of search results

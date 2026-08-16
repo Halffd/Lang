@@ -44,7 +44,7 @@ class AppState extends ChangeNotifier {
 
   AppState(this._storageService) {
     _loadSettings();
-    _loadSavedWords();
+    Future.microtask(() => _loadSavedWords());
     _loadFavoriteWords();
     _loadAnkiWords();
     _loadDeletedWords();
@@ -487,7 +487,7 @@ class AppState extends ChangeNotifier {
   void _loadSettings() {
     try {
       _clipboardMonitor = _storageService.getBool('clipboard_monitor') ?? false;
-      _language = _storageService.getString('language') ?? 'ja';
+      _language = _storageService.getStringSync('language') ?? 'ja';
       // Ensure language code is valid - fix any legacy data that might have display names instead of codes
       if (!LanguageOption.all.any((option) => option.code == _language)) {
         // If the saved language is not a valid code, it might be a display name
@@ -543,7 +543,7 @@ class AppState extends ChangeNotifier {
       }
       _darkMode = _storageService.getBool('dark_mode') ?? false;
       // Load theme mode with fallback to system
-      final themeModeString = _storageService.getString('theme_mode');
+      final themeModeString = _storageService.getStringSync('theme_mode');
       _themeMode = _parseThemeMode(themeModeString) ?? ThemeMode.system;
       _showParticles = _storageService.getBool('show_particles') ?? true;
       _showKanji = _storageService.getBool('show_kanji') ?? true;
@@ -552,20 +552,20 @@ class AppState extends ChangeNotifier {
       _defaultFlexMode = _storageService.getBool('default_flex_mode') ?? false;
       _zoomLevel = _storageService.getDouble('zoom_level') ?? 1.0;
       _fontSizeMultiplier = _storageService.getDouble('font_size_multiplier') ?? 1.0;
-      _currentProfile = _storageService.getString('current_profile') ?? 'Default';
+      _currentProfile = _storageService.getStringSync('current_profile') ?? 'Default';
       _searchHistory = _storageService.getStringList('search_history') ?? [];
       _etymologyLanguages = _storageService.getStringList('etymology_languages') ?? ['en', 'zh', 'ja'];
       _autoTranslate = _storageService.getBool('auto_translate') ?? false;
       _ankiDecks = _storageService.getStringList('anki_decks') ?? ['Default'];
-      _currentAnkiDeck = _storageService.getString('current_anki_deck') ?? 'Default';
-      _ankiConnectUrl = _storageService.getString('anki_connect_url') ?? 'http://127.0.0.1:8765';
+      _currentAnkiDeck = _storageService.getStringSync('current_anki_deck') ?? 'Default';
+      _ankiConnectUrl = _storageService.getStringSync('anki_connect_url') ?? 'http://127.0.0.1:8765';
       _ankiConnectEnabled = _storageService.getBool('anki_connect_enabled') ?? false;
-      _ankiConnectModel = _storageService.getString('anki_connect_model') ?? 'Basic';
+      _ankiConnectModel = _storageService.getStringSync('anki_connect_model') ?? 'Basic';
       _ankiSyncOnSave = _storageService.getBool('anki_sync_on_save') ?? false;
       _profiles = _storageService.getStringList('profiles') ?? ['Default'];
       _clipboardAutoDetect = _storageService.getBool('clipboard_auto_detect') ?? false;
       _forvoAudioEnabled = _storageService.getBool('forvo_audio_enabled') ?? false;
-    _forvoApiKey = _storageService.getString('forvo_api_key') ?? '';
+    _forvoApiKey = _storageService.getStringSync('forvo_api_key') ?? '';
       _autoConvertJapanese = _storageService.getBool('auto_convert_japanese') ?? true;
       _defaultScreenIndex = _storageService.getInt('default_screen_index') ?? 0;
       _autoPasteReader = _storageService.getBool('auto_paste_reader') ?? false;
@@ -573,7 +573,7 @@ class AppState extends ChangeNotifier {
     _showInlineDefinitions = _storageService.getBool('show_inline_definitions') ?? true;
     _showHoverDefinitions = _storageService.getBool('show_hover_definitions') ?? true;
     _useLocalTranslation = _storageService.getBool('use_local_translation') ?? false;
-final savedProvider = _storageService.getString('translation_provider');
+final savedProvider = _storageService.getStringSync('translation_provider');
       _translationProvider = TranslationProvider.values.firstWhere(
         (e) => e.name == savedProvider,
         orElse: () => TranslationProvider.googleCloud,
@@ -581,11 +581,11 @@ final savedProvider = _storageService.getString('translation_provider');
       // Load popup settings
       _hoverPopupSize = _storageService.getDouble('hover_popup_size') ?? 1.0;
       _hoverPopupDelay = _storageService.getInt('hover_popup_delay') ?? 300;
-      _hoverPopupModifier = _storageService.getString('hover_popup_modifier') ?? 'none';
+      _hoverPopupModifier = _storageService.getStringSync('hover_popup_modifier') ?? 'none';
       _hoverPopupLanguages = _storageService.getStringList('hover_popup_languages') ?? [];
       // Load profile activation
-      _profileActivationScreen = _storageService.getString('profile_activation_screen') ?? 'all';
-      _profileActivationApp = _storageService.getString('profile_activation_app') ?? 'default';
+      _profileActivationScreen = _storageService.getStringSync('profile_activation_screen') ?? 'all';
+      _profileActivationApp = _storageService.getStringSync('profile_activation_app') ?? 'default';
       // Ensure value is within valid range (0-6 for the 7 screens)
       if (_defaultScreenIndex < 0 || _defaultScreenIndex > 6) {
         _defaultScreenIndex = 0;
@@ -632,13 +632,13 @@ _showInlineDefinitions = true;
     }
   }
 
-  void _loadSavedWords() {
+  void _loadSavedWords() async {
     try {
       _savedWords = _storageService.getStringList('saved_words') ?? [];
-      final savedDetailsJson = _storageService.getString('saved_words_details');
+      final savedDetailsJson = _storageService.getStringSync('saved_words_details');
       if (savedDetailsJson != null) {
         try {
-          _savedWordsDetails = Map<String, dynamic>.from(_storageService.getJson('saved_words_details') ?? {});
+          _savedWordsDetails = Map<String, dynamic>.from(await _storageService.getJson('saved_words_details') ?? {});
         } catch (e) {
           _savedWordsDetails = {};
         }

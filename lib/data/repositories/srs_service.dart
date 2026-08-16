@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import '../../domain/entities/srs_card.dart';
-import '../../domain/entities/srs_deck.dart';
-import '../../core/services/storage_service.dart';
+import 'package:lang/domain/entities/srs_card.dart';
+import 'package:lang/domain/entities/srs_deck.dart';
+import 'package:lang/core/services/storage_service.dart';
 
 class SRSService extends ChangeNotifier {
   final StorageService _storageService;

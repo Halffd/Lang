@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../domain/entities/dictionary.dart';
-import '../../../data/repositories/dictionary_service.dart';
-import 'search_result_cards.dart';
+import 'package:lang/domain/entities/dictionary.dart';
+import 'package:lang/data/repositories/dictionary_service.dart';
+import 'package:lang/presentation/screens/search/search_result_cards.dart';
 
 class SearchResultsList extends StatelessWidget {
   final SearchResult result;

@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/services/srs_service.dart';
-import '../../domain/entities/srs_card.dart';
-import '../../domain/entities/srs_deck.dart';
-import '../../domain/entities/srs_review.dart';
-import '../../domain/repositories/srs_repository.dart';
+import 'package:lang/core/services/srs_service.dart';
+import 'package:lang/domain/entities/srs_card.dart';
+import 'package:lang/domain/entities/srs_deck.dart';
+import 'package:lang/domain/entities/srs_review.dart';
+import 'package:lang/domain/repositories/srs_repository.dart';
 
 class SrsRepositoryImpl implements SrsRepository {
   final SrsService _srsService;

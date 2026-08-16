@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../data/datasources/radical_data.dart';
-import '../../../data/datasources/kanji_decomposition_data.dart';
-import '../../../data/repositories/dictionary_service.dart';
-import '../../../data/repositories/radical_search_service.dart';
-import '../../../domain/entities/dictionary.dart';
-import '../../../utils/screen_size.dart';
+import 'package:lang/data/datasources/radical_data.dart';
+import 'package:lang/data/datasources/kanji_decomposition_data.dart';
+import 'package:lang/data/repositories/dictionary_service.dart';
+import 'package:lang/data/repositories/radical_search_service.dart';
+import 'package:lang/domain/entities/dictionary.dart';
+import 'package:lang/utils/screen_size.dart';
 
 class RadicalSearchScreen extends StatefulWidget {
   const RadicalSearchScreen({super.key});

@@ -49,11 +49,7 @@ void main() {
     });
 
     test('card type affects export behavior', () {
-      final newCard = SRSCard.newCard(
-        id: 'new',
-        word: 'new',
-        meaning: 'new',
-      );
+      final newCard = SRSCard.newCard(id: 'new', word: 'new', meaning: 'new');
 
       final suspendedCard = SRSCard(
         id: 'suspended',
@@ -104,9 +100,11 @@ void main() {
         word: 'test',
         meaning: 'test',
         nextReview: DateTime.now(),
-        interval: 7,
+        reviewCount: 3,
+        easeFactor: 2.33,
       );
 
+      // interval = reviewCount * easeFactor = 3 * 2.33 = ~7
       expect(card.interval, 7);
     });
 

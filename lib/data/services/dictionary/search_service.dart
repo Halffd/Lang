@@ -1,9 +1,9 @@
-import 'local_dictionary_service.dart';
-import 'yomichan_service.dart';
-import 'remote_dictionary_service.dart';
-import 'tokenizer_service.dart';
-import 'language_detector.dart';
-import '../../domain/entities/dictionary.dart' as model;
+import 'package:lang/data/services/dictionary/local_dictionary_service.dart' hide DictionaryEntry;
+import 'package:lang/data/services/dictionary/yomichan_service.dart';
+import 'package:lang/data/services/dictionary/remote_dictionary_service.dart';
+import 'package:lang/data/services/dictionary/tokenizer_service.dart';
+import 'package:lang/data/services/dictionary/language_detector.dart';
+import 'package:lang/domain/entities/dictionary.dart';
 
 /// Unified search service that orchestrates all dictionary sources
 class SearchService {
@@ -36,24 +36,15 @@ class SearchService {
 
   /// Search for Japanese text
   Future<SearchResult> _searchJapanese(String query, SearchOptions options) async {
-    // Local database search with romaji/kana support
     final localResults = await _localService.searchJapanese(query);
     final localEntries = _localService.convertToModelEntries(localResults);
-
-    // Yomichan search
     final yomichanResults = await _yomichanService.searchEntries(query);
-
-    // Ichi.moe analysis for Japanese text
     final ichiMoeResults = await _localService.analyzeWithIchiMoe(query);
-
-    // Wiktionary for additional detail
     final wiktionaryResults = await _remoteService.fetchWiktionaryDetails(query, language: 'ja');
 
     return SearchResult(
-      entries: localEntries + yomichanResults.map((r) => r.entry).toList(),
-      kanji: [], // Kanji search separate
-      pitchAccents: _mergePitchAccents(yomichanResults),
-      wiktionaryDetails: _convertWiktionary(wiktionaryResults),
+      entries: localEntries + yomichanResults.map((r) => r.entry).whereType<DictionaryEntry>().toList(),
+      kanji: [],
       query: query,
       hasMore: localEntries.length >= 50,
     );
@@ -61,20 +52,14 @@ class SearchService {
 
   /// Search for Chinese text
   Future<SearchResult> _searchChinese(String query, SearchOptions options) async {
-    // Local search for Hanzi
     final localResults = await _localService.searchHanzi(query);
     final localEntries = _localService.convertToModelEntries(localResults);
-
-    // Yomichan search for Chinese characters
     final yomichanResults = await _yomichanService.searchEntries(query);
-
-    // Wiktionary for Chinese
     final wiktionaryResults = await _remoteService.fetchWiktionaryDetails(query, language: 'zh');
 
     return SearchResult(
-      entries: localEntries + yomichanResults.map((r) => r.entry).toList(),
+      entries: localEntries + yomichanResults.map((r) => r.entry).whereType<DictionaryEntry>().toList(),
       kanji: [],
-      wiktionaryDetails: _convertWiktionary(wiktionaryResults),
       query: query,
       hasMore: localEntries.length >= 50,
     );
@@ -86,27 +71,28 @@ class SearchService {
     final wiktionaryResults = await _remoteService.fetchWiktionaryDetails(query, language: 'ko');
 
     return SearchResult(
-      entries: yomichanResults.map((r) => r.entry).toList(),
+      entries: yomichanResults.map((r) => r.entry).whereType<DictionaryEntry>().toList(),
       kanji: [],
-      wiktionaryDetails: _convertWiktionary(wiktionaryResults),
       query: query,
     );
   }
 
   /// Search for European languages (English, etc.)
   Future<SearchResult> _searchEuropean(String query, SearchOptions options) async {
-    // Wiktionary as primary source for European languages
     final wiktionaryResults = await _remoteService.fetchWiktionaryDetails(query, language: 'en');
     final entries = _convertWiktionary(wiktionaryResults);
-
-    // Local fallback
     final localResults = await _localService.searchExact(query);
     final localEntries = _localService.convertToModelEntries(localResults);
 
+    // Merge the two lists properly - entries is a Map, we need to extract the list
+    final wiktionaryEntries = entries['entries'] as List<DictionaryEntry>? ?? [];
+    final allEntries = <DictionaryEntry>[];
+    allEntries.addAll(wiktionaryEntries);
+    allEntries.addAll(localEntries);
+
     return SearchResult(
-      entries: entries + localEntries,
+      entries: allEntries,
       kanji: [],
-      wiktionaryDetails: _convertWiktionary(wiktionaryResults),
       query: query,
     );
   }
@@ -117,8 +103,7 @@ class SearchService {
     
     return SearchResult(
       entries: [],
-      kanji: yomichanResults.map((r) => r.kanji).toList(),
-      tones: _mergeTones(yomichanResults),
+      kanji: yomichanResults.map((r) => r.kanji).whereType<KanjiEntry>().toList(),
       query: character,
     );
   }
@@ -129,26 +114,8 @@ class SearchService {
   }
 
   // Helper methods
-  Map<String, List<model.PitchAccent>> _mergePitchAccents(List<YomichanSearchResult> results) {
-    final map = <String, List<model.PitchAccent>>{};
-    for (final result in results) {
-      final key = '${result.entry.term}_${result.entry.reading}';
-      if (result.pitches.isNotEmpty) map[key] = result.pitches;
-    }
-    return map;
-  }
-
-  Map<String, List<model.ToneInfo>> _mergeTones(List<YomichanKanjiResult> results) {
-    final map = <String, List<model.ToneInfo>>{};
-    for (final result in results) {
-      if (result.tones.isNotEmpty) map[result.kanji.character] = result.tones;
-    }
-    return map;
-  }
-
-  Map<String, dynamic> _convertWiktionary(List<model.WiktionaryEntry> entries) {
-    // Convert to internal format
-    return {'entries': entries.map((e) => e.toJson()).toList()};
+  Map<String, dynamic> _convertWiktionary(List<WiktionaryEntry> entries) {
+    return {'entries': entries.map((e) => e.toJson()).whereType<Map<String, dynamic>>().toList()};
   }
 
   void _mergeFrequencies(List<YomichanSearchResult> results) {
@@ -173,10 +140,10 @@ class SearchOptions {
 
 /// Search result container
 class SearchResult {
-  final List<model.DictionaryEntry> entries;
-  final List<model.KanjiEntry> kanji;
-  final Map<String, List<model.PitchAccent>> pitchAccents;
-  final Map<String, List<model.ToneInfo>> tones;
+  final List<DictionaryEntry> entries;
+  final List<KanjiEntry> kanji;
+  final Map<String, dynamic> pitchAccents;
+  final Map<String, dynamic> tones;
   final Map<String, dynamic> wiktionaryDetails;
   final String query;
   final bool hasMore;

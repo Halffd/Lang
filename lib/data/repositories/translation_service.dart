@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../../domain/entities/translation_model.dart';
+import 'package:lang/domain/entities/translation_model.dart';
 import '../datasources/local_translation_service.dart';
 
 enum TranslationProvider { googleCloud, mlKit, gemini }

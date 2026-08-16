@@ -4,16 +4,59 @@ import 'package:html/parser.dart' as parser;
 /// HTML Sanitizer for preventing XSS when rendering remote content
 class HtmlSanitizer {
   static const List<String> _allowedTags = [
-    'p', 'br', 'div', 'span', 'b', 'i', 'strong', 'em', 'u',
-    'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-    'blockquote', 'pre', 'code', 'a', 'img', 'ruby', 'rt', 'rp',
-    'sub', 'sup', 'small', 'mark', 'ins', 'del',
-    'table', 'thead', 'tbody', 'tr', 'th', 'td',
+    'p',
+    'br',
+    'div',
+    'span',
+    'b',
+    'i',
+    'strong',
+    'em',
+    'u',
+    'ul',
+    'ol',
+    'li',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'blockquote',
+    'pre',
+    'code',
+    'a',
+    'img',
+    'ruby',
+    'rt',
+    'rp',
+    'sub',
+    'sup',
+    'small',
+    'mark',
+    'ins',
+    'del',
+    'table',
+    'thead',
+    'tbody',
+    'tr',
+    'th',
+    'td',
   ];
 
   static const List<String> _allowedAttributes = [
-    'href', 'src', 'alt', 'title', 'class', 'id', 'style',
-    'target', 'rel', 'cite', 'datetime', 'lang',
+    'href',
+    'src',
+    'alt',
+    'title',
+    'class',
+    'id',
+    'style',
+    'target',
+    'rel',
+    'cite',
+    'datetime',
+    'lang',
   ];
 
   static const List<String> _blockedProtocols = [
@@ -41,8 +84,8 @@ class HtmlSanitizer {
 
   static void _sanitizeNode(dom.Node node) {
     if (node is dom.Element) {
-      final tagName = node.localName.toLowerCase();
-      
+      final tagName = node.localName?.toLowerCase() ?? '';
+
       // Remove disallowed tags entirely
       if (!_allowedTags.contains(tagName)) {
         // Replace with text content
@@ -53,10 +96,11 @@ class HtmlSanitizer {
 
       // Sanitize attributes
       final attrsToRemove = <String>[];
-      for (final attr in node.attributes.entries) {
+      for (final entry in node.attributes.entries) {
+        final attr = entry as MapEntry<String, String>;
         final attrName = attr.key.toLowerCase();
         final attrValue = attr.value;
-        
+
         if (!_allowedAttributes.contains(attrName)) {
           attrsToRemove.add(attr.key);
           continue;
@@ -72,8 +116,8 @@ class HtmlSanitizer {
             }
           }
           // Only allow http/https for href/src
-          if ((attrName == 'href' || attrName == 'src') && 
-              !lowerValue.startsWith('http://') && 
+          if ((attrName == 'href' || attrName == 'src') &&
+              !lowerValue.startsWith('http://') &&
               !lowerValue.startsWith('https://') &&
               !lowerValue.startsWith('/') &&
               !lowerValue.startsWith('#')) {
@@ -99,7 +143,8 @@ class HtmlSanitizer {
       // Add security attributes to links
       if (tagName == 'a') {
         final href = node.attributes['href'];
-        if (href != null && (href.startsWith('http://') || href.startsWith('https://'))) {
+        if (href != null &&
+            (href.startsWith('http://') || href.startsWith('https://'))) {
           node.attributes['rel'] = 'noopener noreferrer';
           node.attributes['target'] = '_blank';
         }
@@ -110,8 +155,8 @@ class HtmlSanitizer {
         final src = node.attributes['src'];
         if (src != null) {
           final lowerSrc = src.toLowerCase();
-          if (!lowerSrc.startsWith('http://') && 
-              !lowerSrc.startsWith('https://') && 
+          if (!lowerSrc.startsWith('http://') &&
+              !lowerSrc.startsWith('https://') &&
               !lowerSrc.startsWith('data:image/')) {
             node.remove();
             return;
@@ -129,12 +174,24 @@ class HtmlSanitizer {
 
   static String _sanitizeStyle(String style) {
     if (style.isEmpty) return '';
-    
+
     final allowedProperties = [
-      'color', 'background-color', 'font-size', 'font-weight',
-      'font-style', 'text-decoration', 'text-align', 'margin',
-      'padding', 'border', 'display', 'width', 'height',
-      'font-family', 'line-height', 'vertical-align',
+      'color',
+      'background-color',
+      'font-size',
+      'font-weight',
+      'font-style',
+      'text-decoration',
+      'text-align',
+      'margin',
+      'padding',
+      'border',
+      'display',
+      'width',
+      'height',
+      'font-family',
+      'line-height',
+      'vertical-align',
     ];
 
     final declarations = style.split(';');
@@ -143,13 +200,13 @@ class HtmlSanitizer {
     for (final decl in declarations) {
       final parts = decl.split(':');
       if (parts.length != 2) continue;
-      
+
       final prop = parts[0].trim().toLowerCase();
       final value = parts[1].trim();
 
       if (allowedProperties.contains(prop)) {
         // Basic value sanitization
-        if (!value.contains('expression') && 
+        if (!value.contains('expression') &&
             !value.contains('javascript') &&
             !value.contains('url(')) {
           sanitized.add('$prop: $value');
@@ -166,6 +223,6 @@ class HtmlSanitizer {
         .replaceAll('<', '<')
         .replaceAll('>', '>')
         .replaceAll('"', '"')
-        .replaceAll("'", ''');
+        .replaceAll("'", '&apos;');
   }
 }

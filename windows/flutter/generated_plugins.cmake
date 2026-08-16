@@ -8,13 +8,16 @@ list(APPEND FLUTTER_PLUGIN_LIST
   desktop_drop
   file_selector_windows
   flutter_inappwebview_windows
+  flutter_secure_storage_windows
   flutter_tts
   hotkey_manager_windows
   local_notifier
+  pdfx
   permission_handler_windows
   record_windows
   screen_retriever_windows
   sqlite3_flutter_libs
+  syncfusion_pdfviewer_windows
   tray_manager
   url_launcher_windows
   window_manager

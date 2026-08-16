@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../l10n/app_localizations.dart';
-import '../../domain/entities/app_state.dart';
+import 'package:lang/l10n/app_localizations.dart';
+import 'package:lang/domain/entities/app_state.dart';
 
 class SearchSettingsSection extends StatelessWidget {
   const SearchSettingsSection({super.key});
@@ -38,10 +38,20 @@ class SearchSettingsSection extends StatelessWidget {
             SwitchListTile(
               title: Text(localizations.clipboardMonitor),
               subtitle: Text(localizations.autoSearchClipboard),
-              value: appState.clipboardMonitor,
-              onChanged: (value) {
-                appState.setClipboardMonitor(value);
-              },
+              value: appState.autoSearchClipboard,
+              onChanged: (value) => appState.setAutoSearchClipboard(value),
+            ),
+            SwitchListTile(
+              title: Text(localizations.clipboardAutoDetect),
+              subtitle: Text(localizations.autoDetectProcessText),
+              value: appState.clipboardAutoDetect,
+              onChanged: (value) => appState.setClipboardAutoDetect(value),
+            ),
+            SwitchListTile(
+              title: Text(localizations.highlightParticles),
+              subtitle: Text(localizations.showParticles),
+              value: appState.highlightParticles,
+              onChanged: (value) => appState.setHighlightParticles(value),
             ),
           ],
         ),

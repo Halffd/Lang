@@ -1,5 +1,5 @@
 import 'dictionary_service.dart';
-import '../../domain/entities/dictionary.dart';
+import 'package:lang/domain/entities/dictionary.dart';
 import '../datasources/radical_data.dart';
 import '../datasources/kanji_decomposition_data.dart';
 

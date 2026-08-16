@@ -1,6 +1,6 @@
 import 'dart:convert';
-import '../../domain/entities/ai_message.dart';
-import '../../domain/repositories/ai_repository.dart';
+import 'package:lang/domain/entities/ai_message.dart';
+import 'package:lang/domain/repositories/ai_repository.dart';
 import '../datasources/ai_local_data_source.dart';
 import '../datasources/ai_remote_data_source.dart';
 

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:sqflite/sqflite.dart';
-import '../../database/database_manager.dart';
-import '../../domain/entities/dictionary.dart';
+import 'package:lang/database/database_manager.dart';
+import 'package:lang/domain/entities/dictionary.dart';
 import '../datasources/local/yomichan_parser.dart';
 
 enum ImportStatus {

@@ -1,11 +1,9 @@
-import 'language_detector.dart';
-import '../../domain/entities/dictionary.dart' as model;
-import '../datasources/remote/ichi_moe_service.dart';
+import 'package:lang/utils/chinese_util.dart';
+import 'package:lang/data/services/dictionary/language_detector.dart';
 
 /// Service for multi-language text tokenization
 class TokenizerService {
   final LanguageDetector _languageDetector = LanguageDetector();
-  final IchiMoeService _ichiMoeService = IchiMoeService();
 
   /// Tokenize text based on detected language
   Future<List<Token>> tokenize(String text) async {
@@ -25,22 +23,9 @@ class TokenizerService {
     }
   }
 
-  /// Tokenize Japanese text using ichi.moe
+  /// Tokenize Japanese text (fallback)
   Future<List<Token>> _tokenizeJapanese(String text) async {
-    try {
-      final results = await _ichiMoeService.analyze(text);
-      return results.map((r) => Token(
-        surface: r.word,
-        reading: r.reading,
-        definition: r.definitions.join('; '),
-        partOfSpeech: r.partOfSpeech,
-        startIndex: 0, // ichi.moe doesn't provide indices
-        endIndex: 0,
-      )).toList();
-    } catch (e) {
-      print('Japanese tokenization failed: $e');
-      return _fallbackJapaneseTokenize(text);
-    }
+    return _fallbackJapaneseTokenize(text);
   }
 
   /// Fallback Japanese tokenization (character-based)
@@ -83,8 +68,6 @@ class TokenizerService {
 
   /// Tokenize Korean text
   List<Token> _tokenizeKorean(String text) {
-    // For now, return character tokens
-    // Could integrate a Korean morphological analyzer
     final tokens = <Token>[];
     for (int i = 0; i < text.length; i++) {
       tokens.add(Token(
@@ -119,6 +102,30 @@ class TokenizerService {
       index += word.length + 1; // +1 for space
     }
     return tokens;
+  }
+
+  /// Split text into sentences
+  Map<String, String> splitSentences(List<Token> tokens) {
+    final sentences = <String, String>{};
+    String currentSentence = '';
+    String currentToken = '';
+    
+    for (final token in tokens) {
+      currentToken += token.surface;
+      currentSentence += token.surface;
+      
+      if (token.surface.contains(RegExp(r'[。！？.!?]'))) {
+        sentences[currentToken.trim()] = currentSentence.trim();
+        currentToken = '';
+        currentSentence = '';
+      }
+    }
+    
+    if (currentToken.isNotEmpty) {
+      sentences[currentToken.trim()] = currentSentence.trim();
+    }
+    
+    return sentences;
   }
 }
 

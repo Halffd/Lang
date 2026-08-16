@@ -102,71 +102,107 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
+  /// No description provided for @about.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get about;
+
+  /// No description provided for @add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
+  /// No description provided for @addToFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to favorites'**
+  String get addToFavorites;
+
+  /// No description provided for @advancedSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced Settings'**
+  String get advancedSettings;
+
+  /// No description provided for @afrikaans.
+  ///
+  /// In en, this message translates to:
+  /// **'Afrikaans'**
+  String get afrikaans;
+
+  /// No description provided for @ai.
+  ///
+  /// In en, this message translates to:
+  /// **'AI'**
+  String get ai;
+
+  /// No description provided for @aiAssistant.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Assistant'**
+  String get aiAssistant;
+
+  /// No description provided for @aiBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Breakdown'**
+  String get aiBreakdown;
+
+  /// No description provided for @aiChatTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Chat'**
+  String get aiChatTitle;
+
+  /// No description provided for @aiInsights.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Insights'**
+  String get aiInsights;
+
+  /// No description provided for @analyze.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze'**
+  String get analyze;
+
+  /// No description provided for @analyzeIndividualCharacters.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze Individual Characters'**
+  String get analyzeIndividualCharacters;
+
+  /// No description provided for @analyzeScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze Screen'**
+  String get analyzeScreenTitle;
+
+  /// No description provided for @analyzeText.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze Text'**
+  String get analyzeText;
+
+  /// No description provided for @ankiProfiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Anki & Profiles'**
+  String get ankiProfiles;
+
   /// No description provided for @appName.
   ///
   /// In en, this message translates to:
   /// **'Lang'**
   String get appName;
 
-  /// No description provided for @search.
+  /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Search'**
-  String get search;
-
-  /// No description provided for @reader.
-  ///
-  /// In en, this message translates to:
-  /// **'Reader'**
-  String get reader;
-
-  /// No description provided for @lists.
-  ///
-  /// In en, this message translates to:
-  /// **'Lists'**
-  String get lists;
-
-  /// No description provided for @wordLists.
-  ///
-  /// In en, this message translates to:
-  /// **'Word Lists'**
-  String get wordLists;
-
-  /// No description provided for @dictionaries.
-  ///
-  /// In en, this message translates to:
-  /// **'Dictionaries'**
-  String get dictionaries;
-
-  /// No description provided for @translator.
-  ///
-  /// In en, this message translates to:
-  /// **'Translator'**
-  String get translator;
-
-  /// No description provided for @settings.
-  ///
-  /// In en, this message translates to:
-  /// **'Settings'**
-  String get settings;
-
-  /// No description provided for @language.
-  ///
-  /// In en, this message translates to:
-  /// **'Language'**
-  String get language;
-
-  /// No description provided for @generalSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'General Settings'**
-  String get generalSettings;
-
-  /// No description provided for @dictionaryLanguage.
-  ///
-  /// In en, this message translates to:
-  /// **'Dictionary Language'**
-  String get dictionaryLanguage;
+  /// **'Lang'**
+  String get appTitle;
 
   /// No description provided for @appearance.
   ///
@@ -174,23 +210,29 @@ abstract class AppLocalizations {
   /// **'Appearance'**
   String get appearance;
 
-  /// No description provided for @darkMode.
+  /// No description provided for @arabic.
   ///
   /// In en, this message translates to:
-  /// **'Dark Mode'**
-  String get darkMode;
+  /// **'Arabic'**
+  String get arabic;
 
-  /// No description provided for @useDarkTheme.
+  /// No description provided for @areYouSureYouWantToDelete.
   ///
   /// In en, this message translates to:
-  /// **'Use dark theme'**
-  String get useDarkTheme;
+  /// **'Are you sure you want to delete?'**
+  String areYouSureYouWantToDelete(Object title);
 
-  /// No description provided for @uiAndNavigation.
+  /// No description provided for @askAnything.
   ///
   /// In en, this message translates to:
-  /// **'UI & Navigation'**
-  String get uiAndNavigation;
+  /// **'Ask anything'**
+  String get askAnything;
+
+  /// No description provided for @autoDetectProcessText.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically detect and process text from clipboard'**
+  String get autoDetectProcessText;
 
   /// No description provided for @autoHideNavigation.
   ///
@@ -198,29 +240,137 @@ abstract class AppLocalizations {
   /// **'Auto-hide Navigation'**
   String get autoHideNavigation;
 
-  /// No description provided for @hideNavigationBottom.
+  /// No description provided for @autoKanaConversion.
   ///
   /// In en, this message translates to:
-  /// **'Hide navigation bar when mouse is not near bottom'**
-  String get hideNavigationBottom;
+  /// **'Automatic Kana Conversion'**
+  String get autoKanaConversion;
 
-  /// No description provided for @defaultFlexMode.
+  /// No description provided for @autoPasteReader.
   ///
   /// In en, this message translates to:
-  /// **'Default Flex Mode'**
-  String get defaultFlexMode;
+  /// **'Auto-paste in Reader Mode'**
+  String get autoPasteReader;
 
-  /// No description provided for @useFlexibleGrid.
+  /// No description provided for @autoPasteReaderSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Use flexible grid layout for word lists by default'**
-  String get useFlexibleGrid;
+  /// **'Automatically paste text from clipboard into reader mode'**
+  String get autoPasteReaderSubtitle;
 
-  /// No description provided for @keyboardShortcuts.
+  /// No description provided for @autoSearchClipboard.
   ///
   /// In en, this message translates to:
-  /// **'Keyboard Shortcuts'**
-  String get keyboardShortcuts;
+  /// **'Automatically search for clipboard content'**
+  String get autoSearchClipboard;
+
+  /// No description provided for @autoTranslateWords.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically translate words in reader mode'**
+  String get autoTranslateWords;
+
+  /// No description provided for @autoTranslation.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Translation'**
+  String get autoTranslation;
+
+  /// No description provided for @breakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Breakdown'**
+  String get breakdown;
+
+  /// No description provided for @bulgarian.
+  ///
+  /// In en, this message translates to:
+  /// **'Bulgarian'**
+  String get bulgarian;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @catalan.
+  ///
+  /// In en, this message translates to:
+  /// **'Catalan'**
+  String get catalan;
+
+  /// No description provided for @chatGptMock.
+  ///
+  /// In en, this message translates to:
+  /// **'ChatGPT'**
+  String get chatGptMock;
+
+  /// No description provided for @chatWithAI.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat with AI'**
+  String get chatWithAI;
+
+  /// No description provided for @chinese.
+  ///
+  /// In en, this message translates to:
+  /// **'Chinese'**
+  String get chinese;
+
+  /// No description provided for @clearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Filters'**
+  String get clearFilters;
+
+  /// No description provided for @clearHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear History'**
+  String get clearHistory;
+
+  /// No description provided for @clipboardAutoDetect.
+  ///
+  /// In en, this message translates to:
+  /// **'Clipboard Auto-Detect'**
+  String get clipboardAutoDetect;
+
+  /// No description provided for @clipboardMonitor.
+  ///
+  /// In en, this message translates to:
+  /// **'Clipboard Monitor'**
+  String get clipboardMonitor;
+
+  /// No description provided for @column.
+  ///
+  /// In en, this message translates to:
+  /// **'Column'**
+  String get column;
+
+  /// No description provided for @columns.
+  ///
+  /// In en, this message translates to:
+  /// **'Columns'**
+  String get columns;
+
+  /// No description provided for @context.
+  ///
+  /// In en, this message translates to:
+  /// **'Context'**
+  String get context;
+
+  /// No description provided for @convertRomajiToKana.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert romaji to kana while typing'**
+  String get convertRomajiToKana;
+
+  /// No description provided for @croatian.
+  ///
+  /// In en, this message translates to:
+  /// **'Croatian'**
+  String get croatian;
 
   /// No description provided for @ctrl1Search.
   ///
@@ -258,90 +408,6 @@ abstract class AppLocalizations {
   /// **'Ctrl + 6: Settings'**
   String get ctrl6Settings;
 
-  /// No description provided for @searchSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'Search Settings'**
-  String get searchSettings;
-
-  /// No description provided for @clipboardMonitor.
-  ///
-  /// In en, this message translates to:
-  /// **'Clipboard Monitor'**
-  String get clipboardMonitor;
-
-  /// No description provided for @autoSearchClipboard.
-  ///
-  /// In en, this message translates to:
-  /// **'Automatically search for clipboard content'**
-  String get autoSearchClipboard;
-
-  /// No description provided for @autoKanaConversion.
-  ///
-  /// In en, this message translates to:
-  /// **'Automatic Kana Conversion'**
-  String get autoKanaConversion;
-
-  /// No description provided for @convertRomajiToKana.
-  ///
-  /// In en, this message translates to:
-  /// **'Convert romaji to kana while typing'**
-  String get convertRomajiToKana;
-
-  /// No description provided for @displayOptions.
-  ///
-  /// In en, this message translates to:
-  /// **'Display Options'**
-  String get displayOptions;
-
-  /// No description provided for @showParticles.
-  ///
-  /// In en, this message translates to:
-  /// **'Show Particles'**
-  String get showParticles;
-
-  /// No description provided for @highlightParticles.
-  ///
-  /// In en, this message translates to:
-  /// **'Highlight Japanese particles in text'**
-  String get highlightParticles;
-
-  /// No description provided for @showKanji.
-  ///
-  /// In en, this message translates to:
-  /// **'Show Kanji'**
-  String get showKanji;
-
-  /// No description provided for @displayKanjiInfo.
-  ///
-  /// In en, this message translates to:
-  /// **'Display kanji information'**
-  String get displayKanjiInfo;
-
-  /// No description provided for @minFrequency.
-  ///
-  /// In en, this message translates to:
-  /// **'Minimum Frequency'**
-  String get minFrequency;
-
-  /// No description provided for @filterByFrequency.
-  ///
-  /// In en, this message translates to:
-  /// **'Filter words by frequency (lower = more common)'**
-  String get filterByFrequency;
-
-  /// No description provided for @advancedSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'Advanced Settings'**
-  String get advancedSettings;
-
-  /// No description provided for @ankiProfiles.
-  ///
-  /// In en, this message translates to:
-  /// **'Anki & Profiles'**
-  String get ankiProfiles;
-
   /// No description provided for @currentAnkiDeck.
   ///
   /// In en, this message translates to:
@@ -353,174 +419,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Current Profile'**
   String get currentProfile;
-
-  /// No description provided for @enhancedFeatures.
-  ///
-  /// In en, this message translates to:
-  /// **'Enhanced Features'**
-  String get enhancedFeatures;
-
-  /// No description provided for @clipboardAutoDetect.
-  ///
-  /// In en, this message translates to:
-  /// **'Clipboard Auto-Detect'**
-  String get clipboardAutoDetect;
-
-  /// No description provided for @autoDetectProcessText.
-  ///
-  /// In en, this message translates to:
-  /// **'Automatically detect and process text from clipboard'**
-  String get autoDetectProcessText;
-
-  /// No description provided for @forvoAudio.
-  ///
-  /// In en, this message translates to:
-  /// **'Forvo Audio'**
-  String get forvoAudio;
-
-  /// No description provided for @enableForvoPronunciations.
-  ///
-  /// In en, this message translates to:
-  /// **'Enable audio pronunciations from Forvo'**
-  String get enableForvoPronunciations;
-
-  /// No description provided for @autoTranslation.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto Translation'**
-  String get autoTranslation;
-
-  /// No description provided for @autoTranslateWords.
-  ///
-  /// In en, this message translates to:
-  /// **'Automatically translate words in reader mode'**
-  String get autoTranslateWords;
-
-  /// No description provided for @autoPasteReader.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto-paste in Reader Mode'**
-  String get autoPasteReader;
-
-  /// No description provided for @autoPasteReaderSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Automatically paste text from clipboard into reader mode'**
-  String get autoPasteReaderSubtitle;
-
-  /// No description provided for @about.
-  ///
-  /// In en, this message translates to:
-  /// **'About'**
-  String get about;
-
-  /// No description provided for @version.
-  ///
-  /// In en, this message translates to:
-  /// **'Version {version}'**
-  String version(Object version);
-
-  /// No description provided for @japanese.
-  ///
-  /// In en, this message translates to:
-  /// **'Japanese'**
-  String get japanese;
-
-  /// No description provided for @chinese.
-  ///
-  /// In en, this message translates to:
-  /// **'Chinese'**
-  String get chinese;
-
-  /// No description provided for @korean.
-  ///
-  /// In en, this message translates to:
-  /// **'Korean'**
-  String get korean;
-
-  /// No description provided for @english.
-  ///
-  /// In en, this message translates to:
-  /// **'English'**
-  String get english;
-
-  /// No description provided for @searchOptions.
-  ///
-  /// In en, this message translates to:
-  /// **'Search Options'**
-  String get searchOptions;
-
-  /// No description provided for @french.
-  ///
-  /// In en, this message translates to:
-  /// **'French'**
-  String get french;
-
-  /// No description provided for @spanish.
-  ///
-  /// In en, this message translates to:
-  /// **'Spanish'**
-  String get spanish;
-
-  /// No description provided for @german.
-  ///
-  /// In en, this message translates to:
-  /// **'German'**
-  String get german;
-
-  /// No description provided for @italian.
-  ///
-  /// In en, this message translates to:
-  /// **'Italian'**
-  String get italian;
-
-  /// No description provided for @portuguese.
-  ///
-  /// In en, this message translates to:
-  /// **'Portuguese'**
-  String get portuguese;
-
-  /// No description provided for @russian.
-  ///
-  /// In en, this message translates to:
-  /// **'Russian'**
-  String get russian;
-
-  /// No description provided for @arabic.
-  ///
-  /// In en, this message translates to:
-  /// **'Arabic'**
-  String get arabic;
-
-  /// No description provided for @hindi.
-  ///
-  /// In en, this message translates to:
-  /// **'Hindi'**
-  String get hindi;
-
-  /// No description provided for @afrikaans.
-  ///
-  /// In en, this message translates to:
-  /// **'Afrikaans'**
-  String get afrikaans;
-
-  /// No description provided for @bulgarian.
-  ///
-  /// In en, this message translates to:
-  /// **'Bulgarian'**
-  String get bulgarian;
-
-  /// No description provided for @catalan.
-  ///
-  /// In en, this message translates to:
-  /// **'Catalan'**
-  String get catalan;
-
-  /// No description provided for @croatian.
-  ///
-  /// In en, this message translates to:
-  /// **'Croatian'**
-  String get croatian;
 
   /// No description provided for @czech.
   ///
@@ -534,149 +432,23 @@ abstract class AppLocalizations {
   /// **'Danish'**
   String get danish;
 
-  /// No description provided for @dutch.
+  /// No description provided for @darkMode.
   ///
   /// In en, this message translates to:
-  /// **'Dutch'**
-  String get dutch;
+  /// **'Dark Mode'**
+  String get darkMode;
 
-  /// No description provided for @estonian.
+  /// No description provided for @darkTheme.
   ///
   /// In en, this message translates to:
-  /// **'Estonian'**
-  String get estonian;
+  /// **'Dark Theme'**
+  String get darkTheme;
 
-  /// No description provided for @filipino.
+  /// No description provided for @defaultFlexMode.
   ///
   /// In en, this message translates to:
-  /// **'Filipino'**
-  String get filipino;
-
-  /// No description provided for @finnish.
-  ///
-  /// In en, this message translates to:
-  /// **'Finnish'**
-  String get finnish;
-
-  /// No description provided for @greek.
-  ///
-  /// In en, this message translates to:
-  /// **'Greek'**
-  String get greek;
-
-  /// No description provided for @hebrew.
-  ///
-  /// In en, this message translates to:
-  /// **'Hebrew'**
-  String get hebrew;
-
-  /// No description provided for @hungarian.
-  ///
-  /// In en, this message translates to:
-  /// **'Hungarian'**
-  String get hungarian;
-
-  /// No description provided for @indonesian.
-  ///
-  /// In en, this message translates to:
-  /// **'Indonésian'**
-  String get indonesian;
-
-  /// No description provided for @latvian.
-  ///
-  /// In en, this message translates to:
-  /// **'Latvian'**
-  String get latvian;
-
-  /// No description provided for @lithuanian.
-  ///
-  /// In en, this message translates to:
-  /// **'Lithuanian'**
-  String get lithuanian;
-
-  /// No description provided for @norwegian.
-  ///
-  /// In en, this message translates to:
-  /// **'Norwegian'**
-  String get norwegian;
-
-  /// No description provided for @polish.
-  ///
-  /// In en, this message translates to:
-  /// **'Polish'**
-  String get polish;
-
-  /// No description provided for @romanian.
-  ///
-  /// In en, this message translates to:
-  /// **'Romanian'**
-  String get romanian;
-
-  /// No description provided for @serbian.
-  ///
-  /// In en, this message translates to:
-  /// **'Serbian'**
-  String get serbian;
-
-  /// No description provided for @slovak.
-  ///
-  /// In en, this message translates to:
-  /// **'Slovak'**
-  String get slovak;
-
-  /// No description provided for @slovenian.
-  ///
-  /// In en, this message translates to:
-  /// **'Slovenian'**
-  String get slovenian;
-
-  /// No description provided for @swedish.
-  ///
-  /// In en, this message translates to:
-  /// **'Swedish'**
-  String get swedish;
-
-  /// No description provided for @thai.
-  ///
-  /// In en, this message translates to:
-  /// **'Thai'**
-  String get thai;
-
-  /// No description provided for @turkish.
-  ///
-  /// In en, this message translates to:
-  /// **'Turkish'**
-  String get turkish;
-
-  /// No description provided for @ukrainian.
-  ///
-  /// In en, this message translates to:
-  /// **'Ukrainian'**
-  String get ukrainian;
-
-  /// No description provided for @vietnamese.
-  ///
-  /// In en, this message translates to:
-  /// **'Vietnamese'**
-  String get vietnamese;
-
-  /// No description provided for @privacyPolicy.
-  ///
-  /// In en, this message translates to:
-  /// **'Privacy Policy'**
-  String get privacyPolicy;
-
-  /// No description provided for @termsOfService.
-  ///
-  /// In en, this message translates to:
-  /// **'Terms of Service'**
-  String get termsOfService;
-
-  /// No description provided for @multilingualLearningTool.
-  ///
-  /// In en, this message translates to:
-  /// **'A multilingual language learning tool with dictionary and word saving features.'**
-  String get multilingualLearningTool;
+  /// **'Default Flex Mode'**
+  String get defaultFlexMode;
 
   /// No description provided for @defaultScreen.
   ///
@@ -690,47 +462,101 @@ abstract class AppLocalizations {
   /// **'Select which screen to show when app starts'**
   String get defaultScreenSubtitle;
 
-  /// No description provided for @themeMode.
+  /// No description provided for @definitionsHidden.
   ///
   /// In en, this message translates to:
-  /// **'Theme Mode'**
-  String get themeMode;
+  /// **'Definitions hidden'**
+  String get definitionsHidden;
 
-  /// No description provided for @themeModeSubtitle.
+  /// No description provided for @delete.
   ///
   /// In en, this message translates to:
-  /// **'Select how the app theme should be determined'**
-  String get themeModeSubtitle;
+  /// **'Delete'**
+  String get delete;
 
-  /// No description provided for @systemTheme.
+  /// No description provided for @dictionaries.
   ///
   /// In en, this message translates to:
-  /// **'System Theme'**
-  String get systemTheme;
+  /// **'Dictionaries'**
+  String get dictionaries;
 
-  /// No description provided for @lightTheme.
+  /// No description provided for @dictionaryLanguage.
   ///
   /// In en, this message translates to:
-  /// **'Light Theme'**
-  String get lightTheme;
+  /// **'Dictionary Language'**
+  String get dictionaryLanguage;
 
-  /// No description provided for @darkTheme.
+  /// No description provided for @displayKanjiInfo.
   ///
   /// In en, this message translates to:
-  /// **'Dark Theme'**
-  String get darkTheme;
+  /// **'Display kanji information'**
+  String get displayKanjiInfo;
 
-  /// No description provided for @zoomLevel.
+  /// No description provided for @displayOptions.
   ///
   /// In en, this message translates to:
-  /// **'Zoom Level'**
-  String get zoomLevel;
+  /// **'Display Options'**
+  String get displayOptions;
 
-  /// No description provided for @zoomLevelSubtitle.
+  /// No description provided for @dutch.
   ///
   /// In en, this message translates to:
-  /// **'Adjust the zoom level for the entire app'**
-  String get zoomLevelSubtitle;
+  /// **'Dutch'**
+  String get dutch;
+
+  /// No description provided for @enableForvoPronunciations.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable audio pronunciations from Forvo'**
+  String get enableForvoPronunciations;
+
+  /// No description provided for @english.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get english;
+
+  /// No description provided for @enhancedFeatures.
+  ///
+  /// In en, this message translates to:
+  /// **'Enhanced Features'**
+  String get enhancedFeatures;
+
+  /// No description provided for @enterTextToAnalyze.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter text to analyze'**
+  String get enterTextToAnalyze;
+
+  /// No description provided for @estonian.
+  ///
+  /// In en, this message translates to:
+  /// **'Estonian'**
+  String get estonian;
+
+  /// No description provided for @favorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get favorites;
+
+  /// No description provided for @filipino.
+  ///
+  /// In en, this message translates to:
+  /// **'Filipino'**
+  String get filipino;
+
+  /// No description provided for @filterByFrequency.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter words by frequency (lower = more common)'**
+  String get filterByFrequency;
+
+  /// No description provided for @finnish.
+  ///
+  /// In en, this message translates to:
+  /// **'Finnish'**
+  String get finnish;
 
   /// No description provided for @fontSize.
   ///
@@ -744,269 +570,47 @@ abstract class AppLocalizations {
   /// **'Adjust the font size multiplier for text'**
   String get fontSizeSubtitle;
 
-  /// No description provided for @analyze.
+  /// No description provided for @forvoAudio.
   ///
   /// In en, this message translates to:
-  /// **'Analyze'**
-  String get analyze;
+  /// **'Forvo Audio'**
+  String get forvoAudio;
 
-  /// No description provided for @saved.
+  /// No description provided for @french.
   ///
   /// In en, this message translates to:
-  /// **'Saved'**
-  String get saved;
-
-  /// No description provided for @history.
-  ///
-  /// In en, this message translates to:
-  /// **'History'**
-  String get history;
-
-  /// No description provided for @ai.
-  ///
-  /// In en, this message translates to:
-  /// **'AI'**
-  String get ai;
-
-  /// No description provided for @appTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Lang'**
-  String get appTitle;
+  /// **'French'**
+  String get french;
 
   /// No description provided for @frequency.
   ///
   /// In en, this message translates to:
   /// **'Frequency: {freq}'**
-  String frequency(int freq);
+  String frequency(Object freq);
 
-  /// No description provided for @aiInsights.
+  /// No description provided for @frequencyHighToLow.
   ///
   /// In en, this message translates to:
-  /// **'AI Insights'**
-  String get aiInsights;
+  /// **'Frequency High to Low'**
+  String get frequencyHighToLow;
 
-  /// No description provided for @runAiBreakdown.
+  /// No description provided for @frequencyLowToHigh.
   ///
   /// In en, this message translates to:
-  /// **'Run AI Breakdown'**
-  String get runAiBreakdown;
+  /// **'Frequency Low to High'**
+  String get frequencyLowToHigh;
 
-  /// No description provided for @context.
+  /// No description provided for @fullTranslation.
   ///
   /// In en, this message translates to:
-  /// **'Context'**
-  String get context;
+  /// **'Full Translation'**
+  String get fullTranslation;
 
-  /// No description provided for @localDictionary.
+  /// No description provided for @generalSettings.
   ///
   /// In en, this message translates to:
-  /// **'Local Dictionary'**
-  String get localDictionary;
-
-  /// No description provided for @ichiMoe.
-  ///
-  /// In en, this message translates to:
-  /// **'ichi.moe'**
-  String get ichiMoe;
-
-  /// No description provided for @kanjiBreakdown.
-  ///
-  /// In en, this message translates to:
-  /// **'Kanji Breakdown'**
-  String get kanjiBreakdown;
-
-  /// No description provided for @readings.
-  ///
-  /// In en, this message translates to:
-  /// **'Readings: {readings}'**
-  String readings(String readings);
-
-  /// No description provided for @origin.
-  ///
-  /// In en, this message translates to:
-  /// **'Origin'**
-  String get origin;
-
-  /// No description provided for @usage.
-  ///
-  /// In en, this message translates to:
-  /// **'Usage'**
-  String get usage;
-
-  /// No description provided for @wiktionary.
-  ///
-  /// In en, this message translates to:
-  /// **'Wiktionary'**
-  String get wiktionary;
-
-  /// No description provided for @japaneseKanjiOriginAndUsage.
-  ///
-  /// In en, this message translates to:
-  /// **'Japanese kanji origin and usage'**
-  String get japaneseKanjiOriginAndUsage;
-
-  /// No description provided for @reading.
-  ///
-  /// In en, this message translates to:
-  /// **'Reading: {reading}'**
-  String reading(String reading);
-
-  /// No description provided for @analyzeIndividualCharacters.
-  ///
-  /// In en, this message translates to:
-  /// **'Analyze Individual Characters'**
-  String get analyzeIndividualCharacters;
-
-  /// No description provided for @analyzeText.
-  ///
-  /// In en, this message translates to:
-  /// **'Analyze Text'**
-  String get analyzeText;
-
-  /// No description provided for @analyzeScreenTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Analyze Screen'**
-  String get analyzeScreenTitle;
-
-  /// No description provided for @enterTextToAnalyze.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter text to analyze'**
-  String get enterTextToAnalyze;
-
-  /// No description provided for @breakdown.
-  ///
-  /// In en, this message translates to:
-  /// **'Breakdown'**
-  String get breakdown;
-
-  /// No description provided for @chatWithAI.
-  ///
-  /// In en, this message translates to:
-  /// **'Chat with AI'**
-  String get chatWithAI;
-
-  /// No description provided for @sendMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Send message'**
-  String get sendMessage;
-
-  /// No description provided for @typeMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Type a message...'**
-  String get typeMessage;
-
-  /// No description provided for @aiChatTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'AI Chat'**
-  String get aiChatTitle;
-
-  /// No description provided for @savedWords.
-  ///
-  /// In en, this message translates to:
-  /// **'Saved Words'**
-  String get savedWords;
-
-  /// No description provided for @noSavedWords.
-  ///
-  /// In en, this message translates to:
-  /// **'No saved words yet'**
-  String get noSavedWords;
-
-  /// No description provided for @historyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'History'**
-  String get historyTitle;
-
-  /// No description provided for @noHistory.
-  ///
-  /// In en, this message translates to:
-  /// **'No history yet'**
-  String get noHistory;
-
-  /// No description provided for @clearHistory.
-  ///
-  /// In en, this message translates to:
-  /// **'Clear History'**
-  String get clearHistory;
-
-  /// No description provided for @areYouSureYouWantToDelete.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to delete?'**
-  String areYouSureYouWantToDelete(Object title);
-
-  /// No description provided for @delete.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete'**
-  String get delete;
-
-  /// No description provided for @cancel.
-  ///
-  /// In en, this message translates to:
-  /// **'Cancel'**
-  String get cancel;
-
-  /// No description provided for @add.
-  ///
-  /// In en, this message translates to:
-  /// **'Add'**
-  String get add;
-
-  /// No description provided for @searchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search...'**
-  String get searchHint;
-
-  /// No description provided for @settingsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Settings'**
-  String get settingsTitle;
-
-  /// No description provided for @aiAssistant.
-  ///
-  /// In en, this message translates to:
-  /// **'AI Assistant'**
-  String get aiAssistant;
-
-  /// No description provided for @chatGptMock.
-  ///
-  /// In en, this message translates to:
-  /// **'ChatGPT'**
-  String get chatGptMock;
-
-  /// No description provided for @translate.
-  ///
-  /// In en, this message translates to:
-  /// **'Translate'**
-  String get translate;
-
-  /// No description provided for @summarize.
-  ///
-  /// In en, this message translates to:
-  /// **'Summarize'**
-  String get summarize;
-
-  /// No description provided for @aiBreakdown.
-  ///
-  /// In en, this message translates to:
-  /// **'AI Breakdown'**
-  String get aiBreakdown;
-
-  /// No description provided for @askAnything.
-  ///
-  /// In en, this message translates to:
-  /// **'Ask anything'**
-  String get askAnything;
+  /// **'General Settings'**
+  String get generalSettings;
 
   /// No description provided for @generateImage.
   ///
@@ -1014,47 +618,305 @@ abstract class AppLocalizations {
   /// **'Generate Image'**
   String get generateImage;
 
+  /// No description provided for @german.
+  ///
+  /// In en, this message translates to:
+  /// **'German'**
+  String get german;
+
+  /// No description provided for @greek.
+  ///
+  /// In en, this message translates to:
+  /// **'Greek'**
+  String get greek;
+
+  /// No description provided for @group.
+  ///
+  /// In en, this message translates to:
+  /// **'Group'**
+  String get group;
+
+  /// No description provided for @groupByFirstChar.
+  ///
+  /// In en, this message translates to:
+  /// **'Group by First Character'**
+  String get groupByFirstChar;
+
+  /// No description provided for @groupByFrequency.
+  ///
+  /// In en, this message translates to:
+  /// **'Group by Frequency'**
+  String get groupByFrequency;
+
+  /// No description provided for @groupByKanji.
+  ///
+  /// In en, this message translates to:
+  /// **'Group by Kanji'**
+  String get groupByKanji;
+
+  /// No description provided for @hasDefinition.
+  ///
+  /// In en, this message translates to:
+  /// **'Has Definition'**
+  String get hasDefinition;
+
+  /// No description provided for @hasKanji.
+  ///
+  /// In en, this message translates to:
+  /// **'Has Kanji'**
+  String get hasKanji;
+
+  /// No description provided for @hasReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Has Reading'**
+  String get hasReading;
+
+  /// No description provided for @hebrew.
+  ///
+  /// In en, this message translates to:
+  /// **'Hebrew'**
+  String get hebrew;
+
+  /// No description provided for @hideDefinitions.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide Definitions'**
+  String get hideDefinitions;
+
+  /// No description provided for @hideNavigationBottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide navigation bar when mouse is not near bottom'**
+  String get hideNavigationBottom;
+
+  /// No description provided for @highFrequency.
+  ///
+  /// In en, this message translates to:
+  /// **'High Frequency (1-1K)'**
+  String get highFrequency;
+
+  /// No description provided for @highlightParticles.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlight Japanese particles in text'**
+  String get highlightParticles;
+
+  /// No description provided for @hindi.
+  ///
+  /// In en, this message translates to:
+  /// **'Hindi'**
+  String get hindi;
+
+  /// No description provided for @history.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get history;
+
+  /// No description provided for @historyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get historyTitle;
+
+  /// No description provided for @hungarian.
+  ///
+  /// In en, this message translates to:
+  /// **'Hungarian'**
+  String get hungarian;
+
+  /// No description provided for @ichiMoe.
+  ///
+  /// In en, this message translates to:
+  /// **'ichi.moe'**
+  String get ichiMoe;
+
+  /// No description provided for @indonesian.
+  ///
+  /// In en, this message translates to:
+  /// **'Indonésian'**
+  String get indonesian;
+
+  /// No description provided for @italian.
+  ///
+  /// In en, this message translates to:
+  /// **'Italian'**
+  String get italian;
+
+  /// No description provided for @japanese.
+  ///
+  /// In en, this message translates to:
+  /// **'Japanese'**
+  String get japanese;
+
+  /// No description provided for @japaneseKanjiOriginAndUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Japanese kanji origin and usage'**
+  String get japaneseKanjiOriginAndUsage;
+
+  /// No description provided for @kanjiBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Kanji Breakdown'**
+  String get kanjiBreakdown;
+
+  /// No description provided for @keyboardShortcuts.
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard Shortcuts'**
+  String get keyboardShortcuts;
+
+  /// No description provided for @korean.
+  ///
+  /// In en, this message translates to:
+  /// **'Korean'**
+  String get korean;
+
   /// No description provided for @langAnalyze.
   ///
   /// In en, this message translates to:
   /// **'Lang Analyze'**
   String get langAnalyze;
 
-  /// No description provided for @pasteTextHere.
+  /// No description provided for @language.
   ///
   /// In en, this message translates to:
-  /// **'Paste text here...'**
-  String get pasteTextHere;
+  /// **'Language'**
+  String get language;
 
-  /// No description provided for @processing.
+  /// No description provided for @latvian.
   ///
   /// In en, this message translates to:
-  /// **'Processing...'**
-  String get processing;
+  /// **'Latvian'**
+  String get latvian;
 
-  /// No description provided for @perPageRow.
+  /// No description provided for @lightTheme.
   ///
   /// In en, this message translates to:
-  /// **'{count} per page'**
-  String perPageRow(int count);
+  /// **'Light Theme'**
+  String get lightTheme;
 
-  /// No description provided for @perPagePage.
+  /// No description provided for @lists.
   ///
   /// In en, this message translates to:
-  /// **'{count} per page'**
-  String perPagePage(int count);
+  /// **'Lists'**
+  String get lists;
 
-  /// No description provided for @pageOf.
+  /// No description provided for @lithuanian.
   ///
   /// In en, this message translates to:
-  /// **'{current} of {total}'**
-  String pageOf(int current, int total);
+  /// **'Lithuanian'**
+  String get lithuanian;
 
-  /// No description provided for @pasteYourText.
+  /// No description provided for @localDictionary.
   ///
   /// In en, this message translates to:
-  /// **'Paste your text here to analyze'**
-  String get pasteYourText;
+  /// **'Local Dictionary'**
+  String get localDictionary;
+
+  /// No description provided for @lowFrequency.
+  ///
+  /// In en, this message translates to:
+  /// **'Low Frequency'**
+  String get lowFrequency;
+
+  /// No description provided for @mediumFrequency.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium Frequency (1K-5K)'**
+  String get mediumFrequency;
+
+  /// No description provided for @minFrequency.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum Frequency'**
+  String get minFrequency;
+
+  /// No description provided for @multilingualLearningTool.
+  ///
+  /// In en, this message translates to:
+  /// **'A multilingual language learning tool with dictionary and word saving features.'**
+  String get multilingualLearningTool;
+
+  /// No description provided for @collapse.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse'**
+  String get collapse;
+
+  /// No description provided for @expand.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand'**
+  String get expand;
+
+  /// No description provided for @filter.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get filter;
+
+  /// No description provided for @first.
+  ///
+  /// In en, this message translates to:
+  /// **'First'**
+  String get first;
+
+  /// No description provided for @last.
+  ///
+  /// In en, this message translates to:
+  /// **'Last'**
+  String get last;
+
+  /// No description provided for @navFirstLast.
+  ///
+  /// In en, this message translates to:
+  /// **'First / Last'**
+  String get navFirstLast;
+
+  /// No description provided for @navPrevNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Prev / Next'**
+  String get navPrevNext;
+
+  /// No description provided for @next.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get next;
+
+  /// No description provided for @noFavoritesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorites yet'**
+  String get noFavoritesYet;
+
+  /// No description provided for @noGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'No Group'**
+  String get noGroup;
+
+  /// No description provided for @previous.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get previous;
+
+  /// No description provided for @noHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No history yet'**
+  String get noHistory;
+
+  /// No description provided for @noHistoryYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No history yet'**
+  String get noHistoryYet;
 
   /// No description provided for @noResultsYet.
   ///
@@ -1062,17 +924,437 @@ abstract class AppLocalizations {
   /// **'No results yet'**
   String get noResultsYet;
 
+  /// No description provided for @noSavedWords.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved words yet'**
+  String get noSavedWords;
+
+  /// No description provided for @norwegian.
+  ///
+  /// In en, this message translates to:
+  /// **'Norwegian'**
+  String get norwegian;
+
+  /// No description provided for @ofStatic.
+  ///
+  /// In en, this message translates to:
+  /// **'of'**
+  String get ofStatic;
+
+  /// No description provided for @origin.
+  ///
+  /// In en, this message translates to:
+  /// **'Origin'**
+  String get origin;
+
+  /// No description provided for @page.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {current} of {total}'**
+  String page(Object current, Object total);
+
+  /// No description provided for @pageOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} of {total}'**
+  String pageOf(Object current, Object total);
+
+  /// No description provided for @pasteTextHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste text here...'**
+  String get pasteTextHere;
+
+  /// No description provided for @pasteYourText.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste your text here to analyze'**
+  String get pasteYourText;
+
+  /// No description provided for @perPagePage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} per page'**
+  String perPagePage(Object count);
+
+  /// No description provided for @perPageRow.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} per row'**
+  String perPageRow(Object count);
+
+  /// No description provided for @polish.
+  ///
+  /// In en, this message translates to:
+  /// **'Polish'**
+  String get polish;
+
+  /// No description provided for @portuguese.
+  ///
+  /// In en, this message translates to:
+  /// **'Portuguese'**
+  String get portuguese;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get privacyPolicy;
+
+  /// No description provided for @processing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing...'**
+  String get processing;
+
+  /// No description provided for @reader.
+  ///
+  /// In en, this message translates to:
+  /// **'Reader'**
+  String get reader;
+
+  /// No description provided for @reading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading: {reading}'**
+  String reading(Object reading);
+
+  /// No description provided for @readingAtoZ.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading A-Z'**
+  String get readingAtoZ;
+
+  /// No description provided for @readingZtoA.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading Z-A'**
+  String get readingZtoA;
+
+  /// No description provided for @readings.
+  ///
+  /// In en, this message translates to:
+  /// **'Readings: {readings}'**
+  String readings(Object readings);
+
+  /// No description provided for @removeFromFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from favorites'**
+  String get removeFromFavorites;
+
+  /// No description provided for @romanian.
+  ///
+  /// In en, this message translates to:
+  /// **'Romanian'**
+  String get romanian;
+
+  /// No description provided for @runAiBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Run AI Breakdown'**
+  String get runAiBreakdown;
+
+  /// No description provided for @russian.
+  ///
+  /// In en, this message translates to:
+  /// **'Russian'**
+  String get russian;
+
+  /// No description provided for @saveWordsToSeeThemHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Save words to see them here'**
+  String get saveWordsToSeeThemHere;
+
+  /// No description provided for @saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get saved;
+
   /// No description provided for @savedWord.
   ///
   /// In en, this message translates to:
   /// **'Saved word'**
   String savedWord(Object word);
 
-  /// No description provided for @noHistoryYet.
+  /// No description provided for @savedWords.
   ///
   /// In en, this message translates to:
-  /// **'No history yet'**
-  String get noHistoryYet;
+  /// **'Saved Words'**
+  String get savedWords;
+
+  /// No description provided for @search.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get search;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search...'**
+  String get searchHint;
+
+  /// No description provided for @searchOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Options'**
+  String get searchOptions;
+
+  /// No description provided for @searchSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Settings'**
+  String get searchSettings;
+
+  /// No description provided for @sendMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Send message'**
+  String get sendMessage;
+
+  /// No description provided for @sentenceTranslations.
+  ///
+  /// In en, this message translates to:
+  /// **'Sentence Translations'**
+  String get sentenceTranslations;
+
+  /// No description provided for @sentencesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} sentences found'**
+  String sentencesFound(Object count);
+
+  /// No description provided for @serbian.
+  ///
+  /// In en, this message translates to:
+  /// **'Serbian'**
+  String get serbian;
+
+  /// No description provided for @settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// No description provided for @showDefinitions.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Definitions'**
+  String get showDefinitions;
+
+  /// No description provided for @showKanji.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Kanji'**
+  String get showKanji;
+
+  /// No description provided for @showParticles.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Particles'**
+  String get showParticles;
+
+  /// No description provided for @slovak.
+  ///
+  /// In en, this message translates to:
+  /// **'Slovak'**
+  String get slovak;
+
+  /// No description provided for @slovenian.
+  ///
+  /// In en, this message translates to:
+  /// **'Slovenian'**
+  String get slovenian;
+
+  /// No description provided for @sort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get sort;
+
+  /// No description provided for @spanish.
+  ///
+  /// In en, this message translates to:
+  /// **'Spanish'**
+  String get spanish;
+
+  /// No description provided for @summarize.
+  ///
+  /// In en, this message translates to:
+  /// **'Summarize'**
+  String get summarize;
+
+  /// No description provided for @swedish.
+  ///
+  /// In en, this message translates to:
+  /// **'Swedish'**
+  String get swedish;
+
+  /// No description provided for @systemTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'System Theme'**
+  String get systemTheme;
+
+  /// No description provided for @termsOfService.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Service'**
+  String get termsOfService;
+
+  /// No description provided for @thai.
+  ///
+  /// In en, this message translates to:
+  /// **'Thai'**
+  String get thai;
+
+  /// No description provided for @themeMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme Mode'**
+  String get themeMode;
+
+  /// No description provided for @themeModeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select how the app theme should be determined'**
+  String get themeModeSubtitle;
+
+  /// No description provided for @translate.
+  ///
+  /// In en, this message translates to:
+  /// **'Translate'**
+  String get translate;
+
+  /// No description provided for @translator.
+  ///
+  /// In en, this message translates to:
+  /// **'Translator'**
+  String get translator;
+
+  /// No description provided for @translationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Translation unavailable'**
+  String get translationUnavailable;
+
+  /// No description provided for @turkish.
+  ///
+  /// In en, this message translates to:
+  /// **'Turkish'**
+  String get turkish;
+
+  /// No description provided for @type.
+  ///
+  /// In en, this message translates to:
+  /// **'String'**
+  String get type;
+
+  /// No description provided for @typeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a message...'**
+  String get typeMessage;
+
+  /// No description provided for @uiAndNavigation.
+  ///
+  /// In en, this message translates to:
+  /// **'UI & Navigation'**
+  String get uiAndNavigation;
+
+  /// No description provided for @ukrainian.
+  ///
+  /// In en, this message translates to:
+  /// **'Ukrainian'**
+  String get ukrainian;
+
+  /// No description provided for @usage.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage'**
+  String get usage;
+
+  /// No description provided for @useDarkTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Use dark theme'**
+  String get useDarkTheme;
+
+  /// No description provided for @useFlexibleGrid.
+  ///
+  /// In en, this message translates to:
+  /// **'Use flexible grid layout for word lists by default'**
+  String get useFlexibleGrid;
+
+  /// No description provided for @version.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String version(Object version);
+
+  /// No description provided for @vietnamese.
+  ///
+  /// In en, this message translates to:
+  /// **'Vietnamese'**
+  String get vietnamese;
+
+  /// No description provided for @wiktionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Wiktionary'**
+  String get wiktionary;
+
+  /// No description provided for @wordAtoZ.
+  ///
+  /// In en, this message translates to:
+  /// **'Word A-Z'**
+  String get wordAtoZ;
+
+  /// No description provided for @wordDefinitions.
+  ///
+  /// In en, this message translates to:
+  /// **'Word Definitions'**
+  String get wordDefinitions;
+
+  /// No description provided for @wordLists.
+  ///
+  /// In en, this message translates to:
+  /// **'Word Lists'**
+  String get wordLists;
+
+  /// No description provided for @wordZtoA.
+  ///
+  /// In en, this message translates to:
+  /// **'Word Z-A'**
+  String get wordZtoA;
+
+  /// No description provided for @wordsAnalyzed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} words analyzed'**
+  String wordsAnalyzed(Object count);
+
+  /// No description provided for @zoomLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom Level'**
+  String get zoomLevel;
+
+  /// No description provided for @zoomLevelSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust the zoom level for the entire app'**
+  String get zoomLevelSubtitle;
 }
 
 class _AppLocalizationsDelegate

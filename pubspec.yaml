@@ -49,6 +49,7 @@ dependencies:
   flutter_tts: ^4.2.5
   file_picker: ^10.3.10
   archive: ^4.0.9
+  flutter_secure_storage: ^9.2.2
   supabase: ^2.7.0
   supabase_flutter: ^2.6.0
   supabase_auth_ui: ^0.4.4
@@ -63,6 +64,9 @@ dependencies:
   record: ^5.1.2
   pdfx: ^2.4.0
   epubx: ^4.0.0
+  syncfusion_flutter_pdfviewer: ^33.2.13
+  epub_view: ^3.2.0
+  advance_pdf_viewer: ^2.0.0
   permission_handler: ^11.3.1
   screenshot: ^3.0.0
   path_provider: ^2.1.5

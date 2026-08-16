@@ -599,3 +599,103 @@ class DictionaryStats {
 
   DictionaryStats({required this.entries, required this.kanji});
 }
+
+class YomichanSearchResult {
+  final DictionaryEntry entry;
+  final Dictionary? dictionary;
+  final List<PitchAccent> pitches;
+  final List<ToneInfo> tones;
+  final List<FrequencyData> frequencies;
+
+  YomichanSearchResult({
+    required this.entry,
+    this.dictionary,
+    required this.pitches,
+    required this.tones,
+    required this.frequencies,
+  });
+}
+
+class YomichanKanjiResult {
+  final KanjiEntry kanji;
+  final Dictionary? dictionary;
+  final List<ToneInfo> tones;
+
+  YomichanKanjiResult({
+    required this.kanji,
+    this.dictionary,
+    required this.tones,
+  });
+}
+
+class ToneInfo {
+  final int? id;
+  final int dictionaryId;
+  final String term;
+  final String reading;
+  final int tone;
+  final String? toneMark;
+
+  ToneInfo({
+    this.id,
+    required this.dictionaryId,
+    required this.term,
+    required this.reading,
+    required this.tone,
+    this.toneMark,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      if (id != null) 'id': id,
+      'dictionary_id': dictionaryId,
+      'term': term,
+      'reading': reading,
+      'tone': tone,
+      'tone_mark': toneMark,
+    };
+  }
+
+  factory ToneInfo.fromMap(Map<String, dynamic> map) {
+    return ToneInfo(
+      id: map['id'] as int?,
+      dictionaryId: map['dictionary_id'] as int,
+      term: map['term'] as String,
+      reading: map['reading'] as String,
+      tone: map['tone'] as int,
+      toneMark: map['tone_mark'] as String?,
+    );
+  }
+}
+
+class WiktionaryEntry {
+  final String term;
+  final String definition;
+  final String language;
+  final String? etymology;
+  final List<String>? examples;
+  final List<String>? synonyms;
+  final List<String>? antonyms;
+
+  WiktionaryEntry({
+    required this.term,
+    required this.definition,
+    required this.language,
+    this.etymology,
+    this.examples,
+    this.synonyms,
+    this.antonyms,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'term': term,
+      'definition': definition,
+      'language': language,
+      'etymology': etymology,
+      'examples': examples,
+      'synonyms': synonyms,
+      'antonyms': antonyms,
+    };
+  }
+}

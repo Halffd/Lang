@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../l10n/app_localizations.dart';
-import '../../domain/entities/app_state.dart';
-import '../../domain/entities/translation_model.dart';
-import '../utils/screen_size.dart';
+import 'package:lang/l10n/app_localizations.dart';
+import 'package:lang/domain/entities/app_state.dart';
+import 'package:lang/domain/entities/translation_model.dart';
+import 'package:lang/presentation/utils/screen_size.dart';
 
 class GeneralSettingsSection extends StatelessWidget {
   const GeneralSettingsSection({super.key});
@@ -35,68 +35,144 @@ class GeneralSettingsSection extends StatelessWidget {
         return localizations.arabic;
       case 'hi':
         return localizations.hindi;
-      case 'af':
-        return localizations.afrikaans;
-      case 'bg':
-        return localizations.bulgarian;
-      case 'ca':
-        return localizations.catalan;
-      case 'hr':
-        return localizations.croatian;
-      case 'cs':
-        return localizations.czech;
-      case 'da':
-        return localizations.danish;
-      case 'nl':
-        return localizations.dutch;
-      case 'et':
-        return localizations.estonian;
-      case 'tl':
-        return localizations.filipino;
-      case 'fi':
-        return localizations.finnish;
-      case 'el':
-        return localizations.greek;
-      case 'iw':
-        return localizations.hebrew;
-      case 'hu':
-        return localizations.hungarian;
+      case 'th':
+        return localizations.thai;
+      case 'vi':
+        return localizations.vietnamese;
       case 'id':
         return localizations.indonesian;
-      case 'lv':
-        return localizations.latvian;
-      case 'lt':
-        return localizations.lithuanian;
-      case 'no':
-        return localizations.norwegian;
+      case 'ms':
+        return localizations.malay;
+      case 'tl':
+        return localizations.filipino;
+      case 'tr':
+        return localizations.turkish;
       case 'pl':
         return localizations.polish;
+      case 'nl':
+        return localizations.dutch;
+      case 'sv':
+        return localizations.swedish;
+      case 'da':
+        return localizations.danish;
+      case 'no':
+        return localizations.norwegian;
+      case 'fi':
+        return localizations.finnish;
+      case 'cs':
+        return localizations.czech;
+      case 'hu':
+        return localizations.hungarian;
       case 'ro':
         return localizations.romanian;
-      case 'sr':
-        return localizations.serbian;
+      case 'bg':
+        return localizations.bulgarian;
+      case 'hr':
+        return localizations.croatian;
       case 'sk':
         return localizations.slovak;
       case 'sl':
         return localizations.slovenian;
-      case 'sv':
-        return localizations.swedish;
-      case 'th':
-        return localizations.thai;
-      case 'tr':
-        return localizations.turkish;
+      case 'et':
+        return localizations.estonian;
+      case 'lv':
+        return localizations.latvian;
+      case 'lt':
+        return localizations.lithuanian;
       case 'uk':
         return localizations.ukrainian;
-      case 'vi':
-        return localizations.vietnamese;
+      case 'be':
+        return localizations.belarusian;
+      case 'sr':
+        return localizations.serbian;
+      case 'mk':
+        return localizations.macedonian;
+      case 'sq':
+        return localizations.albanian;
+      case 'mt':
+        return localizations.maltese;
+      case 'ga':
+        return localizations.irish;
+      case 'cy':
+        return localizations.welsh;
+      case 'eu':
+        return localizations.basque;
+      case 'ca':
+        return localizations.catalan;
+      case 'gl':
+        return localizations.galician;
+      case 'is':
+        return localizations.icelandic;
+      case 'fo':
+        return localizations.faroese;
+      case 'kl':
+        return localizations.greenlandic;
+      case 'af':
+        return localizations.afrikaans;
+      case 'sw':
+        return localizations.swahili;
+      case 'zu':
+        return localizations.zulu;
+      case 'xh':
+        return localizations.xhosa;
+      case 'st':
+        return localizations.sotho;
+      case 'tn':
+        return localizations.tswana;
+      case 'ss':
+        return localizations.swati;
+      case 've':
+        return localizations.venda;
+      case 'ts':
+        return localizations.tsonga;
+      case 'ny':
+        return localizations.chewa;
+      case 'mg':
+        return localizations.malagasy;
+      case 'so':
+        return localizations.somali;
+      case 'am':
+        return localizations.amharic;
+      case 'ti':
+        return localizations.tigrinya;
+      case 'om':
+        return localizations.oromo;
+      case 'sn':
+        return localizations.shona;
+      case 'rw':
+        return localizations.kinyarwanda;
+      case 'ny':
+        return localizations.nyanja;
+      case 'ki':
+        return localizations.kikuyu;
+      case 'lu':
+        return localizations.luba;
+      case 'lg':
+        return localizations.ganda;
+      case 'ak':
+        return localizations.akan;
+      case 'tw':
+        return localizations.twi;
+      case 'ee':
+        return localizations.ewe;
+      case 'yo':
+        return localizations.yoruba;
+      case 'ig':
+        return localizations.igbo;
+      case 'ha':
+        return localizations.hausa;
+      case 'zu':
+        return localizations.zulu;
+      case 'xh':
+        return localizations.xhosa;
       default:
-        return code;
+        return code.toUpperCase();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final appState = Provider.of<AppState>(context);
+    final appState = context.watch<AppState>();
     final localizations = AppLocalizations.of(context)!;
 
     return Column(
@@ -104,46 +180,46 @@ class GeneralSettingsSection extends StatelessWidget {
       children: [
         Text(
           localizations.generalSettings,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
         _buildLanguageCard(context, appState, localizations),
+        const SizedBox(height: 16),
         _buildThemeCard(context, appState, localizations),
+        const SizedBox(height: 16),
+        _buildFontSizeCard(context, appState, localizations),
+        const SizedBox(height: 16),
+        _buildZoomLevelCard(context, appState, localizations),
       ],
     );
   }
 
   Widget _buildLanguageCard(BuildContext context, AppState appState, AppLocalizations localizations) {
     return Card(
-      elevation: 1,
-      margin: const EdgeInsets.symmetric(vertical: 8),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(localizations.dictionaryLanguage, style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              ),
-              value: LanguageOption.all.any((option) => option.code == appState.language)
-                  ? appState.language
-                  : 'ja',
-              items: [
-                for (final languageOption in LanguageOption.all)
-                  DropdownMenuItem(
-                    value: languageOption.code,
-                    child: Text(_getLanguageName(context, languageOption.code)),
-                  ),
+            Row(
+              children: [
+                Icon(Icons.language, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 12),
+                Text(localizations.language, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
               ],
-              onChanged: (value) {
-                if (value != null) {
-                  appState.setLanguage(value);
-                }
-              },
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                'ja', 'zh', 'ko', 'en', 'fr', 'es', 'de', 'it', 'pt', 'ru', 'ar', 'hi', 'th', 'vi', 'id', 'tr', 'pl', 'nl', 'sv', 'da', 'no', 'fi', 'cs', 'hu', 'ro', 'bg', 'hr', 'sk', 'sl', 'et', 'lv', 'lt', 'uk'
+              ].map((code) => FilterChip(
+                label: Text(_getLanguageName(context, code)),
+                selected: appState.dictionaryLanguage == code,
+                onSelected: (selected) => appState.setDictionaryLanguage(code),
+                showCheckmark: false,
+              )).toList(),
             ),
           ],
         ),
@@ -153,36 +229,92 @@ class GeneralSettingsSection extends StatelessWidget {
 
   Widget _buildThemeCard(BuildContext context, AppState appState, AppLocalizations localizations) {
     return Card(
-      elevation: 1,
-      margin: const EdgeInsets.symmetric(vertical: 8),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(localizations.appearance, style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            ListTile(
-              title: Text(localizations.themeMode),
-              subtitle: Text(localizations.themeModeSubtitle),
+            Row(
+              children: [
+                Icon(Icons.dark_mode, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 12),
+                Text(localizations.themeMode, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: DropdownButtonFormField<ThemeMode>(
-                value: appState.themeMode,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                ),
-                items: [
-                  DropdownMenuItem(value: ThemeMode.system, child: Text(localizations.systemTheme)),
-                  DropdownMenuItem(value: ThemeMode.light, child: Text(localizations.lightTheme)),
-                  DropdownMenuItem(value: ThemeMode.dark, child: Text(localizations.darkTheme)),
-                ],
-                onChanged: (value) {
-                  if (value != null) appState.setThemeMode(value);
-                },
-              ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                'system', 'light', 'dark'
+              ].map((theme) => FilterChip(
+                label: Text(localizations.themeModeSubtitle),
+                selected: appState.themeMode == theme,
+                onSelected: (selected) => appState.setThemeMode(theme),
+                showCheckmark: false,
+              )).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFontSizeCard(BuildContext context, AppState appState, AppLocalizations localizations) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.text_fields, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 12),
+                Text(localizations.fontSize, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(localizations.fontSizeSubtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
+            const SizedBox(height: 8),
+            Slider(
+              value: appState.fontScale,
+              min: 0.8,
+              max: 2.0,
+              divisions: 12,
+              label: '${(appState.fontScale * 100).round()}%',
+              onChanged: (value) => appState.setFontScale(value),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildZoomLevelCard(BuildContext context, AppState appState, AppLocalizations localizations) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.zoom_out_map, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 12),
+                Text(localizations.zoomLevel, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(localizations.zoomLevelSubtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
+            const SizedBox(height: 8),
+            Slider(
+              value: appState.zoomLevel,
+              min: 0.5,
+              max: 3.0,
+              divisions: 25,
+              label: '${(appState.zoomLevel * 100).round()}%',
+              onChanged: (value) => appState.setZoomLevel(value),
             ),
           ],
         ),
