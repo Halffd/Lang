@@ -142,3 +142,4 @@ executables:
 
 dependency_overrides:
   record_linux: 1.3.0
+  archive: ^4.0.9
