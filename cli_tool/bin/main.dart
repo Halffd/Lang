@@ -333,8 +333,8 @@ Future<void> handleSanitize() async {
 }
 
 String _detectLanguage(String text) {
-  if (ChineseUtil.containsChinese(text)) return 'zh';
   if (JapaneseUtils.containsJapanese(text)) return 'ja';
+  if (ChineseUtil.containsChinese(text)) return 'zh';
   if (RegExp(r'[\uAC00-\uD7AF]').hasMatch(text)) return 'ko';
   if (RegExp(r'[\u0400-\u04FF]').hasMatch(text)) return 'ru';
   if (RegExp(r'[\u0600-\u06FF]').hasMatch(text)) return 'ar';

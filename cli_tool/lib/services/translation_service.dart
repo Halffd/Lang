@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:lang_cli/utils/japanese_utils.dart';
+import 'package:lang_cli/utils/chinese_util.dart';
 
 class TranslationResult {
   final String fullTranslation;
@@ -89,10 +91,8 @@ class TranslationService {
         request.targetLanguage,
       );
 
-      final sourceWords = request.sourceText
-          .split(RegExp(r'\s+'))
-          .where((w) => w.isNotEmpty)
-          .toList();
+      final sourceWords = _tokenizeForWordTranslation(
+          request.sourceText, request.sourceLanguage);
       final wordTranslations = <WordTranslation>[];
       for (final word in sourceWords) {
         try {
@@ -128,10 +128,8 @@ class TranslationService {
         request.targetLanguage,
       );
 
-      final sourceWords = request.sourceText
-          .split(RegExp(r'\s+'))
-          .where((word) => word.isNotEmpty)
-          .toList();
+      final sourceWords = _tokenizeForWordTranslation(
+          request.sourceText, request.sourceLanguage);
       final wordTranslations = <WordTranslation>[];
 
       for (final word in sourceWords) {
@@ -217,6 +215,101 @@ class TranslationService {
     } else {
       throw Exception('Gemini translation failed: ${response.statusCode}');
     }
+  }
+
+  static List<String> _tokenizeForWordTranslation(
+      String text, String sourceLang) {
+    if (sourceLang == 'ja') {
+      return _tokenizeJapanese(text);
+    } else if (sourceLang == 'zh') {
+      return _tokenizeChinese(text);
+    } else if (sourceLang == 'ko') {
+      return _tokenizeKorean(text);
+    } else {
+      return text.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    }
+  }
+
+  static List<String> _tokenizeJapanese(String text) {
+    final tokens = <String>[];
+    final buffer = StringBuffer();
+    String currentType = '';
+
+    for (final char in text.runes) {
+      final ch = String.fromCharCode(char);
+      String type;
+      if (JapaneseUtils.isKanji(ch)) {
+        type = 'kanji';
+      } else if (JapaneseUtils.isHiragana(ch) || JapaneseUtils.isKatakana(ch)) {
+        type = 'kana';
+      } else if (RegExp(r'[a-zA-Z0-9]').hasMatch(ch)) {
+        type = 'latin';
+      } else {
+        type = 'other';
+      }
+
+      if (currentType.isEmpty) {
+        currentType = type;
+      } else if (type != currentType &&
+          type != 'other' &&
+          currentType != 'other') {
+        if (buffer.isNotEmpty) {
+          tokens.add(buffer.toString());
+          buffer.clear();
+        }
+        currentType = type;
+      }
+
+      buffer.write(ch);
+    }
+
+    if (buffer.isNotEmpty) {
+      tokens.add(buffer.toString());
+    }
+
+    return tokens.where((t) => t.trim().isNotEmpty).toList();
+  }
+
+  static List<String> _tokenizeChinese(String text) {
+    final tokens = <String>[];
+    final buffer = StringBuffer();
+
+    for (final char in text.runes) {
+      final ch = String.fromCharCode(char);
+      if (ChineseUtil.containsChinese(ch)) {
+        if (buffer.isNotEmpty &&
+            !ChineseUtil.containsChinese(buffer.toString())) {
+          tokens.add(buffer.toString());
+          buffer.clear();
+        }
+        buffer.write(ch);
+      } else if (RegExp(r'[a-zA-Z0-9]').hasMatch(ch)) {
+        if (buffer.isNotEmpty &&
+            ChineseUtil.containsChinese(buffer.toString())) {
+          tokens.add(buffer.toString());
+          buffer.clear();
+        }
+        buffer.write(ch);
+      } else {
+        if (buffer.isNotEmpty) {
+          tokens.add(buffer.toString());
+          buffer.clear();
+        }
+        if (ch.trim().isNotEmpty) {
+          tokens.add(ch);
+        }
+      }
+    }
+
+    if (buffer.isNotEmpty) {
+      tokens.add(buffer.toString());
+    }
+
+    return tokens.where((t) => t.trim().isNotEmpty).toList();
+  }
+
+  static List<String> _tokenizeKorean(String text) {
+    return text.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
   }
 
   static String _languageName(String code) {
