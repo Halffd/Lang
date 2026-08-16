@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:pdfx/pdfx.dart';
-import 'package:epub_parser/epub_parser.dart';
+import 'package:epub/epub.dart';
 import 'package:archive/archive.dart';
 import 'package:path/path.dart' as path;
 
@@ -78,6 +78,7 @@ class DocumentTextExtractor {
     }
 
     try {
+      // Use the epub package to read the book
       final epubBook = await EpubReader.readBook(filePath);
       
       // Extract text from all chapters
@@ -86,7 +87,7 @@ class DocumentTextExtractor {
       
       for (final chapter in epubBook.Chapters) {
         pageCount++;
-        final content = chapter.Content;
+        final content = chapter.HtmlContent;
         if (content != null && content.isNotEmpty) {
           // Parse HTML content and extract text
           final text = _extractTextFromHtml(content);
