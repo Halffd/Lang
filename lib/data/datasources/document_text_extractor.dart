@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:pdfx/pdfx.dart';
-import 'package:epub/epub.dart';
+import 'package:epubx/epubx.dart';
 import 'package:archive/archive.dart';
 import 'package:path/path.dart' as path;
 
