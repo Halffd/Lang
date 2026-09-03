@@ -144,12 +144,14 @@ class LangApp extends StatelessWidget {
   Widget build(BuildContext context) {
     const seedColor = Color(0xFF7C3AED);
 
-    return MaterialApp(
-      onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('zh'),
-      debugShowCheckedModeBanner: false,
+    return Consumer<AppState>(
+      builder: (context, appState, child) {
+        return MaterialApp(
+          onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: Locale(appState.language),
+          debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
