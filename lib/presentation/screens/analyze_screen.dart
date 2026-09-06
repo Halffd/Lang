@@ -7,6 +7,8 @@ import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/presentation/widgets/word_detail_sheet.dart';
 import 'package:lang/presentation/widgets/kana_text_field.dart';
+import 'package:lang/presentation/widgets/script_text_field.dart';
+import 'package:lang/presentation/widgets/anki_export_dialog.dart';
 import 'package:lang/presentation/screens/settings_screen.dart';
 import 'package:lang/domain/entities/analyzed_word.dart';
 
@@ -129,18 +131,39 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
   void _handleKeyEvent(KeyEvent event, AnalyzerProvider provider) {
     if (event is! KeyDownEvent) return;
     switch (event.logicalKey) {
-      case LogicalKeyboardKey.keyZ:
+      // word navigation
+      case LogicalKeyboardKey.arrowRight:
+        provider.selectNextWord();
       case LogicalKeyboardKey.arrowLeft:
+        provider.selectPrevWord();
+      // sentence navigation
       case LogicalKeyboardKey.arrowUp:
+        provider.selectPrevSentence();
+      case LogicalKeyboardKey.arrowDown:
+        provider.selectNextSentence();
+      // page navigation
+      case LogicalKeyboardKey.keyZ:
         provider.prevPage();
       case LogicalKeyboardKey.keyX:
-      case LogicalKeyboardKey.arrowRight:
-      case LogicalKeyboardKey.arrowDown:
         provider.nextPage();
+      // first/last sentence
       case LogicalKeyboardKey.home:
-        provider.firstPage();
+        provider.selectFirstSentence();
       case LogicalKeyboardKey.end:
-        provider.lastPage();
+        provider.selectLastSentence();
+      // export selected word to anki (backslash)
+      case LogicalKeyboardKey.backslash:
+        final word = provider.selectedWord;
+        if (word != null) {
+          showAnkiExportDialog(context, provider, word);
+        }
+      // save selected word to local Lang DB (enter)
+      case LogicalKeyboardKey.enter:
+      case LogicalKeyboardKey.numpadEnter:
+        final word = provider.selectedWord;
+        if (word != null) {
+          provider.saveWord(word.word);
+        }
       default:
         break;
     }
@@ -174,30 +197,23 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
               ),
 
               if (hasResults) ...[
-                // 2. WORD DEFINITION CARDS
+                // 2. FULL SENTENCES (above) - one entry per sentence
                 SliverToBoxAdapter(
-                  child: _buildWordCardsSection(context, theme, provider, l10n),
-                ),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-                // 3. SENTENCE TRANSLATIONS
-                if (_showSentenceTranslations)
-                  SliverToBoxAdapter(
-                    child: AnimatedSize(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                      child: _buildSentenceTranslations(
-                        context,
-                        theme,
-                        provider,
-                        l10n,
-                      ),
-                    ),
+                  child: _buildSentenceListSection(
+                    context,
+                    theme,
+                    provider,
+                    l10n,
                   ),
+                ),
 
                 if (_showSentenceTranslations)
                   const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+                // 3. WORD DEFINITION CARDS (below, grouped per sentence)
+                SliverToBoxAdapter(
+                  child: _buildWordCardsSection(context, theme, provider, l10n),
+                ),
 
                 // 4. FULL TRANSLATION
                 if (_showFullTranslation)
@@ -294,15 +310,22 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     AppLocalizations l10n,
   ) {
     final theme = Theme.of(context);
+    final appState = context.read<AppState>();
+    // Learning language list: scripts with input conversion come
+    // first, then common study languages.
     final languages = {
       'ja': l10n.japanese,
       'zh': l10n.chinese,
+      'ko': l10n.korean,
+      'ru': l10n.russian,
+      'he': 'Hebrew',
+      'ar': 'Arabic',
+      'hi': 'Hindi',
+      'th': 'Thai',
       'en': l10n.english,
       'es': l10n.spanish,
       'fr': l10n.french,
       'de': l10n.german,
-      'ko': l10n.korean,
-      'ru': l10n.russian,
       'it': l10n.italian,
       'pt': l10n.portuguese,
       'id': l10n.indonesian,
@@ -318,18 +341,19 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
           color: theme.colorScheme.outline.withValues(alpha: 0.2),
         ),
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: provider.currentLanguage,
-          icon: const Icon(Icons.language, size: 18),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: languages.containsKey(provider.currentLanguage)
+                ? provider.currentLanguage
+                : 'ja',
+            icon: const Icon(Icons.language, size: 18),
           items: languages.entries
               .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
               .toList(),
           onChanged: (val) {
             if (val != null) {
               provider.setLanguage(val);
-              // Sync the app-wide UI language so locale updates too
-              context.read<AppState>().setLanguage(val);
+              appState.setLearningLanguage(val);
             }
           },
           borderRadius: BorderRadius.circular(12),
@@ -370,10 +394,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: KanaTextField(
+                child: ScriptTextField(
                   controller: _controller,
-                  enabled: context.read<AppState>().autoConvertJapanese &&
-                      provider.currentLanguage == 'ja',
+                  language: provider.currentLanguage,
+                  enabled: context.read<AppState>().autoConvertJapanese,
                   maxLines: 4,
                   style: const TextStyle(fontSize: 15, height: 1.4),
                   decoration: InputDecoration(
@@ -539,6 +563,119 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     );
   }
 
+  /// Full-sentence list shown above word cards. Each sentence row
+  /// highlights when selected and shows its word count.
+  Widget _buildSentenceListSection(
+    BuildContext context,
+    ThemeData theme,
+    AnalyzerProvider provider,
+    AppLocalizations l10n,
+  ) {
+    final sentences = provider.sentenceList;
+    if (sentences.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.tertiary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.notes_rounded,
+                  size: 20,
+                  color: theme.colorScheme.tertiary,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '${l10n.sentences} (${sentences.length})',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        ...sentences.asMap().entries.map((entry) {
+          final idx = entry.key;
+          final sentence = entry.value;
+          final isSelected = provider.selectedSentenceIndex == idx;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => provider.selectSentence(idx),
+              child: Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? theme.colorScheme.primary.withValues(alpha: 0.15)
+                      : theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSelected
+                        ? theme.colorScheme.primary.withValues(alpha: 0.6)
+                        : Colors.transparent,
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 2, right: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.outline.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '${idx + 1}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        sentence,
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.5,
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: isSelected ? 1 : 0.85,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+        const SizedBox(height: 4),
+      ],
+    );
+  }
+
   Widget _buildWordCardsSection(
     BuildContext context,
     ThemeData theme,
@@ -547,6 +684,9 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
   ) {
     final words = provider.pagedWords;
     if (words.isEmpty) return const SizedBox.shrink();
+
+    final pageStart = provider.currentPage * provider.itemsPerPage;
+    final groups = provider.sentenceGroups;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -584,33 +724,124 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
         // Filter / Sort / Group Bar
         _buildFilterSortGroupBar(context, theme, provider, l10n),
         const SizedBox(height: 12),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final crossAxisCount = provider.itemsPerRow.clamp(1, 5);
-            final cardWidth =
-                (constraints.maxWidth - (crossAxisCount - 1) * 10) /
-                crossAxisCount;
-            final childAspectRatio = cardWidth / 170;
 
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: childAspectRatio,
+        // Word cards grouped by sentence. When no sentence data
+        // exists, fall back to a flat grid.
+        if (groups.isEmpty || (groups.length == 1 && groups.first.key == ''))
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final crossAxisCount = provider.itemsPerRow.clamp(1, 5);
+              final cardWidth =
+                  (constraints.maxWidth - (crossAxisCount - 1) * 10) /
+                  crossAxisCount;
+              final childAspectRatio = cardWidth / 170;
+
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: childAspectRatio,
+                ),
+                itemCount: words.length,
+                itemBuilder: (context, index) {
+                  final word = words[index];
+                  final absolute = pageStart + index;
+                  final selected = provider.selectedWordIndex == absolute;
+                  return _buildWordCard(
+                    context, theme, provider, word, absolute,
+                    selected: selected,
+                  );
+                },
+              );
+            },
+          )
+        else ...[
+          // per-sentence word groups
+          for (final group in groups) ...[
+            if (group.value.isNotEmpty) ...[
+              if (group.key.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 4, 4, 6),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.subdirectory_arrow_right,
+                        size: 14,
+                        color: theme.colorScheme.tertiary,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          group.key,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.55),
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${group.value.length}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final crossAxisCount = provider.itemsPerRow.clamp(1, 5);
+                  final cardWidth =
+                      (constraints.maxWidth - (crossAxisCount - 1) * 10) /
+                      crossAxisCount;
+                  final childAspectRatio = cardWidth / 170;
+
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      childAspectRatio: childAspectRatio,
+                    ),
+                    itemCount: group.value.length,
+                    itemBuilder: (context, index) {
+                      final word = group.value[index];
+                      final absolute = _filteredSortedIndexOf(
+                          provider, group.value[index]);
+                      final selected =
+                          provider.selectedWordIndex == absolute;
+                      return _buildWordCard(
+                        context, theme, provider, word, absolute,
+                        selected: selected,
+                      );
+                    },
+                  );
+                },
               ),
-              itemCount: words.length,
-              itemBuilder: (context, index) {
-                final word = words[index];
-                return _buildWordCard(context, theme, provider, word, index);
-              },
-            );
-          },
-        ),
+              const SizedBox(height: 10),
+            ],
+          ],
+        ],
       ],
     );
+  }
+
+  /// Index of [word] in the provider's filtered+sorted list.
+  int _filteredSortedIndexOf(AnalyzerProvider provider, AnalyzedWord word) {
+    final i = provider.indexOfFilteredSorted(word);
+    return i < 0 ? provider.selectedWordIndex : i;
   }
 
   Widget _buildColumnSelector(
@@ -1017,8 +1248,9 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     ThemeData theme,
     AnalyzerProvider provider,
     AnalyzedWord word,
-    int index,
-  ) {
+    int index, {
+    bool selected = false,
+  }) {
     final isSaved = provider.savedWords.any((w) => w['word'] == word.word);
     final sentence = word.sentence ?? '';
     final reading = word.reading ?? '';
@@ -1052,15 +1284,23 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
       },
       child: Card(
         elevation: 0,
-        color: theme.colorScheme.surface,
+        color: selected
+            ? theme.colorScheme.primary.withValues(alpha: 0.10)
+            : theme.colorScheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
           side: BorderSide(
-            color: theme.colorScheme.outline.withValues(alpha: 0.15),
+            color: selected
+                ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                : theme.colorScheme.outline.withValues(alpha: 0.15),
+            width: selected ? 2 : 1,
           ),
         ),
         child: InkWell(
-          onTap: () => _showWordDetail(context, word, provider),
+          onTap: () {
+            provider.selectWord(index);
+            _showWordDetail(context, word, provider);
+          },
           borderRadius: BorderRadius.circular(14),
           child: Padding(
             padding: const EdgeInsets.all(12),

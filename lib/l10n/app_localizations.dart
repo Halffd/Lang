@@ -1122,6 +1122,12 @@ abstract class AppLocalizations {
   /// **'Sentence Translations'**
   String get sentenceTranslations;
 
+  /// No description provided for @sentences.
+  ///
+  /// In en, this message translates to:
+  /// **'Sentences'**
+  String get sentences;
+
   /// No description provided for @sentencesFound.
   ///
   /// In en, this message translates to:

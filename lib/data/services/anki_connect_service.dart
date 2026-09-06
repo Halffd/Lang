@@ -96,9 +96,9 @@ class AnkiConnectService {
     required String modelName,
     required Map<String, String> fields,
     List<String> tags = const [],
-    String? audio,
-    String? video,
-    String? picture,
+    dynamic audio,
+    dynamic video,
+    dynamic picture,
   }) async {
     final note = <String, dynamic>{
       'deckName': deckName,

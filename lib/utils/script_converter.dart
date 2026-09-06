@@ -2,7 +2,22 @@ import 'japanese_utils.dart';
 import 'pinyin_util.dart';
 import 'chinese_util.dart';
 
-enum ScriptType { latin, hiragana, katakana, kanji, hanzi, bopomofo, mixed, unknown }
+enum ScriptType {
+  latin,
+  hiragana,
+  katakana,
+  kanji,
+  hanzi,
+  bopomofo,
+  hangul,
+  cyrillic,
+  hebrew,
+  arabic,
+  devanagari,
+  thai,
+  mixed,
+  unknown,
+}
 
 class ScriptConverter {
   static final KanaKit _kanaKit = KanaKit();
@@ -76,6 +91,12 @@ class ScriptConverter {
     bool hasKanji = false;
     bool hasHanzi = false;
     bool hasBopomofo = false;
+    bool hasHangul = false;
+    bool hasCyrillic = false;
+    bool hasHebrew = false;
+    bool hasArabic = false;
+    bool hasDevanagari = false;
+    bool hasThai = false;
 
     for (final rune in text.runes) {
       if (rune >= 0x3040 && rune <= 0x309F) hasHiragana = true;
@@ -83,16 +104,40 @@ class ScriptConverter {
       else if (rune >= 0x3400 && rune <= 0x4DBF) hasKanji = true;
       else if (rune >= 0x4E00 && rune <= 0x9FFF) hasKanji = hasHanzi = true;
       else if (rune >= 0x3105 && rune <= 0x312F) hasBopomofo = true;
+      else if (rune >= 0xAC00 && rune <= 0xD7AF) hasHangul = true;
+      else if (rune >= 0x0400 && rune <= 0x04FF) hasCyrillic = true;
+      else if (rune >= 0x0590 && rune <= 0x05FF) hasHebrew = true;
+      else if (rune >= 0x0600 && rune <= 0x06FF) hasArabic = true;
+      else if (rune >= 0x0900 && rune <= 0x097F) hasDevanagari = true;
+      else if (rune >= 0x0E00 && rune <= 0x0E7F) hasThai = true;
       else if (rune >= 0x41 && rune <= 0x5A || rune >= 0x61 && rune <= 0x7A) hasLatin = true;
     }
 
-    final unique = [hasLatin, hasHiragana, hasKatakana, hasKanji || hasHanzi, hasBopomofo];
+    final unique = [
+      hasLatin,
+      hasHiragana,
+      hasKatakana,
+      hasKanji || hasHanzi,
+      hasBopomofo,
+      hasHangul,
+      hasCyrillic,
+      hasHebrew,
+      hasArabic,
+      hasDevanagari,
+      hasThai,
+    ];
     final count = unique.where((b) => b).length;
     if (count > 1) return ScriptType.mixed;
 
     if (hasLatin) return ScriptType.latin;
     if (hasHiragana) return ScriptType.hiragana;
     if (hasKatakana) return ScriptType.katakana;
+    if (hasHangul) return ScriptType.hangul;
+    if (hasCyrillic) return ScriptType.cyrillic;
+    if (hasHebrew) return ScriptType.hebrew;
+    if (hasArabic) return ScriptType.arabic;
+    if (hasDevanagari) return ScriptType.devanagari;
+    if (hasThai) return ScriptType.thai;
     if (hasKanji && !hasHanzi) return ScriptType.kanji;
     if (hasHanzi) return ScriptType.hanzi;
     if (hasBopomofo) return ScriptType.bopomofo;
@@ -222,5 +267,531 @@ class ScriptConverter {
 
   static bool looksLikePinyin(String text) {
     return ChineseUtil.looksLikeChinesePinyin(text);
+  }
+
+  // ============================================================
+  // Hangul: romanized latin -> Hangul (Revised Romanization style)
+  // ============================================================
+
+  static const Map<String, String> _hangulInitials = {
+    'g': 'ㄱ', 'k': 'ㅋ', 'n': 'ㄴ', 'd': 'ㄷ', 't': 'ㅌ',
+    'r': 'ㄹ', 'm': 'ㅁ', 'b': 'ㅂ', 'p': 'ㅍ',
+    's': 'ㅅ', 'ss': 'ㅆ', 'j': 'ㅈ', 'jj': 'ㅉ',
+    'ch': 'ㅊ', 'h': 'ㅎ', 'kk': 'ㄲ', 'tt': 'ㄸ', 'pp': 'ㅃ',
+  };
+
+  static const Map<String, String> _hangulVowels = {
+    'a': 'ㅏ', 'ya': 'ㅑ', 'eo': 'ㅓ', 'yeo': 'ㅕ',
+    'o': 'ㅗ', 'yo': 'ㅛ', 'u': 'ㅜ', 'yu': 'ㅠ',
+    'eu': 'ㅡ', 'i': 'ㅣ', 'ae': 'ㅐ', 'yae': 'ㅒ',
+    'e': 'ㅔ', 'ye': 'ㅖ', 'oe': 'ㅚ', 'wi': 'ㅟ',
+    'ui': 'ㅢ', 'eu-i': 'ㅢ',
+  };
+
+  static const Map<String, String> _hangulFinals = {
+    '': '', 'k': 'ㄱ', 'k-s': 'ㄳ', 'n': 'ㄴ', 'n-h': 'ㄵ', 'n-j': 'ㄶ',
+    't': 'ㅅ', 'l': 'ㄹ', 'l-k': 'ㄺ', 'l-m': 'ㄻ', 'l-p': 'ㄼ',
+    'l-s': 'ㄽ', 'l-t': 'ㄾ', 'l-p-s': 'ㅀ', 'l-h': 'ㅀ',
+    'm': 'ㅁ', 'p': 'ㅂ', 'p-s': 'ㅄ', 's': 'ㅅ',
+    'ng': 'ㅇ', 't-k': 'ㄱ', 't-h': 'ㅎ',
+  };
+
+  // Assemble a Hangul syllable from jamo (or pass through if impossible)
+  static String? _assembleHangul(String cho, String jung, String jong) {
+    const choBase = 0x1100;
+    const jungBase = 0x1161;
+    const jongBase = 0x11A7;
+    const syllableBase = 0xAC00;
+
+    final choList = [
+      'ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ',
+      'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ',
+    ];
+    final jungList = [
+      'ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ',
+      'ㅘ', 'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ',
+    ];
+    final jongList = [
+      '', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ',
+      'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ',
+      'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ',
+    ];
+
+    final choIdx = choList.indexOf(cho);
+    if (choIdx < 0) return null;
+    final jungIdx = jungList.indexOf(jung);
+    if (jungIdx < 0) return null;
+    final jongIdx = jongList.indexOf(jong);
+    if (jongIdx < 0) return null;
+
+    // NOTE: bases unused; compute directly from indices
+    // ignore: unused_local_variable
+    final _ = (choBase, jungBase, jongBase, syllableBase);
+
+    final code = 0xAC00 + (choIdx * 21 + jungIdx) * 28 + jongIdx;
+    return String.fromCharCode(code);
+  }
+
+  /// Convert romanized Korean (Revised Romanization) to Hangul.
+  /// Syllable-block aware: greedily matches [initial][vowel][final].
+  /// Vowel-initial syllables get ㅇ (ieung) as placeholder initial.
+  static String latinToHangul(String input) {
+    if (input.isEmpty) return input;
+    final result = StringBuffer();
+    int i = 0;
+    final lower = input.toLowerCase();
+
+    while (i < lower.length) {
+      // skip spaces/punct
+      if (!_isLatinChar(lower[i])) {
+        result.write(input[i]);
+        i++;
+        continue;
+      }
+
+      // match initial (2-char first for tense consonants)
+      String? cho;
+      int choLen = 0;
+      for (final len in [2, 1]) {
+        if (i + len > lower.length) continue;
+        final sub = lower.substring(i, i + len);
+        if (_hangulInitials.containsKey(sub)) {
+          cho = _hangulInitials[sub]!;
+          choLen = len;
+          break;
+        }
+      }
+
+      // vowel-initial syllable: use ㅇ placeholder
+      if (cho == null) {
+        String? vowelFirst;
+        int vLen = 0;
+        for (final len in [3, 2, 1]) {
+          if (i + len > lower.length) continue;
+          final sub = lower.substring(i, i + len);
+          if (_hangulVowels.containsKey(sub)) {
+            vowelFirst = _hangulVowels[sub]!;
+            vLen = len;
+            break;
+          }
+        }
+        if (vowelFirst != null) {
+          cho = 'ㅇ';
+          choLen = 0; // no consonant consumed
+        } else {
+          result.write(input[i]);
+          i++;
+          continue;
+        }
+      }
+
+      // match vowel (2-char first for diphthongs)
+      String? jung;
+      int jungLen = 0;
+      int vi = i + choLen;
+      for (final len in [3, 2, 1]) {
+        if (vi + len > lower.length) continue;
+        final sub = lower.substring(vi, vi + len);
+        if (_hangulVowels.containsKey(sub)) {
+          jung = _hangulVowels[sub]!;
+          jungLen = len;
+          break;
+        }
+      }
+      if (jung == null) {
+        // lone consonant: write as-is (likely standalone or noise)
+        result.write(input[i]);
+        i++;
+        continue;
+      }
+
+      // match final (2/3-char first for clusters)
+      String? jong;
+      int jongLen = 0;
+      int fi = vi + jungLen;
+      for (final len in [3, 2, 1]) {
+        if (fi + len > lower.length) continue;
+        final sub = lower.substring(fi, fi + len);
+        if (_hangulFinals.containsKey(sub)) {
+          jong = _hangulFinals[sub]!;
+          jongLen = len;
+          break;
+        }
+      }
+
+      final syllable = _assembleHangul(cho, jung, jong ?? '');
+      if (syllable != null) {
+        result.write(syllable);
+        i = fi + jongLen;
+      } else {
+        result.write(input.substring(i, i + choLen));
+        i += choLen == 0 ? 1 : choLen;
+      }
+    }
+
+    return result.toString();
+  }
+
+  static bool _isLatinChar(String c) {
+    final code = c.codeUnitAt(0);
+    return (code >= 0x61 && code <= 0x7A) || (code >= 0x41 && code <= 0x5A);
+  }
+
+  // ============================================================
+  // Cyrillic: translit latin -> Russian
+  // Common scheme (GOST-ish): a->а b->б v->в g->г d->д e->е
+  // zh->ж z->з i->и y->й k->к l->л m->м n->н o->о p->п
+  // r->р s->с t->т u->у f->ф h->х ts->ц ch->ч sh->ш shch->щ
+  // ============================================================
+
+  static const Map<String, String> _latinToCyrillic = {
+    // multi-char first (caller iterates longest-first)
+    'shch': 'щ', 'zh': 'ж', 'ts': 'ц', 'ch': 'ч', 'sh': 'ш',
+    'yu': 'ю', 'ya': 'я',
+    // single
+    'a': 'а', 'b': 'б', 'v': 'в', 'g': 'г', 'd': 'д', 'e': 'е',
+    'z': 'з', 'i': 'и', 'j': 'й', 'k': 'к', 'l': 'л', 'm': 'м',
+    'n': 'н', 'o': 'о', 'p': 'п', 'r': 'р', 's': 'с', 't': 'т',
+    'u': 'у', 'f': 'ф', 'h': 'х',
+    "''": 'ъ', "'": 'ь',
+  };
+
+  /// Convert romanized Cyrillic text to Cyrillic script.
+  static String latinToCyrillic(String input) {
+    if (input.isEmpty) return input;
+    final result = StringBuffer();
+    final lower = input.toLowerCase();
+    int i = 0;
+
+    while (i < lower.length) {
+      String? match;
+      int len = 0;
+      for (int l = 4; l >= 1; l--) {
+        if (i + l > lower.length) continue;
+        final sub = lower.substring(i, i + l);
+        if (_latinToCyrillic.containsKey(sub)) {
+          match = _latinToCyrillic[sub]!;
+          len = l;
+          break;
+        }
+      }
+      if (match != null) {
+        result.write(match);
+        i += len;
+      } else {
+        result.write(input[i]);
+        i++;
+      }
+    }
+
+    return result.toString();
+  }
+
+  // ============================================================
+  // Hebrew: romanized latin -> Hebrew letters
+  // ============================================================
+
+  static const Map<String, String> _latinToHebrew = {
+    // multi
+    'tz': 'צ', 'ts': 'צ', 'kh': 'ח', 'ch': 'כ', 'sh': 'ש',
+    'ei': 'י',
+    // singles - consonants only; Hebrew is an abjad so short
+    // vowels a/e/i/o/u are omitted
+    'b': 'ב', 'g': 'ג', 'd': 'ד', 'h': 'ה', 'v': 'ו',
+    'z': 'ז', 'k': 'ק', 'y': 'י', 'l': 'ל', 'm': 'ם', 'n': 'ן',
+    's': 'ס', 'p': 'פ', 'f': 'פ', 'r': 'ר', 'c': 'כ', 't': 'ת',
+    'oo': 'ו', 'ii': 'י',
+    'a': '', 'e': '', 'i': '', 'o': '', 'u': '',
+  };
+
+  /// Convert romanized Hebrew to Hebrew script. Hebrew is an
+  /// abjad - vowels are typically omitted.
+  static String latinToHebrew(String input) {
+    if (input.isEmpty) return input;
+    final result = StringBuffer();
+    final lower = input.toLowerCase();
+    int i = 0;
+
+    while (i < lower.length) {
+      String? match;
+      int len = 0;
+      for (int l = 2; l >= 1; l--) {
+        if (i + l > lower.length) continue;
+        final sub = lower.substring(i, i + l);
+        if (_latinToHebrew.containsKey(sub)) {
+          match = _latinToHebrew[sub]!;
+          len = l;
+          break;
+        }
+      }
+      if (match != null) {
+        if (match.isNotEmpty) result.write(match);
+        i += len;
+      } else {
+        result.write(input[i]);
+        i++;
+      }
+    }
+
+    return result.toString();
+  }
+
+  // ============================================================
+  // Arabic: romanized latin -> Arabic letters
+  // ============================================================
+
+  static const Map<String, String> _latinToArabic = {
+    // multi-char
+    'th': 'ث', 'kh': 'خ', 'dh': 'ذ', 'sh': 'ش', 'gh': 'غ',
+    'aa': 'ا', 'ii': 'ي', 'uu': 'و',
+    // singles - consonants
+    'b': 'ب', 't': 'ت', 'j': 'ج', 'h': 'ه', 'd': 'د', 'r': 'ر',
+    'z': 'ز', 's': 'س', 'f': 'ف', 'q': 'ق', 'k': 'ك', 'l': 'ل',
+    'm': 'م', 'n': 'ن', 'w': 'و', 'y': 'ي',
+    // short vowels omitted (abjad) - harakat not written
+    'a': '', 'i': '', 'u': '',
+    "'": 'ء',
+  };
+
+  /// Convert romanized Arabic to Arabic script.
+  static String latinToArabic(String input) {
+    if (input.isEmpty) return input;
+    final result = StringBuffer();
+    final lower = input.toLowerCase();
+    int i = 0;
+
+    while (i < lower.length) {
+      String? match;
+      int len = 0;
+      for (int l = 2; l >= 1; l--) {
+        if (i + l > lower.length) continue;
+        final sub = lower.substring(i, i + l);
+        if (_latinToArabic.containsKey(sub)) {
+          match = _latinToArabic[sub]!;
+          len = l;
+          break;
+        }
+      }
+      if (match != null) {
+        result.write(match);
+        i += len;
+      } else {
+        result.write(input[i]);
+        i++;
+      }
+    }
+
+    return result.toString();
+  }
+
+  // ============================================================
+  // Devanagari: IAST/romanized -> Devanagari (simple scheme)
+  // ============================================================
+
+  static const Map<String, String> _latinToDevanagari = {
+    // multi
+    'kh': 'ख', 'gh': 'घ', 'ch': 'च', 'chh': 'छ', 'jh': 'झ',
+    'th': 'थ', 'dh': 'ध', 'ph': 'फ', 'bh': 'भ',
+    'sh': 'श', 'shh': 'ष', 'gy': 'ज्ञ',
+    'aa': 'आ', 'ii': 'ई', 'uu': 'ऊ', 'ai': 'ऐ', 'au': 'ओ',
+    'ri': 'ऋ',
+    // singles
+    'k': 'क', 'g': 'ग', 'n': 'न', 'c': 'च', 'j': 'ज', 't': 'त',
+    'd': 'द', 'p': 'प', 'b': 'ब', 'm': 'म', 'y': 'य', 'r': 'र',
+    'l': 'ल', 'v': 'व', 'w': 'व', 's': 'स', 'h': 'ह',
+    'a': 'अ', 'i': 'इ', 'u': 'उ', 'e': 'ए', 'o': 'ओ',
+  };
+
+  static const String _virama = '\u094D'; // halant/virama
+
+  /// Convert romanized (ISO 15919-ish) text to Devanagari.
+  /// Consonant clusters get virama between consonants.
+  static String latinToDevanagari(String input) {
+    if (input.isEmpty) return input;
+    final result = StringBuffer();
+    final lower = input.toLowerCase();
+    int i = 0;
+
+    String? lastConsonant;
+
+    while (i < lower.length) {
+      String? match;
+      int len = 0;
+      for (int l = 4; l >= 1; l--) {
+        if (i + l > lower.length) continue;
+        final sub = lower.substring(i, i + l);
+        if (_latinToDevanagari.containsKey(sub)) {
+          match = _latinToDevanagari[sub]!;
+          len = l;
+          break;
+        }
+      }
+
+      if (match == null) {
+        // flush pending consonant with inherent vowel
+        if (lastConsonant != null) {
+          result.write(lastConsonant);
+          lastConsonant = null;
+        }
+        result.write(input[i]);
+        i++;
+        continue;
+      }
+
+      // Determine if consonant or vowel
+      final isConsonant = _devanagariConsonants.contains(match);
+      final isVowel = _devanagariVowels.contains(match);
+
+      if (isConsonant) {
+        // flush previous consonant with virama? No - previous
+        // consonant gets inherent 'a' unless followed by consonant.
+        if (lastConsonant != null) {
+          result.write(lastConsonant);
+          result.write(_virama);
+          lastConsonant = null;
+        }
+        lastConsonant = match;
+        i += len;
+      } else if (isVowel) {
+        if (lastConsonant != null) {
+          // combining vowel sign
+          final sign = _devanagariVowelSigns[match] ?? match;
+          result.write(lastConsonant);
+          result.write(sign);
+          lastConsonant = null;
+        } else {
+          result.write(match);
+        }
+        i += len;
+      } else {
+        if (lastConsonant != null) {
+          result.write(lastConsonant);
+          lastConsonant = null;
+        }
+        result.write(match);
+        i += len;
+      }
+    }
+
+    // flush trailing consonant
+    if (lastConsonant != null) {
+      result.write(lastConsonant);
+    }
+
+    return result.toString();
+  }
+
+  static const List<String> _devanagariConsonants = [
+    'क', 'ख', 'ग', 'घ', 'च', 'छ', 'ज', 'झ',
+    'ट', 'ठ', 'ड', 'ढ', 'ण', 'त', 'थ', 'द',
+    'ध', 'न', 'प', 'फ', 'ब', 'भ', 'म', 'य',
+    'र', 'ल', 'व', 'श', 'ष', 'स', 'ह', 'ऋ',
+  ];
+
+  static const List<String> _devanagariVowels = [
+    'अ', 'आ', 'इ', 'ई', 'उ', 'ऊ', 'ए', 'ऐ', 'ओ', 'औ',
+  ];
+
+  static const Map<String, String> _devanagariVowelSigns = {
+    'अ': '', 'आ': 'ा', 'इ': 'ि', 'ई': 'ी',
+    'उ': 'ु', 'ऊ': 'ू', 'ए': 'े', 'ऐ': 'ै',
+    'ओ': 'ो', 'औ': 'ौ',
+  };
+
+  // ============================================================
+  // Thai: romanized -> Thai (approximate, common syllables)
+  // ============================================================
+
+  static const Map<String, String> _latinToThai = {
+    // multi
+    'kh': 'ข', 'ph': 'พ', 'th': 'ท', 'ch': 'ช', 'ng': 'ง',
+    'aa': 'า', 'ii': 'ี', 'uu': 'ู', 'ue': 'ื', 'oe': 'ึ',
+    'ia': 'เีย', 'ua': 'ัว',
+    // singles
+    'k': 'ก', 'g': 'ก', 'p': 'ป', 't': 'ต', 'm': 'ม', 'n': 'น',
+    'r': 'ร', 'l': 'ล', 'w': 'ว', 'y': 'ย', 'f': 'ฟ', 'h': 'ห',
+    's': 'ส', 'j': 'จ', 'd': 'ด', 'b': 'บ',
+    'a': 'ะ', 'i': 'ิ', 'u': 'ุ', 'e': 'เ', 'o': 'โ',
+  };
+
+  /// Convert romanized Thai to Thai script (approximate).
+  static String latinToThai(String input) {
+    if (input.isEmpty) return input;
+    final result = StringBuffer();
+    final lower = input.toLowerCase();
+    int i = 0;
+
+    while (i < lower.length) {
+      String? match;
+      int len = 0;
+      for (int l = 3; l >= 1; l--) {
+        if (i + l > lower.length) continue;
+        final sub = lower.substring(i, i + l);
+        if (_latinToThai.containsKey(sub)) {
+          match = _latinToThai[sub]!;
+          len = l;
+          break;
+        }
+      }
+      if (match != null) {
+        result.write(match);
+        i += len;
+      } else {
+        result.write(input[i]);
+        i++;
+      }
+    }
+
+    return result.toString();
+  }
+
+  // ============================================================
+  // Chinese pinyin: latin -> tone-marked pinyin (per syllable)
+  // e.g. "zhong1wen2" -> "zhōngwén", or "ni hao" -> "nǐ hǎo"
+  // ============================================================
+
+  /// Convert numbered pinyin (ma1, zhong1wen2) to tone-marked pinyin.
+  static String latinToPinyin(String input) {
+    if (input.isEmpty) return input;
+    final result = StringBuffer();
+    for (final word in input.split(' ')) {
+      if (result.isNotEmpty) result.write(' ');
+      result.write(PinyinUtil.convertToneNumbers(word));
+    }
+    return result.toString();
+  }
+
+  /// Dispatch conversion based on language code.
+  /// Returns text converted from romanized latin to the native
+  /// script for the given language. Returns input unchanged when
+  /// the language has no converter.
+  static String latinToScript(String input, String language) {
+    switch (language) {
+      case 'ja':
+        return romajiToHiragana(input);
+      case 'zh':
+        return latinToPinyin(input);
+      case 'ko':
+        return latinToHangul(input);
+      case 'ru':
+        return latinToCyrillic(input);
+      case 'he':
+      case 'iw':
+        return latinToHebrew(input);
+      case 'ar':
+        return latinToArabic(input);
+      case 'hi':
+        return latinToDevanagari(input);
+      case 'th':
+        return latinToThai(input);
+      default:
+        return input;
+    }
+  }
+
+  /// True when [language] has a romanized-input converter.
+  static bool supportsLatinToScript(String language) {
+    return const ['ja', 'zh', 'ko', 'ru', 'he', 'iw', 'ar', 'hi', 'th']
+        .contains(language);
   }
 }

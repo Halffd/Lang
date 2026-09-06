@@ -10,6 +10,7 @@ import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/presentation/providers/ai_provider.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/presentation/widgets/kana_text_field.dart';
+import 'package:lang/presentation/widgets/script_text_field.dart';
 import 'package:lang/presentation/widgets/word_detail_sheet.dart';
 
 enum OcrMode { mlKit, tesseract, easyOcr, ai }
@@ -230,12 +231,11 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildSearchInput(ThemeData theme, AnalyzerProvider provider) {
     final appState = context.read<AppState>();
-    final kanaEnabled = appState.autoConvertJapanese &&
-        provider.currentLanguage == 'ja';
 
-    return KanaTextField(
+    return ScriptTextField(
       controller: _searchController,
-      enabled: kanaEnabled,
+      language: provider.currentLanguage,
+      enabled: appState.autoConvertJapanese,
       decoration: InputDecoration(
         hintText: 'Search for a word...',
         prefixIcon: const Icon(Icons.search),
@@ -260,15 +260,14 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildSentenceInput(ThemeData theme, AnalyzerProvider provider) {
     final appState = context.read<AppState>();
-    final kanaEnabled = appState.autoConvertJapanese &&
-        provider.currentLanguage == 'ja';
 
     return Row(
       children: [
         Expanded(
-          child: KanaTextField(
+          child: ScriptTextField(
             controller: _sentenceController,
-            enabled: kanaEnabled,
+            language: provider.currentLanguage,
+            enabled: appState.autoConvertJapanese,
             maxLines: 2,
             decoration: const InputDecoration(
               hintText: 'Enter a sentence to split into words...',
@@ -295,9 +294,11 @@ class _SearchScreenState extends State<SearchScreen> {
         Row(
           children: [
             Expanded(
-              child: TextField(
+              child: ScriptTextField(
                 controller: _ocrController,
                 focusNode: _focusNode,
+                language: provider.currentLanguage,
+                enabled: context.read<AppState>().autoConvertJapanese,
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText: 'Paste or type text, or pick an image...',

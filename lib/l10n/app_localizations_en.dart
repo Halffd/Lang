@@ -546,6 +546,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sentenceTranslations => 'Sentence Translations';
 
   @override
+  String get sentences => 'Sentences';
+
+  @override
   String sentencesFound(Object count) {
     return '$count sentences found';
   }

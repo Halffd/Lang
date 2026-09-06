@@ -229,6 +229,170 @@ class AnalyzerProvider extends ChangeNotifier {
     return (words.length / _itemsPerPage).ceil();
   }
 
+  // ============================================================
+  // Word/sentence selection model for keyboard navigation
+  // ============================================================
+
+  int _selectedWordIndex = -1;
+  int _selectedSentenceIndex = -1;
+
+  int get selectedWordIndex => _selectedWordIndex;
+  int get selectedSentenceIndex => _selectedSentenceIndex;
+
+  /// Sentences in document order (unique values of _sentences map).
+  List<String> get sentenceList {
+    final seen = <String>{};
+    final list = <String>[];
+    for (final s in _sentences.values) {
+      final t = s.trim();
+      if (t.isNotEmpty && !seen.contains(t)) {
+        seen.add(t);
+        list.add(t);
+      }
+    }
+    return list;
+  }
+
+  /// Words grouped by sentence, in document order.
+  /// Each entry: (sentence text, words in that sentence).
+  List<MapEntry<String, List<AnalyzedWord>>> get sentenceGroups {
+    final sents = sentenceList;
+    final groups = <MapEntry<String, List<AnalyzedWord>>>[];
+    final used = <String>{};
+    for (final s in sents) {
+      final wordsInSentence = _filteredSortedWords
+          .where((w) => (w.sentence ?? '').trim() == s)
+          .toList();
+      groups.add(MapEntry(s, wordsInSentence));
+      for (final w in wordsInSentence) {
+        used.add(w.word);
+      }
+    }
+    // words without sentence go in a trailing pseudo-group
+    final orphans =
+        _filteredSortedWords.where((w) => !used.contains(w.word)).toList();
+    if (orphans.isNotEmpty) {
+      groups.add(MapEntry('', orphans));
+    }
+    return groups;
+  }
+
+  /// Currently selected word (or null).
+  AnalyzedWord? get selectedWord {
+    final words = _filteredSortedWords;
+    if (_selectedWordIndex < 0 || _selectedWordIndex >= words.length) {
+      return null;
+    }
+    return words[_selectedWordIndex];
+  }
+
+  /// Currently selected sentence text (or null).
+  String? get selectedSentence {
+    final sents = sentenceList;
+    if (_selectedSentenceIndex < 0 ||
+        _selectedSentenceIndex >= sents.length) {
+      return null;
+    }
+    return sents[_selectedSentenceIndex];
+  }
+
+  /// Index of [word] in the filtered+sorted list (by identity), -1 if absent.
+  int indexOfFilteredSorted(AnalyzedWord word) {
+    final words = _filteredSortedWords;
+    for (int i = 0; i < words.length; i++) {
+      if (identical(words[i], word) || words[i].word == word.word) return i;
+    }
+    return -1;
+  }
+
+  void selectWord(int index) {
+    final words = _filteredSortedWords;
+    if (index >= 0 && index < words.length) {
+      _selectedWordIndex = index;
+      // keep sentence selection in sync
+      final sent = words[index].sentence?.trim();
+      final sents = sentenceList;
+      final sIdx = sents.indexOf(sent ?? '');
+      if (sIdx >= 0) _selectedSentenceIndex = sIdx;
+      notifyListeners();
+    }
+  }
+
+  void selectSentence(int index) {
+    final sents = sentenceList;
+    if (index >= 0 && index < sents.length) {
+      _selectedSentenceIndex = index;
+      // select first word of that sentence
+      final words = _filteredSortedWords;
+      final wIdx =
+          words.indexWhere((w) => (w.sentence ?? '').trim() == sents[index]);
+      if (wIdx >= 0) _selectedWordIndex = wIdx;
+      notifyListeners();
+    }
+  }
+
+  bool selectNextWord() {
+    final words = _filteredSortedWords;
+    if (words.isEmpty) return false;
+    if (_selectedWordIndex < 0) {
+      selectWord(0);
+      return true;
+    }
+    if (_selectedWordIndex < words.length - 1) {
+      selectWord(_selectedWordIndex + 1);
+      return true;
+    }
+    return false;
+  }
+
+  bool selectPrevWord() {
+    if (_selectedWordIndex <= 0) return false;
+    selectWord(_selectedWordIndex - 1);
+    return true;
+  }
+
+  bool selectNextSentence() {
+    final sents = sentenceList;
+    if (sents.isEmpty) return false;
+    if (_selectedSentenceIndex < 0) {
+      selectSentence(0);
+      return true;
+    }
+    if (_selectedSentenceIndex < sents.length - 1) {
+      selectSentence(_selectedSentenceIndex + 1);
+      return true;
+    }
+    return false;
+  }
+
+  bool selectPrevSentence() {
+    if (_selectedSentenceIndex <= 0) return false;
+    selectSentence(_selectedSentenceIndex - 1);
+    return true;
+  }
+
+  void selectFirstSentence() {
+    final sents = sentenceList;
+    if (sents.isNotEmpty) selectSentence(0);
+  }
+
+  void selectLastSentence() {
+    final sents = sentenceList;
+    if (sents.isNotEmpty) selectSentence(sents.length - 1);
+  }
+
+  /// Page containing the selected word (for auto-scroll sync).
+  int get pageOfSelectedWord {
+    if (_selectedWordIndex < 0) return _currentPage;
+    return _selectedWordIndex ~/ _itemsPerPage;
+  }
+
+  void clearSelection() {
+    _selectedWordIndex = -1;
+    _selectedSentenceIndex = -1;
+    notifyListeners();
+  }
+
   // Grouped words for display
   Map<String, List<AnalyzedWord>> get groupedWords {
     final words = _filteredSortedWords;

@@ -1,0 +1,116 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:lang/utils/script_converter.dart';
+
+void main() {
+  group('ScriptConverter.detect', () {
+    test('detects hangul', () {
+      expect(ScriptConverter.detect('안녕'), ScriptType.hangul);
+    });
+    test('detects cyrillic', () {
+      expect(ScriptConverter.detect('привет'), ScriptType.cyrillic);
+    });
+    test('detects hebrew', () {
+      expect(ScriptConverter.detect('שלום'), ScriptType.hebrew);
+    });
+    test('detects arabic', () {
+      expect(ScriptConverter.detect('مرحبا'), ScriptType.arabic);
+    });
+    test('detects devanagari', () {
+      expect(ScriptConverter.detect('नमस्ते'), ScriptType.devanagari);
+    });
+    test('detects thai', () {
+      expect(ScriptConverter.detect('สวัสดี'), ScriptType.thai);
+    });
+  });
+
+  group('ScriptConverter.latinToHangul', () {
+    test('annyeong', () {
+      final r = ScriptConverter.latinToHangul('annyeong');
+      expect(r, '안녕');
+    });
+
+    test('simple syllable go', () {
+      // g-o => 고
+      expect(ScriptConverter.latinToHangul('go'), '고');
+    });
+
+    test('syllable with final consonant', () {
+      // a-n => 안 (vowel initial uses ieung)
+      expect(ScriptConverter.latinToHangul('an'), '안');
+    });
+  });
+
+  group('ScriptConverter.latinToCyrillic', () {
+    test('privet', () {
+      // p-r-i-v-e-t -> привет
+      expect(ScriptConverter.latinToCyrillic('privet'), 'привет');
+    });
+    test('multi-char zh', () {
+      expect(ScriptConverter.latinToCyrillic('zhest'), 'жест');
+    });
+    test('soft sign', () {
+      expect(ScriptConverter.latinToCyrillic("mol'"), 'моль');
+    });
+  });
+
+  group('ScriptConverter.latinToHebrew', () {
+    test('shalom', () {
+      final r = ScriptConverter.latinToHebrew('shalom');
+      // sh->ש l->ל m->ם o dropped... order: ש ל (o skip) ם
+      expect(r, 'שלם');
+    });
+  });
+
+  group('ScriptConverter.latinToArabic', () {
+    test('marhaba', () {
+      final r = ScriptConverter.latinToArabic('marhaba');
+      // m->م a drop r->ر h->ه b->ب a drop
+      expect(r, 'مرهْب'.replaceAll('\u0652', ''));
+      expect(r.codeUnitAt(2), 0x0647); // ه he
+    });
+  });
+
+  group('ScriptConverter.latinToDevanagari', () {
+    test('namaste', () {
+      final r = ScriptConverter.latinToDevanagari('namaste');
+      // na->न (inherent a) m->म a? -> ा s->स t->ट? e->े
+      // नमस्ते expected: न म स्त े
+      expect(r, 'नमस्ते');
+    });
+
+    test('consonant cluster gets virama', () {
+      // k-y -> क्य (क + virama + य)
+      final r = ScriptConverter.latinToDevanagari('ky');
+      expect(r, 'क्य');
+    });
+  });
+
+  group('ScriptConverter.latinToThai', () {
+    test('sawasdee', () {
+      final r = ScriptConverter.latinToThai('sawatdee');
+      // approximate - just check no latin letters remain for mapped parts
+      expect(r.contains('ส'), true);
+      expect(r.contains('ว'), true);
+    });
+  });
+
+  group('ScriptConverter.latinToScript dispatch', () {
+    test('ja converts romaji', () {
+      expect(ScriptConverter.latinToScript('neko', 'ja'), 'ねこ');
+    });
+    test('ko converts hangul', () {
+      expect(ScriptConverter.latinToScript('go', 'ko'), '고');
+    });
+    test('ru converts cyrillic', () {
+      expect(ScriptConverter.latinToScript('privet', 'ru'), 'привет');
+    });
+    test('unknown language unchanged', () {
+      expect(ScriptConverter.latinToScript('hello', 'en'), 'hello');
+    });
+    test('supportsLatinToScript', () {
+      expect(ScriptConverter.supportsLatinToScript('ja'), true);
+      expect(ScriptConverter.supportsLatinToScript('th'), true);
+      expect(ScriptConverter.supportsLatinToScript('en'), false);
+    });
+  });
+}

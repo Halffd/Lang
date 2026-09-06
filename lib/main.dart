@@ -98,8 +98,8 @@ void main() async {
 
   final analyzerProvider = AnalyzerProvider();
   await analyzerProvider.init();
-  // Sync provider language with the persisted UI language preference
-  analyzerProvider.restoreLanguage(appState.language);
+  // Sync provider learning language with persisted preference
+  analyzerProvider.restoreLanguage(appState.learningLanguage);
 
   final aiProvider = AiProvider(aiRepository);
   await aiProvider.init();

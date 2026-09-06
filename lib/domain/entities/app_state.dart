@@ -9,6 +9,7 @@ class AppState extends ChangeNotifier {
   // App settings
   bool _clipboardMonitor = false;
   String _language = 'ja';
+  String _learningLanguage = 'ja';
   bool _darkMode = false;
   ThemeMode _themeMode = ThemeMode.system; // Default to system theme
   bool _showParticles = true;
@@ -53,6 +54,7 @@ class AppState extends ChangeNotifier {
   // Getters
   bool get clipboardMonitor => _clipboardMonitor;
   String get language => _language;
+  String get learningLanguage => _learningLanguage;
   bool get darkMode => _darkMode;
   ThemeMode get themeMode => _themeMode;
   bool get showParticles => _showParticles;
@@ -139,6 +141,12 @@ class AppState extends ChangeNotifier {
   void setLanguage(String value) {
     _language = value;
     _storageService.setString('language', value);
+    notifyListeners();
+  }
+
+  void setLearningLanguage(String value) {
+    _learningLanguage = value;
+    _storageService.setString('learning_language', value);
     notifyListeners();
   }
   
@@ -488,6 +496,8 @@ class AppState extends ChangeNotifier {
     try {
       _clipboardMonitor = _storageService.getBool('clipboard_monitor') ?? false;
       _language = _storageService.getStringSync('language') ?? 'ja';
+      _learningLanguage =
+          _storageService.getStringSync('learning_language') ?? _language;
       // Ensure language code is valid - fix any legacy data that might have display names instead of codes
       if (!LanguageOption.all.any((option) => option.code == _language)) {
         // If the saved language is not a valid code, it might be a display name
