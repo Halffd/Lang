@@ -146,11 +146,19 @@ class LangApp extends StatelessWidget {
 
     return Consumer<AppState>(
       builder: (context, appState, child) {
+        // Map the user's language preference to a locale we have UI
+        // translations for (en, es, ja, zh). Falls back to English.
+        final uiLocale = switch (appState.language) {
+          'ja' => const Locale('ja'),
+          'zh' => const Locale('zh'),
+          'es' => const Locale('es'),
+          _ => const Locale('en'),
+        };
         return MaterialApp(
           onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          locale: Locale(appState.language),
+          locale: uiLocale,
           debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -288,7 +296,9 @@ class LangApp extends StatelessWidget {
           color: Colors.white70,
         ),
       ),
-      home: const MainNavigationShell(),
+          home: const MainNavigationShell(),
+        );
+      },
     );
   }
 }
