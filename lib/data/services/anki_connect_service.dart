@@ -57,6 +57,16 @@ class AnkiConnectService {
     }
   }
 
+  /// Trigger an Anki sync (syncAllCollection is destructive; use 'sync').
+  Future<bool> forceSync() async {
+    try {
+      await _call('sync', {});
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<List<String>> getDeckNames() async {
     final result = await _call('deckNames', {});
     return List<String>.from(result as List);
@@ -64,8 +74,9 @@ class AnkiConnectService {
 
   Future<Map<String, String>> getDeckNamesAndIds() async {
     final result = await _call('deckNamesAndIds', {});
-    return Map<String, dynamic>.from(result as Map)
-        .map((k, v) => MapEntry(k, v.toString()));
+    return Map<String, dynamic>.from(
+      result as Map,
+    ).map((k, v) => MapEntry(k, v.toString()));
   }
 
   Future<List<String>> getModelNames() async {
@@ -75,8 +86,9 @@ class AnkiConnectService {
 
   Future<Map<String, String>> getModelNamesAndIds() async {
     final result = await _call('modelNamesAndIds', {});
-    return Map<String, dynamic>.from(result as Map)
-        .map((k, v) => MapEntry(k, v.toString()));
+    return Map<String, dynamic>.from(
+      result as Map,
+    ).map((k, v) => MapEntry(k, v.toString()));
   }
 
   Future<Map<String, dynamic>> getModelFieldNames(String modelName) async {
@@ -87,8 +99,9 @@ class AnkiConnectService {
 
   Future<Map<String, String>> getDeckConfig(String deckName) async {
     final result = await _call('getDeckConfig', {'deck': deckName});
-    return Map<String, dynamic>.from(result as Map)
-        .map((k, v) => MapEntry(k, v.toString()));
+    return Map<String, dynamic>.from(
+      result as Map,
+    ).map((k, v) => MapEntry(k, v.toString()));
   }
 
   Future<int?> addNote({
@@ -105,10 +118,7 @@ class AnkiConnectService {
       'modelName': modelName,
       'fields': fields,
       'tags': tags,
-      'options': {
-        'allowDuplicate': false,
-        'duplicateScope': 'deck',
-      },
+      'options': {'allowDuplicate': false, 'duplicateScope': 'deck'},
     };
 
     if (audio != null) note['audio'] = audio;
@@ -124,16 +134,16 @@ class AnkiConnectService {
     return (result as List).map((e) => e as int?).toList();
   }
 
-  Future<bool> canAddNote(String deckName, String modelName, Map<String, String> fields) async {
+  Future<bool> canAddNote(
+    String deckName,
+    String modelName,
+    Map<String, String> fields,
+  ) async {
     try {
       final result = await _call('canAddNotes', {
         'notes': [
-          {
-            'deckName': deckName,
-            'modelName': modelName,
-            'fields': fields,
-          }
-        ]
+          {'deckName': deckName, 'modelName': modelName, 'fields': fields},
+        ],
       });
       return (result as List).isNotEmpty && result[0] == true;
     } catch (_) {
@@ -152,10 +162,7 @@ class AnkiConnectService {
         'deckName': deckName,
         'modelName': modelName,
         'fields': fields,
-        'options': {
-          'allowDuplicate': false,
-          'duplicateScope': 'deck',
-        },
+        'options': {'allowDuplicate': false, 'duplicateScope': 'deck'},
         'tags': tags,
       },
     });

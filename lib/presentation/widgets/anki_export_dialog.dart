@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:lang/data/services/anki_connect_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/domain/entities/analyzed_word.dart';
+import 'package:lang/domain/entities/anki_note_data.dart';
+import 'package:lang/domain/entities/anki_note_types.dart';
 import 'package:lang/presentation/providers/analyzer_provider.dart';
 
 /// Rich Anki export dialog for a word.
@@ -61,7 +63,9 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
     final appState = context.read<AppState>();
     _selectedDeck = appState.ankiDecks.contains(appState.currentAnkiDeck)
         ? appState.currentAnkiDeck
-        : (appState.ankiDecks.isNotEmpty ? appState.ankiDecks.first : 'Default');
+        : (appState.ankiDecks.isNotEmpty
+              ? appState.ankiDecks.first
+              : 'Default');
     _decks = List.from(appState.ankiDecks);
     if (_decks.isEmpty) _decks = ['Default'];
     _sentenceController.text = widget.word.sentence ?? '';
@@ -153,26 +157,54 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
     setState(() => _saving = true);
 
     final w = widget.word;
-    final reading = w.reading ?? '';
 
-    // Build Front/Back for the standard Basic model. Fields beyond
-    // Front/Back are ignored by AnkiConnect unless the model has them.
-    final front = w.word;
-    final backParts = <String>[];
-    if (reading.isNotEmpty) backParts.add('Reading: $reading');
-    if (_sentenceController.text.isNotEmpty) {
-      backParts.add('Sentence: ${_sentenceController.text}');
-    }
-    if (_secondaryController.text.isNotEmpty) {
-      backParts.add('Definitions: ${_secondaryController.text}');
-    }
-    if (_commentsController.text.isNotEmpty) {
-      backParts.add('Notes: ${_commentsController.text}');
-    }
-    if (_includeClipboardText && _clipboardText.isNotEmpty) {
-      backParts.add('Context: $_clipboardText');
-    }
-    final back = backParts.join('<br>');
+    // Build the note data context from the analyzed word + dialog state
+    final cloze = w.sentence != null
+        ? AnkiMarkerRenderer.buildCloze(
+            w.sentence!,
+            w.word,
+            termKana: w.reading,
+          )
+        : null;
+
+    final noteData = AnkiNoteData(
+      expression: w.word,
+      reading: w.reading,
+      language: appState.learningLanguage,
+      cloze: cloze,
+      glossary: [
+        ...w.ichiMoeDefinitions,
+        ..._secondaryController.text
+            .split('; ')
+            .where((s) => s.trim().isNotEmpty),
+      ],
+      dictionary: w.ichiMoeDefinitions.isNotEmpty ? 'IchiMoe' : '',
+      frequencies: w.frequency != null
+          ? [FrequencyEntry('local', w.frequency.toString())]
+          : const [],
+      tags: _tagsController.text
+          .split(RegExp(r'[\s,]+'))
+          .where((t) => t.isNotEmpty)
+          .toList(),
+      clipboardText: _includeClipboardText && _clipboardText.isNotEmpty
+          ? _clipboardText
+          : null,
+      clipboardImagePath: _imagePath,
+      audioPath: _audioUrl,
+      screenshotPath: null, // screenshots picked via image attach
+      selectionText: _sentenceController.text,
+    );
+
+    // Note type config from user settings
+    final noteTypes = appState.ankiNoteTypes;
+    final typeConfig = w.kanjiList.isNotEmpty
+        ? noteTypes.byType(AnkiNoteType.kanji)
+        : noteTypes.byType(AnkiNoteType.expression);
+    final fields = <String, String>{
+      for (final f in typeConfig.fields)
+        if (f.name.isNotEmpty)
+          f.name: AnkiMarkerRenderer.render(f.value, noteData),
+    };
 
     final tags = _tagsController.text
         .split(RegExp(r'[\s,]+'))
@@ -182,41 +214,46 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
     try {
       if (appState.ankiConnectEnabled) {
         final service = AnkiConnectService(appState.ankiConnectUrl);
-        final fields = <String, String>{'Front': front, 'Back': back};
-        // Extended models may have these fields
-        if (reading.isNotEmpty) fields['Reading'] = reading;
-        if (_sentenceController.text.isNotEmpty) {
-          fields['Sentence'] = _sentenceController.text;
-        }
+        final ankiSettings = appState.yomitanOptions.activeProfile.anki;
 
         final noteId = await service.addNote(
           deckName: _selectedDeck,
-          modelName: appState.ankiConnectModel,
+          modelName: typeConfig.model,
           fields: fields,
           tags: tags,
           audio: (_includeAudio && _audioUrl != null && _audioUrl!.isNotEmpty)
               ? {
                   'path': _audioUrl!,
                   'filename': 'audio_${w.word}',
-                  'fields': ['Front'],
+                  'fields': [typeConfig.fields.first.name],
                 }
               : null,
           picture: _imagePath != null
               ? {
                   'path': _imagePath!,
                   'filename': 'img_${w.word}.png',
-                  'fields': ['Back'],
+                  'fields': [
+                    typeConfig.field('Picture').name.isNotEmpty
+                        ? typeConfig.field('Picture').name
+                        : typeConfig.fields.first.name,
+                  ],
                 }
               : null,
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(noteId != null
-                  ? 'Added to Anki deck $_selectedDeck'
-                  : 'Word already exists in deck'),
+              content: Text(
+                noteId != null
+                    ? 'Added to Anki deck $_selectedDeck'
+                    : 'Word already exists in deck',
+              ),
             ),
           );
+        }
+        // optional force sync
+        if (ankiSettings.forceSyncOnAddingCard) {
+          await service.forceSync();
         }
       } else {
         // AnkiConnect disabled: save to local Anki words list
@@ -224,16 +261,18 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Saved to local Anki word list (AnkiConnect disabled)'),
+              content: Text(
+                'Saved to local Anki word list (AnkiConnect disabled)',
+              ),
             ),
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Anki export failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Anki export failed: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -258,13 +297,15 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
               // word + reading row
               Row(
                 children: [
-                  Text(w.word,
-                      style: theme.textTheme.titleLarge
-                          ?.copyWith(fontWeight: FontWeight.bold)),
+                  Text(
+                    w.word,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(width: 12),
                   if (w.reading != null && w.reading!.isNotEmpty)
-                    Text(w.reading!,
-                        style: TextStyle(color: theme.hintColor)),
+                    Text(w.reading!, style: TextStyle(color: theme.hintColor)),
                 ],
               ),
               const SizedBox(height: 12),
@@ -275,7 +316,8 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
                 items: _decks
                     .map((d) => DropdownMenuItem(value: d, child: Text(d)))
                     .toList(),
-                onChanged: (v) => setState(() => _selectedDeck = v ?? _selectedDeck),
+                onChanged: (v) =>
+                    setState(() => _selectedDeck = v ?? _selectedDeck),
               ),
               const SizedBox(height: 12),
 
@@ -351,9 +393,11 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
               ListTile(
                 dense: true,
                 leading: const Icon(Icons.image),
-                title: Text(_imagePath != null
-                    ? 'Image: ${_imagePath!.split('/').last}'
-                    : 'Attach clipboard image / screenshot'),
+                title: Text(
+                  _imagePath != null
+                      ? 'Image: ${_imagePath!.split('/').last}'
+                      : 'Attach clipboard image / screenshot',
+                ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -374,9 +418,11 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
               SwitchListTile(
                 dense: true,
                 title: const Text('Attach audio'),
-                subtitle: Text(_audioUrl != null
-                    ? _audioUrl!.split('/').last
-                    : 'Auto-fetch audio on export (or pick file)'),
+                subtitle: Text(
+                  _audioUrl != null
+                      ? _audioUrl!.split('/').last
+                      : 'Auto-fetch audio on export (or pick file)',
+                ),
                 value: _includeAudio,
                 onChanged: (v) async {
                   if (v && _audioUrl == null) {

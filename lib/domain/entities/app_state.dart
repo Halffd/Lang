@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/services/storage_service.dart';
+import 'yomitan_options.dart';
+import 'anki_note_types.dart';
 import '../../data/repositories/translation_service.dart';
 import 'translation_model.dart';
 
@@ -10,6 +12,8 @@ class AppState extends ChangeNotifier {
   bool _clipboardMonitor = false;
   String _language = 'ja';
   String _learningLanguage = 'ja';
+  YomitanOptions? _yomitanOptions;
+  AnkiNoteTypes? _ankiNoteTypes;
   bool _darkMode = false;
   ThemeMode _themeMode = ThemeMode.system; // Default to system theme
   bool _showParticles = true;
@@ -55,6 +59,8 @@ class AppState extends ChangeNotifier {
   bool get clipboardMonitor => _clipboardMonitor;
   String get language => _language;
   String get learningLanguage => _learningLanguage;
+  YomitanOptions get yomitanOptions => _yomitanOptions ??= YomitanOptions.deserialize(_storageService.getStringSync('yomitan_options'));
+  AnkiNoteTypes get ankiNoteTypes => _ankiNoteTypes ??= AnkiNoteTypes.deserialize(_storageService.getStringSync('anki_note_types'));
   bool get darkMode => _darkMode;
   ThemeMode get themeMode => _themeMode;
   bool get showParticles => _showParticles;
@@ -147,6 +153,18 @@ class AppState extends ChangeNotifier {
   void setLearningLanguage(String value) {
     _learningLanguage = value;
     _storageService.setString('learning_language', value);
+    notifyListeners();
+  }
+
+  void setYomitanOptions(YomitanOptions options) {
+    _yomitanOptions = options;
+    _storageService.setString('yomitan_options', options.serialize());
+    notifyListeners();
+  }
+
+  void setAnkiNoteTypes(AnkiNoteTypes types) {
+    _ankiNoteTypes = types;
+    _storageService.setString('anki_note_types', types.serialize());
     notifyListeners();
   }
   

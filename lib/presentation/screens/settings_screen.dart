@@ -6,6 +6,7 @@ import 'package:lang/domain/entities/translation_model.dart';
 import 'package:lang/data/repositories/translation_service.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/presentation/screens/dictionary_list_screen.dart';
+import 'package:lang/presentation/screens/yomitan_settings_screen.dart';
 import 'package:lang/presentation/screens/import_screen.dart';
 import 'package:lang/utils/screen_size.dart';
 
@@ -101,25 +102,22 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.settings),
         centerTitle: true,
       ),
-    body: ListView(
-      padding: ScreenSize.adaptivePadding(context),
+      body: ListView(
+        padding: ScreenSize.adaptivePadding(context),
         children: [
           // General settings section
           Text(
             AppLocalizations.of(context)!.generalSettings,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          
+
           // Language selection
           Card(
             elevation: 1,
@@ -137,12 +135,17 @@ class SettingsScreen extends StatelessWidget {
                   DropdownButtonFormField<String>(
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                     ),
                     value: () {
                       // Double-check that the value is valid at build time
                       final currentLang = appState.language;
-                      if (LanguageOption.all.any((option) => option.code == currentLang)) {
+                      if (LanguageOption.all.any(
+                        (option) => option.code == currentLang,
+                      )) {
                         return currentLang;
                       } else {
                         // If the value is invalid right now, return default
@@ -153,7 +156,9 @@ class SettingsScreen extends StatelessWidget {
                       for (final languageOption in LanguageOption.all)
                         DropdownMenuItem(
                           value: languageOption.code,
-                          child: Text(_getLanguageName(context, languageOption.code)),
+                          child: Text(
+                            _getLanguageName(context, languageOption.code),
+                          ),
                         ),
                     ],
                     onChanged: (value) {
@@ -166,7 +171,7 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // Theme settings
           Card(
             elevation: 1,
@@ -184,7 +189,9 @@ class SettingsScreen extends StatelessWidget {
                   // Theme mode selection
                   ListTile(
                     title: Text(AppLocalizations.of(context)!.themeMode),
-                    subtitle: Text(AppLocalizations.of(context)!.themeModeSubtitle),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.themeModeSubtitle,
+                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -192,12 +199,17 @@ class SettingsScreen extends StatelessWidget {
                       value: appState.themeMode,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                       ),
                       items: [
                         DropdownMenuItem(
                           value: ThemeMode.system,
-                          child: Text(AppLocalizations.of(context)!.systemTheme),
+                          child: Text(
+                            AppLocalizations.of(context)!.systemTheme,
+                          ),
                         ),
                         DropdownMenuItem(
                           value: ThemeMode.light,
@@ -219,19 +231,16 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 16),
 
           // Search settings section
           Text(
             AppLocalizations.of(context)!.uiAndNavigation,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          
+
           Card(
             elevation: 1,
             margin: const EdgeInsets.symmetric(vertical: 8),
@@ -241,21 +250,29 @@ class SettingsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SwitchListTile(
-                    title: Text(AppLocalizations.of(context)!.autoHideNavigation),
-                    subtitle: Text(AppLocalizations.of(context)!.hideNavigationBottom),
+                    title: Text(
+                      AppLocalizations.of(context)!.autoHideNavigation,
+                    ),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.hideNavigationBottom,
+                    ),
                     value: appState.autoHideNavigation,
                     onChanged: (value) => appState.setAutoHideNavigation(value),
                   ),
                   const Divider(),
                   SwitchListTile(
                     title: Text(AppLocalizations.of(context)!.defaultFlexMode),
-                    subtitle: Text(AppLocalizations.of(context)!.useFlexibleGrid),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.useFlexibleGrid,
+                    ),
                     value: appState.defaultFlexMode,
                     onChanged: (value) => appState.setDefaultFlexMode(value),
                   ),
                   const Divider(),
-                   ListTile(
-                    title: Text(AppLocalizations.of(context)!.keyboardShortcuts),
+                  ListTile(
+                    title: Text(
+                      AppLocalizations.of(context)!.keyboardShortcuts,
+                    ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -271,8 +288,12 @@ class SettingsScreen extends StatelessWidget {
                   const Divider(),
                   // Auto-Kana conversion setting
                   SwitchListTile(
-                    title: Text(AppLocalizations.of(context)!.autoKanaConversion),
-                    subtitle: Text(AppLocalizations.of(context)!.convertRomajiToKana),
+                    title: Text(
+                      AppLocalizations.of(context)!.autoKanaConversion,
+                    ),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.convertRomajiToKana,
+                    ),
                     value: appState.autoConvertJapanese,
                     onChanged: (value) {
                       appState.setAutoConvertJapanese(value);
@@ -282,17 +303,24 @@ class SettingsScreen extends StatelessWidget {
                   // Default screen selection
                   ListTile(
                     title: Text(AppLocalizations.of(context)!.defaultScreen),
-                    subtitle: Text(AppLocalizations.of(context)!.defaultScreenSubtitle),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.defaultScreenSubtitle,
+                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: DropdownButtonFormField<int>(
-                      value: (appState.defaultScreenIndex >= 0 && appState.defaultScreenIndex <= 5)
+                      value:
+                          (appState.defaultScreenIndex >= 0 &&
+                              appState.defaultScreenIndex <= 5)
                           ? appState.defaultScreenIndex
                           : 0, // fallback to 0 if current value is invalid
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                       ),
                       items: [
                         DropdownMenuItem(
@@ -309,7 +337,9 @@ class SettingsScreen extends StatelessWidget {
                         ),
                         DropdownMenuItem(
                           value: 3,
-                          child: Text(AppLocalizations.of(context)!.dictionaries),
+                          child: Text(
+                            AppLocalizations.of(context)!.dictionaries,
+                          ),
                         ),
                         DropdownMenuItem(
                           value: 4,
@@ -331,7 +361,9 @@ class SettingsScreen extends StatelessWidget {
                   // Zoom level control
                   ListTile(
                     title: Text(AppLocalizations.of(context)!.zoomLevel),
-                    subtitle: Text(AppLocalizations.of(context)!.zoomLevelSubtitle),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.zoomLevelSubtitle,
+                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -342,7 +374,8 @@ class SettingsScreen extends StatelessWidget {
                             value: appState.zoomLevel,
                             min: 0.5,
                             max: 3.0,
-                            divisions: 50, // Provides 0.05 increments between 0.5 and 3.0
+                            divisions:
+                                50, // Provides 0.05 increments between 0.5 and 3.0
                             label: '${appState.zoomLevel.toStringAsFixed(2)}x',
                             onChanged: (value) {
                               appState.setZoomLevel(value);
@@ -360,7 +393,9 @@ class SettingsScreen extends StatelessWidget {
                   // Font size control
                   ListTile(
                     title: Text(AppLocalizations.of(context)!.fontSize),
-                    subtitle: Text(AppLocalizations.of(context)!.fontSizeSubtitle),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.fontSizeSubtitle,
+                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -371,8 +406,10 @@ class SettingsScreen extends StatelessWidget {
                             value: appState.fontSizeMultiplier,
                             min: 0.8,
                             max: 2.0,
-                            divisions: 24, // Provides 0.05 increments between 0.8 and 2.0
-                            label: '${(appState.fontSizeMultiplier * 100).round()}%',
+                            divisions:
+                                24, // Provides 0.05 increments between 0.8 and 2.0
+                            label:
+                                '${(appState.fontSizeMultiplier * 100).round()}%',
                             onChanged: (value) {
                               appState.setFontSizeMultiplier(value);
                             },
@@ -394,13 +431,10 @@ class SettingsScreen extends StatelessWidget {
           // Search settings section
           Text(
             AppLocalizations.of(context)!.searchSettings,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          
+
           // Search options
           Card(
             elevation: 1,
@@ -417,7 +451,9 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   SwitchListTile(
                     title: Text(AppLocalizations.of(context)!.clipboardMonitor),
-                    subtitle: Text(AppLocalizations.of(context)!.autoSearchClipboard),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.autoSearchClipboard,
+                    ),
                     value: appState.clipboardMonitor,
                     onChanged: (value) {
                       appState.setClipboardMonitor(value);
@@ -427,7 +463,7 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // Display options
           Card(
             elevation: 1,
@@ -444,7 +480,9 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   SwitchListTile(
                     title: Text(AppLocalizations.of(context)!.showParticles),
-                    subtitle: Text(AppLocalizations.of(context)!.highlightParticles),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.highlightParticles,
+                    ),
                     value: appState.showParticles,
                     onChanged: (value) {
                       appState.setShowParticles(value);
@@ -453,7 +491,9 @@ class SettingsScreen extends StatelessWidget {
                   const Divider(),
                   SwitchListTile(
                     title: Text(AppLocalizations.of(context)!.showKanji),
-                    subtitle: Text(AppLocalizations.of(context)!.displayKanjiInfo),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.displayKanjiInfo,
+                    ),
                     value: appState.showKanji,
                     onChanged: (value) {
                       appState.setShowKanji(value);
@@ -462,16 +502,23 @@ class SettingsScreen extends StatelessWidget {
                   const Divider(),
                   ListTile(
                     title: Text(AppLocalizations.of(context)!.minFrequency),
-                    subtitle: Text(AppLocalizations.of(context)!.filterByFrequency),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.filterByFrequency,
+                    ),
                     trailing: SizedBox(
                       width: 100,
                       child: TextField(
                         keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                         ),
-                        controller: TextEditingController(text: appState.minFrequency.toString()),
+                        controller: TextEditingController(
+                          text: appState.minFrequency.toString(),
+                        ),
                         onChanged: (value) {
                           final intValue = int.tryParse(value);
                           if (intValue != null) {
@@ -491,10 +538,7 @@ class SettingsScreen extends StatelessWidget {
           // Advanced settings section
           Text(
             AppLocalizations.of(context)!.advancedSettings,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
 
@@ -512,159 +556,195 @@ class SettingsScreen extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-              // Anki Deck Selection
-              ScreenSize.isCompact(context)
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(AppLocalizations.of(context)!.currentAnkiDeck),
-                        const SizedBox(height: 8),
-                        DropdownButtonFormField<String>(
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          ),
-                          value: appState.ankiDecks.contains(appState.currentAnkiDeck)
-                              ? appState.currentAnkiDeck
-                              : (appState.ankiDecks.isNotEmpty ? appState.ankiDecks.first : 'Default'),
-                          items: appState.ankiDecks.isNotEmpty
-                              ? appState.ankiDecks.map((deck) {
-                                  return DropdownMenuItem(
-                                    value: deck,
-                                    child: Text(deck),
-                                  );
-                                }).toList()
-                              : [
-                                  const DropdownMenuItem(
-                                    value: 'Default',
-                                    child: Text('Default'),
+                  // Anki Deck Selection
+                  ScreenSize.isCompact(context)
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(AppLocalizations.of(context)!.currentAnkiDeck),
+                            const SizedBox(height: 8),
+                            DropdownButtonFormField<String>(
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                              ),
+                              value:
+                                  appState.ankiDecks.contains(
+                                    appState.currentAnkiDeck,
                                   )
-                                ],
-                          onChanged: (value) {
-                            if (value != null) {
-                              appState.setCurrentAnkiDeck(value);
-                            }
-                          },
-                        ),
-                      ],
-                    )
-                  : Row(
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: Text(AppLocalizations.of(context)!.currentAnkiDeck),
-                        ),
-                        Expanded(
-                          flex: 4,
-                          child: DropdownButtonFormField<String>(
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  ? appState.currentAnkiDeck
+                                  : (appState.ankiDecks.isNotEmpty
+                                        ? appState.ankiDecks.first
+                                        : 'Default'),
+                              items: appState.ankiDecks.isNotEmpty
+                                  ? appState.ankiDecks.map((deck) {
+                                      return DropdownMenuItem(
+                                        value: deck,
+                                        child: Text(deck),
+                                      );
+                                    }).toList()
+                                  : [
+                                      const DropdownMenuItem(
+                                        value: 'Default',
+                                        child: Text('Default'),
+                                      ),
+                                    ],
+                              onChanged: (value) {
+                                if (value != null) {
+                                  appState.setCurrentAnkiDeck(value);
+                                }
+                              },
                             ),
-                            value: appState.ankiDecks.contains(appState.currentAnkiDeck)
-                                ? appState.currentAnkiDeck
-                                : (appState.ankiDecks.isNotEmpty ? appState.ankiDecks.first : 'Default'),
-                            items: appState.ankiDecks.isNotEmpty
-                                ? appState.ankiDecks.map((deck) {
-                                    return DropdownMenuItem(
-                                      value: deck,
-                                      child: Text(deck),
-                                    );
-                                  }).toList()
-                                : [
-                                    const DropdownMenuItem(
-                                      value: 'Default',
-                                      child: Text('Default'),
+                          ],
+                        )
+                      : Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                AppLocalizations.of(context)!.currentAnkiDeck,
+                              ),
+                            ),
+                            Expanded(
+                              flex: 4,
+                              child: DropdownButtonFormField<String>(
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                ),
+                                value:
+                                    appState.ankiDecks.contains(
+                                      appState.currentAnkiDeck,
                                     )
-                                  ],
-                            onChanged: (value) {
-                              if (value != null) {
-                                appState.setCurrentAnkiDeck(value);
-                              }
-                            },
-                          ),
+                                    ? appState.currentAnkiDeck
+                                    : (appState.ankiDecks.isNotEmpty
+                                          ? appState.ankiDecks.first
+                                          : 'Default'),
+                                items: appState.ankiDecks.isNotEmpty
+                                    ? appState.ankiDecks.map((deck) {
+                                        return DropdownMenuItem(
+                                          value: deck,
+                                          child: Text(deck),
+                                        );
+                                      }).toList()
+                                    : [
+                                        const DropdownMenuItem(
+                                          value: 'Default',
+                                          child: Text('Default'),
+                                        ),
+                                      ],
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    appState.setCurrentAnkiDeck(value);
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-              const SizedBox(height: 16),
-              // Profile Selection
-              ScreenSize.isCompact(context)
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(AppLocalizations.of(context)!.currentProfile),
-                        const SizedBox(height: 8),
-                        DropdownButtonFormField<String>(
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          ),
-                          value: appState.profiles.contains(appState.currentProfile)
-                              ? appState.currentProfile
-                              : (appState.profiles.isNotEmpty ? appState.profiles.first : 'Default'),
-                          items: appState.profiles.isNotEmpty
-                              ? appState.profiles.map((profile) {
-                                  return DropdownMenuItem(
-                                    value: profile,
-                                    child: Text(profile),
-                                  );
-                                }).toList()
-                              : [
-                                  const DropdownMenuItem(
-                                    value: 'Default',
-                                    child: Text('Default'),
+                  const SizedBox(height: 16),
+                  // Profile Selection
+                  ScreenSize.isCompact(context)
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(AppLocalizations.of(context)!.currentProfile),
+                            const SizedBox(height: 8),
+                            DropdownButtonFormField<String>(
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                              ),
+                              value:
+                                  appState.profiles.contains(
+                                    appState.currentProfile,
                                   )
-                                ],
-                          onChanged: (value) {
-                            if (value != null) {
-                              appState.setCurrentProfile(value);
-                            }
-                          },
-                        ),
-                      ],
-                    )
-                  : Row(
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: Text(AppLocalizations.of(context)!.currentProfile),
-                        ),
-                        Expanded(
-                          flex: 4,
-                          child: DropdownButtonFormField<String>(
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  ? appState.currentProfile
+                                  : (appState.profiles.isNotEmpty
+                                        ? appState.profiles.first
+                                        : 'Default'),
+                              items: appState.profiles.isNotEmpty
+                                  ? appState.profiles.map((profile) {
+                                      return DropdownMenuItem(
+                                        value: profile,
+                                        child: Text(profile),
+                                      );
+                                    }).toList()
+                                  : [
+                                      const DropdownMenuItem(
+                                        value: 'Default',
+                                        child: Text('Default'),
+                                      ),
+                                    ],
+                              onChanged: (value) {
+                                if (value != null) {
+                                  appState.setCurrentProfile(value);
+                                }
+                              },
                             ),
-                            value: appState.profiles.contains(appState.currentProfile)
-                                ? appState.currentProfile
-                                : (appState.profiles.isNotEmpty ? appState.profiles.first : 'Default'),
-                            items: appState.profiles.isNotEmpty
-                                ? appState.profiles.map((profile) {
-                                    return DropdownMenuItem(
-                                      value: profile,
-                                      child: Text(profile),
-                                    );
-                                  }).toList()
-                                : [
-                                    const DropdownMenuItem(
-                                      value: 'Default',
-                                      child: Text('Default'),
+                          ],
+                        )
+                      : Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                AppLocalizations.of(context)!.currentProfile,
+                              ),
+                            ),
+                            Expanded(
+                              flex: 4,
+                              child: DropdownButtonFormField<String>(
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                ),
+                                value:
+                                    appState.profiles.contains(
+                                      appState.currentProfile,
                                     )
-                                  ],
-                            onChanged: (value) {
-                              if (value != null) {
-                                appState.setCurrentProfile(value);
-                              }
-      },
-    ),
-  ),
-      ],
-    ),
-  ],
-),
-),
-),
+                                    ? appState.currentProfile
+                                    : (appState.profiles.isNotEmpty
+                                          ? appState.profiles.first
+                                          : 'Default'),
+                                items: appState.profiles.isNotEmpty
+                                    ? appState.profiles.map((profile) {
+                                        return DropdownMenuItem(
+                                          value: profile,
+                                          child: Text(profile),
+                                        );
+                                      }).toList()
+                                    : [
+                                        const DropdownMenuItem(
+                                          value: 'Default',
+                                          child: Text('Default'),
+                                        ),
+                                      ],
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    appState.setCurrentProfile(value);
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                ],
+              ),
+            ),
+          ),
 
           // AnkiConnect settings
           Card(
@@ -698,30 +778,41 @@ class SettingsScreen extends StatelessWidget {
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         hintText: 'http://127.0.0.1:8765',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         isDense: true,
                       ),
-                      controller: TextEditingController(text: appState.ankiConnectUrl),
+                      controller: TextEditingController(
+                        text: appState.ankiConnectUrl,
+                      ),
                       onChanged: (v) => appState.setAnkiConnectUrl(v),
                     ),
                     const SizedBox(height: 12),
                     // Test connection button + status
                     ElevatedButton.icon(
-                          onPressed: () async {
-                            final service = AnkiConnectService(appState.ankiConnectUrl);
-                            final ok = await service.testConnection();
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(ok ? 'AnkiConnect connected' : 'Connection failed'),
-                                  backgroundColor: ok ? Colors.green : Colors.red,
-                                ),
-                              );
-                            }
-                          },
-                          icon: const Icon(Icons.wifi_find, size: 18),
-                          label: const Text('Test Connection'),
-                        ),
+                      onPressed: () async {
+                        final service = AnkiConnectService(
+                          appState.ankiConnectUrl,
+                        );
+                        final ok = await service.testConnection();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                ok
+                                    ? 'AnkiConnect connected'
+                                    : 'Connection failed',
+                              ),
+                              backgroundColor: ok ? Colors.green : Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.wifi_find, size: 18),
+                      label: const Text('Test Connection'),
+                    ),
                     const SizedBox(height: 12),
                     // Deck selection
                     Row(
@@ -730,14 +821,29 @@ class SettingsScreen extends StatelessWidget {
                           child: DropdownButtonFormField<String>(
                             decoration: const InputDecoration(
                               border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
                               isDense: true,
                               labelText: 'Deck',
                             ),
-                            value: appState.ankiDecks.contains(appState.currentAnkiDeck)
+                            value:
+                                appState.ankiDecks.contains(
+                                  appState.currentAnkiDeck,
+                                )
                                 ? appState.currentAnkiDeck
-                                : (appState.ankiDecks.isNotEmpty ? appState.ankiDecks.first : 'Default'),
-                            items: appState.ankiDecks.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+                                : (appState.ankiDecks.isNotEmpty
+                                      ? appState.ankiDecks.first
+                                      : 'Default'),
+                            items: appState.ankiDecks
+                                .map(
+                                  (d) => DropdownMenuItem(
+                                    value: d,
+                                    child: Text(d),
+                                  ),
+                                )
+                                .toList(),
                             onChanged: (v) {
                               if (v != null) appState.setCurrentAnkiDeck(v);
                             },
@@ -748,13 +854,19 @@ class SettingsScreen extends StatelessWidget {
                           icon: const Icon(Icons.refresh, size: 20),
                           tooltip: 'Fetch decks from AnkiConnect',
                           onPressed: () async {
-                            final service = AnkiConnectService(appState.ankiConnectUrl);
+                            final service = AnkiConnectService(
+                              appState.ankiConnectUrl,
+                            );
                             try {
                               final decks = await service.getDeckNames();
                               appState.setAnkiDecks(decks);
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Found ${decks.length} decks')),
+                                  SnackBar(
+                                    content: Text(
+                                      'Found ${decks.length} decks',
+                                    ),
+                                  ),
                                 );
                               }
                             } catch (e) {
@@ -777,11 +889,16 @@ class SettingsScreen extends StatelessWidget {
                             decoration: const InputDecoration(
                               border: OutlineInputBorder(),
                               hintText: 'Basic',
-                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
                               isDense: true,
                               labelText: 'Note Type',
                             ),
-                            controller: TextEditingController(text: appState.ankiConnectModel),
+                            controller: TextEditingController(
+                              text: appState.ankiConnectModel,
+                            ),
                             onChanged: (v) => appState.setAnkiConnectModel(v),
                           ),
                         ),
@@ -790,7 +907,9 @@ class SettingsScreen extends StatelessWidget {
                           icon: const Icon(Icons.refresh, size: 20),
                           tooltip: 'Fetch note types from AnkiConnect',
                           onPressed: () async {
-                            final service = AnkiConnectService(appState.ankiConnectUrl);
+                            final service = AnkiConnectService(
+                              appState.ankiConnectUrl,
+                            );
                             try {
                               final models = await service.getModelNames();
                               if (context.mounted) {
@@ -798,13 +917,17 @@ class SettingsScreen extends StatelessWidget {
                                   context: context,
                                   builder: (ctx) => SimpleDialog(
                                     title: const Text('Select Note Type'),
-                                    children: models.map((m) => SimpleDialogOption(
-                                      onPressed: () {
-                                        appState.setAnkiConnectModel(m);
-                                        Navigator.pop(ctx);
-                                      },
-                                      child: Text(m),
-                                    )).toList(),
+                                    children: models
+                                        .map(
+                                          (m) => SimpleDialogOption(
+                                            onPressed: () {
+                                              appState.setAnkiConnectModel(m);
+                                              Navigator.pop(ctx);
+                                            },
+                                            child: Text(m),
+                                          ),
+                                        )
+                                        .toList(),
                                   ),
                                 );
                               }
@@ -822,8 +945,14 @@ class SettingsScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     // Sync on save toggle
                     SwitchListTile(
-                      title: const Text('Auto-sync to Anki', style: TextStyle(fontSize: 14)),
-                      subtitle: const Text('Send to Anki when saving a word', style: TextStyle(fontSize: 12)),
+                      title: const Text(
+                        'Auto-sync to Anki',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      subtitle: const Text(
+                        'Send to Anki when saving a word',
+                        style: TextStyle(fontSize: 12),
+                      ),
                       value: appState.ankiSyncOnSave,
                       onChanged: (v) => appState.setAnkiSyncOnSave(v),
                       dense: true,
@@ -849,136 +978,165 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   SwitchListTile(
-                    title: Text(AppLocalizations.of(context)!.clipboardAutoDetect),
-                    subtitle: Text(AppLocalizations.of(context)!.autoDetectProcessText),
+                    title: Text(
+                      AppLocalizations.of(context)!.clipboardAutoDetect,
+                    ),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.autoDetectProcessText,
+                    ),
                     value: appState.clipboardAutoDetect,
                     onChanged: (value) {
                       appState.setClipboardAutoDetect(value);
                     },
                   ),
                   const Divider(),
-        SwitchListTile(
-          title: Text(AppLocalizations.of(context)!.forvoAudio),
-          subtitle: Text(AppLocalizations.of(context)!.enableForvoPronunciations),
-          value: appState.forvoAudioEnabled,
-          onChanged: (value) {
-            appState.setForvoAudioEnabled(value);
-          },
-        ),
-        if (appState.forvoAudioEnabled) ...[
-          const SizedBox(height: 8),
-          ScreenSize.isCompact(context)
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Forvo API Key'),
+                  SwitchListTile(
+                    title: Text(AppLocalizations.of(context)!.forvoAudio),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.enableForvoPronunciations,
+                    ),
+                    value: appState.forvoAudioEnabled,
+                    onChanged: (value) {
+                      appState.setForvoAudioEnabled(value);
+                    },
+                  ),
+                  if (appState.forvoAudioEnabled) ...[
                     const SizedBox(height: 8),
-                    TextField(
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Enter your Forvo API key',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                      obscureText: true,
-                      controller: TextEditingController(text: appState.forvoApiKey),
-                      onChanged: (value) {
-                        appState.setForvoApiKey(value);
-                      },
-                    ),
+                    ScreenSize.isCompact(context)
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Forvo API Key'),
+                              const SizedBox(height: 8),
+                              TextField(
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  hintText: 'Enter your Forvo API key',
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                ),
+                                obscureText: true,
+                                controller: TextEditingController(
+                                  text: appState.forvoApiKey,
+                                ),
+                                onChanged: (value) {
+                                  appState.setForvoApiKey(value);
+                                },
+                              ),
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              const Expanded(
+                                flex: 3,
+                                child: Text('Forvo API Key'),
+                              ),
+                              Expanded(
+                                flex: 4,
+                                child: TextField(
+                                  decoration: const InputDecoration(
+                                    border: OutlineInputBorder(),
+                                    hintText: 'Enter your Forvo API key',
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                  ),
+                                  obscureText: true,
+                                  controller: TextEditingController(
+                                    text: appState.forvoApiKey,
+                                  ),
+                                  onChanged: (value) {
+                                    appState.setForvoApiKey(value);
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
                   ],
-                )
-              : Row(
-                  children: [
-                    const Expanded(
-                      flex: 3,
-                      child: Text('Forvo API Key'),
-                    ),
-                    Expanded(
-                      flex: 4,
-                      child: TextField(
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          hintText: 'Enter your Forvo API key',
-                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        ),
-                        obscureText: true,
-                        controller: TextEditingController(text: appState.forvoApiKey),
-                        onChanged: (value) {
-                          appState.setForvoApiKey(value);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-        ],
                   const Divider(),
                   SwitchListTile(
                     title: Text(AppLocalizations.of(context)!.autoTranslation),
-                    subtitle: Text(AppLocalizations.of(context)!.autoTranslateWords),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.autoTranslateWords,
+                    ),
                     value: appState.autoTranslate,
                     onChanged: (value) {
                       appState.setAutoTranslate(value);
                     },
                   ),
                   const Divider(),
-        SwitchListTile(
-          title: Text(AppLocalizations.of(context)!.autoPasteReader),
-          subtitle: Text(AppLocalizations.of(context)!.autoPasteReaderSubtitle),
-          value: appState.autoPasteReader,
-          onChanged: (value) {
-            appState.setAutoPasteReader(value);
-          },
-        ),
-        SwitchListTile(
-          title: const Text('Inline Definitions'),
-          subtitle: const Text('Show definition text below each word'),
-          value: appState.showInlineDefinitions,
-          onChanged: (value) {
-            appState.setShowInlineDefinitions(value);
-          },
-        ),
-        SwitchListTile(
-          title: const Text('Hover Definitions'),
-          subtitle: const Text('Show definition popup on hover / long-press'),
-          value: appState.showHoverDefinitions,
-          onChanged: (value) {
-            appState.setShowHoverDefinitions(value);
-          },
-        ),
-        const Divider(),
-        ListTile(
-          title: const Text('Translation Provider'),
-          subtitle: const Text('Choose engine for sentence/word translation'),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: DropdownButtonFormField<TranslationProvider>(
-            value: appState.translationProvider,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-            items: const [
-              DropdownMenuItem(
-                value: TranslationProvider.googleCloud,
-                child: Text('Google Cloud (free, online)'),
-              ),
-              DropdownMenuItem(
-                value: TranslationProvider.mlKit,
-                child: Text('ML Kit (offline, on-device)'),
-              ),
-              DropdownMenuItem(
-                value: TranslationProvider.gemini,
-                child: Text('Gemini AI (requires API key)'),
-              ),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                appState.setTranslationProvider(value);
-              }
-            },
-          ),
-        ),
+                  SwitchListTile(
+                    title: Text(AppLocalizations.of(context)!.autoPasteReader),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.autoPasteReaderSubtitle,
+                    ),
+                    value: appState.autoPasteReader,
+                    onChanged: (value) {
+                      appState.setAutoPasteReader(value);
+                    },
+                  ),
+                  SwitchListTile(
+                    title: const Text('Inline Definitions'),
+                    subtitle: const Text(
+                      'Show definition text below each word',
+                    ),
+                    value: appState.showInlineDefinitions,
+                    onChanged: (value) {
+                      appState.setShowInlineDefinitions(value);
+                    },
+                  ),
+                  SwitchListTile(
+                    title: const Text('Hover Definitions'),
+                    subtitle: const Text(
+                      'Show definition popup on hover / long-press',
+                    ),
+                    value: appState.showHoverDefinitions,
+                    onChanged: (value) {
+                      appState.setShowHoverDefinitions(value);
+                    },
+                  ),
+                  const Divider(),
+                  ListTile(
+                    title: const Text('Translation Provider'),
+                    subtitle: const Text(
+                      'Choose engine for sentence/word translation',
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: DropdownButtonFormField<TranslationProvider>(
+                      value: appState.translationProvider,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: TranslationProvider.googleCloud,
+                          child: Text('Google Cloud (free, online)'),
+                        ),
+                        DropdownMenuItem(
+                          value: TranslationProvider.mlKit,
+                          child: Text('ML Kit (offline, on-device)'),
+                        ),
+                        DropdownMenuItem(
+                          value: TranslationProvider.gemini,
+                          child: Text('Gemini AI (requires API key)'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          appState.setTranslationProvider(value);
+                        }
+                      },
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -989,10 +1147,7 @@ class SettingsScreen extends StatelessWidget {
           // Dictionaries section
           Text(
             AppLocalizations.of(context)!.dictionaries,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Card(
@@ -1001,16 +1156,35 @@ class SettingsScreen extends StatelessWidget {
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.library_books),
-                  title: const Text('Manage Dictionaries'),
+                  leading: const Icon(Icons.tune),
+                  title: const Text('Yomitan Settings'),
                   subtitle: const Text(
-                      'Enable/disable, reorder, set priority per dictionary'),
+                    'Profiles, scanning, popup, audio, anki export settings',
+                  ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const DictionaryListScreen()),
+                        builder: (context) => const YomitanSettingsScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.library_books),
+                  title: const Text('Manage Dictionaries'),
+                  subtitle: const Text(
+                    'Enable/disable, reorder, set priority per dictionary',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const DictionaryListScreen(),
+                      ),
                     );
                   },
                 ),
@@ -1018,14 +1192,14 @@ class SettingsScreen extends StatelessWidget {
                 ListTile(
                   leading: const Icon(Icons.file_upload),
                   title: const Text('Import Dictionary'),
-                  subtitle:
-                      const Text('Import Yomichan .zip dictionaries'),
+                  subtitle: const Text('Import Yomichan .zip dictionaries'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const ImportScreen()),
+                        builder: (context) => const ImportScreen(),
+                      ),
                     );
                   },
                 ),
@@ -1038,10 +1212,7 @@ class SettingsScreen extends StatelessWidget {
           // About section
           Text(
             AppLocalizations.of(context)!.about,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
 
@@ -1055,7 +1226,10 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   Text(
                     AppLocalizations.of(context)!.appName,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(AppLocalizations.of(context)!.version('1.0.0')),
