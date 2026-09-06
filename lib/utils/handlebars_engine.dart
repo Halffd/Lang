@@ -105,14 +105,17 @@ class HandlebarsEngine {
     } else if (n is _PartialNode) {
       final partial = _partials[n.name];
       if (partial != null) {
-        final saved = _partialArgs;
+        final saved = Map<String, dynamic>.from(_partialArgs);
         _partialArgs.clear();
         for (final e in n.args.entries) {
           _partialArgs[e.key] = _evalArg(e.value, ctx);
         }
-        // partial sees current context + args
-        final pctx = _Context(ctx.data, parent: ctx);
-        pctx.data.addAll(_partialArgs);
+        // partial sees a copy of current context + args (never
+        // mutate the caller's data map)
+        final pData = <String, dynamic>{};
+        pData.addAll(ctx.data);
+        pData.addAll(_partialArgs);
+        final pctx = _Context(pData, parent: ctx);
         _renderNodes(partial, pctx, out);
         _partialArgs
           ..clear()
@@ -166,7 +169,12 @@ class HandlebarsEngine {
             }
             final ictx = mapItem != null
                 ? _Context(mapItem, parent: ctx)
-                : _Context({}, parent: ctx, thisValue: raw);
+                : _Context(
+                    {},
+                    parent: ctx,
+                    thisValue: raw,
+                    isNullItem: raw == null,
+                  );
             ictx.setVar('@index', i);
             ictx.setVar('@first', i == 0);
             ictx.setVar('@last', i == list.length - 1);
@@ -191,24 +199,37 @@ class HandlebarsEngine {
   }
 
   void _renderRegex(_RegexNode n, _Context ctx, StringBuffer out) {
-    final inner = _renderToString(n.body, ctx);
     final pattern = _stringArg(n.pattern, ctx);
 
     if (n.type == 'regexMatch') {
       // {{#regexMatch pattern flags}}content{{/regexMatch}}
-      // renders content only where pattern matches content - per
-      // Yomitan semantics: match pattern against the *block content*
-      // and output matched substrings. Reverse usage in
-      // jpmn-get-dict-type: pattern is a dict-regex, content is
-      // dictionary name; outputs dictionary name if it matches.
+      // Yomitan semantics: output the content only when pattern
+      // matches it. Side effects (set) inside the body must NOT run
+      // when the match fails, so render into a snapshot and commit
+      // only on success.
+      // render into a sandbox copy; if the pattern does not match,
+      // discard the body entirely (including any set side effects)
+      final before = _collectVars(ctx);
+      final sandbox = _Context(ctx.data, parent: ctx.parent);
+      sandbox._vars.addAll(before);
+      final sb = StringBuffer();
+      _renderNodes(n.body, sandbox, sb);
+      final inner = sb.toString();
+      var matched = false;
       try {
-        final re = RegExp(pattern);
-        if (re.hasMatch(inner)) {
-          out.write(inner);
-        }
+        matched = RegExp(pattern).hasMatch(inner);
       } catch (_) {}
+      if (matched) {
+        // commit: replay body against the real context so sets
+        // inside persist
+        _renderNodes(n.body, ctx, out);
+      } else {
+        // rollback writes the trial render pushed into ancestors
+        _restoreVars(ctx, before);
+      }
     } else {
-      // regexReplace
+      // regexReplace: side effects in body always run
+      final inner = _renderToString(n.body, ctx);
       final replacement = _stringArg(n.replacement as _Arg, ctx);
       try {
         final re = RegExp(pattern);
@@ -225,6 +246,32 @@ class HandlebarsEngine {
         );
       } catch (_) {
         out.write(inner);
+      }
+    }
+  }
+
+  /// Copy var values from this context and all ancestors.
+  Map<String, dynamic> _collectVars(_Context ctx) {
+    final vars = <String, dynamic>{};
+    // collect from root down so nearer scopes overwrite ancestors
+    final chain = <_Context>[];
+    for (_Context? c = ctx; c != null; c = c.parent) {
+      chain.add(c);
+    }
+    for (final c in chain.reversed) {
+      vars.addAll(c._vars);
+    }
+    return vars;
+  }
+
+  /// Restore var state across the whole chain after a rolled-back
+  /// render: values changed vs [before] are reset.
+  void _restoreVars(_Context? ctx, Map<String, dynamic> before) {
+    for (_Context? c = ctx; c != null; c = c.parent) {
+      final scope = c;
+      scope._vars.removeWhere((k, v) => !before.containsKey(k));
+      for (final e in before.entries) {
+        scope._vars[e.key] = e.value;
       }
     }
   }
@@ -254,6 +301,8 @@ class HandlebarsEngine {
     final expr = raw.trim();
     if (expr.isEmpty) return null;
     if (expr == '.' || expr == 'this') {
+      // null each-item renders empty, scalars as themselves
+      if (ctx.isNullItem) return '';
       return ctx.thisValue ?? ctx.data;
     }
 
@@ -276,6 +325,7 @@ class HandlebarsEngine {
     final firstSpace = expr.indexOf(' ');
     if (firstSpace > 0) {
       final helperName = expr.substring(0, firstSpace);
+      // registered helper functions (bare call syntax)
       final fn = _helpers[helperName];
       if (fn != null) {
         final args = _Parser._parseArgsStatic(expr.substring(firstSpace + 1));
@@ -285,6 +335,19 @@ class HandlebarsEngine {
         } catch (_) {
           return null;
         }
+      }
+      // built-in helpers in bare call syntax: {{property m "k"}}
+      const builtins = [
+        'concat',
+        'spread',
+        'property',
+        'lookup',
+        'regexMatch',
+        'hiragana',
+      ];
+      if (builtins.contains(helperName)) {
+        final args = _Parser._parseArgsStatic(expr.substring(firstSpace + 1));
+        return _evalHelper(_HelperArg(helperName, args), ctx);
       }
     }
 
@@ -421,8 +484,9 @@ class HandlebarsEngine {
     if (a == null && b == null) return true;
     if (a == null || b == null) return false;
     if (a is num && b is num) return a == b;
-    if (a.runtimeType == b.runtimeType) return a == b;
-    return a.toString() == b.toString();
+    // strict: different runtime types are never equal (no coercion)
+    if (a.runtimeType != b.runtimeType) return false;
+    return a == b;
   }
 
   double _num(dynamic v) {
@@ -435,6 +499,19 @@ class HandlebarsEngine {
       return ctx.parent != null
           ? _lookupPath(path.substring(3), ctx.parent!)
           : null;
+    }
+    // this.x refers to the current context item
+    if (path.startsWith('this.')) {
+      final base = ctx.thisValue ?? ctx.data;
+      final baseMap = base is Map<String, dynamic>
+          ? base
+          : (base is Map
+                ? base.map((k, v) => MapEntry(k.toString(), v))
+                : <String, dynamic>{});
+      return _lookupPath(
+        path.substring(5),
+        _Context(baseMap, parent: ctx.parent),
+      );
     }
     // @root special
     if (path.startsWith('@root.')) {
@@ -455,11 +532,15 @@ class HandlebarsEngine {
         if (cur is Map && cur.containsKey(s)) {
           cur = cur[s];
         } else if (cur is List) {
-          final i = int.tryParse(s);
-          if (i != null && i < cur.length) {
-            cur = cur[i];
+          if (s == 'length') {
+            cur = cur.length;
           } else {
-            return null;
+            final i = int.tryParse(s);
+            if (i != null && i >= 0 && i < cur.length) {
+              cur = cur[i];
+            } else {
+              return null;
+            }
           }
         } else {
           return null;
@@ -467,7 +548,7 @@ class HandlebarsEngine {
       }
       return cur;
     }
-    // data lookup
+    // data lookup (handles .length on lists/strings)
     return ctx.get(path);
   }
 
@@ -506,10 +587,22 @@ class _Context {
   final _Context? parent;
   final Map<String, dynamic> _vars = {};
   final dynamic thisValue;
+  final bool isNullItem;
 
-  _Context(this.data, {this.parent, this.thisValue});
+  _Context(this.data, {this.parent, this.thisValue, this.isNullItem = false});
 
-  void setVar(String name, dynamic value) => _vars[name] = value;
+  /// Set a variable at the scope where it was declared (nearest
+  /// ancestor holding it), else the current scope. This keeps
+  /// counters working inside {{#each}} child scopes.
+  void setVar(String name, dynamic value) {
+    _Context? owner;
+    for (_Context? c = this; c != null; c = c.parent) {
+      if (c._vars.containsKey(name)) {
+        owner = c;
+      }
+    }
+    (owner ?? this)._vars[name] = value;
+  }
 
   dynamic getVar(String name) {
     if (_vars.containsKey(name)) return _vars[name];
@@ -523,12 +616,18 @@ class _Context {
       if (cur is Map && cur.containsKey(s)) {
         cur = cur[s];
       } else if (cur is List) {
-        final i = int.tryParse(s);
-        if (i != null && i >= 0 && i < cur.length) {
-          cur = cur[i];
+        if (s == 'length') {
+          cur = cur.length;
         } else {
-          return null;
+          final i = int.tryParse(s);
+          if (i != null && i >= 0 && i < cur.length) {
+            cur = cur[i];
+          } else {
+            return null;
+          }
         }
+      } else if (cur is String && s == 'length') {
+        cur = cur.length;
       } else {
         return null;
       }
@@ -638,9 +737,11 @@ class _Parser {
       final remaining = src.substring(pos);
       final m = _tagRe.firstMatch(remaining);
       if (m == null) {
-        out.add(_TextNode(remaining));
+        var tail = remaining;
+        if (_pendingLeftTrim) tail = tail.trimLeft();
+        out.add(_TextNode(tail));
         pos = src.length;
-        if (stopType != null) return null; // unterminated
+        // unterminated block: keep what we parsed (graceful)
         return out;
       }
 
@@ -655,6 +756,8 @@ class _Parser {
       if (lTrim) body = body.substring(1);
       if (body.endsWith('~')) body = body.substring(0, body.length - 1);
       if (lTrim) text = text.trimRight();
+      if (_pendingLeftTrim) text = text.trimLeft();
+      _pendingLeftTrim = false;
       if (text.isNotEmpty) out.add(_TextNode(text));
       pos += m.end;
 
@@ -675,6 +778,8 @@ class _Parser {
         final t = _blockTypeOf(inner) ?? inner.trim();
         if (stopType != null && t == stopType) {
           if (rTrimText) _trimLastTextRight(out);
+          // right-~ on the closing tag trims the text after the block
+          if (rTrimText) _pendingLeftTrim = true;
           return out; // normal block end: return accumulated nodes
         }
         if (stopType == null) continue; // stray close
@@ -684,18 +789,21 @@ class _Parser {
       // else: only meaningful when a block is being parsed
       if (stopType != null && (inner == 'else' || inner.startsWith('else '))) {
         if (rTrimText) _trimLastTextRight(out);
+        if (rTrimText) _pendingLeftTrim = true;
         _atElse = true;
         return out;
       }
 
+      // trailing ~ trims the next text node's left side; set BEFORE
+      // parsing so nested block bodies see it too
+      if (rTrimText) _pendingLeftTrim = true;
       _parseTag(inner, isBlock, isPartial, out, stopType, rTrimText);
-      // handle trailing ~: trim next text's left - implemented via
-      // flag stored on parser
     }
     return out;
   }
 
   bool _atElse = false;
+  bool _pendingLeftTrim = false;
 
   void _parseTag(
     String inner,
@@ -737,11 +845,21 @@ class _Parser {
       return;
     }
     if (isBlock && inner.startsWith('set ')) {
-      // {{#set "name"~}}body{{/set}}
+      // {{#set "name"~}}body{{/set}} - only a BLOCK set when there
+      // is no inline value after the name
       final nv = _parseSetNameValue(inner.substring(4));
-      final body = _parse('set');
-      final rendered = _SubexprValue(body ?? const []);
-      out.add(_SetNode(nv.$1, _RawArg(rendered)));
+      final hasInlineValue =
+          nv.$2 is! _LiteralArg ||
+          (nv.$2 as _LiteralArg).value.toString().isNotEmpty;
+      if (!hasInlineValue ||
+          (nv.$2 is _LiteralArg && (nv.$2 as _LiteralArg).value == '')) {
+        final body = _parse('set');
+        final rendered = _SubexprValue(body ?? const []);
+        out.add(_SetNode(nv.$1, _RawArg(rendered)));
+      } else {
+        // inline value: treat like {{set name value}}
+        out.add(_SetNode(nv.$1, nv.$2));
+      }
       return;
     }
 
@@ -872,17 +990,26 @@ class _Parser {
     final args = <_Arg>[];
     var s = raw.trim();
     while (s.isNotEmpty) {
-      final str = RegExp(r'^"([^"]*)"').firstMatch(s);
+      final str = RegExp(r'^"((?:[^"\\]|\\.)*)"').firstMatch(s);
       final num = RegExp(r'^-?\d+(\.\d+)?').firstMatch(s);
       if (s.startsWith('(')) {
         var depth = 0;
         var i = 0;
+        var closed = false;
         for (; i < s.length; i++) {
           if (s[i] == '(') depth++;
           if (s[i] == ')') {
             depth--;
-            if (depth == 0) break;
+            if (depth == 0) {
+              closed = true;
+              break;
+            }
           }
+        }
+        if (!closed) {
+          // unterminated subexpression: consume the rest as-is
+          args.add(_LiteralArg(s));
+          break;
         }
         final inner = s.substring(1, i);
         final name = inner.split(RegExp(r'\s+')).first;
@@ -892,12 +1019,22 @@ class _Parser {
         args.add(_HelperArg(name, _parseArgs(rest)));
         s = s.substring(i + 1).trim();
       } else if (str != null) {
-        args.add(_LiteralArg(str.group(1)));
+        // unescape " inside the string literal
+        args.add(_LiteralArg(str.group(1)!.replaceAll(r'\"', '"')));
         s = s.substring(str.end).trim();
       } else if (num != null) {
         final v = num.group(0)!;
         args.add(_LiteralArg(v.contains('.') ? double.parse(v) : int.parse(v)));
         s = s.substring(num.end).trim();
+      } else if (s == 'true' || s.startsWith('true ')) {
+        args.add(_LiteralArg(true));
+        s = s.substring(4).trim();
+      } else if (s == 'false' || s.startsWith('false ')) {
+        args.add(_LiteralArg(false));
+        s = s.substring(5).trim();
+      } else if (s == 'null' || s.startsWith('null ')) {
+        args.add(_LiteralArg(null));
+        s = s.substring(4).trim();
       } else {
         final path = RegExp(r'^[^\s")]+').firstMatch(s);
         if (path == null) break;
