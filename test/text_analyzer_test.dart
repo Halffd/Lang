@@ -13,13 +13,13 @@ void main() {
     late DictionaryService dictionaryService;
     late TextAnalyzer textAnalyzer;
 
-    setUpAll(() async {
+    setUp(() async {
       // Initialize FFI for testing
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
 
-      // Create in-memory database for testing
-      appDatabase = AppDatabase();
+      // Fresh in-memory database per test
+      appDatabase = AppDatabase.inMemory();
       dictionaryService = DictionaryService();
 
       textAnalyzer = TextAnalyzer(appDatabase, dictionaryService);

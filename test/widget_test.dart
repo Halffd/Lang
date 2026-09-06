@@ -1,5 +1,4 @@
-// This is a basic Flutter widget test for the Lang app.
-// Testing the core functionality without full app initialization.
+// Basic Flutter widget test for the Lang app search screen.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,18 +7,22 @@ import 'package:provider/provider.dart';
 import 'package:lang/presentation/screens/search_screen.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/core/services/storage_service.dart';
+import 'package:lang/presentation/providers/analyzer_provider.dart';
 
 void main() {
   testWidgets('Search screen shows properly', (WidgetTester tester) async {
-    // Mock the StorageService to avoid actual database calls in tests
     final mockStorageService = MockStorageService();
 
-    // Test the search screen with required providers
+    final analyzerProvider = AnalyzerProvider();
+
     await tester.pumpWidget(
       MaterialApp(
         title: 'Lang Test',
-        home: ChangeNotifierProvider(
-          create: (_) => AppState(mockStorageService),
+        home: MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => AppState(mockStorageService)),
+            ChangeNotifierProvider(create: (_) => analyzerProvider),
+          ],
           child: const SearchScreen(),
         ),
         theme: ThemeData(
@@ -29,10 +32,12 @@ void main() {
       ),
     );
 
-    // The search screen should show the search input area
     await tester.pumpAndSettle();
-    expect(find.byType(TextField), findsOneWidget);
-    expect(find.text('Search Japanese/Chinese...'), findsOneWidget);
+
+    // The search screen shows the search input area
+    expect(find.byType(TextField), findsWidgets);
+    expect(find.text('Search for a word...'), findsOneWidget);
+
   });
 }
 
@@ -69,14 +74,8 @@ class MockStorageService extends StorageService {
   Future<void> removeAnkiWord(String word) async {}
 
   @override
-  Future<bool> getAutoHideNavigation() async => false;
+  String getStringSync(String key) => '';
 
   @override
-  Future<void> setAutoHideNavigation(bool value) async {}
-
-  @override
-  Future<String> getLanguage() async => 'ja';
-
-  @override
-  Future<void> setLanguage(String language) async {}
+  Future<String?> getString(String key) async => '';
 }

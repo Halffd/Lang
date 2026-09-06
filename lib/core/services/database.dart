@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:drift/drift.dart';
+import 'package:meta/meta.dart';
 import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -11,11 +12,11 @@ class DriftDictionaryEntries extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get term => text()();
   TextColumn get reading => text().nullable()();
-  TextColumn get definitions => text()();  // Store as JSON array string
+  TextColumn get definitions => text()(); // Store as JSON array string
   TextColumn get tags => text().nullable()();
   IntColumn get frequency => integer().withDefault(const Constant(-1))();
   TextColumn get examples => text().nullable()();
-  TextColumn get metadata => text().nullable()();  // JSON string
+  TextColumn get metadata => text().nullable()(); // JSON string
 }
 
 // Table for tone information (Mandarin, Cantonese, etc.)
@@ -35,7 +36,8 @@ class WordOccurrences extends Table {
   TextColumn get reading => text().nullable()();
   TextColumn get baseForm => text().nullable()();
   IntColumn get position => integer()();
-  IntColumn get sentenceId => integer().nullable()(); // To track which sentence a word came from
+  IntColumn get sentenceId =>
+      integer().nullable()(); // To track which sentence a word came from
 }
 
 // Table for Japanese text FTS5 analysis
@@ -48,15 +50,21 @@ class ChineseTextFts extends Table {
   TextColumn get content => text()();
 }
 
-@DriftDatabase(tables: [
-  DriftDictionaryEntries,
-  DriftTones,
-  WordOccurrences,
-  JapaneseTextFts,
-  ChineseTextFts,
-])
+@DriftDatabase(
+  tables: [
+    DriftDictionaryEntries,
+    DriftTones,
+    WordOccurrences,
+    JapaneseTextFts,
+    ChineseTextFts,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
+
+  /// In-memory database for tests (no path_provider needed).
+  @visibleForTesting
+  AppDatabase.inMemory() : super(NativeDatabase.memory());
 
   @override
   int get schemaVersion => 1;
@@ -80,9 +88,10 @@ class AppDatabase extends _$AppDatabase {
   Future<List<DriftDictionaryEntry>> searchBoth(String query) async {
     if (query.isEmpty) return [];
     return (select(driftDictionaryEntries)
-          ..where((entry) =>
-              entry.term.like('%$query%') |
-              entry.reading.like('%$query%'))
+          ..where(
+            (entry) =>
+                entry.term.like('%$query%') | entry.reading.like('%$query%'),
+          )
           ..limit(50))
         .get();
   }
@@ -92,9 +101,10 @@ class AppDatabase extends _$AppDatabase {
     if (query.isEmpty) return [];
     // Search in both term and reading fields for the query
     return (select(driftDictionaryEntries)
-          ..where((entry) =>
-              entry.term.like('%$query%') |
-              entry.reading.like('%$query%'))
+          ..where(
+            (entry) =>
+                entry.term.like('%$query%') | entry.reading.like('%$query%'),
+          )
           ..limit(50))
         .get();
   }
@@ -104,9 +114,9 @@ class AppDatabase extends _$AppDatabase {
     if (query.isEmpty) return [];
     // Exact match for the Chinese character
     return (select(driftDictionaryEntries)
-          ..where((entry) =>
-              entry.term.like('%$query%') &
-              entry.term.isNotNull())
+          ..where(
+            (entry) => entry.term.like('%$query%') & entry.term.isNotNull(),
+          )
           ..limit(50))
         .get();
   }
@@ -117,7 +127,9 @@ class AppDatabase extends _$AppDatabase {
   }
 
   // Batch insert for initial import
-  Future<void> insertBatch(List<DriftDictionaryEntriesCompanion> entries) async {
+  Future<void> insertBatch(
+    List<DriftDictionaryEntriesCompanion> entries,
+  ) async {
     await batch((batch) {
       batch.insertAll(driftDictionaryEntries, entries);
     });
@@ -125,10 +137,11 @@ class AppDatabase extends _$AppDatabase {
 
   // Get entry by exact term
   Future<DriftDictionaryEntry?> getByTerm(String term) async {
-    final results = await (select(driftDictionaryEntries)
-          ..where((entry) => entry.term.equals(term))
-          ..limit(1))
-        .get();
+    final results =
+        await (select(driftDictionaryEntries)
+              ..where((entry) => entry.term.equals(term))
+              ..limit(1))
+            .get();
     return results.isNotEmpty ? results.first : null;
   }
 
@@ -139,16 +152,16 @@ class AppDatabase extends _$AppDatabase {
 
   // Tone-related methods
   Future<List<DriftTone>> getTonesByTerm(String term) async {
-    return (select(driftTones)
-          ..where((tone) => tone.term.equals(term)))
-        .get();
+    return (select(driftTones)..where((tone) => tone.term.equals(term))).get();
   }
 
-  Future<List<DriftTone>> getTonesByTermAndLanguage(String term, String language) async {
-    return (select(driftTones)
-          ..where((tone) =>
-              tone.term.equals(term) &
-              tone.language.equals(language)))
+  Future<List<DriftTone>> getTonesByTermAndLanguage(
+    String term,
+    String language,
+  ) async {
+    return (select(driftTones)..where(
+          (tone) => tone.term.equals(term) & tone.language.equals(language),
+        ))
         .get();
   }
 
@@ -163,7 +176,9 @@ class AppDatabase extends _$AppDatabase {
   }
 
   // Methods for text analysis and word occurrence tracking
-  Future<void> insertWordOccurrences(List<WordOccurrencesCompanion> entries) async {
+  Future<void> insertWordOccurrences(
+    List<WordOccurrencesCompanion> entries,
+  ) async {
     // Batch insert for performance
     await batch((batch) {
       batch.insertAll(wordOccurrences, entries);
@@ -171,7 +186,9 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<int> clearWordOccurrences() async {
-    return await (delete(wordOccurrences)..where((tbl) => const Constant(true))).go();
+    return await (delete(
+      wordOccurrences,
+    )..where((tbl) => const Constant(true))).go();
   }
 
   // Get word frequencies from the current analysis
@@ -186,15 +203,20 @@ class AppDatabase extends _$AppDatabase {
       ORDER BY occurrence_count DESC, first_occurrence ASC
     ''').get();
 
-    return results.map((row) => WordFrequencyResult(
-      word: row.read<String>('word'),
-      count: row.read<int>('occurrence_count'),
-      firstOccurrence: row.read<int>('first_occurrence'),
-    )).toList();
+    return results
+        .map(
+          (row) => WordFrequencyResult(
+            word: row.read<String>('word'),
+            count: row.read<int>('occurrence_count'),
+            firstOccurrence: row.read<int>('first_occurrence'),
+          ),
+        )
+        .toList();
   }
 
   // Get word frequencies with dictionary information
-  Future<List<WordFrequencyWithDefinition>> getWordFrequenciesWithDefinitions() async {
+  Future<List<WordFrequencyWithDefinition>>
+  getWordFrequenciesWithDefinitions() async {
     final results = await customSelect('''
       SELECT
         wo.word,
@@ -202,21 +224,25 @@ class AppDatabase extends _$AppDatabase {
         MIN(wo.position) as first_occurrence,
         de.definitions,
         de.reading as dict_reading,
-        de.popularity
+        de.frequency as popularity
       FROM word_occurrences wo
       LEFT JOIN drift_dictionary_entries de ON wo.word = de.term
       GROUP BY wo.word
       ORDER BY occurrence_count DESC, first_occurrence ASC
     ''').get();
 
-    return results.map((row) => WordFrequencyWithDefinition(
-      word: row.read<String>('word'),
-      count: row.read<int>('occurrence_count'),
-      firstOccurrence: row.read<int>('first_occurrence'),
-      definitions: row.read<String?>('definitions'),
-      reading: row.read<String?>('dict_reading'),
-      popularity: row.read<int>('popularity') ?? -1,
-    )).toList();
+    return results
+        .map(
+          (row) => WordFrequencyWithDefinition(
+            word: row.read<String>('word'),
+            count: row.read<int>('occurrence_count'),
+            firstOccurrence: row.read<int>('first_occurrence'),
+            definitions: row.read<String?>('definitions'),
+            reading: row.read<String?>('dict_reading'),
+            popularity: row.read<int?>('popularity') ?? -1,
+          ),
+        )
+        .toList();
   }
 }
 

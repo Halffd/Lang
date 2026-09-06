@@ -9,8 +9,12 @@ import 'package:tesseract_ocr/ocr_engine_config.dart';
 enum OcrEngine { mlKit, tesseract, easyOcr }
 
 class OcrService {
-  final TextRecognizer _mlKitRecognizer = TextRecognizer();
+  // Lazy: constructing ML Kit's recognizer needs the widget binding
+  // (platform channels), so only create it when OCR actually runs.
+  TextRecognizer? _mlKitRecognizer;
   bool _isInitialized = false;
+
+  TextRecognizer get _recognizer => _mlKitRecognizer ??= TextRecognizer();
 
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -18,7 +22,8 @@ class OcrService {
   }
 
   void dispose() {
-    _mlKitRecognizer.close();
+    _mlKitRecognizer?.close();
+    _mlKitRecognizer = null;
   }
 
   Future<OcrResult> recognizeFromFile(
@@ -54,32 +59,36 @@ class OcrService {
   Future<OcrResult> _recognizeWithMlKit(File imageFile) async {
     try {
       final inputImage = InputImage.fromFile(imageFile);
-      final recognizedText = await _mlKitRecognizer.processImage(inputImage);
+      final recognizedText = await _recognizer.processImage(inputImage);
 
       return OcrResult(
         text: recognizedText.text,
         blocks: recognizedText.blocks
-            .map((block) => OcrTextBlock(
-                  text: block.text,
-                  boundingBox: Rect(
-                    left: block.boundingBox.left,
-                    top: block.boundingBox.top,
-                    right: block.boundingBox.right,
-                    bottom: block.boundingBox.bottom,
-                  ),
-                  lines: block.lines
-                      .map((line) => OcrLine(
-                            text: line.text,
-                            boundingBox: Rect(
-                              left: line.boundingBox.left,
-                              top: line.boundingBox.top,
-                              right: line.boundingBox.right,
-                              bottom: line.boundingBox.bottom,
-                            ),
-                            words: line.elements.map((e) => e.text).toList(),
-                          ))
-                      .toList(),
-                ))
+            .map(
+              (block) => OcrTextBlock(
+                text: block.text,
+                boundingBox: Rect(
+                  left: block.boundingBox.left,
+                  top: block.boundingBox.top,
+                  right: block.boundingBox.right,
+                  bottom: block.boundingBox.bottom,
+                ),
+                lines: block.lines
+                    .map(
+                      (line) => OcrLine(
+                        text: line.text,
+                        boundingBox: Rect(
+                          left: line.boundingBox.left,
+                          top: line.boundingBox.top,
+                          right: line.boundingBox.right,
+                          bottom: line.boundingBox.bottom,
+                        ),
+                        words: line.elements.map((e) => e.text).toList(),
+                      ),
+                    )
+                    .toList(),
+              ),
+            )
             .toList(),
         confidence: _calculateConfidence(recognizedText.blocks),
       );
@@ -99,32 +108,36 @@ class OcrService {
           bytesPerRow: 0,
         ),
       );
-      final recognizedText = await _mlKitRecognizer.processImage(inputImage);
+      final recognizedText = await _recognizer.processImage(inputImage);
 
       return OcrResult(
         text: recognizedText.text,
         blocks: recognizedText.blocks
-            .map((block) => OcrTextBlock(
-                  text: block.text,
-                  boundingBox: Rect(
-                    left: block.boundingBox.left,
-                    top: block.boundingBox.top,
-                    right: block.boundingBox.right,
-                    bottom: block.boundingBox.bottom,
-                  ),
-                  lines: block.lines
-                      .map((line) => OcrLine(
-                            text: line.text,
-                            boundingBox: Rect(
-                              left: line.boundingBox.left,
-                              top: line.boundingBox.top,
-                              right: line.boundingBox.right,
-                              bottom: line.boundingBox.bottom,
-                            ),
-                            words: line.elements.map((e) => e.text).toList(),
-                          ))
-                      .toList(),
-                ))
+            .map(
+              (block) => OcrTextBlock(
+                text: block.text,
+                boundingBox: Rect(
+                  left: block.boundingBox.left,
+                  top: block.boundingBox.top,
+                  right: block.boundingBox.right,
+                  bottom: block.boundingBox.bottom,
+                ),
+                lines: block.lines
+                    .map(
+                      (line) => OcrLine(
+                        text: line.text,
+                        boundingBox: Rect(
+                          left: line.boundingBox.left,
+                          top: line.boundingBox.top,
+                          right: line.boundingBox.right,
+                          bottom: line.boundingBox.bottom,
+                        ),
+                        words: line.elements.map((e) => e.text).toList(),
+                      ),
+                    )
+                    .toList(),
+              ),
+            )
             .toList(),
         confidence: _calculateConfidence(recognizedText.blocks),
       );
@@ -133,7 +146,10 @@ class OcrService {
     }
   }
 
-  Future<OcrResult> _recognizeWithTesseract(String imagePath, {String? language}) async {
+  Future<OcrResult> _recognizeWithTesseract(
+    String imagePath, {
+    String? language,
+  }) async {
     try {
       final tessLanguage = language ?? 'eng';
 
@@ -142,22 +158,23 @@ class OcrService {
         config: OCRConfig(language: tessLanguage),
       );
 
-      return OcrResult(
-        text: result,
-        blocks: [],
-        confidence: 0.8,
-      );
+      return OcrResult(text: result, blocks: [], confidence: 0.8);
     } catch (e) {
       return OcrResult(text: '', error: e.toString());
     }
   }
 
-  Future<OcrResult> _recognizeWithTesseractFromBytes(Uint8List bytes, {String? language}) async {
+  Future<OcrResult> _recognizeWithTesseractFromBytes(
+    Uint8List bytes, {
+    String? language,
+  }) async {
     try {
       final tessLanguage = language ?? 'eng';
 
       final tempDir = Directory.systemTemp;
-      final tempFile = File('${tempDir.path}/ocr_${DateTime.now().millisecondsSinceEpoch}.png');
+      final tempFile = File(
+        '${tempDir.path}/ocr_${DateTime.now().millisecondsSinceEpoch}.png',
+      );
       await tempFile.writeAsBytes(bytes);
 
       final result = await TesseractOcr.extractText(
@@ -167,22 +184,21 @@ class OcrService {
 
       tempFile.deleteSync();
 
-      return OcrResult(
-        text: result,
-        blocks: [],
-        confidence: 0.8,
-      );
+      return OcrResult(text: result, blocks: [], confidence: 0.8);
     } catch (e) {
       return OcrResult(text: '', error: e.toString());
     }
   }
 
-  Future<OcrResult> _recognizeWithEasyOcr(String imagePath, {String? language}) async {
+  Future<OcrResult> _recognizeWithEasyOcr(
+    String imagePath, {
+    String? language,
+  }) async {
     try {
-      final result = await compute(_easyOcrIsolate, _EasyOcrParams(
-        imagePath: imagePath,
-        language: language ?? 'en',
-      ));
+      final result = await compute(
+        _easyOcrIsolate,
+        _EasyOcrParams(imagePath: imagePath, language: language ?? 'en'),
+      );
 
       return result;
     } catch (e) {
@@ -190,13 +206,21 @@ class OcrService {
     }
   }
 
-  Future<OcrResult> _recognizeWithEasyOcrFromBytes(Uint8List bytes, {String? language}) async {
+  Future<OcrResult> _recognizeWithEasyOcrFromBytes(
+    Uint8List bytes, {
+    String? language,
+  }) async {
     try {
       final tempDir = Directory.systemTemp;
-      final tempFile = File('${tempDir.path}/temp_ocr_${DateTime.now().millisecondsSinceEpoch}.png');
+      final tempFile = File(
+        '${tempDir.path}/temp_ocr_${DateTime.now().millisecondsSinceEpoch}.png',
+      );
       await tempFile.writeAsBytes(bytes);
 
-      final result = await _recognizeWithEasyOcr(tempFile.path, language: language);
+      final result = await _recognizeWithEasyOcr(
+        tempFile.path,
+        language: language,
+      );
 
       if (await tempFile.exists()) {
         await tempFile.delete();
@@ -219,7 +243,8 @@ class OcrService {
     // For now, return a message indicating EasyOCR needs backend setup
     return OcrResult(
       text: '',
-      error: 'EasyOCR requires a Python backend or API. Use MLKit or Tesseract for local OCR.',
+      error:
+          'EasyOCR requires a Python backend or API. Use MLKit or Tesseract for local OCR.',
       isEasyOcrUnavailable: true,
     );
   }
@@ -260,9 +285,9 @@ class OcrService {
       case OcrEngine.mlKit:
         return 'Google ML Kit - Fast and accurate, supports multiple languages';
       case OcrEngine.tesseract:
-        return 'Tesseract - Open source OCR, excellent for documents';
+        return 'Tesseract - The open source OCR engine, excellent for documents';
       case OcrEngine.easyOcr:
-        return 'EasyOCR - AI-powered, great for complex images (requires backend)';
+        return 'EasyOCR - An AI-powered engine, great for complex images (requires backend)';
     }
   }
 }
@@ -297,11 +322,7 @@ class OcrTextBlock {
   final Rect? boundingBox;
   final List<OcrLine> lines;
 
-  OcrTextBlock({
-    required this.text,
-    this.boundingBox,
-    this.lines = const [],
-  });
+  OcrTextBlock({required this.text, this.boundingBox, this.lines = const []});
 }
 
 class OcrLine {
@@ -309,11 +330,7 @@ class OcrLine {
   final Rect? boundingBox;
   final List<String> words;
 
-  OcrLine({
-    required this.text,
-    this.boundingBox,
-    this.words = const [],
-  });
+  OcrLine({required this.text, this.boundingBox, this.words = const []});
 }
 
 class Rect {
@@ -329,6 +346,9 @@ class Rect {
     required this.bottom,
   });
 
-  double get width => right - left;
-  double get height => bottom - top;
+  /// Width as an absolute value (handles inverted coordinates).
+  double get width => (right - left).abs();
+
+  /// Height as an absolute value (handles inverted coordinates).
+  double get height => (bottom - top).abs();
 }

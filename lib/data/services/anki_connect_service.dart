@@ -67,6 +67,20 @@ class AnkiConnectService {
     }
   }
 
+  /// Suspend a card by note id. AnkiConnect suspends cards, not
+  /// notes, so find the cards for the note first.
+  Future<bool> suspendCard(int noteId) async {
+    try {
+      final cardIds = await _call('findCards', {'query': 'note:$noteId'});
+      if (cardIds is List && cardIds.isNotEmpty) {
+        await _call('suspend', {'cards': cardIds});
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<List<String>> getDeckNames() async {
     final result = await _call('deckNames', {});
     return List<String>.from(result as List);

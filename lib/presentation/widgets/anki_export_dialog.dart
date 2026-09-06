@@ -71,6 +71,11 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
     if (_decks.isEmpty) _decks = ['Default'];
     _sentenceController.text = widget.word.sentence ?? '';
     _secondaryController.text = _buildSecondaryDefinitions();
+    // seed tags from yomitan anki settings
+    final ankiSettings = appState.yomitanOptions.activeProfile.anki;
+    if (ankiSettings.tags.isNotEmpty) {
+      _tagsController.text = ankiSettings.tags;
+    }
     _loadClipboard();
     _loadDecks();
   }
@@ -118,9 +123,15 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
 
   Future<void> _loadDecks() async {
     final appState = context.read<AppState>();
-    if (!appState.ankiConnectEnabled) return;
+    final ankiEnabled =
+        appState.ankiConnectEnabled ||
+        appState.yomitanOptions.activeProfile.anki.enabled;
+    if (!ankiEnabled) return;
+    final url = appState.yomitanOptions.activeProfile.anki.enabled
+        ? appState.yomitanOptions.activeProfile.anki.serverAddress
+        : appState.ankiConnectUrl;
     try {
-      final service = AnkiConnectService(appState.ankiConnectUrl);
+      final service = AnkiConnectService(url);
       final decks = await service.getDeckNames();
       if (decks.isNotEmpty && mounted) {
         setState(() {
@@ -200,9 +211,14 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
         .toList();
 
     try {
-      if (appState.ankiConnectEnabled) {
-        final service = AnkiConnectService(appState.ankiConnectUrl);
-        final ankiSettings = appState.yomitanOptions.activeProfile.anki;
+      final ankiSettings = appState.yomitanOptions.activeProfile.anki;
+      final ankiEnabled = appState.ankiConnectEnabled || ankiSettings.enabled;
+      if (ankiEnabled) {
+        // yomitan anki server address wins when its integration is on
+        final serverUrl = ankiSettings.enabled
+            ? ankiSettings.serverAddress
+            : appState.ankiConnectUrl;
+        final service = AnkiConnectService(serverUrl);
 
         final noteId = await service.addNote(
           deckName: _selectedDeck,
@@ -238,6 +254,12 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
               ),
             ),
           );
+        }
+        // suspend new cards when configured
+        if (ankiSettings.suspendNewCards && noteId != null) {
+          try {
+            await service.suspendCard(noteId);
+          } catch (_) {}
         }
         // optional force sync
         if (ankiSettings.forceSyncOnAddingCard) {
