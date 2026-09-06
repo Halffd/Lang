@@ -6,7 +6,6 @@ import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/presentation/widgets/word_detail_sheet.dart';
-import 'package:lang/presentation/widgets/kana_text_field.dart';
 import 'package:lang/presentation/widgets/script_text_field.dart';
 import 'package:lang/presentation/widgets/anki_export_dialog.dart';
 import 'package:lang/presentation/screens/settings_screen.dart';

@@ -9,7 +9,6 @@ import 'package:lang/data/services/ocr_service.dart';
 import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/presentation/providers/ai_provider.dart';
 import 'package:lang/domain/entities/app_state.dart';
-import 'package:lang/presentation/widgets/kana_text_field.dart';
 import 'package:lang/presentation/widgets/script_text_field.dart';
 import 'package:lang/presentation/widgets/word_detail_sheet.dart';
 

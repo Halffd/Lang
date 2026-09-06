@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -69,8 +70,19 @@ class _BrowserScreenState extends State<BrowserScreen> {
     _initWebView();
   }
 
+  /// True when the inappwebview plugin has no implementation for
+  /// this platform (e.g. Linux desktop) - the browser screen then
+  /// shows a fallback with an external-browser launch button.
+  static bool get _webviewUnsupported =>
+      Platform.isLinux || Platform.isWindows;
+
   Future<void> _initWebView() async {
-    await InAppWebViewController.setWebContentsDebuggingEnabled(true);
+    if (_webviewUnsupported) return;
+    try {
+      await InAppWebViewController.setWebContentsDebuggingEnabled(true);
+    } catch (e) {
+      debugPrint('WebView init skipped: $e');
+    }
   }
 
   @override
@@ -744,6 +756,36 @@ class _BrowserScreenState extends State<BrowserScreen> {
   }
 
   Widget _buildWebView() {
+    // No native webview on this platform: offer to open in the
+    // system browser instead.
+    if (_webviewUnsupported) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.public_off, size: 48, color: Colors.grey),
+              const SizedBox(height: 12),
+              const Text(
+                'Embedded webview is not available on this platform.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              FilledButton.icon(
+                icon: const Icon(Icons.open_in_new),
+                label: const Text('Open in system browser'),
+                onPressed: () async {
+                  final url = widget.initialUrl ?? 'https://www.google.com';
+                  await launchUrl(Uri.parse(url),
+                      mode: LaunchMode.externalApplication);
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return InAppWebView(
       initialUrlRequest: URLRequest(
         url: WebUri(widget.initialUrl ?? 'https://www.google.com'),
@@ -1782,6 +1824,13 @@ img, video, canvas, svg, picture {
         await _captureFromGallery();
         break;
       case 'clear_cache':
+        if (_webviewUnsupported) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('No webview on this platform')));
+          }
+          break;
+        }
         await _controller?.clearCache();
         await InAppWebViewController.clearAllCache();
         if (mounted) {

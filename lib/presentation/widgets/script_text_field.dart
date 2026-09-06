@@ -166,8 +166,13 @@ class _ScriptTextFieldState extends State<ScriptTextField> {
 
   @override
   Widget build(BuildContext context) {
+    // NOTE: the Focus wrapper uses its own internal node; the
+    // TextField uses the user-provided (or internal) node. Key
+    // events on the text field bubble up to the wrapper, where
+    // onKeyEvent observes shift state. Passing the same node to
+    // both would re-parent it under itself and crash.
     return Focus(
-      focusNode: _effectiveFocus,
+      canRequestFocus: false,
       onKeyEvent: _handleKey,
       child: TextField(
         controller: widget.controller,
