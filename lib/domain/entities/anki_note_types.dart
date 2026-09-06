@@ -171,7 +171,12 @@ class DefaultNoteTypes {
 class AnkiNoteTypes {
   final List<AnkiNoteTypeConfig> types;
 
-  AnkiNoteTypes(this.types);
+  /// Custom handlebars templates per marker, overriding the built-in
+  /// renderers. e.g. {'glossary': '{{#each definition.definitions}}...'}
+  Map<String, String> markerTemplates = {};
+
+  AnkiNoteTypes(this.types, {Map<String, String>? markerTemplates})
+      : markerTemplates = markerTemplates ?? {};
 
   static AnkiNoteTypes defaults() => AnkiNoteTypes(DefaultNoteTypes.all());
 
@@ -180,15 +185,21 @@ class AnkiNoteTypes {
           orElse: () => DefaultNoteTypes.all()
               .firstWhere((c) => c.type == t));
 
-  Map<String, dynamic> toJson() =>
-      {'types': types.map((t) => t.toJson()).toList()};
+  Map<String, dynamic> toJson() => {
+        'types': types.map((t) => t.toJson()).toList(),
+        'markerTemplates': markerTemplates,
+      };
 
   static AnkiNoteTypes fromJson(Map<String, dynamic> json) {
     final ts = json['types'] as List? ?? [];
-    return AnkiNoteTypes(ts
-        .whereType<Map>()
-        .map((m) => AnkiNoteTypeConfig.fromJson(m.cast<String, dynamic>()))
-        .toList());
+    final mt = json['markerTemplates'];
+    return AnkiNoteTypes(
+      ts
+          .whereType<Map>()
+          .map((m) => AnkiNoteTypeConfig.fromJson(m.cast<String, dynamic>()))
+          .toList(),
+      markerTemplates: mt is Map ? mt.cast<String, String>() : null,
+    );
   }
 
   String serialize() => jsonEncode(toJson());

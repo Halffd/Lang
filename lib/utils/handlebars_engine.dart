@@ -23,14 +23,22 @@
 class HandlebarsEngine {
   final Map<String, List<_AstNode>> _partials = {};
   final Map<String, dynamic> _partialArgs = {};
+  final Map<String, Function> _helpers = {};
 
   // ------------------------------------------------------------
   // Public API
   // ------------------------------------------------------------
 
   /// Render [template] with [data]. Returns the expanded string.
-  static String render(String template, Map<String, dynamic> data) {
+  /// [helpers] are named functions callable as
+  /// `{{helpername arg}}` or `{{#if (helpername arg)}}`.
+  static String render(
+    String template,
+    Map<String, dynamic> data, {
+    Map<String, Function>? helpers,
+  }) {
     final engine = HandlebarsEngine._();
+    if (helpers != null) engine._helpers.addAll(helpers);
     return engine._renderTemplate(template, data);
   }
 
@@ -38,9 +46,11 @@ class HandlebarsEngine {
   static String renderWithPartials(
     String template,
     Map<String, String> partials,
-    Map<String, dynamic> data,
-  ) {
+    Map<String, dynamic> data, {
+    Map<String, Function>? helpers,
+  }) {
     final engine = HandlebarsEngine._();
+    if (helpers != null) engine._helpers.addAll(helpers);
     for (final e in partials.entries) {
       engine._partials[e.key] = _Parser(e.value).parse();
     }
@@ -262,6 +272,22 @@ class HandlebarsEngine {
     }
     if (expr.startsWith('dictionaryAlias')) return ctx.get('dictionaryAlias');
 
+    // registered helper called without parens: {{helpername arg ...}}
+    final firstSpace = expr.indexOf(' ');
+    if (firstSpace > 0) {
+      final helperName = expr.substring(0, firstSpace);
+      final fn = _helpers[helperName];
+      if (fn != null) {
+        final args = _Parser._parseArgsStatic(expr.substring(firstSpace + 1));
+        final values = args.map((a) => _evalArg(a, ctx)).toList();
+        try {
+          return Function.apply(fn, values);
+        } catch (_) {
+          return null;
+        }
+      }
+    }
+
     return _lookupPath(expr, ctx);
   }
 
@@ -321,6 +347,16 @@ class HandlebarsEngine {
         }
         return null;
       default:
+        // registered helper functions (hasMedia, getMedia, ...)
+        final fn = _helpers[arg.name];
+        if (fn != null) {
+          final args = arg.args.map((a) => _evalArg(a, ctx)).toList();
+          try {
+            return Function.apply(fn, args);
+          } catch (_) {
+            return null;
+          }
+        }
         return null;
     }
   }

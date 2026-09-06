@@ -54,6 +54,7 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
   String? _audioUrl;
   bool _includeAudio = false;
   bool _saving = false;
+  AnkiNoteType? _selectedNoteType;
   List<String> _decks = ['Default'];
   late String _selectedDeck;
 
@@ -158,52 +159,39 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
 
     final w = widget.word;
 
-    // Build the note data context from the analyzed word + dialog state
-    final cloze = w.sentence != null
-        ? AnkiMarkerRenderer.buildCloze(
-            w.sentence!,
-            w.word,
-            termKana: w.reading,
-          )
-        : null;
-
-    final noteData = AnkiNoteData(
-      expression: w.word,
-      reading: w.reading,
+    // Build note data from the analyzed word + dialog inputs
+    final noteData = AnkiNoteData.fromAnalyzedWord(
+      w,
       language: appState.learningLanguage,
-      cloze: cloze,
-      glossary: [
-        ...w.ichiMoeDefinitions,
-        ..._secondaryController.text
-            .split('; ')
-            .where((s) => s.trim().isNotEmpty),
-      ],
-      dictionary: w.ichiMoeDefinitions.isNotEmpty ? 'IchiMoe' : '',
-      frequencies: w.frequency != null
-          ? [FrequencyEntry('local', w.frequency.toString())]
-          : const [],
-      tags: _tagsController.text
-          .split(RegExp(r'[\s,]+'))
-          .where((t) => t.isNotEmpty)
-          .toList(),
+      hint: _commentsController.text.trim().isNotEmpty
+          ? _commentsController.text.trim()
+          : null,
       clipboardText: _includeClipboardText && _clipboardText.isNotEmpty
           ? _clipboardText
           : null,
       clipboardImagePath: _imagePath,
       audioPath: _audioUrl,
-      screenshotPath: null, // screenshots picked via image attach
-      selectionText: _sentenceController.text,
+      selectionText: _sentenceController.text.trim().isNotEmpty
+          ? _sentenceController.text.trim()
+          : null,
     );
 
-    // Note type config from user settings
+    // Note type: user selection, kanji auto-detect for single kanji
     final noteTypes = appState.ankiNoteTypes;
-    final typeConfig = w.kanjiList.isNotEmpty
-        ? noteTypes.byType(AnkiNoteType.kanji)
-        : noteTypes.byType(AnkiNoteType.expression);
+    final typeConfig = _selectedNoteType != null
+        ? noteTypes.byType(_selectedNoteType!)
+        : (noteData.type == NoteDataType.kanji
+              ? noteTypes.byType(AnkiNoteType.kanji)
+              : noteTypes.byType(AnkiNoteType.expression));
+
     final fields = <String, String>{
       for (final f in typeConfig.fields)
         if (f.name.isNotEmpty)
-          f.name: AnkiMarkerRenderer.render(f.value, noteData),
+          f.name: AnkiMarkerRenderer.render(
+            f.value,
+            noteData,
+            markerTemplates: noteTypes.markerTemplates,
+          ),
     };
 
     final tags = _tagsController.text
@@ -307,6 +295,43 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
                   if (w.reading != null && w.reading!.isNotEmpty)
                     Text(w.reading!, style: TextStyle(color: theme.hintColor)),
                 ],
+              ),
+              const SizedBox(height: 12),
+
+              _sectionLabel('Note type'),
+              DropdownButtonFormField<AnkiNoteType>(
+                initialValue: _selectedNoteType,
+                hint: const Text('Auto (kanji detection)'),
+                items: const [
+                  DropdownMenuItem(
+                    value: AnkiNoteType.expression,
+                    child: Text('Expression (term)'),
+                  ),
+                  DropdownMenuItem(
+                    value: AnkiNoteType.reading,
+                    child: Text('Reading'),
+                  ),
+                  DropdownMenuItem(
+                    value: AnkiNoteType.kanji,
+                    child: Text('Kanji'),
+                  ),
+                  DropdownMenuItem(
+                    value: AnkiNoteType.name,
+                    child: Text('Name'),
+                  ),
+                ],
+                onChanged: (v) {
+                  setState(() => _selectedNoteType = v);
+                  if (v != null) {
+                    // default deck follows the note type config
+                    final cfg = context.read<AppState>().ankiNoteTypes.byType(
+                      v,
+                    );
+                    if (cfg.deck.isNotEmpty) {
+                      setState(() => _selectedDeck = cfg.deck);
+                    }
+                  }
+                },
               ),
               const SizedBox(height: 12),
 

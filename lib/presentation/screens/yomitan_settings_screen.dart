@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/domain/entities/yomitan_options.dart';
 import 'package:lang/domain/entities/anki_note_types.dart';
+import 'package:lang/domain/entities/anki_note_data.dart';
 import 'package:lang/data/services/anki_connect_service.dart';
 import 'dart:io';
 
@@ -16,7 +17,6 @@ class YomitanSettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = context.read<AppState>();
-    final options = appState.yomitanOptions;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Yomitan Settings')),
@@ -1197,6 +1197,21 @@ class _AnkiSection extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         ...AnkiNoteType.values.map((t) => _noteTypeTile(context, t)),
+        const Divider(height: 32),
+        // Custom marker templates
+        const Text(
+          'Customize handlebars templates',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        ),
+        const Text(
+          'Override how each marker renders using Yomitan-compatible '
+          'handlebars templates. Context: expression, reading, glossary, '
+          'cloze.sentence, definition.definitions (dictionary, glossary), '
+          'frequencies (dictionary, frequency), hasMedia/getMedia helpers.',
+          style: TextStyle(fontSize: 12),
+        ),
+        const SizedBox(height: 8),
+        _MarkerTemplatesEditor(),
       ],
     );
   }
@@ -1251,7 +1266,6 @@ class NoteTypeEditorScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = context.read<AppState>();
     final noteTypes = appState.ankiNoteTypes;
-    final config = noteTypes.byType(type);
 
     return Scaffold(
       appBar: AppBar(
@@ -1610,4 +1624,106 @@ class _BackupSection extends StatelessWidget {
       ],
     );
   }
+}
+
+// ============================================================
+// Marker templates editor (handlebars overrides per marker)
+// ============================================================
+
+class _MarkerTemplatesEditor extends StatefulWidget {
+  @override
+  State<_MarkerTemplatesEditor> createState() =>
+      _MarkerTemplatesEditorState();
+}
+
+class _MarkerTemplatesEditorState extends State<_MarkerTemplatesEditor> {
+  final Map<String, TextEditingController> _controllers = {};
+
+  @override
+  void dispose() {
+    for (final c in _controllers.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appState = context.read<AppState>();
+    final noteTypes = appState.ankiNoteTypes;
+    final markers = AnkiMarkerRenderer.allMarkers;
+
+    return Column(
+      children: [
+        for (final marker in markers)
+          if (_isCommonMarker(marker)) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: ExpansionTile(
+                dense: true,
+                tilePadding: EdgeInsets.zero,
+                title: Text('{$marker}',
+                    style: const TextStyle(
+                        fontSize: 13, fontFamily: 'monospace')),
+                subtitle: noteTypes.markerTemplates[marker]?.isNotEmpty ==
+                        true
+                    ? const Text('custom template',
+                        style: TextStyle(fontSize: 11))
+                    : null,
+                children: [
+                  TextField(
+                    controller: _controllers.putIfAbsent(
+                        marker,
+                        () => TextEditingController(
+                            text: noteTypes.markerTemplates[marker] ?? '')),
+                    maxLines: 6,
+                    style: const TextStyle(
+                        fontFamily: 'monospace', fontSize: 12),
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                      hintText: 'Leave empty for the built-in renderer',
+                    ),
+                    onChanged: (v) {
+                      if (v.trim().isEmpty) {
+                        noteTypes.markerTemplates.remove(marker);
+                      } else {
+                        noteTypes.markerTemplates[marker] = v;
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          _controllers[marker]?.clear();
+                          noteTypes.markerTemplates.remove(marker);
+                          appState.setAnkiNoteTypes(noteTypes);
+                        },
+                        child: const Text('Reset'),
+                      ),
+                      const Spacer(),
+                      FilledButton.tonal(
+                        onPressed: () =>
+                            appState.setAnkiNoteTypes(noteTypes),
+                        child: const Text('Save'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+      ],
+    );
+  }
+
+  static bool _isCommonMarker(String m) => const [
+        'expression', 'reading', 'glossary', 'glossary-first',
+        'glossary-brief', 'furigana', 'furigana-plain', 'sentence',
+        'sentence-furigana-plain', 'cloze-body', 'frequencies',
+        'frequency-harmonic-rank', 'pitch-accents', 'tags',
+        'clipboard-text', 'screenshot', 'audio',
+      ].contains(m);
 }
