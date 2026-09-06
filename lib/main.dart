@@ -94,13 +94,15 @@ void main() async {
     localDataSource: aiLocalDataSource,
   );
 
+  final appState = AppState(storageService);
+
   final analyzerProvider = AnalyzerProvider();
   await analyzerProvider.init();
+  // Sync provider language with the persisted UI language preference
+  analyzerProvider.restoreLanguage(appState.language);
 
   final aiProvider = AiProvider(aiRepository);
   await aiProvider.init();
-
-  final appState = AppState(storageService);
 
   srsServiceLegacy = SRSService(storageService);
   await srsServiceLegacy.initialize();

@@ -172,6 +172,114 @@ class KanaKit {
       (r) => (r >= 0x3040 && r <= 0x309F) || (r >= 0x30A0 && r <= 0x30FF),
     );
   }
+
+  // Romaji -> kana tables (longest match first)
+  static const Map<String, String> _romajiToHiragana = {
+    // 3+ char
+    'chya': 'ちゃ', 'chyu': 'ちゅ', 'cho': 'ちょ', 'chyi': 'ちぃ', 'che': 'ちぇ',
+    'sha': 'しゃ', 'shu': 'しゅ', 'sho': 'しょ', 'shi': 'し',
+    'tsu': 'つ',
+    'cha': 'ちゃ', 'chu': 'ちゅ', 'chi': 'ち',
+    'jya': 'じゃ', 'jyu': 'じゅ', 'jyo': 'じょ', 'ja': 'じゃ', 'ji': 'じ', 'ju': 'じゅ', 'jo': 'じょ',
+    'bya': 'びゃ', 'byu': 'びゅ', 'byo': 'びょ',
+    'pya': 'ぴゃ', 'pyu': 'ぴゅ', 'pyo': 'ぴょ',
+    'mya': 'みゃ', 'myu': 'みゅ', 'myo': 'みょ',
+    'rya': 'りゃ', 'ryu': 'りゅ', 'ryo': 'りょ',
+    'gya': 'ぎゃ', 'gyu': 'ぎゅ', 'gyo': 'ぎょ',
+    'kya': 'きゃ', 'kyu': 'きゅ', 'kyo': 'きょ',
+    'nya': 'にゃ', 'nyu': 'にゅ', 'nyo': 'にょ',
+    'hya': 'ひゃ', 'hyu': 'ひゅ', 'hyo': 'ひょ',
+    'fya': 'ふゃ', 'fyu': 'ふゅ', 'fyo': 'ふょ',
+    'hwa': 'ふぁ', 'hwi': 'ふぃ', 'hwe': 'ふぇ', 'hwo': 'ふぉ', 'hu': 'ふ', 'fu': 'ふ', 'fa': 'ふぁ', 'fi': 'ふぃ', 'fe': 'ふぇ', 'fo': 'ふぉ',
+    // 2 char (long vowels: use ou/oo for おう/おお)
+    'ka': 'か', 'ki': 'き', 'ku': 'く', 'ke': 'け', 'ko': 'こ',
+    'sa': 'さ', 'su': 'す', 'se': 'せ', 'so': 'そ',
+    'ta': 'た', 'ti': 'ち', 'te': 'て', 'to': 'と',
+    'na': 'な', 'ni': 'に', 'nu': 'ぬ', 'ne': 'ね', 'no': 'の',
+    'ha': 'は', 'hi': 'ひ', 'he': 'へ', 'ho': 'ほ',
+    'ma': 'ま', 'mi': 'み', 'mu': 'む', 'me': 'め', 'mo': 'も',
+    'ya': 'や', 'yu': 'ゆ', 'yo': 'よ',
+    'ra': 'ら', 'ri': 'り', 'ru': 'る', 're': 'れ', 'ro': 'ろ',
+    'wa': 'わ', 'wo': 'を', 'wi': 'うぃ', 'we': 'うぇ',
+    'ga': 'が', 'gi': 'ぎ', 'gu': 'ぐ', 'ge': 'げ', 'go': 'ご',
+    'za': 'ざ', 'zi': 'じ', 'zu': 'ず', 'ze': 'ぜ', 'zo': 'ぞ',
+    'da': 'だ', 'di': 'ぢ', 'du': 'づ', 'de': 'で', 'do': 'ど',
+    'ba': 'ば', 'bi': 'び', 'bu': 'ぶ', 'be': 'べ', 'bo': 'ぼ',
+    'pa': 'ぱ', 'pi': 'ぴ', 'pu': 'ぷ', 'pe': 'ぺ', 'po': 'ぽ',
+    'va': 'ゔぁ', 'vi': 'ゔぃ', 'vu': 'ゔ', 've': 'ゔぇ', 'vo': 'ゔぉ',
+    'xa': 'ぁ', 'xi': 'ぃ', 'xu': 'ぅ', 'xe': 'ぇ', 'xo': 'ぉ', 'xtu': 'っ', 'xya': 'ゃ', 'xyu': 'ゅ', 'xyo': 'ょ',
+    // n' handling: nn -> ん, n followed by consonant -> ん
+    // 1 char
+    'a': 'あ', 'i': 'い', 'u': 'う', 'e': 'え', 'o': 'お',
+    '-': 'ー',
+  };
+
+  static const List<String> _romajiConsonants = [
+    'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z',
+  ];
+
+  /// Convert romaji to hiragana. Caps lock or shifted input can be
+  /// converted to katakana via [katakana].
+  String romajiToKana(String input, {bool katakana = false}) {
+    if (input.isEmpty) return input;
+    final lower = input.toLowerCase();
+    final result = StringBuffer();
+    int i = 0;
+
+    while (i < lower.length) {
+      // Try longest match (4 chars down to 1)
+      String? matched;
+      int matchLen = 0;
+      for (int len = 4; len >= 1; len--) {
+        if (i + len > lower.length) continue;
+        final sub = lower.substring(i, i + len);
+        if (_romajiToHiragana.containsKey(sub)) {
+          matched = _romajiToHiragana[sub]!;
+          matchLen = len;
+          break;
+        }
+      }
+
+      if (matched != null) {
+        result.write(matched);
+        i += matchLen;
+        continue;
+      }
+
+      // 'n' followed by consonant or end = ん
+      if (lower[i] == 'n') {
+        final next = (i + 1 < lower.length) ? lower[i + 1] : '';
+        if (next.isEmpty || _romajiConsonants.contains(next)) {
+          if (next == 'n' && i + 2 < lower.length && lower[i + 2] == 'y') {
+            // "nny" - treat first n as ん then handle n+y
+            result.write('ん');
+            i += 1;
+            continue;
+          }
+          result.write('ん');
+          i += 1;
+          continue;
+        }
+      }
+
+      // consonant doubling (sokuon) e.g. "kk" -> っk
+      if (i + 1 < lower.length &&
+          lower[i] == lower[i + 1] &&
+          _romajiConsonants.contains(lower[i]) &&
+          lower[i] != 'n') {
+        result.write('っ');
+        i += 1;
+        continue;
+      }
+
+      // unknown char, pass through
+      result.write(input[i]);
+      i += 1;
+    }
+
+    final out = result.toString();
+    return katakana ? toKatakana(out) : out;
+  }
 }
 
 class JapaneseUtils {
@@ -243,6 +351,12 @@ class JapaneseUtils {
 
   static String toRomaji(String text) {
     return _kanaKit.toRomaji(text);
+  }
+
+  /// Convert romaji input to kana. [katakana] true converts to katakana
+  /// (used when shift/caps is held).
+  static String romajiToKana(String text, {bool katakana = false}) {
+    return _kanaKit.romajiToKana(text, katakana: katakana);
   }
 
   static List<TextSpan> highlightParticles(String text) {

@@ -5,6 +5,8 @@ import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/domain/entities/translation_model.dart';
 import 'package:lang/data/repositories/translation_service.dart';
 import 'package:lang/l10n/app_localizations.dart';
+import 'package:lang/presentation/screens/dictionary_list_screen.dart';
+import 'package:lang/presentation/screens/import_screen.dart';
 import 'package:lang/utils/screen_size.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -979,6 +981,55 @@ class SettingsScreen extends StatelessWidget {
         ),
                 ],
               ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Dictionaries section
+          Text(
+            AppLocalizations.of(context)!.dictionaries,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            elevation: 1,
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.library_books),
+                  title: const Text('Manage Dictionaries'),
+                  subtitle: const Text(
+                      'Enable/disable, reorder, set priority per dictionary'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const DictionaryListScreen()),
+                    );
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.file_upload),
+                  title: const Text('Import Dictionary'),
+                  subtitle:
+                      const Text('Import Yomichan .zip dictionaries'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const ImportScreen()),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
 

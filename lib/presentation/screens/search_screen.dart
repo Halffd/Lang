@@ -8,6 +8,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:lang/data/services/ocr_service.dart';
 import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/presentation/providers/ai_provider.dart';
+import 'package:lang/domain/entities/app_state.dart';
+import 'package:lang/presentation/widgets/kana_text_field.dart';
 import 'package:lang/presentation/widgets/word_detail_sheet.dart';
 
 enum OcrMode { mlKit, tesseract, easyOcr, ai }
@@ -227,8 +229,13 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildSearchInput(ThemeData theme, AnalyzerProvider provider) {
-    return TextField(
+    final appState = context.read<AppState>();
+    final kanaEnabled = appState.autoConvertJapanese &&
+        provider.currentLanguage == 'ja';
+
+    return KanaTextField(
       controller: _searchController,
+      enabled: kanaEnabled,
       decoration: InputDecoration(
         hintText: 'Search for a word...',
         prefixIcon: const Icon(Icons.search),
@@ -252,17 +259,25 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildSentenceInput(ThemeData theme, AnalyzerProvider provider) {
+    final appState = context.read<AppState>();
+    final kanaEnabled = appState.autoConvertJapanese &&
+        provider.currentLanguage == 'ja';
+
     return Row(
       children: [
         Expanded(
-          child: TextField(
+          child: KanaTextField(
             controller: _sentenceController,
+            enabled: kanaEnabled,
             maxLines: 2,
             decoration: const InputDecoration(
               hintText: 'Enter a sentence to split into words...',
               prefixIcon: Icon(Icons.text_fields),
             ),
             onChanged: (_) => setState(() {}),
+            onSubmitted: (text) {
+              if (text.isNotEmpty) provider.searchWord(text);
+            },
           ),
         ),
         const SizedBox(width: 8),

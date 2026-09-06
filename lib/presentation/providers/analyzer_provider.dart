@@ -527,6 +527,12 @@ class AnalyzerProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Restore persisted language preference into this provider
+  void restoreLanguage(String lang) {
+    _currentLanguage = lang;
+    notifyListeners();
+  }
+
   // --- Translation Methods ---
 
   String getSentenceTranslation(String sentence) {

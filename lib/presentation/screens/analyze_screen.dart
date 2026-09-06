@@ -4,7 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/presentation/providers/analyzer_provider.dart';
+import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/presentation/widgets/word_detail_sheet.dart';
+import 'package:lang/presentation/widgets/kana_text_field.dart';
 import 'package:lang/presentation/screens/settings_screen.dart';
 import 'package:lang/domain/entities/analyzed_word.dart';
 
@@ -94,7 +96,6 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
 
   late AnimationController _expandController;
   late AnimationController _fadeController;
-  late AppLocalizations l10n;
 
   @override
   void initState() {
@@ -129,8 +130,12 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     if (event is! KeyDownEvent) return;
     switch (event.logicalKey) {
       case LogicalKeyboardKey.keyZ:
+      case LogicalKeyboardKey.arrowLeft:
+      case LogicalKeyboardKey.arrowUp:
         provider.prevPage();
       case LogicalKeyboardKey.keyX:
+      case LogicalKeyboardKey.arrowRight:
+      case LogicalKeyboardKey.arrowDown:
         provider.nextPage();
       case LogicalKeyboardKey.home:
         provider.firstPage();
@@ -321,7 +326,11 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
               .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
               .toList(),
           onChanged: (val) {
-            if (val != null) provider.setLanguage(val);
+            if (val != null) {
+              provider.setLanguage(val);
+              // Sync the app-wide UI language so locale updates too
+              context.read<AppState>().setLanguage(val);
+            }
           },
           borderRadius: BorderRadius.circular(12),
         ),
@@ -361,10 +370,11 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: TextField(
+                child: KanaTextField(
                   controller: _controller,
+                  enabled: context.read<AppState>().autoConvertJapanese &&
+                      provider.currentLanguage == 'ja',
                   maxLines: 4,
-                  minLines: 2,
                   style: const TextStyle(fontSize: 15, height: 1.4),
                   decoration: InputDecoration(
                     hintText: l10n.pasteTextHere,
@@ -1113,8 +1123,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                           tooltip: isSaved
-                              ? l10n.removeFromFavorites
-                              : l10n.addToFavorites,
+                              ? AppLocalizations.of(context)!.removeFromFavorites
+                              : AppLocalizations.of(context)!.addToFavorites,
                         ),
                         if (freq > 0)
                           Container(
@@ -1166,7 +1176,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                   Expanded(
                     child: Center(
                       child: Text(
-                        l10n.definitionsHidden,
+                        AppLocalizations.of(context)!.definitionsHidden,
                         style: TextStyle(
                           fontSize: 10,
                           color: theme.colorScheme.onSurface.withValues(
