@@ -747,4 +747,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activitySrsRemove => 'Removed from SRS';
+
+  @override
+  String get categoryAnalysis => 'Analyses';
+
+  @override
+  String get categoryClipboard => 'Clipboard';
+
+  @override
+  String get activityAnalysis => 'Analyzed text';
+
+  @override
+  String get activityClipboard => 'Copied text';
 }

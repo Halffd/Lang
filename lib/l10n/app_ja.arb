@@ -552,5 +552,9 @@
   "activitySaveWord": "単語を保存:",
   "activityRemoveWord": "単語を削除:",
   "activitySrsAdd": "SRSに追加:",
-  "activitySrsRemove": "SRSから削除:"
+  "activitySrsRemove": "SRSから削除:",
+  "categoryAnalysis": "解析",
+  "categoryClipboard": "クリップボード",
+  "activityAnalysis": "テキストを解析:",
+  "activityClipboard": "テキストをコピー:"
 }

@@ -747,4 +747,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get activitySrsRemove => '移除SRS';
+
+  @override
+  String get categoryAnalysis => '分析';
+
+  @override
+  String get categoryClipboard => '剪贴板';
+
+  @override
+  String get activityAnalysis => '分析了文本';
+
+  @override
+  String get activityClipboard => '复制了文本';
 }

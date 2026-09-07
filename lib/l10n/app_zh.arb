@@ -113,5 +113,9 @@
   "activitySaveWord": "保存单词",
   "activityRemoveWord": "移除单词",
   "activitySrsAdd": "加入SRS",
-  "activitySrsRemove": "移除SRS"
+  "activitySrsRemove": "移除SRS",
+  "categoryAnalysis": "分析",
+  "categoryClipboard": "剪贴板",
+  "activityAnalysis": "分析了文本",
+  "activityClipboard": "复制了文本"
 }

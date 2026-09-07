@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:lang/core/services/history_service.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/domain/entities/app_state.dart';
@@ -87,6 +88,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
   bool _showSentenceTranslations = true;
   bool _showFullTranslation = true;
   bool _showFavorites = true;
+
+  // Bottom section tab: 0 = favorites+word history, 1 = analyses,
+  // 2 = clipboard history
+  int _bottomTab = 0;
 
   // Filter state - using analyzer_provider types
   final WordFilter _wordFilter = WordFilter();
@@ -339,12 +344,12 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
           color: theme.colorScheme.outline.withValues(alpha: 0.2),
         ),
       ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: languages.containsKey(provider.currentLanguage)
-                ? provider.currentLanguage
-                : 'ja',
-            icon: const Icon(Icons.language, size: 18),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: languages.containsKey(provider.currentLanguage)
+              ? provider.currentLanguage
+              : 'ja',
+          icon: const Icon(Icons.language, size: 18),
           items: languages.entries
               .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
               .toList(),
@@ -615,13 +620,16 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
               onTap: () => provider.selectSentence(idx),
               child: Container(
                 width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? theme.colorScheme.primary.withValues(alpha: 0.15)
-                      : theme.colorScheme.surfaceContainerHighest
-                          .withValues(alpha: 0.5),
+                      : theme.colorScheme.surfaceContainerHighest.withValues(
+                          alpha: 0.5,
+                        ),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: isSelected
@@ -635,7 +643,9 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                     Container(
                       margin: const EdgeInsets.only(top: 2, right: 8),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? theme.colorScheme.primary
@@ -749,7 +759,11 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                   final absolute = pageStart + index;
                   final selected = provider.selectedWordIndex == absolute;
                   return _buildWordCard(
-                    context, theme, provider, word, absolute,
+                    context,
+                    theme,
+                    provider,
+                    word,
+                    absolute,
                     selected: selected,
                   );
                 },
@@ -778,8 +792,9 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 12,
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.55),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.55,
+                            ),
                             fontStyle: FontStyle.italic,
                           ),
                         ),
@@ -788,8 +803,9 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                         '${group.value.length}',
                         style: TextStyle(
                           fontSize: 11,
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.4),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.4,
+                          ),
                         ),
                       ),
                     ],
@@ -806,8 +822,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                   return GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: crossAxisCount,
                       crossAxisSpacing: 10,
                       mainAxisSpacing: 10,
@@ -817,11 +832,16 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                     itemBuilder: (context, index) {
                       final word = group.value[index];
                       final absolute = _filteredSortedIndexOf(
-                          provider, group.value[index]);
-                      final selected =
-                          provider.selectedWordIndex == absolute;
+                        provider,
+                        group.value[index],
+                      );
+                      final selected = provider.selectedWordIndex == absolute;
                       return _buildWordCard(
-                        context, theme, provider, word, absolute,
+                        context,
+                        theme,
+                        provider,
+                        word,
+                        absolute,
                         selected: selected,
                       );
                     },
@@ -1361,7 +1381,9 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                           tooltip: isSaved
-                              ? AppLocalizations.of(context)!.removeFromFavorites
+                              ? AppLocalizations.of(
+                                  context,
+                                )!.removeFromFavorites
                               : AppLocalizations.of(context)!.addToFavorites,
                         ),
                         if (freq > 0)
@@ -2053,8 +2075,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     final hasItems = favorites.isNotEmpty || history.isNotEmpty;
 
     return Container(
-      height: 130,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      height: 145,
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         border: Border(
@@ -2112,96 +2134,310 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
+          // Tab row: favorites+words / analyses / clipboard
+          SizedBox(
+            height: 28,
+            child: Row(
+              children: [
+                _bottomTabButton(
+                  context,
+                  theme,
+                  l10n.history,
+                  Icons.star_rounded,
+                  0,
+                  favorites.length + history.length,
+                ),
+                _bottomTabButton(
+                  context,
+                  theme,
+                  l10n.categoryAnalysis,
+                  Icons.analytics,
+                  1,
+                  _analysisHistory().length,
+                ),
+                _bottomTabButton(
+                  context,
+                  theme,
+                  l10n.categoryClipboard,
+                  Icons.content_copy,
+                  2,
+                  _clipboardHistory().length,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
           if (_showFavorites)
             Expanded(
-              child: hasItems
-                  ? ListView(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      children: [
-                        if (favorites.isNotEmpty) ...[
-                          ...favorites
-                              .take(12)
-                              .map(
-                                (word) => _buildFavoriteChip(
-                                  context,
-                                  theme,
-                                  word,
-                                  true,
-                                  provider,
-                                ),
-                              ),
-                          if (favorites.length > 12)
-                            _buildMoreChip(
-                              context,
-                              theme,
-                              favorites.length - 12,
-                            ),
-                        ],
-                        if (history.isNotEmpty) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            width: 1,
-                            height: 24,
-                            color: theme.colorScheme.outline.withValues(
-                              alpha: 0.2,
-                            ),
-                            margin: const EdgeInsets.symmetric(vertical: 8),
-                          ),
-                          const SizedBox(width: 8),
-                          ...history
-                              .take(12)
-                              .map(
-                                (word) => _buildFavoriteChip(
-                                  context,
-                                  theme,
-                                  word,
-                                  false,
-                                  provider,
-                                ),
-                              ),
-                          if (history.length > 12)
-                            _buildMoreChip(context, theme, history.length - 12),
-                        ],
-                      ],
-                    )
-                  : Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.star_border_rounded,
-                            size: 32,
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.2,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            l10n.noFavoritesYet,
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.35,
-                              ),
-                              fontSize: 12.5,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            l10n.saveWordsToSeeThemHere,
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.25,
-                              ),
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+              child: _buildBottomTabContent(
+                context,
+                theme,
+                provider,
+                l10n,
+                favorites,
+                history,
+                hasItems,
+              ),
             ),
         ],
+      ),
+    );
+  }
+
+  /// Items of the analysis category from activity history.
+  List<HistoryItem> _analysisHistory() => HistoryService.instance.items
+      .where((i) => i.category == HistoryCategory.analysis)
+      .toList();
+
+  /// Items of the clipboard category from activity history.
+  List<HistoryItem> _clipboardHistory() => HistoryService.instance.items
+      .where((i) => i.category == HistoryCategory.clipboard)
+      .toList();
+
+  Widget _bottomTabButton(
+    BuildContext context,
+    ThemeData theme,
+    String label,
+    IconData icon,
+    int index,
+    int count,
+  ) {
+    final selected = _bottomTab == index;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: InkWell(
+        onTap: () => setState(() => _bottomTab = index),
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+          decoration: BoxDecoration(
+            color: selected
+                ? theme.colorScheme.secondary.withValues(alpha: 0.14)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: selected
+                  ? theme.colorScheme.secondary.withValues(alpha: 0.4)
+                  : theme.colorScheme.outline.withValues(alpha: 0.15),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 13,
+                color: selected
+                    ? theme.colorScheme.secondary
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                '$label ($count)',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                  color: selected
+                      ? theme.colorScheme.secondary
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomTabContent(
+    BuildContext context,
+    ThemeData theme,
+    AnalyzerProvider provider,
+    AppLocalizations l10n,
+    List<Map<String, dynamic>> favorites,
+    List<String> history,
+    bool hasItems,
+  ) {
+    switch (_bottomTab) {
+      case 1:
+        final analyses = _analysisHistory();
+        return analyses.isEmpty
+            ? _bottomEmptyHint(
+                theme,
+                Icons.analytics_outlined,
+                l10n.noActivityYet,
+              )
+            : ListView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                children: analyses
+                    .take(12)
+                    .map(
+                      (item) => _buildTextChip(
+                        context,
+                        theme,
+                        item.title,
+                        onTap: () =>
+                            provider.analyzeText(item.subtitle ?? item.title),
+                      ),
+                    )
+                    .toList(),
+              );
+      case 2:
+        final clips = _clipboardHistory();
+        return clips.isEmpty
+            ? _bottomEmptyHint(theme, Icons.content_copy, l10n.noActivityYet)
+            : ListView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                children: clips
+                    .take(12)
+                    .map(
+                      (item) => _buildTextChip(
+                        context,
+                        theme,
+                        item.title,
+                        icon: Icons.content_copy,
+                        onTap: () async {
+                          await Clipboard.setData(
+                            ClipboardData(text: item.subtitle ?? item.title),
+                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(l10n.activityClipboard)),
+                            );
+                          }
+                        },
+                      ),
+                    )
+                    .toList(),
+              );
+      default:
+        return hasItems
+            ? ListView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  if (favorites.isNotEmpty) ...[
+                    ...favorites
+                        .take(12)
+                        .map(
+                          (word) => _buildFavoriteChip(
+                            context,
+                            theme,
+                            word,
+                            true,
+                            provider,
+                          ),
+                        ),
+                    if (favorites.length > 12)
+                      _buildMoreChip(context, theme, favorites.length - 12),
+                  ],
+                  if (history.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 1,
+                      height: 24,
+                      color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                    const SizedBox(width: 8),
+                    ...history
+                        .take(12)
+                        .map(
+                          (word) => _buildFavoriteChip(
+                            context,
+                            theme,
+                            word,
+                            false,
+                            provider,
+                          ),
+                        ),
+                    if (history.length > 12)
+                      _buildMoreChip(context, theme, history.length - 12),
+                  ],
+                ],
+              )
+            : _bottomEmptyHint(
+                theme,
+                Icons.star_border_rounded,
+                l10n.noFavoritesYet,
+              );
+    }
+  }
+
+  /// Empty placeholder for bottom-section tabs.
+  Widget _bottomEmptyHint(ThemeData theme, IconData icon, String label) {
+    return Center(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 26,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            label,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+              fontSize: 12.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Generic chip for arbitrary text items (analyses, clipboard).
+  Widget _buildTextChip(
+    BuildContext context,
+    ThemeData theme,
+    String text, {
+    IconData icon = Icons.history,
+    int maxLines = 1,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 220),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: theme.colorScheme.outline.withValues(alpha: 0.15),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 13,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  text,
+                  maxLines: maxLines,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

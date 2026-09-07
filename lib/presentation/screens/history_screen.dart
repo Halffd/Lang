@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:lang/core/services/history_service.dart';
@@ -85,6 +86,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   Icons.language,
                 ),
                 _chip(HistoryCategory.action, l10n.categoryActions, Icons.bolt),
+                _chip(
+                  HistoryCategory.analysis,
+                  l10n.categoryAnalysis,
+                  Icons.analytics,
+                ),
+                _chip(
+                  HistoryCategory.clipboard,
+                  l10n.categoryClipboard,
+                  Icons.content_copy,
+                ),
               ],
             ),
           ),
@@ -170,6 +181,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
         Colors.orange,
         _actionLabel(l10n, item.subtitle),
       ),
+      HistoryCategory.analysis => (
+        Icons.analytics,
+        Colors.indigo,
+        l10n.activityAnalysis,
+      ),
+      HistoryCategory.clipboard => (
+        Icons.content_copy,
+        Colors.lightGreen,
+        l10n.activityClipboard,
+      ),
     };
 
     final time = DateFormat.MMMd().add_Hm().format(item.time);
@@ -228,20 +249,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     switch (item.category) {
       case HistoryCategory.search:
       case HistoryCategory.word:
-        final provider = context.read<AnalyzerProvider>();
-        final word = item.title;
-        final result = await provider.lookupHistoryWord(word);
-        if (result != null && context.mounted) {
-          WordDetailSheet.show(context, provider, result);
-        }
-        break;
       case HistoryCategory.kanji:
-        final provider = context.read<AnalyzerProvider>();
-        final result = await provider.lookupHistoryWord(item.title);
-        if (result != null && context.mounted) {
-          WordDetailSheet.show(context, provider, result);
-        }
-        break;
       case HistoryCategory.favorite:
       case HistoryCategory.anki:
       case HistoryCategory.action:
@@ -249,6 +257,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
         final result = await provider.lookupHistoryWord(item.title);
         if (result != null && context.mounted) {
           WordDetailSheet.show(context, provider, result);
+        }
+        break;
+      case HistoryCategory.analysis:
+        // re-run analysis: full text is stored in subtitle
+        if (item.subtitle != null && item.subtitle!.isNotEmpty) {
+          final provider = context.read<AnalyzerProvider>();
+          await provider.analyzeText(item.subtitle!);
+        }
+        break;
+      case HistoryCategory.clipboard:
+        // copy stored text back to the clipboard
+        final text = item.subtitle;
+        if (text != null && text.isNotEmpty) {
+          await Clipboard.setData(ClipboardData(text: text));
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Copied to clipboard')),
+            );
+          }
         }
         break;
       case HistoryCategory.document:
@@ -278,6 +305,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
       HistoryCategory.document => l10n.categoryDocuments,
       HistoryCategory.visit => l10n.categoryVisits,
       HistoryCategory.action => l10n.categoryActions,
+      HistoryCategory.analysis => l10n.categoryAnalysis,
+      HistoryCategory.clipboard => l10n.categoryClipboard,
     };
     final confirmed = await showDialog<bool>(
       context: context,

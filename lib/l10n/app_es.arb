@@ -552,5 +552,9 @@
   "activitySaveWord": "Palabra guardada:",
   "activityRemoveWord": "Palabra eliminada:",
   "activitySrsAdd": "Añadido a SRS:",
-  "activitySrsRemove": "Eliminado de SRS:"
+  "activitySrsRemove": "Eliminado de SRS:",
+  "categoryAnalysis": "Análisis",
+  "categoryClipboard": "Portapapeles",
+  "activityAnalysis": "Texto analizado:",
+  "activityClipboard": "Texto copiado:"
 }

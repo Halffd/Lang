@@ -736,4 +736,16 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get activitySrsRemove => 'SRSから削除:';
+
+  @override
+  String get categoryAnalysis => '解析';
+
+  @override
+  String get categoryClipboard => 'クリップボード';
+
+  @override
+  String get activityAnalysis => 'テキストを解析:';
+
+  @override
+  String get activityClipboard => 'テキストをコピー:';
 }

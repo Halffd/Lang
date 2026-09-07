@@ -12,6 +12,8 @@ enum HistoryCategory {
   document,
   visit,
   action,
+  analysis,
+  clipboard,
 }
 
 /// One recorded history item.

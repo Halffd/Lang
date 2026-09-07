@@ -1511,6 +1511,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Removed from SRS'**
   String get activitySrsRemove;
+
+  /// No description provided for @categoryAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyses'**
+  String get categoryAnalysis;
+
+  /// No description provided for @categoryClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Clipboard'**
+  String get categoryClipboard;
+
+  /// No description provided for @activityAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzed text'**
+  String get activityAnalysis;
+
+  /// No description provided for @activityClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied text'**
+  String get activityClipboard;
 }
 
 class _AppLocalizationsDelegate

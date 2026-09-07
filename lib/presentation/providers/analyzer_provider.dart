@@ -663,6 +663,11 @@ class AnalyzerProvider extends ChangeNotifier {
 
     try {
       if (text.length < 50) await addToHistory(text);
+      HistoryService.instance.record(
+        HistoryCategory.analysis,
+        text.length > 60 ? '${text.substring(0, 60)}…' : text,
+        subtitle: text,
+      );
 
       final tokens = await _tokenizerService.tokenize(text);
       _sentences = _tokenizerService.splitSentences(tokens);

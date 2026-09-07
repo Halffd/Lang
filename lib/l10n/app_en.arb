@@ -233,5 +233,9 @@
   "activitySaveWord": "Saved word",
   "activityRemoveWord": "Removed word",
   "activitySrsAdd": "Added to SRS",
-  "activitySrsRemove": "Removed from SRS"
+  "activitySrsRemove": "Removed from SRS",
+  "categoryAnalysis": "Analyses",
+  "categoryClipboard": "Clipboard",
+  "activityAnalysis": "Analyzed text",
+  "activityClipboard": "Copied text"
 }
