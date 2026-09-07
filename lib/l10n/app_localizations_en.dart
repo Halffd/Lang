@@ -672,4 +672,79 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get zoomLevelSubtitle => 'Adjust the zoom level for the entire app';
+
+  @override
+  String get activityTitle => 'Activity';
+
+  @override
+  String get allCategories => 'All';
+
+  @override
+  String get categorySearches => 'Searches';
+
+  @override
+  String get categoryWords => 'Words';
+
+  @override
+  String get categoryKanji => 'Kanji';
+
+  @override
+  String get categoryFavorites => 'Favorites';
+
+  @override
+  String get categoryAnki => 'Anki Added';
+
+  @override
+  String get categoryDocuments => 'Documents';
+
+  @override
+  String get categoryVisits => 'Visits';
+
+  @override
+  String get categoryActions => 'Actions';
+
+  @override
+  String get noActivityYet => 'No activity yet';
+
+  @override
+  String get noActivityInCategory => 'Nothing here yet';
+
+  @override
+  String get activitySearch => 'Searched';
+
+  @override
+  String get activityWordLookup => 'Looked up word';
+
+  @override
+  String get activityKanjiLookup => 'Viewed kanji';
+
+  @override
+  String get activityFavorite => 'Favorited';
+
+  @override
+  String get activityUnfavorite => 'Removed from favorites';
+
+  @override
+  String get activityAnkiAdded => 'Added to Anki';
+
+  @override
+  String get activityAnkiLocal => 'Saved to Anki list';
+
+  @override
+  String get activityDocument => 'Opened document';
+
+  @override
+  String get activityVisit => 'Visited';
+
+  @override
+  String get activitySaveWord => 'Saved word';
+
+  @override
+  String get activityRemoveWord => 'Removed word';
+
+  @override
+  String get activitySrsAdd => 'Added to SRS';
+
+  @override
+  String get activitySrsRemove => 'Removed from SRS';
 }

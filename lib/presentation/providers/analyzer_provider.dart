@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lang/core/services/history_service.dart';
 import 'package:lang/data/services/dictionary/local_dictionary_service.dart';
 import 'package:lang/data/services/dictionary/yomichan_service.dart';
 import 'package:lang/data/services/dictionary/remote_dictionary_service.dart';
@@ -6,9 +7,16 @@ import 'package:lang/data/services/dictionary/language_detector.dart';
 import 'package:lang/data/services/dictionary/search_service.dart';
 import 'package:lang/data/services/dictionary/tokenizer_service.dart';
 import 'package:lang/domain/entities/analyzed_word.dart';
+import 'package:lang/domain/entities/dictionary.dart';
+import 'package:lang/utils/recursive_lookup.dart';
+import 'package:lang/domain/entities/app_state.dart';
 
 /// Unified dictionary service that delegates to specialized services
 class AnalyzerProvider extends ChangeNotifier {
+  /// App state hook, set at startup so profile dictionary settings
+  /// (priority/conditions) can gate and order search results.
+  AppState? appState;
+
   final LocalDictionaryService _localService = LocalDictionaryService();
   final YomichanService _yomichanService = YomichanService();
   final RemoteDictionaryService _remoteService = RemoteDictionaryService();
@@ -269,8 +277,9 @@ class AnalyzerProvider extends ChangeNotifier {
       }
     }
     // words without sentence go in a trailing pseudo-group
-    final orphans =
-        _filteredSortedWords.where((w) => !used.contains(w.word)).toList();
+    final orphans = _filteredSortedWords
+        .where((w) => !used.contains(w.word))
+        .toList();
     if (orphans.isNotEmpty) {
       groups.add(MapEntry('', orphans));
     }
@@ -289,8 +298,7 @@ class AnalyzerProvider extends ChangeNotifier {
   /// Currently selected sentence text (or null).
   String? get selectedSentence {
     final sents = sentenceList;
-    if (_selectedSentenceIndex < 0 ||
-        _selectedSentenceIndex >= sents.length) {
+    if (_selectedSentenceIndex < 0 || _selectedSentenceIndex >= sents.length) {
       return null;
     }
     return sents[_selectedSentenceIndex];
@@ -324,8 +332,9 @@ class AnalyzerProvider extends ChangeNotifier {
       _selectedSentenceIndex = index;
       // select first word of that sentence
       final words = _filteredSortedWords;
-      final wIdx =
-          words.indexWhere((w) => (w.sentence ?? '').trim() == sents[index]);
+      final wIdx = words.indexWhere(
+        (w) => (w.sentence ?? '').trim() == sents[index],
+      );
       if (wIdx >= 0) _selectedWordIndex = wIdx;
       notifyListeners();
     }
@@ -528,22 +537,43 @@ class AnalyzerProvider extends ChangeNotifier {
 
     try {
       await addToHistory(query);
+      HistoryService.instance.record(
+        HistoryCategory.search,
+        query,
+        subtitle: _currentLanguage,
+      );
       final results = await _yomichanService.lookupWord(
         query,
         _currentLanguage,
       );
-      _searchResults = results
-          .map(
-            (r) => AnalyzedWord(
-              word: r.entry.word,
-              reading: r.entry.reading,
-              frequency: r.entry.frequency,
-              ichiMoeDefinitions: r.entry.definitions
-                  .where((d) => d.isNotEmpty)
-                  .toList(),
-            ),
-          )
-          .toList();
+
+      // profile-scoped dictionary settings: priority, conditions
+      final dictSettings =
+          appState?.yomitanOptions.activeProfile.dictionarySettings;
+      final filtered = <YomichanSearchResult>[];
+      for (final r in results) {
+        final name = r.dictionary?.name ?? '';
+        final s = dictSettings?.forDictionary(name);
+        if (s != null && !s.enabled) continue;
+        if (s != null && !s.hasNoConditions) {
+          final matches = s.matches(
+            term: r.entry.term,
+            reading: r.entry.reading,
+            lookupLanguage: _currentLanguage,
+            tags: [...?r.entry.definitionTags, ...?r.entry.termTags],
+          );
+          if (!matches) continue;
+        }
+        filtered.add(r);
+      }
+      // sort: enabled/priority per profile settings
+      final sorted = dictSettings == null
+          ? filtered
+          : dictSettings.sortResults(filtered, (r) => r.dictionary?.name ?? '');
+
+      _searchResults = [
+        for (final r in sorted) await _toAnalyzedWordRecursive(r, depth: 0),
+      ];
     } catch (e) {
       debugPrint('Search error: $e');
       _searchResults = [];
@@ -553,9 +583,52 @@ class AnalyzerProvider extends ChangeNotifier {
     }
   }
 
+  /// Build an AnalyzedWord from a search result, attaching nested
+  /// entries found inside its definitions (recursive lookup, max
+  /// depth [RecursiveLookup.maxDepth]).
+  Future<AnalyzedWord> _toAnalyzedWordRecursive(
+    YomichanSearchResult r, {
+    required int depth,
+  }) async {
+    final word = AnalyzedWord(
+      word: r.entry.word,
+      reading: r.entry.reading,
+      frequency: r.entry.frequency,
+      ichiMoeDefinitions: r.entry.definitions
+          .where((d) => d.isNotEmpty)
+          .toList(),
+      sourceDictionary: r.dictionary?.name,
+    );
+
+    if (depth >= RecursiveLookup.maxDepth - 1) return word;
+
+    // find sub-terms in the definitions
+    final subTerms = RecursiveLookup.extractSubTerms(r.entry);
+    if (subTerms.isEmpty) return word;
+
+    final nested = <AnalyzedWord>[];
+    for (final term in subTerms.take(RecursiveLookup.maxChildrenPerEntry)) {
+      try {
+        final childResults = await _yomichanService.lookupWord(
+          term,
+          _currentLanguage,
+        );
+        if (childResults.isEmpty) continue;
+        final child = await _toAnalyzedWordRecursive(
+          childResults.first,
+          depth: depth + 1,
+        );
+        if (child.word != word.word) nested.add(child);
+      } catch (_) {
+        // sub lookups are best-effort
+      }
+    }
+    return word.copyWith(nestedEntries: nested);
+  }
+
   Future<AnalyzedWord?> lookupHistoryWord(String word) async {
     try {
-      return await _yomichanService.enrichWord(
+      final result = await _yomichanService.enrichWord(
         word,
         _currentLanguage,
         showIchiMoe: _showIchiMoe,
@@ -563,6 +636,14 @@ class AnalyzerProvider extends ChangeNotifier {
         showKanji: _showKanji,
         showEtymology: _showEtymology,
       );
+      if (result != null) {
+        HistoryService.instance.record(
+          HistoryCategory.word,
+          word,
+          subtitle: _currentLanguage,
+        );
+      }
+      return result;
     } catch (e) {
       debugPrint('History word lookup error: $e');
       return null;
@@ -655,11 +736,21 @@ class AnalyzerProvider extends ChangeNotifier {
   Future<void> saveWord(String word) async {
     final sentence = _sentences[word];
     await _yomichanService.saveWord(word, sentence: sentence);
+    HistoryService.instance.record(
+      HistoryCategory.action,
+      word,
+      subtitle: 'save_word',
+    );
     await refreshUserData();
   }
 
   Future<void> removeSavedWord(String word) async {
     await _yomichanService.removeSavedWord(word);
+    HistoryService.instance.record(
+      HistoryCategory.action,
+      word,
+      subtitle: 'remove_word',
+    );
     await refreshUserData();
   }
 

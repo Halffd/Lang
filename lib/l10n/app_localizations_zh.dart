@@ -672,4 +672,79 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get zoomLevelSubtitle => 'Adjust the zoom level for the entire app';
+
+  @override
+  String get activityTitle => '活动';
+
+  @override
+  String get allCategories => '全部';
+
+  @override
+  String get categorySearches => '搜索';
+
+  @override
+  String get categoryWords => '单词';
+
+  @override
+  String get categoryKanji => '汉字';
+
+  @override
+  String get categoryFavorites => '收藏';
+
+  @override
+  String get categoryAnki => '已加Anki';
+
+  @override
+  String get categoryDocuments => '文档';
+
+  @override
+  String get categoryVisits => '访问';
+
+  @override
+  String get categoryActions => '操作';
+
+  @override
+  String get noActivityYet => '暂无活动';
+
+  @override
+  String get noActivityInCategory => '暂无记录';
+
+  @override
+  String get activitySearch => '搜索了';
+
+  @override
+  String get activityWordLookup => '查询单词';
+
+  @override
+  String get activityKanjiLookup => '查看汉字';
+
+  @override
+  String get activityFavorite => '已收藏';
+
+  @override
+  String get activityUnfavorite => '取消收藏';
+
+  @override
+  String get activityAnkiAdded => '已加入Anki';
+
+  @override
+  String get activityAnkiLocal => '保存到Anki列表';
+
+  @override
+  String get activityDocument => '打开文档';
+
+  @override
+  String get activityVisit => '访问了';
+
+  @override
+  String get activitySaveWord => '保存单词';
+
+  @override
+  String get activityRemoveWord => '移除单词';
+
+  @override
+  String get activitySrsAdd => '加入SRS';
+
+  @override
+  String get activitySrsRemove => '移除SRS';
 }

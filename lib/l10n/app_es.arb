@@ -527,5 +527,30 @@
   "@fontSizeSubtitle": {
     "type": "text",
     "placeholders": {}
-  }
+  },
+  "activityTitle": "Actividad",
+  "allCategories": "Todo",
+  "categorySearches": "Búsquedas",
+  "categoryWords": "Palabras",
+  "categoryKanji": "Kanji",
+  "categoryFavorites": "Favoritos",
+  "categoryAnki": "Añadido a Anki",
+  "categoryDocuments": "Documentos",
+  "categoryVisits": "Visitas",
+  "categoryActions": "Acciones",
+  "noActivityYet": "Aún no hay actividad",
+  "noActivityInCategory": "Nada por aquí todavía",
+  "activitySearch": "Buscado",
+  "activityWordLookup": "Palabra consultada:",
+  "activityKanjiLookup": "Kanji visto:",
+  "activityFavorite": "Añadido a favoritos:",
+  "activityUnfavorite": "Eliminado de favoritos:",
+  "activityAnkiAdded": "Añadido a Anki:",
+  "activityAnkiLocal": "Guardado en lista Anki:",
+  "activityDocument": "Documento abierto:",
+  "activityVisit": "Visitado",
+  "activitySaveWord": "Palabra guardada:",
+  "activityRemoveWord": "Palabra eliminada:",
+  "activitySrsAdd": "Añadido a SRS:",
+  "activitySrsRemove": "Eliminado de SRS:"
 }

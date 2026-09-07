@@ -661,4 +661,79 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get zoomLevelSubtitle => 'アプリ全体のズームレベルを調整する';
+
+  @override
+  String get activityTitle => 'アクティビティ';
+
+  @override
+  String get allCategories => 'すべて';
+
+  @override
+  String get categorySearches => '検索';
+
+  @override
+  String get categoryWords => '単語';
+
+  @override
+  String get categoryKanji => '漢字';
+
+  @override
+  String get categoryFavorites => 'お気に入り';
+
+  @override
+  String get categoryAnki => 'Anki追加済み';
+
+  @override
+  String get categoryDocuments => 'ドキュメント';
+
+  @override
+  String get categoryVisits => '訪問';
+
+  @override
+  String get categoryActions => '操作';
+
+  @override
+  String get noActivityYet => 'まだアクティビティはありません';
+
+  @override
+  String get noActivityInCategory => 'まだ何もありません';
+
+  @override
+  String get activitySearch => '検索:';
+
+  @override
+  String get activityWordLookup => '単語を検索:';
+
+  @override
+  String get activityKanjiLookup => '漢字を表示:';
+
+  @override
+  String get activityFavorite => 'お気に入りに追加:';
+
+  @override
+  String get activityUnfavorite => 'お気に入りから削除:';
+
+  @override
+  String get activityAnkiAdded => 'Ankiに追加:';
+
+  @override
+  String get activityAnkiLocal => 'Ankiリストに保存:';
+
+  @override
+  String get activityDocument => 'ドキュメントを開く:';
+
+  @override
+  String get activityVisit => '訪問:';
+
+  @override
+  String get activitySaveWord => '単語を保存:';
+
+  @override
+  String get activityRemoveWord => '単語を削除:';
+
+  @override
+  String get activitySrsAdd => 'SRSに追加:';
+
+  @override
+  String get activitySrsRemove => 'SRSから削除:';
 }

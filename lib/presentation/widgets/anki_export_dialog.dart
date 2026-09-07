@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:lang/core/services/history_service.dart';
 import 'package:lang/data/services/anki_connect_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/domain/entities/analyzed_word.dart';
@@ -255,6 +256,13 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
             ),
           );
         }
+        if (noteId != null) {
+          HistoryService.instance.record(
+            HistoryCategory.anki,
+            w.word,
+            subtitle: _selectedDeck,
+          );
+        }
         // suspend new cards when configured
         if (ankiSettings.suspendNewCards && noteId != null) {
           try {
@@ -268,6 +276,11 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
       } else {
         // AnkiConnect disabled: save to local Anki words list
         appState.addAnkiWord(w.word);
+        HistoryService.instance.record(
+          HistoryCategory.anki,
+          w.word,
+          subtitle: 'local',
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

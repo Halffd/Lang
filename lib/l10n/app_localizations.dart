@@ -1361,6 +1361,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Adjust the zoom level for the entire app'**
   String get zoomLevelSubtitle;
+
+  /// No description provided for @activityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get activityTitle;
+
+  /// No description provided for @allCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get allCategories;
+
+  /// No description provided for @categorySearches.
+  ///
+  /// In en, this message translates to:
+  /// **'Searches'**
+  String get categorySearches;
+
+  /// No description provided for @categoryWords.
+  ///
+  /// In en, this message translates to:
+  /// **'Words'**
+  String get categoryWords;
+
+  /// No description provided for @categoryKanji.
+  ///
+  /// In en, this message translates to:
+  /// **'Kanji'**
+  String get categoryKanji;
+
+  /// No description provided for @categoryFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get categoryFavorites;
+
+  /// No description provided for @categoryAnki.
+  ///
+  /// In en, this message translates to:
+  /// **'Anki Added'**
+  String get categoryAnki;
+
+  /// No description provided for @categoryDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get categoryDocuments;
+
+  /// No description provided for @categoryVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'Visits'**
+  String get categoryVisits;
+
+  /// No description provided for @categoryActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get categoryActions;
+
+  /// No description provided for @noActivityYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No activity yet'**
+  String get noActivityYet;
+
+  /// No description provided for @noActivityInCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet'**
+  String get noActivityInCategory;
+
+  /// No description provided for @activitySearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Searched'**
+  String get activitySearch;
+
+  /// No description provided for @activityWordLookup.
+  ///
+  /// In en, this message translates to:
+  /// **'Looked up word'**
+  String get activityWordLookup;
+
+  /// No description provided for @activityKanjiLookup.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewed kanji'**
+  String get activityKanjiLookup;
+
+  /// No description provided for @activityFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorited'**
+  String get activityFavorite;
+
+  /// No description provided for @activityUnfavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from favorites'**
+  String get activityUnfavorite;
+
+  /// No description provided for @activityAnkiAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to Anki'**
+  String get activityAnkiAdded;
+
+  /// No description provided for @activityAnkiLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to Anki list'**
+  String get activityAnkiLocal;
+
+  /// No description provided for @activityDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Opened document'**
+  String get activityDocument;
+
+  /// No description provided for @activityVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'Visited'**
+  String get activityVisit;
+
+  /// No description provided for @activitySaveWord.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved word'**
+  String get activitySaveWord;
+
+  /// No description provided for @activityRemoveWord.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed word'**
+  String get activityRemoveWord;
+
+  /// No description provided for @activitySrsAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to SRS'**
+  String get activitySrsAdd;
+
+  /// No description provided for @activitySrsRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from SRS'**
+  String get activitySrsRemove;
 }
 
 class _AppLocalizationsDelegate

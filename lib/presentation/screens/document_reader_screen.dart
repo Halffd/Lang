@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as path;
+import 'package:lang/core/services/history_service.dart';
 import 'package:lang/presentation/widgets/document_reader.dart';
 
 class DocumentReaderScreen extends StatefulWidget {
@@ -20,7 +21,8 @@ class DocumentReaderScreen extends StatefulWidget {
 }
 
 class DocumentReaderScreenState extends State<DocumentReaderScreen> {
-  final GlobalKey<DocumentReaderState> _documentReaderKey = GlobalKey<DocumentReaderState>();
+  final GlobalKey<DocumentReaderState> _documentReaderKey =
+      GlobalKey<DocumentReaderState>();
   final TextEditingController _pageController = TextEditingController();
   int _currentPage = 1;
   int _totalPages = 1;
@@ -72,10 +74,10 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
                 ),
               )
             else
-              const Center(
-                child: Text('No document selected'),
-              ),
-            if (_showControls && _currentFileType != null && _currentFileType != 'txt')
+              const Center(child: Text('No document selected')),
+            if (_showControls &&
+                _currentFileType != null &&
+                _currentFileType != 'txt')
               _buildNavigationOverlay(),
             if (_showControls) _buildAppBar(),
           ],
@@ -94,10 +96,7 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.black.withValues(alpha: 0.7),
-              Colors.transparent,
-            ],
+            colors: [Colors.black.withValues(alpha: 0.7), Colors.transparent],
           ),
         ),
         child: SafeArea(
@@ -116,7 +115,9 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
                 onPressed: _openMangaFolder,
                 tooltip: 'Open manga folder',
               ),
-              if (_currentFileType == 'manga' || _currentFileType == 'cbz' || _currentFileType == 'folder')
+              if (_currentFileType == 'manga' ||
+                  _currentFileType == 'cbz' ||
+                  _currentFileType == 'folder')
                 IconButton(
                   icon: const Icon(Icons.swap_horiz),
                   onPressed: () {
@@ -205,7 +206,9 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
                         ),
                         onFieldSubmitted: (value) {
                           int? page = int.tryParse(value);
-                          if (page != null && page >= 1 && page <= _totalPages) {
+                          if (page != null &&
+                              page >= 1 &&
+                              page <= _totalPages) {
                             final state = _documentReaderKey.currentState;
                             if (state != null) {
                               state.goToPage(page);
@@ -228,7 +231,10 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
                   ),
                 ] else ...[
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(20),
@@ -301,11 +307,16 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
         _totalPages = 1;
         _pageController.text = '1';
       });
+      HistoryService.instance.record(
+        HistoryCategory.document,
+        path.basename(filePath),
+        subtitle: filePath,
+      );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error opening file: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error opening file: $e')));
       }
     }
   }
@@ -323,11 +334,16 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
         _totalPages = 1;
         _pageController.text = '1';
       });
+      HistoryService.instance.record(
+        HistoryCategory.document,
+        path.basename(folderPath),
+        subtitle: folderPath,
+      );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error opening folder: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error opening folder: $e')));
       }
     }
   }

@@ -674,4 +674,79 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get zoomLevelSubtitle =>
       'Ajustar el nivel de zoom para toda la aplicación';
+
+  @override
+  String get activityTitle => 'Actividad';
+
+  @override
+  String get allCategories => 'Todo';
+
+  @override
+  String get categorySearches => 'Búsquedas';
+
+  @override
+  String get categoryWords => 'Palabras';
+
+  @override
+  String get categoryKanji => 'Kanji';
+
+  @override
+  String get categoryFavorites => 'Favoritos';
+
+  @override
+  String get categoryAnki => 'Añadido a Anki';
+
+  @override
+  String get categoryDocuments => 'Documentos';
+
+  @override
+  String get categoryVisits => 'Visitas';
+
+  @override
+  String get categoryActions => 'Acciones';
+
+  @override
+  String get noActivityYet => 'Aún no hay actividad';
+
+  @override
+  String get noActivityInCategory => 'Nada por aquí todavía';
+
+  @override
+  String get activitySearch => 'Buscado';
+
+  @override
+  String get activityWordLookup => 'Palabra consultada:';
+
+  @override
+  String get activityKanjiLookup => 'Kanji visto:';
+
+  @override
+  String get activityFavorite => 'Añadido a favoritos:';
+
+  @override
+  String get activityUnfavorite => 'Eliminado de favoritos:';
+
+  @override
+  String get activityAnkiAdded => 'Añadido a Anki:';
+
+  @override
+  String get activityAnkiLocal => 'Guardado en lista Anki:';
+
+  @override
+  String get activityDocument => 'Documento abierto:';
+
+  @override
+  String get activityVisit => 'Visitado';
+
+  @override
+  String get activitySaveWord => 'Palabra guardada:';
+
+  @override
+  String get activityRemoveWord => 'Palabra eliminada:';
+
+  @override
+  String get activitySrsAdd => 'Añadido a SRS:';
+
+  @override
+  String get activitySrsRemove => 'Eliminado de SRS:';
 }

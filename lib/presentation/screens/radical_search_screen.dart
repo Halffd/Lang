@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lang/core/services/history_service.dart';
 import 'package:lang/data/datasources/radical_data.dart';
 import 'package:lang/data/datasources/kanji_decomposition_data.dart';
 import 'package:lang/data/repositories/dictionary_service.dart';
@@ -52,7 +53,9 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
 
     setState(() => _isRadicalSearching = true);
     try {
-      final results = await _radicalSearchService.searchByRadicals(_selectedRadicals);
+      final results = await _radicalSearchService.searchByRadicals(
+        _selectedRadicals,
+      );
       setState(() {
         _radicalResults = results;
         _isRadicalSearching = false;
@@ -60,9 +63,9 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
     } catch (e) {
       setState(() => _isRadicalSearching = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Search error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Search error: $e')));
       }
     }
   }
@@ -70,7 +73,9 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
   void _toggleRadical(KangxiRadical radical) {
     setState(() {
       if (_selectedRadicals.any((r) => r.number == radical.number)) {
-        _selectedRadicals = _selectedRadicals.where((r) => r.number != radical.number).toList();
+        _selectedRadicals = _selectedRadicals
+            .where((r) => r.number != radical.number)
+            .toList();
       } else {
         _selectedRadicals = [..._selectedRadicals, radical];
       }
@@ -109,7 +114,9 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
 
     setState(() => _isComponentSearching = true);
     try {
-      final results = await _radicalSearchService.searchByComponents(_selectedComponents);
+      final results = await _radicalSearchService.searchByComponents(
+        _selectedComponents,
+      );
       setState(() {
         _componentResults = results;
         _isComponentSearching = false;
@@ -117,9 +124,9 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
     } catch (e) {
       setState(() => _isComponentSearching = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Search error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Search error: $e')));
       }
     }
   }
@@ -127,7 +134,9 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
   void _toggleComponent(String component) {
     setState(() {
       if (_selectedComponents.contains(component)) {
-        _selectedComponents = _selectedComponents.where((c) => c != component).toList();
+        _selectedComponents = _selectedComponents
+            .where((c) => c != component)
+            .toList();
       } else {
         _selectedComponents = [..._selectedComponents, component];
       }
@@ -136,6 +145,11 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
   }
 
   void _showKanjiDetail(RadicalSearchResult result) {
+    HistoryService.instance.record(
+      HistoryCategory.kanji,
+      result.character,
+      subtitle: result.kanjiEntry?.meanings.take(3).join(', '),
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -162,10 +176,7 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [
-          _buildRadicalPickerTab(),
-          _buildComponentDecompositionTab(),
-        ],
+        children: [_buildRadicalPickerTab(), _buildComponentDecompositionTab()],
       ),
     );
   }
@@ -193,7 +204,9 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
                       child: Wrap(
                         spacing: 4,
                         runSpacing: 4,
-                        children: _selectedRadicals.map((r) => _buildRadicalChip(r, isSelected: true)).toList(),
+                        children: _selectedRadicals
+                            .map((r) => _buildRadicalChip(r, isSelected: true))
+                            .toList(),
                       ),
                     ),
                     IconButton(
@@ -239,7 +252,9 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
 
         Expanded(
           flex: 1,
-          child: _buildRadicalGrid(radicalsByStroke[_selectedStrokeCount] ?? []),
+          child: _buildRadicalGrid(
+            radicalsByStroke[_selectedStrokeCount] ?? [],
+          ),
         ),
 
         Expanded(
@@ -266,7 +281,9 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
       itemCount: radicals.length,
       itemBuilder: (context, index) {
         final radical = radicals[index];
-        final isSelected = _selectedRadicals.any((r) => r.number == radical.number);
+        final isSelected = _selectedRadicals.any(
+          (r) => r.number == radical.number,
+        );
         return _buildRadicalChip(radical, isSelected: isSelected);
       },
     );
@@ -277,15 +294,21 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
       onTap: () => _toggleRadical(radical),
       borderRadius: BorderRadius.circular(8),
       child: Tooltip(
-        message: '${radical.number}. ${radical.nameEn} (${radical.nameJa}) ${radical.strokes} strokes',
+        message:
+            '${radical.number}. ${radical.nameEn} (${radical.nameJa}) ${radical.strokes} strokes',
         child: Container(
           decoration: BoxDecoration(
             color: isSelected
                 ? Theme.of(context).primaryColor
-                : Theme.of(context).unselectedWidgetColor.withValues(alpha: 0.08),
+                : Theme.of(
+                    context,
+                  ).unselectedWidgetColor.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(8),
             border: isSelected
-                ? Border.all(color: Theme.of(context).primaryColorDark, width: 2)
+                ? Border.all(
+                    color: Theme.of(context).primaryColorDark,
+                    width: 2,
+                  )
                 : null,
           ),
           alignment: Alignment.center,
@@ -341,7 +364,10 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
                   children: [
                     Text(
                       _currentDecomposition!.character,
-                      style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -443,7 +469,10 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
             children: [
               Text(
                 result.character,
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               if (meanings.isNotEmpty)
                 Text(
@@ -529,7 +558,10 @@ class _KanjiDetailSheet extends StatelessWidget {
                 children: [
                   Text(
                     result.character,
-                    style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 64,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(width: 20),
                   Expanded(
@@ -546,15 +578,29 @@ class _KanjiDetailSheet extends StatelessWidget {
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
-color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                                  color: Theme.of(
+                                    context,
+                                  ).primaryColor.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: const Text('音', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                child: const Text(
+                                  '音',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                               const SizedBox(width: 6),
-                              Text(onyomi.join('・'), style: const TextStyle(fontSize: 14)),
+                              Text(
+                                onyomi.join('・'),
+                                style: const TextStyle(fontSize: 14),
+                              ),
                             ],
                           ),
                         ],
@@ -563,15 +609,29 @@ color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).hintColor.withValues(alpha: 0.1),
+                                  color: Theme.of(
+                                    context,
+                                  ).hintColor.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: const Text('訓', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                child: const Text(
+                                  '訓',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                               const SizedBox(width: 6),
-                              Text(kunyomi.join('・'), style: const TextStyle(fontSize: 14)),
+                              Text(
+                                kunyomi.join('・'),
+                                style: const TextStyle(fontSize: 14),
+                              ),
                             ],
                           ),
                         ],
@@ -594,9 +654,14 @@ color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                   runSpacing: 8,
                   children: result.decomposition!.components.map((comp) {
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Theme.of(context).dividerColor),
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor,
+                        ),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
@@ -631,17 +696,17 @@ color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                 const SizedBox(height: 16),
                 const Divider(),
                 const SizedBox(height: 8),
-                Text(
-                  'Stats',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+                Text('Stats', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 4,
                   children: stats.entries.map((e) {
                     return Chip(
-                      label: Text('${e.key}: ${e.value}', style: const TextStyle(fontSize: 11)),
+                      label: Text(
+                        '${e.key}: ${e.value}',
+                        style: const TextStyle(fontSize: 11),
+                      ),
                     );
                   }).toList(),
                 ),

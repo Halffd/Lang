@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:lang/core/services/history_service.dart';
 import 'package:lang/data/services/ocr_service.dart';
 import 'package:lang/data/repositories/dictionary_service.dart';
 
@@ -63,8 +64,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
   /// True when the inappwebview plugin has no implementation for
   /// this platform (e.g. Linux desktop) - the browser screen then
   /// shows a fallback with an external-browser launch button.
-  static bool get _webviewUnsupported =>
-      Platform.isLinux || Platform.isWindows;
+  static bool get _webviewUnsupported => Platform.isLinux || Platform.isWindows;
 
   Future<void> _initWebView() async {
     if (_webviewUnsupported) return;
@@ -97,6 +97,16 @@ class _BrowserScreenState extends State<BrowserScreen> {
     }
   }
 
+  /// Host name for visit history titles.
+  static String _hostOf(String url) {
+    try {
+      final uri = Uri.parse(url);
+      return uri.host.isNotEmpty ? uri.host : url;
+    } catch (_) {
+      return url;
+    }
+  }
+
   Future<void> _handleSubmit(String url) async {
     _urlFocusNode.unfocus();
     final finalUrl = _normalizeUrl(url.trim());
@@ -115,10 +125,12 @@ class _BrowserScreenState extends State<BrowserScreen> {
   }
 
   bool _looksLikeDomain(String text) {
-    return text.contains('.') && !text.contains(' ') && RegExp(r'\.[a-zA-Z]{2,}').hasMatch(text);
+    return text.contains('.') &&
+        !text.contains(' ') &&
+        RegExp(r'\.[a-zA-Z]{2,}').hasMatch(text);
   }
 
-@override
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
@@ -155,13 +167,12 @@ class _BrowserScreenState extends State<BrowserScreen> {
           Expanded(
             child: Stack(
               children: [
-                RepaintBoundary(
-                  key: _webViewKey,
-                  child: _buildWebView(),
-                ),
+                RepaintBoundary(key: _webViewKey, child: _buildWebView()),
                 if (_isLoading) _buildLoadingBar(theme),
-                if (_showHoverPopup && _hoveredUrl != null) _buildHoverPopup(theme),
-                if (_showAllReadings && _readingsMap.isNotEmpty) _buildReadingsPanel(theme),
+                if (_showHoverPopup && _hoveredUrl != null)
+                  _buildHoverPopup(theme),
+                if (_showAllReadings && _readingsMap.isNotEmpty)
+                  _buildReadingsPanel(theme),
                 if (_isCapturingOcr)
                   Container(
                     color: Colors.black26,
@@ -203,7 +214,9 @@ class _BrowserScreenState extends State<BrowserScreen> {
               Icons.album,
               'Definitions \\',
               _showDefinitionsPanel,
-              () => setState(() => _showDefinitionsPanel = !_showDefinitionsPanel),
+              () => setState(
+                () => _showDefinitionsPanel = !_showDefinitionsPanel,
+              ),
             ),
             const SizedBox(width: 8),
             _statusChip(
@@ -241,7 +254,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
             if (_selectedText.isNotEmpty)
               Text(
                 'Selected: ${_selectedText.length > 20 ? '${_selectedText.substring(0, 20)}...' : _selectedText}',
-                style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
               ),
           ],
         ),
@@ -249,27 +265,48 @@ class _BrowserScreenState extends State<BrowserScreen> {
     );
   }
 
-  Widget _statusChip(ThemeData theme, IconData icon, String label, bool isActive, VoidCallback onTap) {
+  Widget _statusChip(
+    ThemeData theme,
+    IconData icon,
+    String label,
+    bool isActive,
+    VoidCallback onTap,
+  ) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: isActive ? theme.colorScheme.primary.withValues(alpha: 0.2) : Colors.transparent,
+          color: isActive
+              ? theme.colorScheme.primary.withValues(alpha: 0.2)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isActive ? theme.colorScheme.primary : theme.colorScheme.outline.withValues(alpha: 0.3),
+            color: isActive
+                ? theme.colorScheme.primary
+                : theme.colorScheme.outline.withValues(alpha: 0.3),
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 12, color: isActive ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+            Icon(
+              icon,
+              size: 12,
+              color: isActive
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            ),
             const SizedBox(width: 4),
             Text(
               label,
-              style: TextStyle(fontSize: 10, color: isActive ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+              style: TextStyle(
+                fontSize: 10,
+                color: isActive
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
             ),
           ],
         ),
@@ -296,7 +333,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
   }
 
   List<String> _parseDefinitions(String text) {
-    final words = text.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    final words = text
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .toList();
     return words;
   }
 
@@ -317,7 +357,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
   Map<String, List<String>> _parseReadings(String html) {
     final readings = <String, List<String>>{};
     final japaneseReadingRegex = RegExp(r'([一-龯ヶ革命]+)\s*\[([^\]]+)\]');
-    final chinesePinyinRegex = RegExp(r'([一-龯]+)\s*(pinyin[:\s]*([^<,\n]+))', caseSensitive: false);
+    final chinesePinyinRegex = RegExp(
+      r'([一-龯]+)\s*(pinyin[:\s]*([^<,\n]+))',
+      caseSensitive: false,
+    );
     final koreanRegex = RegExp(r'([가-힣]+)\s*\( ([^)]+) \)');
 
     for (final match in japaneseReadingRegex.allMatches(html)) {
@@ -353,17 +396,37 @@ class _BrowserScreenState extends State<BrowserScreen> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
-        border: Border(bottom: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2))),
+        border: Border(
+          bottom: BorderSide(
+            color: theme.colorScheme.outline.withValues(alpha: 0.2),
+          ),
+        ),
       ),
       child: _definitions.isEmpty && _selectedText.isEmpty
-          ? Center(child: Text('Select text on page and press \\ to see definitions', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5))))
+          ? Center(
+              child: Text(
+                'Select text on page and press \\ to see definitions',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
+              ),
+            )
           : ListView.builder(
               padding: const EdgeInsets.all(12),
               scrollDirection: Axis.horizontal,
               itemCount: _definitions.isEmpty ? 1 : _definitions.length,
               itemBuilder: (context, index) {
                 if (_definitions.isEmpty) {
-                  return Center(child: Text('No definitions found for "$_selectedText"', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5))));
+                  return Center(
+                    child: Text(
+                      'No definitions found for "$_selectedText"',
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.5,
+                        ),
+                      ),
+                    ),
+                  );
                 }
                 final word = _definitions[index];
                 return Card(
@@ -377,9 +440,21 @@ class _BrowserScreenState extends State<BrowserScreen> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(word, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text(
+                            word,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
                           const SizedBox(height: 4),
-                          Text('Tap to define', style: TextStyle(fontSize: 10, color: theme.colorScheme.primary)),
+                          Text(
+                            'Tap to define',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -412,7 +487,9 @@ class _BrowserScreenState extends State<BrowserScreen> {
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
+            border: Border.all(
+              color: theme.colorScheme.outline.withValues(alpha: 0.2),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -421,15 +498,24 @@ class _BrowserScreenState extends State<BrowserScreen> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.translate, size: 18, color: theme.colorScheme.primary),
+                    Icon(
+                      Icons.translate,
+                      size: 18,
+                      color: theme.colorScheme.primary,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'All Readings (${_readingsMap.length} words)',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
                     const Spacer(),
                     IconButton(
@@ -460,12 +546,19 @@ class _BrowserScreenState extends State<BrowserScreen> {
                                 Expanded(
                                   child: Text(
                                     word,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
                                   ),
                                 ),
                                 InkWell(
                                   onTap: () => _searchWordDefinition(word),
-                                  child: Icon(Icons.search, size: 16, color: theme.colorScheme.primary),
+                                  child: Icon(
+                                    Icons.search,
+                                    size: 16,
+                                    color: theme.colorScheme.primary,
+                                  ),
                                 ),
                               ],
                             ),
@@ -475,14 +568,22 @@ class _BrowserScreenState extends State<BrowserScreen> {
                               runSpacing: 4,
                               children: readings.map((reading) {
                                 return Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                                    color: theme.colorScheme.primary.withValues(
+                                      alpha: 0.15,
+                                    ),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
                                     reading,
-                                    style: TextStyle(fontSize: 10, color: theme.colorScheme.primary),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: theme.colorScheme.primary,
+                                    ),
                                   ),
                                 );
                               }).toList(),
@@ -508,12 +609,19 @@ class _BrowserScreenState extends State<BrowserScreen> {
       color: theme.colorScheme.errorContainer,
       child: Row(
         children: [
-          Icon(Icons.warning_amber, size: 18, color: theme.colorScheme.onErrorContainer),
+          Icon(
+            Icons.warning_amber,
+            size: 18,
+            color: theme.colorScheme.onErrorContainer,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               _lastError!,
-              style: TextStyle(fontSize: 12, color: theme.colorScheme.onErrorContainer),
+              style: TextStyle(
+                fontSize: 12,
+                color: theme.colorScheme.onErrorContainer,
+              ),
             ),
           ),
           IconButton(
@@ -537,11 +645,21 @@ class _BrowserScreenState extends State<BrowserScreen> {
         style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface),
         decoration: InputDecoration(
           hintText: 'Search or enter URL',
-          hintStyle: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
-          prefixIcon: Icon(Icons.search, size: 18, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+          hintStyle: TextStyle(
+            fontSize: 14,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+          ),
+          prefixIcon: Icon(
+            Icons.search,
+            size: 18,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+          ),
           filled: true,
           fillColor: theme.colorScheme.surfaceContainerHighest,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 0,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(24),
             borderSide: BorderSide.none,
@@ -550,7 +668,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
         onSubmitted: _handleSubmit,
         onTap: () {
           if (_urlController.text.isNotEmpty) {
-            _urlController.selection = TextSelection(baseOffset: 0, extentOffset: _urlController.text.length);
+            _urlController.selection = TextSelection(
+              baseOffset: 0,
+              extentOffset: _urlController.text.length,
+            );
           }
         },
       ),
@@ -580,12 +701,19 @@ class _BrowserScreenState extends State<BrowserScreen> {
         tooltip: 'Home',
       ),
       IconButton(
-        icon: Icon(_isMokuroMode ? Icons.auto_fix_high : Icons.document_scanner, size: 22, color: _isMokuroMode ? theme.colorScheme.primary : null),
+        icon: Icon(
+          _isMokuroMode ? Icons.auto_fix_high : Icons.document_scanner,
+          size: 22,
+          color: _isMokuroMode ? theme.colorScheme.primary : null,
+        ),
         onPressed: _toggleMokuroMode,
         tooltip: 'Mokuro Mode (Screenshot OCR)',
       ),
       IconButton(
-        icon: Icon(_isCapturingOcr ? Icons.hourglass_empty : Icons.photo_camera, size: 22),
+        icon: Icon(
+          _isCapturingOcr ? Icons.hourglass_empty : Icons.photo_camera,
+          size: 22,
+        ),
         onPressed: _isCapturingOcr ? null : _captureScreenshot,
         tooltip: 'Capture & OCR',
       ),
@@ -596,7 +724,11 @@ class _BrowserScreenState extends State<BrowserScreen> {
           tooltip: 'Select Region',
         ),
       IconButton(
-        icon: Icon(_isDarkMode ? Icons.brightness_3 : Icons.brightness_7, size: 22, color: _isDarkMode ? theme.colorScheme.primary : null),
+        icon: Icon(
+          _isDarkMode ? Icons.brightness_3 : Icons.brightness_7,
+          size: 22,
+          color: _isDarkMode ? theme.colorScheme.primary : null,
+        ),
         onPressed: _showDarkModeOptions,
         tooltip: 'Dark Mode',
       ),
@@ -619,32 +751,62 @@ class _BrowserScreenState extends State<BrowserScreen> {
         itemBuilder: (context) => [
           PopupMenuItem(
             value: 'toggle_definitions',
-            child: _menuItemWithCheck(Icons.album, 'Definitions Panel', _showDefinitionsPanel),
+            child: _menuItemWithCheck(
+              Icons.album,
+              'Definitions Panel',
+              _showDefinitionsPanel,
+            ),
           ),
           PopupMenuItem(
             value: 'toggle_readings',
-            child: _menuItemWithCheck(Icons.translate, 'All Readings Panel', _showAllReadings),
+            child: _menuItemWithCheck(
+              Icons.translate,
+              'All Readings Panel',
+              _showAllReadings,
+            ),
           ),
           PopupMenuItem(
             value: 'toggle_mokuro',
-            child: _menuItemWithCheck(Icons.auto_fix_high, 'Mokuro Mode', _isMokuroMode),
+            child: _menuItemWithCheck(
+              Icons.auto_fix_high,
+              'Mokuro Mode',
+              _isMokuroMode,
+            ),
           ),
           const PopupMenuDivider(),
-          PopupMenuItem(value: 'ocr_from_camera', child: _menuItem(Icons.camera_alt, 'OCR from Camera')),
-          PopupMenuItem(value: 'ocr_from_gallery', child: _menuItem(Icons.photo_library, 'OCR from Gallery')),
+          PopupMenuItem(
+            value: 'ocr_from_camera',
+            child: _menuItem(Icons.camera_alt, 'OCR from Camera'),
+          ),
+          PopupMenuItem(
+            value: 'ocr_from_gallery',
+            child: _menuItem(Icons.photo_library, 'OCR from Gallery'),
+          ),
           const PopupMenuDivider(),
           PopupMenuItem(
             value: 'dark_mode_inverted',
-            child: _menuItemWithCheck(Icons.brightness_3, 'Dark Mode (Inverted)', _isDarkMode && !_darkModeInvertOnly),
+            child: _menuItemWithCheck(
+              Icons.brightness_3,
+              'Dark Mode (Inverted)',
+              _isDarkMode && !_darkModeInvertOnly,
+            ),
           ),
           PopupMenuItem(
             value: 'dark_mode_pure',
-            child: _menuItemWithCheck(Icons.brightness_2, 'Dark Mode (Pure)', _isDarkMode && _darkModeInvertOnly),
+            child: _menuItemWithCheck(
+              Icons.brightness_2,
+              'Dark Mode (Pure)',
+              _isDarkMode && _darkModeInvertOnly,
+            ),
           ),
           const PopupMenuDivider(),
           PopupMenuItem(
             value: 'toggle_ad_blocker',
-            child: _menuItemWithCheck(Icons.shield, 'Ad Blocker', _isAdBlockerEnabled),
+            child: _menuItemWithCheck(
+              Icons.shield,
+              'Ad Blocker',
+              _isAdBlockerEnabled,
+            ),
           ),
           PopupMenuItem(
             value: 'view_blocked',
@@ -652,11 +814,23 @@ class _BrowserScreenState extends State<BrowserScreen> {
           ),
           const PopupMenuDivider(),
           PopupMenuItem(value: 'share', child: _menuItem(Icons.share, 'Share')),
-          PopupMenuItem(value: 'copy', child: _menuItem(Icons.copy, 'Copy URL')),
-          PopupMenuItem(value: 'open_external', child: _menuItem(Icons.open_in_browser, 'Open in Browser')),
-          PopupMenuItem(value: 'stop', child: _menuItem(Icons.stop, 'Stop Loading')),
+          PopupMenuItem(
+            value: 'copy',
+            child: _menuItem(Icons.copy, 'Copy URL'),
+          ),
+          PopupMenuItem(
+            value: 'open_external',
+            child: _menuItem(Icons.open_in_browser, 'Open in Browser'),
+          ),
+          PopupMenuItem(
+            value: 'stop',
+            child: _menuItem(Icons.stop, 'Stop Loading'),
+          ),
           const PopupMenuDivider(),
-          PopupMenuItem(value: 'clear_cache', child: _menuItem(Icons.delete_outline, 'Clear Cache')),
+          PopupMenuItem(
+            value: 'clear_cache',
+            child: _menuItem(Icons.delete_outline, 'Clear Cache'),
+          ),
         ],
       ),
     ];
@@ -664,11 +838,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
 
   Widget _menuItem(IconData icon, String label) {
     return Row(
-      children: [
-        Icon(icon, size: 20),
-        const SizedBox(width: 12),
-        Text(label),
-      ],
+      children: [Icon(icon, size: 20), const SizedBox(width: 12), Text(label)],
     );
   }
 
@@ -705,8 +875,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
                 label: const Text('Open in system browser'),
                 onPressed: () async {
                   final url = widget.initialUrl ?? 'https://www.google.com';
-                  await launchUrl(Uri.parse(url),
-                      mode: LaunchMode.externalApplication);
+                  await launchUrl(
+                    Uri.parse(url),
+                    mode: LaunchMode.externalApplication,
+                  );
                 },
               ),
             ],
@@ -735,7 +907,8 @@ class _BrowserScreenState extends State<BrowserScreen> {
         allowUniversalAccessFromFileURLs: true,
         allowFileAccessFromFileURLs: true,
         isInspectable: true,
-        userAgent: 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+        userAgent:
+            'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
       ),
       onWebViewCreated: (controller) {
         _controller = controller;
@@ -754,6 +927,13 @@ class _BrowserScreenState extends State<BrowserScreen> {
           _loadProgress = 0;
           if (url != null) _urlController.text = url.toString();
         });
+        if (url != null) {
+          HistoryService.instance.record(
+            HistoryCategory.visit,
+            _hostOf(url.toString()),
+            subtitle: url.toString(),
+          );
+        }
         _updateNavigationState();
       },
       onProgressChanged: (controller, progress) {
@@ -769,7 +949,8 @@ class _BrowserScreenState extends State<BrowserScreen> {
         });
       },
       onReceivedHttpError: (controller, request, errorResponse) {
-        if (errorResponse.statusCode != 200 && errorResponse.statusCode != 204) {
+        if (errorResponse.statusCode != 200 &&
+            errorResponse.statusCode != 204) {
           setState(() {
             _lastError = 'HTTP Error: ${errorResponse.statusCode}';
           });
@@ -781,14 +962,20 @@ class _BrowserScreenState extends State<BrowserScreen> {
 
         if (uri == null) return NavigationActionPolicy.CANCEL;
 
-        if (url.startsWith('tel:') || url.startsWith('mailto:') || url.startsWith('sms:') || url.startsWith('tg:')) {
+        if (url.startsWith('tel:') ||
+            url.startsWith('mailto:') ||
+            url.startsWith('sms:') ||
+            url.startsWith('tg:')) {
           if (await canLaunchUrl(uri)) {
             await launchUrl(uri);
             return NavigationActionPolicy.CANCEL;
           }
         }
 
-        if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('file://') && !url.startsWith('data:')) {
+        if (!url.startsWith('http://') &&
+            !url.startsWith('https://') &&
+            !url.startsWith('file://') &&
+            !url.startsWith('data:')) {
           if (await canLaunchUrl(uri)) {
             await launchUrl(uri, mode: LaunchMode.externalApplication);
             return NavigationActionPolicy.CANCEL;
@@ -866,7 +1053,9 @@ class _BrowserScreenState extends State<BrowserScreen> {
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
+            border: Border.all(
+              color: theme.colorScheme.outline.withValues(alpha: 0.2),
+            ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -907,8 +1096,12 @@ class _BrowserScreenState extends State<BrowserScreen> {
                     setState(() => _showHoverPopup = false);
                   }),
                   _hoverButton(theme, Icons.open_in_new, 'Open', () async {
-                    if (_hoveredUrl != null && !_hoveredUrl!.startsWith('data:')) {
-                      await launchUrl(Uri.parse(_hoveredUrl!), mode: LaunchMode.externalApplication);
+                    if (_hoveredUrl != null &&
+                        !_hoveredUrl!.startsWith('data:')) {
+                      await launchUrl(
+                        Uri.parse(_hoveredUrl!),
+                        mode: LaunchMode.externalApplication,
+                      );
                     }
                     setState(() => _showHoverPopup = false);
                   }),
@@ -924,7 +1117,12 @@ class _BrowserScreenState extends State<BrowserScreen> {
     );
   }
 
-  Widget _hoverButton(ThemeData theme, IconData icon, String label, VoidCallback onPressed) {
+  Widget _hoverButton(
+    ThemeData theme,
+    IconData icon,
+    String label,
+    VoidCallback onPressed,
+  ) {
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(8),
@@ -935,7 +1133,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
           children: [
             Icon(icon, size: 18, color: theme.colorScheme.primary),
             const SizedBox(height: 2),
-            Text(label, style: TextStyle(fontSize: 10, color: theme.colorScheme.primary)),
+            Text(
+              label,
+              style: TextStyle(fontSize: 10, color: theme.colorScheme.primary),
+            ),
           ],
         ),
       ),
@@ -952,7 +1153,9 @@ class _BrowserScreenState extends State<BrowserScreen> {
     if (_isMokuroMode) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Mokuro Mode: Take screenshot to extract and lookup words'),
+          content: Text(
+            'Mokuro Mode: Take screenshot to extract and lookup words',
+          ),
           duration: Duration(seconds: 2),
         ),
       );
@@ -960,8 +1163,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
   }
 
   void _startRegionSelection() {
-    setState(() {
-    });
+    setState(() {});
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Tap and drag to select region'),
@@ -992,9 +1194,9 @@ class _BrowserScreenState extends State<BrowserScreen> {
       await _processOcrImage(screenshot);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('OCR Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('OCR Error: $e')));
       }
     } finally {
       setState(() => _isCapturingOcr = false);
@@ -1003,32 +1205,36 @@ class _BrowserScreenState extends State<BrowserScreen> {
 
   Future<void> _captureFromCamera() async {
     try {
-      final XFile? image = await _imagePicker.pickImage(source: ImageSource.camera);
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+      );
       if (image != null) {
         final bytes = await image.readAsBytes();
         await _processOcrImage(bytes);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Camera error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Camera error: $e')));
       }
     }
   }
 
   Future<void> _captureFromGallery() async {
     try {
-      final XFile? image = await _imagePicker.pickImage(source: ImageSource.gallery);
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+      );
       if (image != null) {
         final bytes = await image.readAsBytes();
         await _processOcrImage(bytes);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gallery error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gallery error: $e')));
       }
     }
   }
@@ -1070,15 +1276,19 @@ class _BrowserScreenState extends State<BrowserScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('No text found in image${result.error != null ? ': ${result.error}' : ''}')),
+            SnackBar(
+              content: Text(
+                'No text found in image${result.error != null ? ': ${result.error}' : ''}',
+              ),
+            ),
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('OCR processing failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('OCR processing failed: $e')));
       }
     } finally {
       setState(() => _isCapturingOcr = false);
@@ -1086,7 +1296,9 @@ class _BrowserScreenState extends State<BrowserScreen> {
   }
 
   List<String> _extractJapaneseWords(String text) {
-    final japaneseRegex = RegExp(r'[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf\u3400-\u4dbf]+');
+    final japaneseRegex = RegExp(
+      r'[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf\u3400-\u4dbf]+',
+    );
     final matches = japaneseRegex.allMatches(text);
     final words = <String>[];
     for (final match in matches) {
@@ -1107,12 +1319,12 @@ class _BrowserScreenState extends State<BrowserScreen> {
     for (final word in words.take(20)) {
       try {
         final result = await dictionaryService.searchTerm(word);
-              if (result.entries.isNotEmpty) {
-                final e = result.entries.first;
-                foundEntries.add({
-                  'word': word,
-                  'reading': e.reading,
-                  'meaning': e.definitions.isNotEmpty ? e.definitions.first : '',
+        if (result.entries.isNotEmpty) {
+          final e = result.entries.first;
+          foundEntries.add({
+            'word': word,
+            'reading': e.reading,
+            'meaning': e.definitions.isNotEmpty ? e.definitions.first : '',
           });
         }
       } catch (e) {
@@ -1123,7 +1335,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
     if (foundEntries.isNotEmpty && mounted) {
       _showMokuroResultsDialog(foundEntries);
     }
-}
+  }
 
   // Only actual ad/tracking domains - matched exactly against host
   static const Set<String> _adDomains = {
@@ -1279,7 +1491,9 @@ img, video, canvas, svg, picture {
     final css = _darkModeInvertOnly ? _darkModeInvertOnlyCss : _darkModeCss;
 
     if (_isDarkMode) {
-      await _controller?.evaluateJavascript(source: '''
+      await _controller?.evaluateJavascript(
+        source:
+            '''
         (function() {
           var style = document.createElement('style');
           style.id = 'dark-mode-style';
@@ -1287,14 +1501,17 @@ img, video, canvas, svg, picture {
           style.innerHTML = `$css`;
           document.head.appendChild(style);
         })();
-      ''');
+      ''',
+      );
     } else {
-      await _controller?.evaluateJavascript(source: '''
+      await _controller?.evaluateJavascript(
+        source: '''
         (function() {
           var style = document.getElementById('dark-mode-style');
           if (style) style.remove();
         })();
-      ''');
+      ''',
+      );
     }
   }
 
@@ -1398,7 +1615,9 @@ img, video, canvas, svg, picture {
           children: [
             SwitchListTile(
               title: const Text('Ad Blocker'),
-              subtitle: Text(_isAdBlockerEnabled ? 'Blocking ads' : 'Ads are allowed'),
+              subtitle: Text(
+                _isAdBlockerEnabled ? 'Blocking ads' : 'Ads are allowed',
+              ),
               value: _isAdBlockerEnabled,
               onChanged: (value) {
                 Navigator.pop(context);
@@ -1483,7 +1702,9 @@ img, video, canvas, svg, picture {
   Future<void> _applyAdBlockerCss() async {
     if (_controller == null) return;
 
-    await _controller?.evaluateJavascript(source: '''
+    await _controller?.evaluateJavascript(
+      source:
+          '''
       (function() {
         var style = document.createElement('style');
         style.id = 'ad-blocker-style';
@@ -1491,18 +1712,21 @@ img, video, canvas, svg, picture {
         style.innerHTML = `$_adBlockerCss`;
         document.head.appendChild(style);
       })();
-    ''');
+    ''',
+    );
   }
 
   Future<void> _removeAdBlockerCss() async {
     if (_controller == null) return;
 
-    await _controller?.evaluateJavascript(source: '''
+    await _controller?.evaluateJavascript(
+      source: '''
       (function() {
         var style = document.getElementById('ad-blocker-style');
         if (style) style.remove();
       })();
-    ''');
+    ''',
+    );
   }
 
   void _showMokuroResultsDialog(List<Map<String, dynamic>> entries) {
@@ -1520,7 +1744,9 @@ img, video, canvas, svg, picture {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
               ),
               child: Row(
                 children: [
@@ -1547,15 +1773,27 @@ img, video, canvas, svg, picture {
                   return ListTile(
                     title: Text(
                       entry['word'] ?? '',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (entry['reading']?.isNotEmpty == true)
-                          Text(entry['reading'], style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                          Text(
+                            entry['reading'],
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
                         if (entry['meaning']?.isNotEmpty == true)
-                          Text(entry['meaning'], maxLines: 2, overflow: TextOverflow.ellipsis),
+                          Text(
+                            entry['meaning'],
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                       ],
                     ),
                     onTap: () {
@@ -1574,7 +1812,8 @@ img, video, canvas, svg, picture {
   }
 
   void _searchWord(String word) {
-    final searchUrl = 'https://www.google.com/search?q=define+${Uri.encodeComponent(word)}';
+    final searchUrl =
+        'https://www.google.com/search?q=define+${Uri.encodeComponent(word)}';
     _controller?.loadUrl(urlRequest: URLRequest(url: WebUri(searchUrl)));
   }
 
@@ -1595,7 +1834,9 @@ img, video, canvas, svg, picture {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surfaceContainerHighest,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
               ),
               child: Row(
                 children: [
@@ -1646,7 +1887,10 @@ img, video, canvas, svg, picture {
                     ),
                     const SizedBox(height: 16),
                     if (_detectedWords.isNotEmpty) ...[
-                      Text('Detected Words:', style: theme.textTheme.titleSmall),
+                      Text(
+                        'Detected Words:',
+                        style: theme.textTheme.titleSmall,
+                      ),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
@@ -1673,11 +1917,15 @@ img, video, canvas, svg, picture {
     switch (action) {
       case 'share':
         if (_currentUrl != null) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Share: $_currentUrl')));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Share: $_currentUrl')));
         }
         break;
       case 'copy':
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('URL copied to clipboard')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('URL copied to clipboard')),
+        );
         break;
       case 'open_external':
         if (_currentUrl != null) {
@@ -1737,14 +1985,17 @@ img, video, canvas, svg, picture {
         if (_webviewUnsupported) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('No webview on this platform')));
+              const SnackBar(content: Text('No webview on this platform')),
+            );
           }
           break;
         }
         await _controller?.clearCache();
         await InAppWebViewController.clearAllCache();
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cache cleared')));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Cache cleared')));
         }
         break;
     }
@@ -1772,9 +2023,9 @@ img, video, canvas, svg, picture {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Saved to Lang!')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Saved to Lang!')));
             },
             child: const Text('Save'),
           ),
@@ -1805,9 +2056,9 @@ img, video, canvas, svg, picture {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Added to Anki!')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Added to Anki!')));
             },
             child: const Text('Add'),
           ),
@@ -1838,8 +2089,11 @@ img, video, canvas, svg, picture {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              final searchUrl = 'https://www.google.com/search?q=define+${Uri.encodeComponent(text)}';
-              _controller?.loadUrl(urlRequest: URLRequest(url: WebUri(searchUrl)));
+              final searchUrl =
+                  'https://www.google.com/search?q=define+${Uri.encodeComponent(text)}';
+              _controller?.loadUrl(
+                urlRequest: URLRequest(url: WebUri(searchUrl)),
+              );
             },
             child: const Text('Search'),
           ),

@@ -527,5 +527,30 @@
   "@fontSizeSubtitle": {
     "type": "text",
     "placeholders": {}
-  }
+  },
+  "activityTitle": "アクティビティ",
+  "allCategories": "すべて",
+  "categorySearches": "検索",
+  "categoryWords": "単語",
+  "categoryKanji": "漢字",
+  "categoryFavorites": "お気に入り",
+  "categoryAnki": "Anki追加済み",
+  "categoryDocuments": "ドキュメント",
+  "categoryVisits": "訪問",
+  "categoryActions": "操作",
+  "noActivityYet": "まだアクティビティはありません",
+  "noActivityInCategory": "まだ何もありません",
+  "activitySearch": "検索:",
+  "activityWordLookup": "単語を検索:",
+  "activityKanjiLookup": "漢字を表示:",
+  "activityFavorite": "お気に入りに追加:",
+  "activityUnfavorite": "お気に入りから削除:",
+  "activityAnkiAdded": "Ankiに追加:",
+  "activityAnkiLocal": "Ankiリストに保存:",
+  "activityDocument": "ドキュメントを開く:",
+  "activityVisit": "訪問:",
+  "activitySaveWord": "単語を保存:",
+  "activityRemoveWord": "単語を削除:",
+  "activitySrsAdd": "SRSに追加:",
+  "activitySrsRemove": "SRSから削除:"
 }

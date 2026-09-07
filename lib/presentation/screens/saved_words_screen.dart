@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lang/core/services/history_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/domain/entities/dictionary.dart';
 import 'package:lang/domain/entities/srs_card.dart';
@@ -29,7 +30,11 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
     if (_searchQuery.isEmpty) {
       return words;
     }
-    return words.where((word) => word.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+    return words
+        .where(
+          (word) => word.toLowerCase().contains(_searchQuery.toLowerCase()),
+        )
+        .toList();
   }
 
   @override
@@ -52,9 +57,9 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
       ),
       body: Column(
         children: [
-        // Search bar and actions
-        Padding(
-          padding: ScreenSize.adaptivePadding(context),
+          // Search bar and actions
+          Padding(
+            padding: ScreenSize.adaptivePadding(context),
             child: Column(
               children: [
                 Row(
@@ -95,18 +100,19 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
                           _addAllToSRS(context, appState);
                         }
                       },
-                      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                        const PopupMenuItem<String>(
-                          value: 'add_all_to_srs',
-                          child: Row(
-                            children: [
-                              Icon(Icons.school, size: 18),
-                              SizedBox(width: 8),
-                              Text('Add all to SRS'),
-                            ],
-                          ),
-                        ),
-                      ],
+                      itemBuilder: (BuildContext context) =>
+                          <PopupMenuEntry<String>>[
+                            const PopupMenuItem<String>(
+                              value: 'add_all_to_srs',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.school, size: 18),
+                                  SizedBox(width: 8),
+                                  Text('Add all to SRS'),
+                                ],
+                              ),
+                            ),
+                          ],
                     ),
                   ],
                 ),
@@ -115,9 +121,9 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
           ),
 
           // Stats summary
-        Padding(
-          padding: ScreenSize.adaptivePadding(context),
-          child: Row(
+          Padding(
+            padding: ScreenSize.adaptivePadding(context),
+            child: Row(
               children: [
                 Text(
                   '${filteredWords.length} words',
@@ -145,7 +151,11 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.bookmark_border, size: 64, color: Colors.grey),
+                        Icon(
+                          Icons.bookmark_border,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
                         SizedBox(height: 16),
                         Text(
                           'No saved words yet',
@@ -160,62 +170,90 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
                     ),
                   )
                 : filteredWords.isEmpty
-                    ? Center(
-                        child: Text('No words matching "$_searchQuery"'),
-                      )
-        : ListView.builder(
-          padding: ScreenSize.adaptivePadding(context),
-                        itemCount: filteredWords.length,
-                        itemBuilder: (context, index) {
-                          final word = filteredWords[index];
-                          final details = appState.savedWordsDetails[word];
+                ? Center(child: Text('No words matching "$_searchQuery"'))
+                : ListView.builder(
+                    padding: ScreenSize.adaptivePadding(context),
+                    itemCount: filteredWords.length,
+                    itemBuilder: (context, index) {
+                      final word = filteredWords[index];
+                      final details = appState.savedWordsDetails[word];
 
-                          // Create a dictionary entry from saved details
-                          final entry = details != null
-                              ? DictionaryEntry.fromJson(details)
-                              : DictionaryEntry.fromData(
-                                  term: word,
-                                  reading: '',
-                                  definitions: ['No details available'],
-                                );
+                      // Create a dictionary entry from saved details
+                      final entry = details != null
+                          ? DictionaryEntry.fromJson(details)
+                          : DictionaryEntry.fromData(
+                              term: word,
+                              reading: '',
+                              definitions: ['No details available'],
+                            );
 
-                          return DictionaryEntryCard(
-                            entry: entry,
-                            isSaved: true,
-                            isFavorite: appState.favoriteWords.contains(word),
-                            isInAnki: appState.ankiWords.contains(word),
-                            isInSRS: context.watch<SRSService>().allCards.any((card) => card.id == (word + (entry.reading))),
-                            onSaveToggle: () {
-                              appState.removeSavedWord(word);
-                            },
-                            onFavoriteToggle: () {
-                              if (appState.favoriteWords.contains(word)) {
-                                appState.removeFavoriteWord(word);
-                              } else {
-                                appState.addFavoriteWord(word);
-                              }
-                            },
-                            onAnkiToggle: () {
-                              if (appState.ankiWords.contains(word)) {
-                                appState.removeAnkiWord(word);
-                              } else {
-                                appState.addAnkiWord(word);
-                              }
-                            },
-                            onSRSToggle: () {
-                              final srsService = context.read<SRSService>();
-                              if (context.read<SRSService>().allCards.any((card) => card.id == (word + (entry.reading)))) {
-                                // Remove from SRS
-                                srsService.removeCard(word + (entry.reading));
-                              } else {
-                                // Add to SRS
-                                final srsCard = SRSConversionUtils.dictionaryEntryToSRSCard(entry);
-                                srsService.addCard(srsCard);
-                              }
-                            },
-                          );
+                      return DictionaryEntryCard(
+                        entry: entry,
+                        isSaved: true,
+                        isFavorite: appState.favoriteWords.contains(word),
+                        isInAnki: appState.ankiWords.contains(word),
+                        isInSRS: context.watch<SRSService>().allCards.any(
+                          (card) => card.id == (word + (entry.reading)),
+                        ),
+                        onSaveToggle: () {
+                          appState.removeSavedWord(word);
                         },
-                      ),
+                        onFavoriteToggle: () {
+                          if (appState.favoriteWords.contains(word)) {
+                            appState.removeFavoriteWord(word);
+                            HistoryService.instance.record(
+                              HistoryCategory.favorite,
+                              word,
+                              subtitle: '-',
+                            );
+                          } else {
+                            appState.addFavoriteWord(word);
+                            HistoryService.instance.record(
+                              HistoryCategory.favorite,
+                              word,
+                            );
+                          }
+                        },
+                        onAnkiToggle: () {
+                          if (appState.ankiWords.contains(word)) {
+                            appState.removeAnkiWord(word);
+                          } else {
+                            appState.addAnkiWord(word);
+                            HistoryService.instance.record(
+                              HistoryCategory.anki,
+                              word,
+                            );
+                          }
+                        },
+                        onSRSToggle: () {
+                          final srsService = context.read<SRSService>();
+                          if (context.read<SRSService>().allCards.any(
+                            (card) => card.id == (word + (entry.reading)),
+                          )) {
+                            // Remove from SRS
+                            srsService.removeCard(word + (entry.reading));
+                            HistoryService.instance.record(
+                              HistoryCategory.action,
+                              word,
+                              subtitle: 'srs_remove',
+                            );
+                          } else {
+                            // Add to SRS
+                            final srsCard =
+                                SRSConversionUtils.dictionaryEntryToSRSCard(
+                                  entry,
+                                );
+                            srsService.addCard(srsCard);
+                            HistoryService.instance.record(
+                              HistoryCategory.action,
+                              word,
+                              subtitle: 'srs_add',
+                            );
+                          }
+                        },
+                      );
+                    },
+                  ),
           ),
         ],
       ),
