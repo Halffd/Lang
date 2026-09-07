@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lang/data/repositories/srs_service.dart';
 import 'package:lang/domain/entities/srs_card.dart';
@@ -386,63 +385,4 @@ class MockStorageService extends StorageService {
   @override
   Future<Set<String>> getAnkiWords() async => <String>{};
 
-  @override
-  Future<void> addSavedWord(
-    String word, {
-    Map<String, dynamic>? details,
-  }) async {}
-
-  @override
-  Future<void> removeSavedWord(String word) async {}
-
-  @override
-  Future<void> addFavoriteWord(String word) async {}
-
-  @override
-  Future<void> removeFavoriteWord(String word) async {}
-
-  @override
-  Future<void> addAnkiWord(String word) async {}
-
-  @override
-  Future<void> removeAnkiWord(String word) async {}
-
-  @override
-  Future<bool> getAutoHideNavigation() async => false;
-
-  @override
-  Future<void> setAutoHideNavigation(bool value) async {}
-
-  @override
-  Future<String> getLanguage() async => 'ja';
-
-  @override
-  Future<void> setLanguage(String language) async {}
-
-  @override
-  Future<Map<String, dynamic>?> getJson(String key) async {
-    final value = _data[key];
-    if (value == null) return null;
-    if (value is Map<String, dynamic>) return value;
-    return null;
-  }
-
-  @override
-  Future<bool> setJson(String key, Map<String, dynamic> value) async {
-    _data[key] = value;
-    return true;
-  }
-
-  @override
-  Future<List<Map<String, dynamic>>> getJsonList(String key) async {
-    final value = _data[key];
-    if (value == null) return [];
-    if (value is List) return value.cast<Map<String, dynamic>>();
-    return [];
-  }
-
-  @override
-  Future<void> setJsonList(String key, List<Map<String, dynamic>> value) async {
-    _data[key] = value;
-  }
 }

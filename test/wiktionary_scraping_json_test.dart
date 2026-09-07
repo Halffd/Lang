@@ -21,7 +21,7 @@ void main() {
         'content': result,
         'contentCount': result.length,
         'hasData': result.isNotEmpty,
-        'sampleContent': result.length > 0 ? result.sublist(0, result.length > 5 ? 5 : result.length) : [],
+        'sampleContent': result.isNotEmpty ? result.sublist(0, result.length > 5 ? 5 : result.length) : [],
       };
       
       print('--- English "hello" results ---');
@@ -44,7 +44,7 @@ void main() {
         'contentCount': result.length,
         'hasData': result.isNotEmpty,
         'isJapanese': RegExp(r'[\u3040-\u309F\u30A0-\u30FF]').hasMatch('猫'),
-        'sampleContent': result.length > 0 ? result.sublist(0, result.length > 5 ? 5 : result.length) : [],
+        'sampleContent': result.isNotEmpty ? result.sublist(0, result.length > 5 ? 5 : result.length) : [],
       };
       
       print('--- Japanese "猫" (cat) results ---');
@@ -67,7 +67,7 @@ void main() {
         'contentCount': result.length,
         'hasData': result.isNotEmpty,
         'isChinese': service.isSingleChineseCharacter('水'),
-        'sampleContent': result.length > 0 ? result.sublist(0, result.length > 5 ? 5 : result.length) : [],
+        'sampleContent': result.isNotEmpty ? result.sublist(0, result.length > 5 ? 5 : result.length) : [],
       };
       
       print('--- Chinese "水" (water) results ---');
@@ -89,7 +89,7 @@ void main() {
         'content': result,
         'contentCount': result.length,
         'hasData': result.isNotEmpty,
-        'sampleContent': result.length > 0 ? result.sublist(0, result.length > 5 ? 5 : result.length) : [],
+        'sampleContent': result.isNotEmpty ? result.sublist(0, result.length > 5 ? 5 : result.length) : [],
       };
       
       print('--- French "bonjour" results ---');
@@ -111,7 +111,7 @@ void main() {
         'content': result,
         'contentCount': result.length,
         'hasData': result.isNotEmpty,
-        'sampleContent': result.length > 0 ? result.sublist(0, result.length > 5 ? 5 : result.length) : [],
+        'sampleContent': result.isNotEmpty ? result.sublist(0, result.length > 5 ? 5 : result.length) : [],
       };
       
       print('--- German "hallo" results ---');

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 import 'package:lang/data/repositories/srs_service.dart';
 import 'package:lang/domain/entities/srs_card.dart';
 import 'package:lang/domain/entities/srs_deck.dart';
@@ -143,7 +142,7 @@ void main() {
               leading: CircleAvatar(
                 backgroundColor: Color(
                   int.parse(deck.color.replaceFirst('#', '0xFF')),
-                ).withOpacity(0.2),
+                ).withValues(alpha: 0.2),
                 child: Text(deck.icon),
               ),
               title: Text(deck.name),
@@ -197,37 +196,4 @@ class MockStorageService extends StorageService {
 
   @override
   Future<Set<String>> getAnkiWords() async => <String>{};
-
-  @override
-  Future<void> addSavedWord(
-    String word, {
-    Map<String, dynamic>? details,
-  }) async {}
-
-  @override
-  Future<void> removeSavedWord(String word) async {}
-
-  @override
-  Future<void> addFavoriteWord(String word) async {}
-
-  @override
-  Future<void> removeFavoriteWord(String word) async {}
-
-  @override
-  Future<void> addAnkiWord(String word) async {}
-
-  @override
-  Future<void> removeAnkiWord(String word) async {}
-
-  @override
-  Future<bool> getAutoHideNavigation() async => false;
-
-  @override
-  Future<void> setAutoHideNavigation(bool value) async {}
-
-  @override
-  Future<String> getLanguage() async => 'ja';
-
-  @override
-  Future<void> setLanguage(String language) async {}
 }

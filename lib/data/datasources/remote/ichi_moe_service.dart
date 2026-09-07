@@ -180,9 +180,7 @@ class IchiMoeService {
             mainContent = HtmlSanitizer.sanitize(compoundSection.innerHtml);
             // Process meanings separately
             for (final u in meaningElements) {
-              if (u.innerHtml != null) {
-                processedMeanings.add(u);
-              }
+              processedMeanings.add(u);
             }
           } 
           // Check if we have conjugation information
@@ -193,9 +191,7 @@ class IchiMoeService {
               // Clear and rebuild dd content with meanings
               ddElement.innerHtml = '';
               for (final u in meaningElements) {
-                if (u.innerHtml != null) {
-                  ddElement.innerHtml += '<li>${HtmlSanitizer.sanitize(u.innerHtml)}</li>';
-                }
+                ddElement.innerHtml += '<li>${HtmlSanitizer.sanitize(u.innerHtml)}</li>';
               }
               mainContent = HtmlSanitizer.sanitize(ddElement.innerHtml);
             }
@@ -207,9 +203,7 @@ class IchiMoeService {
               // Clear and rebuild dd content with meanings
               ddElement.innerHtml = '';
               for (final u in meaningElements) {
-                if (u.innerHtml != null) {
-                  ddElement.innerHtml += '<li>${HtmlSanitizer.sanitize(u.innerHtml)}</li>';
-                }
+                ddElement.innerHtml += '<li>${HtmlSanitizer.sanitize(u.innerHtml)}</li>';
               }
               mainContent = HtmlSanitizer.sanitize(ddElement.innerHtml);
             }
@@ -217,9 +211,7 @@ class IchiMoeService {
           // Default: just use the meanings
           else {
             for (final u in meaningElements) {
-              if (u.innerHtml != null) {
-                mainContent += '<li>${HtmlSanitizer.sanitize(u.innerHtml)}</li>';
-              }
+              mainContent += '<li>${HtmlSanitizer.sanitize(u.innerHtml)}</li>';
             }
           }
 

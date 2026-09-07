@@ -25,7 +25,7 @@ class TranslationResult {
     if (wordTranslations.isNotEmpty) {
       final maxSourceLen = wordTranslations.map((w) => w.source.length).reduce((a, b) => a > b ? a : b);
       final colWidth = maxSourceLen + 2;
-      buffer.writeln('${wordTranslations.map((w) => w.source).join(' ')}');
+      buffer.writeln(wordTranslations.map((w) => w.source).join(' '));
       buffer.writeln(fullTranslation);
       buffer.writeln('');
       buffer.writeln('Word-by-word:');

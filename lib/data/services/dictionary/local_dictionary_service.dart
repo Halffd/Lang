@@ -1,4 +1,3 @@
-import 'package:lang/utils/japanese_utils.dart';
 import 'package:lang/domain/entities/dictionary.dart';
 
 /// Service for local dictionary database operations (Drift/SQLite)

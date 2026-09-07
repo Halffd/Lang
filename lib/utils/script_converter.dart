@@ -99,8 +99,9 @@ class ScriptConverter {
     bool hasThai = false;
 
     for (final rune in text.runes) {
-      if (rune >= 0x3040 && rune <= 0x309F) hasHiragana = true;
-      else if (rune >= 0x30A0 && rune <= 0x30FF) hasKatakana = true;
+      if (rune >= 0x3040 && rune <= 0x309F) {
+        hasHiragana = true;
+      } else if (rune >= 0x30A0 && rune <= 0x30FF) hasKatakana = true;
       else if (rune >= 0x3400 && rune <= 0x4DBF) hasKanji = true;
       else if (rune >= 0x4E00 && rune <= 0x9FFF) hasKanji = hasHanzi = true;
       else if (rune >= 0x3105 && rune <= 0x312F) hasBopomofo = true;

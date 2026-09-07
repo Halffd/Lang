@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lang/data/repositories/srs_service.dart';
 
 class ImportWordsSheet extends StatefulWidget {
   final Function(List<String>) onImport;

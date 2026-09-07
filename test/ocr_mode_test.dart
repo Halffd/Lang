@@ -62,9 +62,9 @@ void main() {
 
     test('forEach iterates all modes', () {
       int count = 0;
-      OcrMode.values.forEach((mode) {
+      for (var mode in OcrMode.values) {
         count++;
-      });
+      }
       expect(count, 4);
     });
   });

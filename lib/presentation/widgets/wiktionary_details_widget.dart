@@ -7,10 +7,10 @@ class WiktionaryDetailsWidget extends StatelessWidget {
   final String word;
 
   const WiktionaryDetailsWidget({
-    Key? key,
+    super.key,
     required this.wiktionaryEntries,
     required this.word,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +44,7 @@ class WiktionaryDetailsWidget extends StatelessWidget {
               final index = entry.key;
               final wiktionaryEntry = entry.value;
               return _buildWiktionaryEntry(context, wiktionaryEntry, index);
-            }).toList(),
+            }),
           ],
         ),
       ),

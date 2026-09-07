@@ -4,7 +4,7 @@ import 'package:lang/data/repositories/dictionary_service.dart';
 import 'package:lang/presentation/screens/import_screen.dart';
 
 class DictionaryListScreen extends StatefulWidget {
-  const DictionaryListScreen({Key? key}) : super(key: key);
+  const DictionaryListScreen({super.key});
 
   @override
   State<DictionaryListScreen> createState() => _DictionaryListScreenState();

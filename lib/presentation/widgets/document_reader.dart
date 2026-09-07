@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart' as widgets;
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:epub_view/epub_view.dart';
-import 'package:advance_pdf_viewer/advance_pdf_viewer.dart';
 import 'package:archive/archive.dart';
 
 typedef OnPageChangedCallback = void Function(int currentPage, int totalPages);
@@ -16,12 +15,12 @@ class DocumentReader extends StatefulWidget {
   final bool isMangaMode;
 
   const DocumentReader({
-    Key? key,
+    super.key,
     required this.filePath,
     required this.fileType,
     this.onPageChanged,
     this.isMangaMode = false,
-  }) : super(key: key);
+  });
 
   @override
   State<DocumentReader> createState() => DocumentReaderState();
@@ -342,7 +341,7 @@ class DocumentReaderState extends State<DocumentReader> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                '${_currentPage}/${_totalPages}',
+                '$_currentPage/$_totalPages',
                 style: const TextStyle(color: Colors.white),
               ),
             ),
@@ -360,7 +359,7 @@ class DocumentReaderState extends State<DocumentReader> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('Page ${_currentPage}/${_totalPages}'),
+              Text('Page $_currentPage/$_totalPages'),
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.swap_vert),

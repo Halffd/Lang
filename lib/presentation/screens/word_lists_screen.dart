@@ -27,7 +27,7 @@ class _WordListsScreenState extends State<WordListsScreen>
   bool? _isFlexMode;
   bool _isSentenceMode = false;
   int _sentenceColumns = 6;
-  int _selectedIndex = 0;
+  final int _selectedIndex = 0;
 
   @override
   void initState() {

@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:lang/data/repositories/dictionary_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/domain/entities/dictionary.dart';
-import 'package:lang/domain/entities/tone_model.dart';
 import 'package:lang/utils/screen_size.dart';
 
 class SearchKanjiCard extends StatelessWidget {

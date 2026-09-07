@@ -114,7 +114,7 @@ class AnalyzerProvider extends ChangeNotifier {
           .where(
             (w) =>
                 (w.reading?.isNotEmpty ?? false) ||
-                (w.mdbgData?.pinyin?.isNotEmpty ?? false),
+                (w.mdbgData?.pinyin.isNotEmpty ?? false),
           )
           .toList();
     } else if (_filter.hasReading == false) {
@@ -122,7 +122,7 @@ class AnalyzerProvider extends ChangeNotifier {
           .where(
             (w) =>
                 (w.reading?.isEmpty ?? true) &&
-                (w.mdbgData?.pinyin?.isEmpty ?? true),
+                (w.mdbgData?.pinyin.isEmpty ?? true),
           )
           .toList();
     }
@@ -145,7 +145,7 @@ class AnalyzerProvider extends ChangeNotifier {
             (w) =>
                 w.word.toLowerCase().contains(q) ||
                 (w.reading?.toLowerCase().contains(q) ?? false) ||
-                (w.mdbgData?.pinyin?.toLowerCase().contains(q) ?? false) ||
+                (w.mdbgData?.pinyin.toLowerCase().contains(q) ?? false) ||
                 w.ichiMoeDefinitions.any((d) => d.toLowerCase().contains(q)) ||
                 w.localDefinitions.any(
                   (d) => (d['definition'] as String? ?? '')
@@ -163,9 +163,9 @@ class AnalyzerProvider extends ChangeNotifier {
       words = words.where((w) {
         final freq = w.frequency ?? 999999;
         int band;
-        if (freq <= 1000)
+        if (freq <= 1000) {
           band = 0;
-        else if (freq <= 5000)
+        } else if (freq <= 5000)
           band = 1;
         else if (freq <= 15000)
           band = 2;
@@ -404,9 +404,9 @@ class AnalyzerProvider extends ChangeNotifier {
       switch (_groupBy) {
         case WordGroupBy.frequencyBand:
           final freq = word.frequency ?? 999999;
-          if (freq <= 1000)
+          if (freq <= 1000) {
             key = 'Top 1K (Very Common)';
-          else if (freq <= 5000)
+          } else if (freq <= 5000)
             key = '1K-5K (Common)';
           else if (freq <= 15000)
             key = '5K-15K (Uncommon)';
@@ -422,7 +422,7 @@ class AnalyzerProvider extends ChangeNotifier {
         case WordGroupBy.hasReading:
           key =
               (word.reading?.isNotEmpty ?? false) ||
-                  (word.mdbgData?.pinyin?.isNotEmpty ?? false)
+                  (word.mdbgData?.pinyin.isNotEmpty ?? false)
               ? 'Has Reading'
               : 'No Reading';
           break;

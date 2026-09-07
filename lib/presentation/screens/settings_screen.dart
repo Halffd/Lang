@@ -140,7 +140,7 @@ class SettingsScreen extends StatelessWidget {
                         vertical: 8,
                       ),
                     ),
-                    value: () {
+                    initialValue: () {
                       // Double-check that the value is valid at build time
                       final currentLang = appState.language;
                       if (LanguageOption.all.any(
@@ -196,7 +196,7 @@ class SettingsScreen extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: DropdownButtonFormField<ThemeMode>(
-                      value: appState.themeMode,
+                      initialValue: appState.themeMode,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         contentPadding: EdgeInsets.symmetric(
@@ -310,7 +310,7 @@ class SettingsScreen extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: DropdownButtonFormField<int>(
-                      value:
+                      initialValue:
                           (appState.defaultScreenIndex >= 0 &&
                               appState.defaultScreenIndex <= 5)
                           ? appState.defaultScreenIndex
@@ -571,7 +571,7 @@ class SettingsScreen extends StatelessWidget {
                                   vertical: 8,
                                 ),
                               ),
-                              value:
+                              initialValue:
                                   appState.ankiDecks.contains(
                                     appState.currentAnkiDeck,
                                   )
@@ -618,7 +618,7 @@ class SettingsScreen extends StatelessWidget {
                                     vertical: 8,
                                   ),
                                 ),
-                                value:
+                                initialValue:
                                     appState.ankiDecks.contains(
                                       appState.currentAnkiDeck,
                                     )
@@ -664,7 +664,7 @@ class SettingsScreen extends StatelessWidget {
                                   vertical: 8,
                                 ),
                               ),
-                              value:
+                              initialValue:
                                   appState.profiles.contains(
                                     appState.currentProfile,
                                   )
@@ -711,7 +711,7 @@ class SettingsScreen extends StatelessWidget {
                                     vertical: 8,
                                   ),
                                 ),
-                                value:
+                                initialValue:
                                     appState.profiles.contains(
                                       appState.currentProfile,
                                     )
@@ -828,7 +828,7 @@ class SettingsScreen extends StatelessWidget {
                               isDense: true,
                               labelText: 'Deck',
                             ),
-                            value:
+                            initialValue:
                                 appState.ankiDecks.contains(
                                   appState.currentAnkiDeck,
                                 )
@@ -1108,7 +1108,7 @@ class SettingsScreen extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: DropdownButtonFormField<TranslationProvider>(
-                      value: appState.translationProvider,
+                      initialValue: appState.translationProvider,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         contentPadding: EdgeInsets.symmetric(

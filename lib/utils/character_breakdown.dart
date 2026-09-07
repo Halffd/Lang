@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'chinese_util.dart';
 import 'package:lang/domain/entities/dictionary.dart' as model;
 

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -90,10 +89,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
   bool _showFavorites = true;
 
   // Filter state - using analyzer_provider types
-  WordFilter _wordFilter = WordFilter();
-  WordSortBy _sortBy = WordSortBy.frequency;
-  bool _sortAscending = false;
-  WordGroupBy _groupBy = WordGroupBy.none;
+  final WordFilter _wordFilter = WordFilter();
+  final WordSortBy _sortBy = WordSortBy.frequency;
+  final bool _sortAscending = false;
+  final WordGroupBy _groupBy = WordGroupBy.none;
 
   late AnimationController _expandController;
   late AnimationController _fadeController;
@@ -1262,9 +1261,9 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     final freq = word.frequency ?? 0;
 
     Color freqColor;
-    if (freq <= 1000)
+    if (freq <= 1000) {
       freqColor = Colors.green;
-    else if (freq <= 5000)
+    } else if (freq <= 5000)
       freqColor = Colors.lightGreen;
     else if (freq <= 15000)
       freqColor = Colors.amber;
@@ -1508,7 +1507,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: sentenceList.length.clamp(0, 15),
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        separatorBuilder: (_, _) => const SizedBox(height: 8),
         itemBuilder: (context, index) {
           final sentence = sentenceList[index];
           final translation = provider.getSentenceTranslation(sentence);

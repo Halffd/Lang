@@ -9,11 +9,11 @@ class DocumentReaderScreen extends StatefulWidget {
   final bool isMangaMode;
 
   const DocumentReaderScreen({
-    Key? key,
+    super.key,
     this.filePath,
     this.fileType,
     this.isMangaMode = false,
-  }) : super(key: key);
+  });
 
   @override
   State<DocumentReaderScreen> createState() => DocumentReaderScreenState();
@@ -347,7 +347,7 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
             if (_currentFilePath != null) ...[
               const SizedBox(height: 8),
               Text(
-                'Path: ${_currentFilePath}',
+                'Path: $_currentFilePath',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],

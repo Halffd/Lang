@@ -7,7 +7,7 @@ import 'package:lang/data/repositories/translation_service.dart';
 import 'package:lang/data/datasources/local_translation_service.dart';
 
 class SentenceTranslatorScreen extends StatefulWidget {
-  const SentenceTranslatorScreen({Key? key}) : super(key: key);
+  const SentenceTranslatorScreen({super.key});
 
   @override
   State<SentenceTranslatorScreen> createState() => _SentenceTranslatorScreenState();
@@ -373,7 +373,7 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
     required void Function(String?) onChanged,
   }) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       decoration: const InputDecoration(
         border: OutlineInputBorder(),
       ),

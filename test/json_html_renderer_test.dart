@@ -80,7 +80,8 @@ void main() {
         'href': 'https://example.com',
         'content': 'Click here',
       });
-      expect(widget, isA<InkWell>());
+      // link renders as MouseRegion > GestureDetector > rich text
+      expect(widget, isA<MouseRegion>());
     });
 
     test('render handles img tag', () {
@@ -88,7 +89,11 @@ void main() {
         'tag': 'img',
         'data': {'src': 'image.png'},
       });
-      expect(widget, isA<Icon>());
+      // unresolvable image renders a labeled fallback block
+      expect(widget, isA<Padding>());
+      // the fallback shows the basename of the missing image
+      final label = _findTextOf(widget);
+      expect(label, contains('image.png'));
     });
 
     test('render handles ruby tag with base and annotation', () {
@@ -104,7 +109,7 @@ void main() {
           },
         ],
       });
-      expect(widget, isA<RichText>());
+      expect(widget, isA<DefaultTextStyle>());
     });
 
     test('render handles ruby with complex annotation', () {
@@ -120,7 +125,7 @@ void main() {
           },
         ],
       });
-      expect(widget, isA<RichText>());
+      expect(widget, isA<DefaultTextStyle>());
     });
 
     test('render handles div with sense-group class', () {
@@ -129,7 +134,8 @@ void main() {
         'data': {'content': 'sense-group'},
         'content': 'Sense content',
       });
-      expect(widget, isA<Container>());
+      // sense-group renders as a padded block (not a bordered container)
+      expect(widget, isA<Padding>());
     });
 
     test('render handles div with sense class', () {
@@ -138,7 +144,7 @@ void main() {
         'data': {'content': 'sense'},
         'content': 'Definition',
       });
-      expect(widget, isA<Container>());
+      expect(widget, isA<Padding>());
     });
 
     test('render handles div with glossary class', () {
@@ -147,7 +153,7 @@ void main() {
         'data': {'content': 'glossary'},
         'content': 'Glossary content',
       });
-      expect(widget, isA<Text>());
+      expect(widget, isA<Padding>());
     });
 
     test('render handles div with extra-info class', () {
@@ -177,4 +183,36 @@ void main() {
       expect(widget, isA<Text>());
     });
   });
+}
+
+
+// walk a widget tree (debug fill) and collect Text data strings
+String _findTextOf(Widget widget) {
+  final buf = StringBuffer();
+  void walk(dynamic w) {
+    if (w is Text) {
+      buf.writeln(w.data);
+    } else if (w is MultiChildRenderObjectWidget) {
+      for (final c in w.children) {
+        walk(c);
+      }
+    } else if (w is Padding) {
+      walk(w.child);
+    } else if (w is Row) {
+      for (final c in w.children) {
+        walk(c);
+      }
+    } else if (w is Column) {
+      for (final c in w.children) {
+        walk(c);
+      }
+    } else if (w is Container) {
+      if (w.child != null) walk(w.child);
+    } else if (w is Tooltip) {
+      walk(w.child);
+    }
+  }
+
+  walk(widget);
+  return buf.toString();
 }

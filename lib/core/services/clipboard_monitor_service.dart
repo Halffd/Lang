@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../domain/entities/app_state.dart';
 
 class ClipboardMonitorService {

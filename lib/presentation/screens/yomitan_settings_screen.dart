@@ -40,6 +40,8 @@ class YomitanSettingsScreen extends StatelessWidget {
               const Divider(height: 32),
               _AppearanceSection(profile: p),
               const Divider(height: 32),
+              const _DictionaryDisplaySection(),
+              const Divider(height: 32),
               _PopupPositionSection(profile: p),
               const Divider(height: 32),
               _AudioSection(profile: p),
@@ -1726,4 +1728,93 @@ class _MarkerTemplatesEditorState extends State<_MarkerTemplatesEditor> {
         'frequency-harmonic-rank', 'pitch-accents', 'tags',
         'clipboard-text', 'screenshot', 'audio',
       ].contains(m);
+}
+
+
+// ============================================================
+// Dictionary display toggles (user-level, not per-profile)
+// ============================================================
+
+class _DictionaryDisplaySection extends StatelessWidget {
+  const _DictionaryDisplaySection();
+
+  @override
+  Widget build(BuildContext context) {
+    final appState = context.read<AppState>();
+
+    return ListenableBuilder(
+      listenable: appState,
+      builder: (context, _) {
+        final o = appState.dictionaryDisplayOptions;
+        void save() => appState.setDictionaryDisplayOptions(o);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _sectionTitle('Dictionary Display'),
+            const Text(
+                'Control which parts of dictionary entries are shown '
+                'when rendering results (incl. structured content)',
+                style: TextStyle(fontSize: 12)),
+            const SizedBox(height: 8),
+            _switchTile('Example sentences',
+                'Sentence blocks in definitions', o.showSentences, (v) {
+              o.showSentences = v;
+              save();
+            }),
+            _switchTile('Dictionary images',
+                'Images embedded in entries (extracted on import)', o.showImages,
+                (v) {
+              o.showImages = v;
+              save();
+            }),
+            _switchTile('Tags',
+                'Part-of-speech and category tags', o.showTags, (v) {
+              o.showTags = v;
+              save();
+            }),
+            _switchTile('Notes and extra info',
+                'Usage notes, extra-info blocks', o.showNotes, (v) {
+              o.showNotes = v;
+              save();
+            }),
+            _switchTile('Frequencies',
+                'Frequency information in entries', o.showFrequencies, (v) {
+              o.showFrequencies = v;
+              save();
+            }),
+            _switchTile('Pitch accent',
+                'Pronunciation/pitch-accent blocks', o.showPitchAccent, (v) {
+              o.showPitchAccent = v;
+              save();
+            }),
+            _switchTile('Compact glossaries',
+                'Semicolon-joined definitions without list bullets',
+                o.compactGlossaries, (v) {
+              o.compactGlossaries = v;
+              save();
+            }),
+            _switchTile('Structured content',
+                'Render structured-content entries with styling; off shows plain text',
+                o.showStructuredContent, (v) {
+              o.showStructuredContent = v;
+              save();
+            }),
+            _switchTile('Collapse long definitions',
+                'Long entries hide behind an expand control',
+                o.collapseLongDefinitions, (v) {
+              o.collapseLongDefinitions = v;
+              save();
+            }),
+            _switchTile('Dictionary name',
+                'Per-definition source dictionary badge', o.showDictionaryName,
+                (v) {
+              o.showDictionaryName = v;
+              save();
+            }),
+          ],
+        );
+      },
+    );
+  }
 }

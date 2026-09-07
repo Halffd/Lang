@@ -1,11 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:path/path.dart' as path;
-import 'package:path_provider/path_provider.dart';
 import 'package:archive/archive.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:lang/domain/entities/srs_card.dart';
-import 'package:lang/domain/entities/srs_deck.dart';
 import 'package:lang/data/repositories/srs_service.dart';
 
 class AnkiPackageService {

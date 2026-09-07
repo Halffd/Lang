@@ -79,14 +79,13 @@ class WordDetailSheet extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          if (word.word != null &&
-              PinyinUtil.isChinese(word.word!) &&
+          if (PinyinUtil.isChinese(word.word) &&
               word.reading == null &&
               provider.currentLanguage == 'zh')
             Padding(
               padding: const EdgeInsets.only(top: 4.0, bottom: 8.0),
               child: Text(
-                PinyinUtil.getPinyin(word.word!) ?? '',
+                PinyinUtil.getPinyin(word.word) ?? '',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.white70,
@@ -112,8 +111,9 @@ class WordDetailSheet extends StatelessWidget {
                   ),
                   Consumer<AppState>(
                     builder: (context, appState, _) {
-                      if (!appState.ankiConnectEnabled)
+                      if (!appState.ankiConnectEnabled) {
                         return const SizedBox.shrink();
+                      }
                       return IconButton(
                         icon: const Icon(Icons.auto_stories),
                         tooltip: 'Send to Anki',
@@ -216,8 +216,9 @@ class WordDetailSheet extends StatelessWidget {
             ...kanjis.map((k) {
               final details = word.kanjiDetails[k];
               final kjp = word.kanjipediaData[k];
-              if (details == null && kjp == null)
+              if (details == null && kjp == null) {
                 return const SizedBox.shrink();
+              }
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12.0),
                 child: Column(

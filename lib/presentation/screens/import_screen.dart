@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:lang/data/repositories/import_service.dart';
 
 class ImportScreen extends StatefulWidget {
-  const ImportScreen({Key? key}) : super(key: key);
+  const ImportScreen({super.key});
   
   @override
   State<ImportScreen> createState() => _ImportScreenState();

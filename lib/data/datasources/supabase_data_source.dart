@@ -310,10 +310,10 @@ class SupabaseDataSource {
     final uid = userId;
     if (uid == null) return;
     await _supabase.from('srs_decks').update({
-      if (name != null) 'name': name,
-      if (description != null) 'description': description,
-      if (icon != null) 'icon': icon,
-      if (color != null) 'color': color,
+      'name': ?name,
+      'description': ?description,
+      'icon': ?icon,
+      'color': ?color,
     }).eq('id', deckId).eq('user_id', uid);
   }
 

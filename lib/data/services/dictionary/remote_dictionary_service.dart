@@ -1,7 +1,5 @@
 import 'package:lang/utils/chinese_util.dart';
-import 'package:lang/utils/ideographic_util.dart';
 import 'package:lang/domain/entities/etymology_model.dart';
-import 'package:lang/domain/entities/tone_model.dart';
 import 'package:lang/domain/entities/dictionary.dart';
 
 /// Service for remote dictionary sources (Wiktionary, etymology, ichi.moe)

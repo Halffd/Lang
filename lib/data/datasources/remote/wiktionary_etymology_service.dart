@@ -104,7 +104,7 @@ class WiktionaryEtymologyService {
     try {
       // Get the appropriate Wiktionary subdomain for the language
       String subdomain = _getSubdomain(language);
-      String baseUrl = 'https://${subdomain}.wiktionary.org/w/api.php';
+      String baseUrl = 'https://$subdomain.wiktionary.org/w/api.php';
 
       // Use the Parse API which gives us wikitext that we can parse more accurately
       final response = await http.get(
@@ -280,9 +280,9 @@ class WiktionaryEtymologyService {
         if (currentSection.isNotEmpty) {
           result.add(currentSection);
         }
-        currentSection = line + '\n';
+        currentSection = '$line\n';
       } else {
-        currentSection += line + '\n';
+        currentSection += '$line\n';
       }
     }
     

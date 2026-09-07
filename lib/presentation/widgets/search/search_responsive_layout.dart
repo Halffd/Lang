@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lang/utils/screen_size.dart';
 
 class SearchResponsiveLayout extends StatelessWidget {
   final Widget searchBar;

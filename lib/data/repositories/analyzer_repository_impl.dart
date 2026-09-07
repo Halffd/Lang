@@ -108,9 +108,7 @@ class AnalyzerRepositoryImpl implements AnalyzerRepository {
 
     // 2. Frequency (Local -> Remote)
     freq = await dictionaryLocalDataSource.getFrequency(word);
-    if (freq == null) {
-      freq = await dictionaryRemoteDataSource.getFrequency(word, lang);
-    }
+    freq ??= await dictionaryRemoteDataSource.getFrequency(word, lang);
 
     // 3. ichi.moe (Japanese only)
     if (lang == 'ja' && showIchiMoe) {

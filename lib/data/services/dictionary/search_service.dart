@@ -1,6 +1,5 @@
-import 'package:lang/data/services/dictionary/local_dictionary_service.dart' hide DictionaryEntry;
+import 'package:lang/data/services/dictionary/local_dictionary_service.dart';
 import 'package:lang/data/services/dictionary/yomichan_service.dart';
-import 'package:lang/data/services/dictionary/remote_dictionary_service.dart';
 import 'package:lang/data/services/dictionary/tokenizer_service.dart';
 import 'package:lang/data/services/dictionary/language_detector.dart';
 import 'package:lang/domain/entities/dictionary.dart';
@@ -9,7 +8,6 @@ import 'package:lang/domain/entities/dictionary.dart';
 class SearchService {
   final LocalDictionaryService _localService = LocalDictionaryService();
   final YomichanService _yomichanService = YomichanService();
-  final RemoteDictionaryService _remoteService = RemoteDictionaryService();
   final TokenizerService _tokenizerService = TokenizerService();
   final LanguageDetector _languageDetector = LanguageDetector();
 
@@ -39,8 +37,6 @@ class SearchService {
     final localResults = await _localService.searchJapanese(query);
     final localEntries = _localService.convertToModelEntries(localResults);
     final yomichanResults = await _yomichanService.searchEntries(query);
-    final ichiMoeResults = await _localService.analyzeWithIchiMoe(query);
-    final wiktionaryResults = await _remoteService.fetchWiktionaryDetails(query, language: 'ja');
 
     return SearchResult(
       entries: localEntries + yomichanResults.map((r) => r.entry).whereType<DictionaryEntry>().toList(),
@@ -55,7 +51,6 @@ class SearchService {
     final localResults = await _localService.searchHanzi(query);
     final localEntries = _localService.convertToModelEntries(localResults);
     final yomichanResults = await _yomichanService.searchEntries(query);
-    final wiktionaryResults = await _remoteService.fetchWiktionaryDetails(query, language: 'zh');
 
     return SearchResult(
       entries: localEntries + yomichanResults.map((r) => r.entry).whereType<DictionaryEntry>().toList(),
@@ -68,7 +63,6 @@ class SearchService {
   /// Search for Korean text
   Future<SearchResult> _searchKorean(String query, SearchOptions options) async {
     final yomichanResults = await _yomichanService.searchEntries(query);
-    final wiktionaryResults = await _remoteService.fetchWiktionaryDetails(query, language: 'ko');
 
     return SearchResult(
       entries: yomichanResults.map((r) => r.entry).whereType<DictionaryEntry>().toList(),
@@ -79,19 +73,11 @@ class SearchService {
 
   /// Search for European languages (English, etc.)
   Future<SearchResult> _searchEuropean(String query, SearchOptions options) async {
-    final wiktionaryResults = await _remoteService.fetchWiktionaryDetails(query, language: 'en');
-    final entries = _convertWiktionary(wiktionaryResults);
     final localResults = await _localService.searchExact(query);
     final localEntries = _localService.convertToModelEntries(localResults);
 
-    // Merge the two lists properly - entries is a Map, we need to extract the list
-    final wiktionaryEntries = entries['entries'] as List<DictionaryEntry>? ?? [];
-    final allEntries = <DictionaryEntry>[];
-    allEntries.addAll(wiktionaryEntries);
-    allEntries.addAll(localEntries);
-
     return SearchResult(
-      entries: allEntries,
+      entries: localEntries,
       kanji: [],
       query: query,
     );
@@ -113,14 +99,6 @@ class SearchService {
     return await _tokenizerService.tokenize(text);
   }
 
-  // Helper methods
-  Map<String, dynamic> _convertWiktionary(List<WiktionaryEntry> entries) {
-    return {'entries': entries.map((e) => e.toJson()).whereType<Map<String, dynamic>>().toList()};
-  }
-
-  void _mergeFrequencies(List<YomichanSearchResult> results) {
-    // Implementation
-  }
 }
 
 /// Search options

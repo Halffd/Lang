@@ -37,12 +37,15 @@ class WiktionaryEntry {
   String toString() {
     final buffer = StringBuffer();
     buffer.writeln('=== $word ($language) ===');
-    if (partOfSpeech.isNotEmpty)
+    if (partOfSpeech.isNotEmpty) {
       buffer.writeln('Part of Speech: $partOfSpeech');
-    if (pronunciation.isNotEmpty)
+    }
+    if (pronunciation.isNotEmpty) {
       buffer.writeln('Pronunciation: ${pronunciation.join(', ')}');
-    if (etymology.isNotEmpty)
+    }
+    if (etymology.isNotEmpty) {
       buffer.writeln('Etymology: ${etymology.join('; ')}');
+    }
     if (definitions.isNotEmpty) {
       buffer.writeln('Definitions:');
       for (final def in definitions) {

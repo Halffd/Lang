@@ -136,7 +136,6 @@ class BackupService {
     }
 
     final zipData = ZipEncoder().encode(archive);
-    if (zipData == null) throw Exception('Failed to create backup archive');
 
     final backupsDir = await _backupsDir;
     final backupFile = File('${backupsDir.path}/$backupName.zip');

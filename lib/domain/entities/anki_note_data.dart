@@ -160,7 +160,7 @@ class AnkiNoteData {
       if (word.mdbgData != null && word.mdbgData!.definitions.isNotEmpty)
         AnalyzedDefGroup(
           'MDBG',
-          word.mdbgData!.definitions.map((d) => '$d').toList(),
+          word.mdbgData!.definitions.map((d) => d).toList(),
         ),
       if (word.localDefinitions.isNotEmpty)
         AnalyzedDefGroup(

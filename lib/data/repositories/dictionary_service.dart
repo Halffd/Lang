@@ -1,9 +1,6 @@
-import 'dart:convert';
-import 'dart:io';
 import 'package:lang/domain/entities/dictionary.dart' as model;
 import 'package:lang/domain/entities/tone_model.dart';
 import 'package:lang/domain/entities/etymology_model.dart';
-import 'package:drift/drift.dart' as drift;
 import 'package:lang/core/services/database.dart';
 import 'package:lang/database/database_manager.dart';
 import 'package:lang/utils/chinese_util.dart';
@@ -13,8 +10,6 @@ import '../datasources/remote/wiktionary_service.dart';
 import '../datasources/remote/ichi_moe_service.dart';
 
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:lang/utils/japanese_grammar.dart';
 
 class SearchOptions {

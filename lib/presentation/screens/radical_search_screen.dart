@@ -3,7 +3,6 @@ import 'package:lang/data/datasources/radical_data.dart';
 import 'package:lang/data/datasources/kanji_decomposition_data.dart';
 import 'package:lang/data/repositories/dictionary_service.dart';
 import 'package:lang/data/repositories/radical_search_service.dart';
-import 'package:lang/domain/entities/dictionary.dart';
 import 'package:lang/utils/screen_size.dart';
 
 class RadicalSearchScreen extends StatefulWidget {
@@ -222,7 +221,7 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: strokeCounts.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 4),
+              separatorBuilder: (_, _) => const SizedBox(width: 4),
               itemBuilder: (context, index) {
                 final sc = strokeCounts[index];
                 final isSelected = sc == _selectedStrokeCount;

@@ -2,8 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lang/domain/entities/anki_note_data.dart';
 import 'package:lang/domain/entities/anki_note_types.dart';
 import 'package:lang/domain/entities/analyzed_word.dart';
-import 'package:lang/l10n/app_localizations.dart' hide AnkiNoteType;
-import 'package:lang/utils/handlebars_engine.dart';
 
 void main() {
   group('AnkiNoteData.fromAnalyzedWord', () {

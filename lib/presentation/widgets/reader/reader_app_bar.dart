@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:lang/domain/entities/app_state.dart';
 
 class ReaderAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const ReaderAppBar({Key? key}) : super(key: key);
+  const ReaderAppBar({super.key});
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);

@@ -184,7 +184,7 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
                             isSaved: true,
                             isFavorite: appState.favoriteWords.contains(word),
                             isInAnki: appState.ankiWords.contains(word),
-                            isInSRS: context.watch<SRSService>().allCards.any((card) => card.id == (word + (entry.reading ?? ''))),
+                            isInSRS: context.watch<SRSService>().allCards.any((card) => card.id == (word + (entry.reading))),
                             onSaveToggle: () {
                               appState.removeSavedWord(word);
                             },
@@ -204,9 +204,9 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
                             },
                             onSRSToggle: () {
                               final srsService = context.read<SRSService>();
-                              if (context.read<SRSService>().allCards.any((card) => card.id == (word + (entry.reading ?? '')))) {
+                              if (context.read<SRSService>().allCards.any((card) => card.id == (word + (entry.reading)))) {
                                 // Remove from SRS
-                                srsService.removeCard(word + (entry.reading ?? ''));
+                                srsService.removeCard(word + (entry.reading));
                               } else {
                                 // Add to SRS
                                 final srsCard = SRSConversionUtils.dictionaryEntryToSRSCard(entry);
@@ -300,7 +300,7 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
         }
       } else {
         // Create a basic card if no details are available
-        final cardId = word + '';
+        final cardId = word;
         if (!srsService.allCards.any((card) => card.id == cardId)) {
           final srsCard = SRSCard.newCard(
             id: cardId,

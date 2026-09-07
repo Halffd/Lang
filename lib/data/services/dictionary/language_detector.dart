@@ -1,4 +1,3 @@
-import 'package:lang/utils/ideographic_util.dart';
 import 'package:lang/utils/chinese_util.dart';
 import 'package:lang/utils/japanese_utils.dart';
 

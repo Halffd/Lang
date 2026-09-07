@@ -1,21 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:path/path.dart' as path;
 import 'package:image_picker/image_picker.dart';
-import 'package:video_player/video_player.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:screenshot/screenshot.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:lang/domain/entities/srs_card.dart';
-import 'package:lang/domain/entities/srs_deck.dart';
 import 'package:lang/data/repositories/srs_service.dart';
-import 'package:lang/utils/screen_size.dart';
 
 class AddCardSheet extends StatefulWidget {
   final SRSCard? editCard;
@@ -49,7 +41,7 @@ class _AddCardSheetState extends State<AddCardSheet> {
 
   final AudioRecorder _audioRecorder = AudioRecorder();
   final AudioPlayer _audioPlayer = AudioPlayer();
-  bool _isRecording = false;
+  final bool _isRecording = false;
   bool _isPlayingAudio = false;
   String? _recordedAudioPath;
   final screenshotController = ScreenshotController();
@@ -141,9 +133,9 @@ class _AddCardSheetState extends State<AddCardSheet> {
     final bytes = await picker.readAsBytes();
     final ext = picker.path.split('.').last.toLowerCase();
     String mimeType = 'video/mp4';
-    if (ext == 'mov')
+    if (ext == 'mov') {
       mimeType = 'video/quicktime';
-    else if (ext == 'webm')
+    } else if (ext == 'webm')
       mimeType = 'video/webm';
     final base64 = 'data:$mimeType;base64,${base64Encode(bytes)}';
     setState(() => _videoBase64 = base64);
@@ -153,10 +145,11 @@ class _AddCardSheetState extends State<AddCardSheet> {
     try {
       final status = await Permission.camera.request();
       if (!status.isGranted) {
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Camera permission required')),
           );
+        }
         return;
       }
 
@@ -277,7 +270,7 @@ class _AddCardSheetState extends State<AddCardSheet> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedDeck,
+                initialValue: _selectedDeck,
                 decoration: const InputDecoration(
                   labelText: 'Deck',
                   border: OutlineInputBorder(),

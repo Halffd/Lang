@@ -84,6 +84,7 @@ dependencies:
   window_manager: ^0.4.3
   desktop_drop: ^0.5.0
 
+  meta: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

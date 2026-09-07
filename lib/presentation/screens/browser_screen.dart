@@ -1,18 +1,11 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:typed_data';
-import 'dart:ui' as ui;
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:screenshot/screenshot.dart';
 import 'package:lang/data/services/ocr_service.dart';
-import 'package:provider/provider.dart';
-import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/data/repositories/dictionary_service.dart';
 
 class BrowserScreen extends StatefulWidget {
@@ -46,7 +39,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
   List<String> _definitions = [];
   Map<String, List<String>> _readingsMap = {};
 
-  final ScreenshotController _screenshotController = ScreenshotController();
   final OcrService _ocrService = OcrService();
   final ImagePicker _imagePicker = ImagePicker();
   bool _isCapturingOcr = false;
@@ -55,8 +47,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
   List<String> _detectedWords = [];
   bool _isMokuroMode = false;
   final GlobalKey _webViewKey = GlobalKey();
-  Rect? _selectionRect;
-  bool _isSelectingRegion = false;
   bool _isDarkMode = false;
   bool _darkModeInvertOnly = false; // pure invert vs dark mode CSS
   bool _isAdBlockerEnabled = true;
@@ -126,27 +116,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
 
   bool _looksLikeDomain(String text) {
     return text.contains('.') && !text.contains(' ') && RegExp(r'\.[a-zA-Z]{2,}').hasMatch(text);
-  }
-
-  void _updateHoverInfo(String? url, Offset position) {
-    if (url == null || url.isEmpty) {
-      setState(() {
-        _showHoverPopup = false;
-        _hoveredUrl = null;
-      });
-      return;
-    }
-
-    if (!url.startsWith('http') && !url.startsWith('/') && !url.startsWith('data:')) {
-      setState(() => _showHoverPopup = false);
-      return;
-    }
-
-    setState(() {
-      _hoveredUrl = url.startsWith('data:') ? 'Data URL' : url;
-      _hoverPosition = position;
-      _showHoverPopup = true;
-    });
   }
 
 @override
@@ -221,7 +190,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
   }
 
   PreferredSizeWidget _buildStatusBar(ThemeData theme) {
-    final isActive = _showDefinitionsPanel || _showAllReadings || _isMokuroMode;
     return PreferredSize(
       preferredSize: const Size.fromHeight(28),
       child: Container(
@@ -307,29 +275,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
         ),
       ),
     );
-  }
-
-  void _handleKeyEvent(KeyEvent event) {
-    if (event is! KeyDownEvent) return;
-
-    final isShift = HardwareKeyboard.instance.isShiftPressed;
-    final key = event.logicalKey;
-
-    if (key == LogicalKeyboardKey.backslash) {
-      setState(() {
-        _showDefinitionsPanel = !_showDefinitionsPanel;
-        if (_showDefinitionsPanel) {
-          _extractDefinitions();
-        }
-      });
-    } else if (isShift && key == LogicalKeyboardKey.keyR) {
-      setState(() {
-        _showAllReadings = !_showAllReadings;
-        if (_showAllReadings) {
-          _extractReadings();
-        }
-      });
-    }
   }
 
   Future<void> _extractDefinitions() async {
@@ -556,8 +501,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
     );
   }
 
-  @override
-
   Widget _buildErrorBanner(ThemeData theme) {
     return Container(
       width: double.infinity,
@@ -705,7 +648,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
           ),
           PopupMenuItem(
             value: 'view_blocked',
-            child: _menuItem(Icons.list, 'View Blocked (${_adsBlockedCount})'),
+            child: _menuItem(Icons.list, 'View Blocked ($_adsBlockedCount)'),
           ),
           const PopupMenuDivider(),
           PopupMenuItem(value: 'share', child: _menuItem(Icons.share, 'Share')),
@@ -736,21 +679,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
         const SizedBox(width: 12),
         Expanded(child: Text(label)),
         if (isChecked) const Icon(Icons.check, size: 16),
-      ],
-    );
-  }
-
-  Widget _menuItemInfo(IconData icon, String label) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: Colors.grey),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.grey),
-          ),
-        ),
       ],
     );
   }
@@ -1019,7 +947,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
       _isMokuroMode = !_isMokuroMode;
       if (!_isMokuroMode) {
         _showOcrResults = false;
-        _selectionRect = null;
       }
     });
     if (_isMokuroMode) {
@@ -1034,8 +961,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
 
   void _startRegionSelection() {
     setState(() {
-      _isSelectingRegion = true;
-      _selectionRect = null;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -1348,21 +1273,6 @@ img, video, canvas, svg, picture {
 }
 ''';
 
-  void _toggleDarkMode() {
-    setState(() {
-      _isDarkMode = !_isDarkMode;
-    });
-    _applyDarkMode();
-  }
-
-  void _toggleDarkModeInvert() {
-    setState(() {
-      _isDarkMode = !_isDarkMode;
-      _darkModeInvertOnly = !_darkModeInvertOnly;
-    });
-    _applyDarkMode();
-  }
-
   Future<void> _applyDarkMode() async {
     if (_controller == null) return;
 
@@ -1374,7 +1284,7 @@ img, video, canvas, svg, picture {
           var style = document.createElement('style');
           style.id = 'dark-mode-style';
           style.type = 'text/css';
-          style.innerHTML = \`$css\`;
+          style.innerHTML = `$css`;
           document.head.appendChild(style);
         })();
       ''');
@@ -1578,7 +1488,7 @@ img, video, canvas, svg, picture {
         var style = document.createElement('style');
         style.id = 'ad-blocker-style';
         style.type = 'text/css';
-        style.innerHTML = \`$_adBlockerCss\`;
+        style.innerHTML = `$_adBlockerCss`;
         document.head.appendChild(style);
       })();
     ''');

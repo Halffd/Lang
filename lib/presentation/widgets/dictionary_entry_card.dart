@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'package:lang/domain/entities/dictionary.dart';
+import 'package:lang/domain/entities/app_state.dart';
+import 'package:lang/utils/dictionary_media_registry.dart';
+import 'package:lang/domain/entities/dictionary_display_options.dart';
 import 'package:lang/utils/json_html_renderer.dart';
 import 'package:lang/utils/screen_size.dart';
 import 'package:lang/presentation/widgets/tag_renderer.dart';
@@ -68,49 +72,83 @@ class DictionaryEntryCard extends StatelessWidget {
   }
 
   /// Helper method to render definition content that might be plain text or structured JSON
-  Widget _renderDefinitionContent(String definition, ThemeData theme) {
+  Widget _renderDefinitionContent(
+    BuildContext context,
+    String definition,
+    ThemeData theme,
+  ) {
+    final options = _displayOptionsOf(context);
+    final mediaIndex = DictionaryMediaRegistry.mediaIndex();
     try {
-      // Try to decode the definition as JSON
       final dynamic jsonContent = jsonDecode(definition);
-      // If successful, render it using our JSON HTML renderer
-      return JsonHtmlRenderer.render(jsonContent);
+      if (jsonContent is List || jsonContent is Map) {
+        if (!options.showStructuredContent) {
+          // plain-text fallback: flatten structured content
+          final buf = StringBuffer();
+          _flattenForPlain(jsonContent, buf);
+          final flat = buf.toString().trim();
+          if (flat.isNotEmpty) {
+            return Text(flat, style: theme.textTheme.bodyLarge);
+          }
+        }
+        return JsonHtmlRenderer.render(
+          jsonContent,
+          options: options,
+          mediaIndex: mediaIndex,
+        );
+      }
+      return Text(definition, style: theme.textTheme.bodyLarge);
     } on FormatException {
-      // If it's not valid JSON, render as plain text
-      return Text(
-        definition,
-        style: theme.textTheme.bodyLarge,
-      );
+      return Text(definition, style: theme.textTheme.bodyLarge);
     } catch (e) {
-      // If there's any other error, render as plain text
-      return Text(
-        definition,
-        style: theme.textTheme.bodyLarge,
-      );
+      return Text(definition, style: theme.textTheme.bodyLarge);
     }
   }
 
-  Widget _buildExternalLinkButton(BuildContext context, IconData icon, String label, String url) {
-    final theme = Theme.of(context);
-    return InkWell(
-      onTap: () => _launchExternalLink(context, url),
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        child: Column(
-          children: [
-            Icon(icon, size: 20, color: theme.colorScheme.primary),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  void _flattenForPlain(dynamic node, StringBuffer out) {
+    if (node is String) {
+      out.write(node);
+    } else if (node is List) {
+      for (final c in node) {
+        _flattenForPlain(c, out);
+      }
+    } else if (node is Map) {
+      final m = node.map((k, v) => MapEntry(k.toString(), v));
+      final tag = m['tag'] as String?;
+      if (tag == 'br' || tag == 'line-break') {
+        out.write('\n');
+        return;
+      }
+      if (tag == 'ruby') {
+        // keep just the base text
+        final content = m['content'];
+        if (content is List) {
+          for (final child in content) {
+            if (child is Map) {
+              final cm = child.map((k, v) => MapEntry(k.toString(), v));
+              if (cm['tag'] == 'rt' || cm['tag'] == 'rp') continue;
+            }
+            _flattenForPlain(child, out);
+          }
+        } else {
+          _flattenForPlain(content, out);
+        }
+        return;
+      }
+      if (tag == 'rt' || tag == 'rp') return;
+      _flattenForPlain(m['content'], out);
+    }
+  }
+
+  DictionaryDisplayOptions _displayOptionsOf(BuildContext context) {
+    try {
+      // provider lookup with graceful fallback when no AppState
+      // exists above (e.g. isolated widget tests)
+      final appState = Provider.of<AppState>(context, listen: false);
+      return appState.dictionaryDisplayOptions;
+    } catch (_) {
+      return DictionaryDisplayOptions();
+    }
   }
 
   @override
@@ -261,7 +299,7 @@ class DictionaryEntryCard extends StatelessWidget {
                         color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                       ),
                     ),
-                    backgroundColor: theme.colorScheme.surfaceVariant,
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   );
@@ -302,21 +340,23 @@ class DictionaryEntryCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Render tags if available
-                          if (entry.definitionTags != null && entry.definitionTags!.isNotEmpty)
+                          if (_displayOptionsOf(context).showTags &&
+                              entry.definitionTags != null &&
+                              entry.definitionTags!.isNotEmpty)
                             Wrap(
                               spacing: 4,
                               runSpacing: 4,
                               children: TagRenderer.renderTags(entry.definitionTags!),
                             ),
                           // Render the definition content
-                          _renderDefinitionContent(definition, theme),
+                          _renderDefinitionContent(context, definition, theme),
                         ],
                       ),
                     ),
                   ],
                 ),
               );
-            }).toList(),
+            }),
             
             // Frequency indicator
             if (entry.frequency > 0)
@@ -408,7 +448,7 @@ class DictionaryEntryCard extends StatelessWidget {
                           ),
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
               ),

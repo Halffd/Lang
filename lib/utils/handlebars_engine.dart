@@ -19,6 +19,7 @@
 /// Not supported (gracefully skipped): {{formatGlossary}}, {{furigana}},
 /// {{getMedia}}/{{hasMedia}}, {{pronunciation}} and other Yomitan
 /// native helpers - they render as empty strings unless overridden.
+library;
 
 class HandlebarsEngine {
   final Map<String, List<_AstNode>> _partials = {};

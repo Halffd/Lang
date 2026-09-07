@@ -56,24 +56,6 @@ class MockStorageService extends StorageService {
   Future<Set<String>> getAnkiWords() async => <String>{}.toSet();
 
   @override
-  Future<void> addSavedWord(String word, {Map<String, dynamic>? details}) async {}
-
-  @override
-  Future<void> removeSavedWord(String word) async {}
-
-  @override
-  Future<void> addFavoriteWord(String word) async {}
-
-  @override
-  Future<void> removeFavoriteWord(String word) async {}
-
-  @override
-  Future<void> addAnkiWord(String word) async {}
-
-  @override
-  Future<void> removeAnkiWord(String word) async {}
-
-  @override
   String getStringSync(String key) => '';
 
   @override

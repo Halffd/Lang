@@ -1,23 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as path;
-import 'package:image_picker/image_picker.dart';
-import 'package:video_player/video_player.dart';
-import 'package:record/record.dart';
-import 'package:audioplayers/audioplayers.dart';
-import 'package:screenshot/screenshot.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:lang/domain/entities/srs_card.dart';
-import 'package:lang/domain/entities/srs_deck.dart';
 import 'package:lang/data/repositories/srs_service.dart';
 import 'package:lang/data/repositories/anki_package_service.dart';
-import 'package:lang/utils/screen_size.dart';
 import 'package:lang/presentation/screens/srs/sheets/deck_manager_sheet.dart';
 import 'package:lang/presentation/screens/srs/sheets/add_card_sheet.dart';
 import 'package:lang/presentation/screens/srs/sheets/card_detail_sheet.dart';
@@ -61,7 +50,7 @@ class _CardsTabState extends State<CardsTab> {
     if (_searchQuery.isNotEmpty) {
       cards = cards.where((c) =>
         c.word.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-        (c.meaning?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false) ||
+        c.meaning.toLowerCase().contains(_searchQuery.toLowerCase()) ||
         (c.reading?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false)
       ).toList();
     }
@@ -362,7 +351,7 @@ class _CardsTabState extends State<CardsTab> {
               ],
               const SizedBox(height: 4),
               Text(
-                card.meaning ?? '',
+                card.meaning,
                 style: const TextStyle(fontSize: 11, color: Colors.grey),
                 textAlign: TextAlign.center,
                 maxLines: 2,
@@ -414,7 +403,7 @@ class _CardsTabState extends State<CardsTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                card.meaning?.isNotEmpty == true ? card.meaning! : card.reading ?? '',
+                card.meaning.isNotEmpty == true ? card.meaning : card.reading ?? '',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(color: card.isDue && !isSuspended ? Colors.orange : Colors.grey),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lang/domain/entities/srs_card.dart';
 import 'package:lang/domain/entities/srs_deck.dart';
 import 'package:lang/data/repositories/srs_service.dart';
 
@@ -196,8 +195,9 @@ class _DeckManagerSheetState extends State<DeckManagerSheet> {
                               ),
                             PopupMenuButton<String>(
                               onSelected: (v) {
-                                if (v == 'edit') _showAddDeckDialog(editDeck: deck);
-                                else if (v == 'delete') _confirmDeleteDeck(deck);
+                                if (v == 'edit') {
+                                  _showAddDeckDialog(editDeck: deck);
+                                } else if (v == 'delete') _confirmDeleteDeck(deck);
                                 else if (v == 'select') widget.onDeckSelected(deck.id);
                               },
                               itemBuilder: (_) => [

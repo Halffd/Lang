@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:lang/core/services/srs_service.dart';
 import 'package:lang/core/services/realtime_sync_service.dart';
 import 'package:lang/data/datasources/supabase_data_source.dart';
