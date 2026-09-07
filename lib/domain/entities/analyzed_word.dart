@@ -11,6 +11,13 @@ class AnalyzedWord {
   final List<Map<String, dynamic>> localDefinitions;
   final MdbgData? mdbgData;
 
+  /// Recursive definition lookups: nested word entries found inside
+  /// this word's definitions (max depth 3).
+  final List<AnalyzedWord> nestedEntries;
+
+  /// Source dictionary name (for priority ordering).
+  final String? sourceDictionary;
+
   AnalyzedWord({
     required this.word,
     this.reading,
@@ -23,6 +30,8 @@ class AnalyzedWord {
     this.kanjipediaData = const {},
     this.localDefinitions = const [],
     this.mdbgData,
+    this.nestedEntries = const [],
+    this.sourceDictionary,
   });
 
   AnalyzedWord copyWith({
@@ -37,6 +46,8 @@ class AnalyzedWord {
     Map<String, Map<String, String>>? kanjipediaData,
     List<Map<String, dynamic>>? localDefinitions,
     MdbgData? mdbgData,
+    List<AnalyzedWord>? nestedEntries,
+    String? sourceDictionary,
   }) {
     return AnalyzedWord(
       word: word ?? this.word,
@@ -50,6 +61,8 @@ class AnalyzedWord {
       kanjipediaData: kanjipediaData ?? this.kanjipediaData,
       localDefinitions: localDefinitions ?? this.localDefinitions,
       mdbgData: mdbgData ?? this.mdbgData,
+      nestedEntries: nestedEntries ?? this.nestedEntries,
+      sourceDictionary: sourceDictionary ?? this.sourceDictionary,
     );
   }
 }

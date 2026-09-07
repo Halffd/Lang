@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:lang/domain/entities/dictionary.dart' as model;
 import 'package:lang/data/repositories/dictionary_service.dart';
 import 'package:lang/presentation/screens/import_screen.dart';
+import 'package:lang/domain/entities/app_state.dart';
 
 class DictionaryListScreen extends StatefulWidget {
   const DictionaryListScreen({super.key});
@@ -93,9 +95,26 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
     final descController = TextEditingController(text: dict.description ?? '');
     final priorityController = TextEditingController(text: dict.priority.toString());
 
+    // per-profile conditions for this dictionary
+    final appState = context.read<AppState>();
+    final profile = appState.yomitanOptions.activeProfile;
+    final settings = profile.dictionarySettings.forDictionary(dict.title);
+    final languagesController = TextEditingController(
+      text: settings.languages.join(', '),
+    );
+    final readingsController = TextEditingController(
+      text: settings.readingPatterns.join(', '),
+    );
+    final regexController = TextEditingController(text: settings.termRegex ?? '');
+    final posController = TextEditingController(
+      text: settings.partOfSpeechTags.join(', '),
+    );
+    bool conditionEnabled = !settings.hasNoConditions;
+
     await showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
         title: const Text('Edit Dictionary'),
         content: SingleChildScrollView(
           child: Column(
@@ -117,6 +136,58 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
                 decoration: const InputDecoration(labelText: 'Priority (higher = first)'),
                 keyboardType: TextInputType.number,
               ),
+              const Divider(height: 24),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Lookup conditions (active profile)',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              ),
+              SwitchListTile(
+                dense: true,
+                title: const Text('Use conditions', style: TextStyle(fontSize: 13)),
+                subtitle: const Text(
+                    'Dictionary only matches lookups meeting all conditions',
+                    style: TextStyle(fontSize: 11)),
+                value: conditionEnabled,
+                onChanged: (v) => setDialogState(() => conditionEnabled = v),
+              ),
+              if (conditionEnabled) ...[
+                TextField(
+                  controller: languagesController,
+                  decoration: const InputDecoration(
+                    labelText: 'Languages (comma separated)',
+                    hintText: 'ja, zh',
+                    isDense: true,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: readingsController,
+                  decoration: const InputDecoration(
+                    labelText: 'Reading patterns (exact or *)',
+                    hintText: 'よ*, た*',
+                    isDense: true,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: regexController,
+                  decoration: const InputDecoration(
+                    labelText: 'Term regex',
+                    hintText: '^\u3041-\u3096 pattern or empty',
+                    isDense: true,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: posController,
+                  decoration: const InputDecoration(
+                    labelText: 'Part-of-speech tags (comma separated)',
+                    hintText: 'noun, verb',
+                    isDense: true,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -135,6 +206,21 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
                   priority: priority,
                 ),
               );
+              // save per-profile conditions
+              if (conditionEnabled) {
+                settings.languages = _splitList(languagesController.text);
+                settings.readingPatterns = _splitList(readingsController.text);
+                settings.termRegex = regexController.text.trim().isEmpty
+                    ? null
+                    : regexController.text.trim();
+                settings.partOfSpeechTags = _splitList(posController.text);
+              } else {
+                settings.languages = [];
+                settings.readingPatterns = [];
+                settings.termRegex = null;
+                settings.partOfSpeechTags = [];
+              }
+              appState.setYomitanOptions(appState.yomitanOptions);
               if (mounted) {
                 Navigator.pop(ctx);
                 _loadDictionaries();
@@ -143,6 +229,7 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
             child: const Text('Save'),
           ),
         ],
+        ),
       ),
     );
   }
@@ -519,4 +606,11 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
       },
     );
   }
+
+
+  static List<String> _splitList(String raw) => raw
+      .split(',')
+      .map((s) => s.trim())
+      .where((s) => s.isNotEmpty)
+      .toList();
 }

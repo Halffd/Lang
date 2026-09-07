@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dictionary_settings.dart';
 
 /// Yomitan-style settings covering all export-related options.
 ///
@@ -633,6 +634,11 @@ class YomitanProfile {
   final ResultDisplaySettings resultDisplay = ResultDisplaySettings();
   final AnkiSettings anki = AnkiSettings();
 
+  /// Per-dictionary settings for this profile: priority, enable,
+  /// and lookup conditions.
+  final ProfileDictionarySettings dictionarySettings =
+      ProfileDictionarySettings();
+
   YomitanProfile(this.name);
 
   Map<String, dynamic> toJson() => {
@@ -652,6 +658,7 @@ class YomitanProfile {
         'security': security.toJson(),
         'resultDisplay': resultDisplay.toJson(),
         'anki': anki.toJson(),
+        'dictionarySettings': dictionarySettings.toJson(),
       };
 
   static YomitanProfile fromJson(Map<String, dynamic> json) {
@@ -677,6 +684,8 @@ class YomitanProfile {
     p.resultDisplay
         .fromJson(json['resultDisplay'] as Map<String, dynamic>? ?? {});
     p.anki.fromJson(json['anki'] as Map<String, dynamic>? ?? {});
+    p.dictionarySettings
+        .fromJson(json['dictionarySettings'] as Map<String, dynamic>? ?? {});
     return p;
   }
 }

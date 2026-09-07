@@ -267,6 +267,21 @@ class WordDetailSheet extends StatelessWidget {
             }),
             const SizedBox(height: 20),
           ],
+          if (word.nestedEntries.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _SectionHeader(
+              icon: Icons.account_tree,
+              title: 'Words in definition',
+              color: theme.colorScheme.tertiary,
+            ),
+            const SizedBox(height: 6),
+            ...word.nestedEntries.map(
+              (nested) => _NestedWordTile(
+                word: nested,
+                onLookup: () => provider.searchWord(nested.word),
+              ),
+            ),
+          ],
           if (wikiHtml != null) ...[
             _SectionHeader(
               icon: Icons.public,
@@ -315,6 +330,95 @@ class _SectionHeader extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Nested dictionary word found inside a definition (recursive
+/// lookup). Expandable: reveals the nested word's own definitions
+/// and any second-level nesting.
+class _NestedWordTile extends StatelessWidget {
+  final AnalyzedWord word;
+  final VoidCallback onLookup;
+
+  const _NestedWordTile({required this.word, required this.onLookup});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      decoration: BoxDecoration(
+        border: Border(
+          left: BorderSide(color: theme.colorScheme.tertiary, width: 3),
+        ),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Theme(
+        data: theme.copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          dense: true,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 10),
+          childrenPadding: const EdgeInsets.fromLTRB(14, 0, 10, 8),
+          title: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  word.word,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (word.reading?.isNotEmpty == true) ...[
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    word.reading!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+              const Spacer(),
+              if (word.nestedEntries.isNotEmpty)
+                Badge(
+                  label: Text('${word.nestedEntries.length}'),
+                  smallSize: 14,
+                ),
+            ],
+          ),
+          children: [
+            for (final def in word.ichiMoeDefinitions.take(3))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  def,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
+                  ),
+                ),
+              ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: onLookup,
+                icon: const Icon(Icons.search, size: 16),
+                label: const Text('Look up'),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: const Size(0, 30),
+                  textStyle: const TextStyle(fontSize: 12),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

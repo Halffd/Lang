@@ -99,6 +99,7 @@ void main() async {
   final analyzerProvider = AnalyzerProvider();
   await analyzerProvider.init();
   // Sync provider learning language with persisted preference
+  analyzerProvider.appState = appState;
   analyzerProvider.restoreLanguage(appState.learningLanguage);
 
   final aiProvider = AiProvider(aiRepository);
