@@ -556,5 +556,17 @@
   "categoryAnalysis": "解析",
   "categoryClipboard": "クリップボード",
   "activityAnalysis": "テキストを解析:",
-  "activityClipboard": "テキストをコピー:"
+  "activityClipboard": "テキストをコピー:",
+  "clipboardMonitorMode": "クリップボード監視モード",
+  "clipboardModeHistoryOnly": "履歴のみ",
+  "clipboardModeHistoryOnlyDesc": "コピーしたテキストを履歴に記録するだけで検索しない",
+  "clipboardModeAutoSearch": "自動検索",
+  "clipboardModeAutoSearchDesc": "コピーしたテキストを記録して自動検索する",
+  "clipboardModeOff": "オフ",
+  "clipboardModeOffDesc": "クリップボードを監視しない",
+  "autoSearchOnlyWhenFocused": "アプリフォーカス時のみ",
+  "autoSearchOnlyWhenFocusedDesc": "アプリウィンドウがフォーカスしていないときは自動検索しない",
+  "autoSearchRegex": "一致するテキストのみ",
+  "autoSearchRegexDesc": "コピーしたテキストがパターンに一致するときのみ自動検索：正規表現、または 'ja' で日本語テキスト",
+  "autoSearchRegexHint": "正規表現または 'ja'"
 }

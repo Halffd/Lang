@@ -759,4 +759,40 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get activityClipboard => '复制了文本';
+
+  @override
+  String get clipboardMonitorMode => '剪贴板监控模式';
+
+  @override
+  String get clipboardModeHistoryOnly => '仅记录';
+
+  @override
+  String get clipboardModeHistoryOnlyDesc => '仅将复制的文本记录到活动历史，不搜索';
+
+  @override
+  String get clipboardModeAutoSearch => '自动搜索';
+
+  @override
+  String get clipboardModeAutoSearchDesc => '记录并自动搜索复制的文本';
+
+  @override
+  String get clipboardModeOff => '关闭';
+
+  @override
+  String get clipboardModeOffDesc => '不监控剪贴板';
+
+  @override
+  String get autoSearchOnlyWhenFocused => '仅应用聚焦时';
+
+  @override
+  String get autoSearchOnlyWhenFocusedDesc => '应用窗口未聚焦时跳过自动搜索';
+
+  @override
+  String get autoSearchRegex => '仅匹配文本';
+
+  @override
+  String get autoSearchRegexDesc => '复制的文本匹配时才自动搜索：输入正则表达式，或 \'ja\' 表示任意日文';
+
+  @override
+  String get autoSearchRegexHint => '正则或 \'ja\'';
 }

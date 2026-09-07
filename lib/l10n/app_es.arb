@@ -556,5 +556,17 @@
   "categoryAnalysis": "Análisis",
   "categoryClipboard": "Portapapeles",
   "activityAnalysis": "Texto analizado:",
-  "activityClipboard": "Texto copiado:"
+  "activityClipboard": "Texto copiado:",
+  "clipboardMonitorMode": "Modo de monitoreo del portapapeles",
+  "clipboardModeHistoryOnly": "Solo historial",
+  "clipboardModeHistoryOnlyDesc": "Registrar el texto copiado en el historial sin buscar",
+  "clipboardModeAutoSearch": "Búsqueda automática",
+  "clipboardModeAutoSearchDesc": "Registrar y buscar automáticamente el texto copiado",
+  "clipboardModeOff": "Desactivado",
+  "clipboardModeOffDesc": "No monitorear el portapapeles",
+  "autoSearchOnlyWhenFocused": "Solo con la app enfocada",
+  "autoSearchOnlyWhenFocusedDesc": "Omitir la búsqueda automática cuando la ventana no está enfocada",
+  "autoSearchRegex": "Solo texto coincidente",
+  "autoSearchRegexDesc": "Buscar automáticamente solo cuando el texto coincide: introduce un regex, o 'ja' para texto japonés",
+  "autoSearchRegexHint": "regex o 'ja'"
 }

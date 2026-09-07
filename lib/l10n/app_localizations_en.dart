@@ -759,4 +759,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activityClipboard => 'Copied text';
+
+  @override
+  String get clipboardMonitorMode => 'Clipboard monitor mode';
+
+  @override
+  String get clipboardModeHistoryOnly => 'History only';
+
+  @override
+  String get clipboardModeHistoryOnlyDesc =>
+      'Record copied text to activity history without searching';
+
+  @override
+  String get clipboardModeAutoSearch => 'Auto search';
+
+  @override
+  String get clipboardModeAutoSearchDesc =>
+      'Record and automatically search copied text';
+
+  @override
+  String get clipboardModeOff => 'Off';
+
+  @override
+  String get clipboardModeOffDesc => 'Do not monitor the clipboard';
+
+  @override
+  String get autoSearchOnlyWhenFocused => 'Only when app is focused';
+
+  @override
+  String get autoSearchOnlyWhenFocusedDesc =>
+      'Skip auto search when the app window is not focused';
+
+  @override
+  String get autoSearchRegex => 'Only matching text';
+
+  @override
+  String get autoSearchRegexDesc =>
+      'Auto search only when copied text matches a pattern: enter a regex, or \'ja\' for any Japanese text';
+
+  @override
+  String get autoSearchRegexHint => 'regex or \'ja\'';
 }

@@ -761,4 +761,44 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get activityClipboard => 'Texto copiado:';
+
+  @override
+  String get clipboardMonitorMode => 'Modo de monitoreo del portapapeles';
+
+  @override
+  String get clipboardModeHistoryOnly => 'Solo historial';
+
+  @override
+  String get clipboardModeHistoryOnlyDesc =>
+      'Registrar el texto copiado en el historial sin buscar';
+
+  @override
+  String get clipboardModeAutoSearch => 'Búsqueda automática';
+
+  @override
+  String get clipboardModeAutoSearchDesc =>
+      'Registrar y buscar automáticamente el texto copiado';
+
+  @override
+  String get clipboardModeOff => 'Desactivado';
+
+  @override
+  String get clipboardModeOffDesc => 'No monitorear el portapapeles';
+
+  @override
+  String get autoSearchOnlyWhenFocused => 'Solo con la app enfocada';
+
+  @override
+  String get autoSearchOnlyWhenFocusedDesc =>
+      'Omitir la búsqueda automática cuando la ventana no está enfocada';
+
+  @override
+  String get autoSearchRegex => 'Solo texto coincidente';
+
+  @override
+  String get autoSearchRegexDesc =>
+      'Buscar automáticamente solo cuando el texto coincide: introduce un regex, o \'ja\' para texto japonés';
+
+  @override
+  String get autoSearchRegexHint => 'regex o \'ja\'';
 }

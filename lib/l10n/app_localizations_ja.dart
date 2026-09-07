@@ -748,4 +748,41 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get activityClipboard => 'テキストをコピー:';
+
+  @override
+  String get clipboardMonitorMode => 'クリップボード監視モード';
+
+  @override
+  String get clipboardModeHistoryOnly => '履歴のみ';
+
+  @override
+  String get clipboardModeHistoryOnlyDesc => 'コピーしたテキストを履歴に記録するだけで検索しない';
+
+  @override
+  String get clipboardModeAutoSearch => '自動検索';
+
+  @override
+  String get clipboardModeAutoSearchDesc => 'コピーしたテキストを記録して自動検索する';
+
+  @override
+  String get clipboardModeOff => 'オフ';
+
+  @override
+  String get clipboardModeOffDesc => 'クリップボードを監視しない';
+
+  @override
+  String get autoSearchOnlyWhenFocused => 'アプリフォーカス時のみ';
+
+  @override
+  String get autoSearchOnlyWhenFocusedDesc => 'アプリウィンドウがフォーカスしていないときは自動検索しない';
+
+  @override
+  String get autoSearchRegex => '一致するテキストのみ';
+
+  @override
+  String get autoSearchRegexDesc =>
+      'コピーしたテキストがパターンに一致するときのみ自動検索：正規表現、または \'ja\' で日本語テキスト';
+
+  @override
+  String get autoSearchRegexHint => '正規表現または \'ja\'';
 }

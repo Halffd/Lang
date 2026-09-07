@@ -6,9 +6,21 @@ import 'dictionary_display_options.dart';
 import '../../data/repositories/translation_service.dart';
 import 'translation_model.dart';
 
+/// What the clipboard monitor does with detected text.
+enum ClipboardAutoSearchMode {
+  /// record to activity history only, never search
+  historyOnly,
+
+  /// record and automatically run a dictionary search
+  autoSearch,
+
+  /// disabled entirely
+  off,
+}
+
 class AppState extends ChangeNotifier {
   final StorageService _storageService;
-  
+
   // App settings
   bool _clipboardMonitor = false;
   String _language = 'ja';
@@ -26,13 +38,17 @@ class AppState extends ChangeNotifier {
   double _fontSizeMultiplier = 1.0; // Default font size multiplier
   bool _defaultFlexMode = false;
   int _defaultScreenIndex = 0; // Default to 0 (Search screen)
-  List<String> _etymologyLanguages = ['en', 'zh', 'ja']; // Default languages for etymology
-  
+  List<String> _etymologyLanguages = [
+    'en',
+    'zh',
+    'ja',
+  ]; // Default languages for etymology
+
   // Search state
   String _currentQuery = '';
   List<String> _searchHistory = [];
   String _currentProfile = 'Default';
-  
+
   // Saved words
   List<String> _savedWords = [];
   Map<String, dynamic> _savedWordsDetails = {};
@@ -61,9 +77,18 @@ class AppState extends ChangeNotifier {
   bool get clipboardMonitor => _clipboardMonitor;
   String get language => _language;
   String get learningLanguage => _learningLanguage;
-  YomitanOptions get yomitanOptions => _yomitanOptions ??= YomitanOptions.deserialize(_storageService.getStringSync('yomitan_options'));
-  AnkiNoteTypes get ankiNoteTypes => _ankiNoteTypes ??= AnkiNoteTypes.deserialize(_storageService.getStringSync('anki_note_types'));
-  DictionaryDisplayOptions get dictionaryDisplayOptions => _dictionaryDisplayOptions ??= DictionaryDisplayOptions.deserialize(_storageService.getStringSync('dictionary_display_options'));
+  YomitanOptions get yomitanOptions =>
+      _yomitanOptions ??= YomitanOptions.deserialize(
+        _storageService.getStringSync('yomitan_options'),
+      );
+  AnkiNoteTypes get ankiNoteTypes =>
+      _ankiNoteTypes ??= AnkiNoteTypes.deserialize(
+        _storageService.getStringSync('anki_note_types'),
+      );
+  DictionaryDisplayOptions get dictionaryDisplayOptions =>
+      _dictionaryDisplayOptions ??= DictionaryDisplayOptions.deserialize(
+        _storageService.getStringSync('dictionary_display_options'),
+      );
   bool get darkMode => _darkMode;
   ThemeMode get themeMode => _themeMode;
   bool get showParticles => _showParticles;
@@ -90,6 +115,10 @@ class AppState extends ChangeNotifier {
   String get currentAnkiDeck => _currentAnkiDeck;
   List<String> get profiles => _profiles;
   bool get clipboardAutoDetect => _clipboardAutoDetect;
+  ClipboardAutoSearchMode get clipboardAutoSearchMode =>
+      _clipboardAutoSearchMode;
+  bool get clipboardAutoSearchFocusedOnly => _clipboardAutoSearchFocusedOnly;
+  String get clipboardAutoSearchRegex => _clipboardAutoSearchRegex;
   bool get forvoAudioEnabled => _forvoAudioEnabled;
   String get forvoApiKey => _forvoApiKey;
   bool get autoConvertJapanese => _autoConvertJapanese;
@@ -118,9 +147,17 @@ class AppState extends ChangeNotifier {
   List<String> _ankiDecks = ['Default'];
   String _currentAnkiDeck = 'Default';
   bool _clipboardAutoDetect = false;
+  // what the clipboard monitor does with detected text
+  ClipboardAutoSearchMode _clipboardAutoSearchMode =
+      ClipboardAutoSearchMode.historyOnly;
+  // auto-search only when an app window has focus
+  bool _clipboardAutoSearchFocusedOnly = false;
+  // optional custom regex; clipboard text must match to trigger search
+  String _clipboardAutoSearchRegex = '';
   bool _forvoAudioEnabled = false;
   String _forvoApiKey = '';
-  bool _autoConvertJapanese = true; // Default to auto-convert letters to Japanese
+  bool _autoConvertJapanese =
+      true; // Default to auto-convert letters to Japanese
   List<String> _profiles = ['Default'];
   bool _autoPasteReader = false; // Auto-paste from clipboard in reader mode
   bool _showWiktionary = true; // Show Wiktionary definitions by default
@@ -136,7 +173,8 @@ class AppState extends ChangeNotifier {
   List<String> _hoverPopupLanguages = []; // empty = all languages
 
   // Profile activation
-  String _profileActivationScreen = 'all'; // 'all', 'search', 'reader', 'srs', 'browser'
+  String _profileActivationScreen =
+      'all'; // 'all', 'search', 'reader', 'srs', 'browser'
   String _profileActivationApp = 'default'; // 'default', 'srs', 'browser'
 
   // Setters with persistence
@@ -146,7 +184,7 @@ class AppState extends ChangeNotifier {
     _storageService.setBool('clipboard_monitor', value);
     notifyListeners();
   }
-  
+
   void setLanguage(String value) {
     _language = value;
     _storageService.setString('language', value);
@@ -173,10 +211,13 @@ class AppState extends ChangeNotifier {
 
   void setDictionaryDisplayOptions(DictionaryDisplayOptions options) {
     _dictionaryDisplayOptions = options;
-    _storageService.setString('dictionary_display_options', options.serialize());
+    _storageService.setString(
+      'dictionary_display_options',
+      options.serialize(),
+    );
     notifyListeners();
   }
-  
+
   void setDarkMode(bool value) {
     _darkMode = value;
     _storageService.setBool('dark_mode', value);
@@ -204,19 +245,19 @@ class AppState extends ChangeNotifier {
     _storageService.setString('theme_mode', mode.toString());
     notifyListeners();
   }
-  
+
   void setShowParticles(bool value) {
     _showParticles = value;
     _storageService.setBool('show_particles', value);
     notifyListeners();
   }
-  
+
   void setShowKanji(bool value) {
     _showKanji = value;
     _storageService.setBool('show_kanji', value);
     notifyListeners();
   }
-  
+
   void setMinFrequency(int value) {
     _minFrequency = value;
     _storageService.setInt('min_frequency', value);
@@ -248,13 +289,13 @@ class AppState extends ChangeNotifier {
     _storageService.setDouble('font_size_multiplier', _fontSizeMultiplier);
     notifyListeners();
   }
-  
+
   void setCurrentProfile(String value) {
     _currentProfile = value;
     _storageService.setString('current_profile', value);
     notifyListeners();
   }
-  
+
   void setCurrentQuery(String value) {
     _currentQuery = value;
     notifyListeners();
@@ -293,7 +334,8 @@ class AppState extends ChangeNotifier {
   }
 
   void removeAnkiDeck(String deckName) {
-    if (_ankiDecks.length > 1 && _ankiDecks.contains(deckName)) { // Don't remove last deck
+    if (_ankiDecks.length > 1 && _ankiDecks.contains(deckName)) {
+      // Don't remove last deck
       _ankiDecks.remove(deckName);
       if (_currentAnkiDeck == deckName) {
         _currentAnkiDeck = _ankiDecks.first; // Switch to first deck
@@ -344,7 +386,8 @@ class AppState extends ChangeNotifier {
   }
 
   void removeProfile(String profileName) {
-    if (_profiles.length > 1 && _profiles.contains(profileName)) { // Don't remove last profile
+    if (_profiles.length > 1 && _profiles.contains(profileName)) {
+      // Don't remove last profile
       _profiles.remove(profileName);
       if (_currentProfile == profileName) {
         _currentProfile = _profiles.first; // Switch to first profile
@@ -358,6 +401,24 @@ class AppState extends ChangeNotifier {
   void setClipboardAutoDetect(bool value) {
     _clipboardAutoDetect = value;
     _storageService.setBool('clipboard_auto_detect', value);
+    notifyListeners();
+  }
+
+  void setClipboardAutoSearchMode(ClipboardAutoSearchMode value) {
+    _clipboardAutoSearchMode = value;
+    _storageService.setString('clipboard_auto_search_mode', value.name);
+    notifyListeners();
+  }
+
+  void setClipboardAutoSearchFocusedOnly(bool value) {
+    _clipboardAutoSearchFocusedOnly = value;
+    _storageService.setBool('clipboard_auto_search_focused_only', value);
+    notifyListeners();
+  }
+
+  void setClipboardAutoSearchRegex(String value) {
+    _clipboardAutoSearchRegex = value;
+    _storageService.setString('clipboard_auto_search_regex', value);
     notifyListeners();
   }
 
@@ -506,7 +567,7 @@ class AppState extends ChangeNotifier {
     _persistAnkiWords();
     notifyListeners();
   }
-  
+
   void addToSearchHistory(String query) {
     if (query.isNotEmpty && !_searchHistory.contains(query)) {
       _searchHistory.insert(0, query);
@@ -585,32 +646,62 @@ class AppState extends ChangeNotifier {
       _showParticles = _storageService.getBool('show_particles') ?? true;
       _showKanji = _storageService.getBool('show_kanji') ?? true;
       _minFrequency = _storageService.getInt('min_frequency') ?? -1;
-      _autoHideNavigation = _storageService.getBool('auto_hide_navigation') ?? true;
+      _autoHideNavigation =
+          _storageService.getBool('auto_hide_navigation') ?? true;
       _defaultFlexMode = _storageService.getBool('default_flex_mode') ?? false;
       _zoomLevel = _storageService.getDouble('zoom_level') ?? 1.0;
-      _fontSizeMultiplier = _storageService.getDouble('font_size_multiplier') ?? 1.0;
-      _currentProfile = _storageService.getStringSync('current_profile') ?? 'Default';
+      _fontSizeMultiplier =
+          _storageService.getDouble('font_size_multiplier') ?? 1.0;
+      _currentProfile =
+          _storageService.getStringSync('current_profile') ?? 'Default';
       _searchHistory = _storageService.getStringList('search_history') ?? [];
-      _etymologyLanguages = _storageService.getStringList('etymology_languages') ?? ['en', 'zh', 'ja'];
+      _etymologyLanguages =
+          _storageService.getStringList('etymology_languages') ??
+          ['en', 'zh', 'ja'];
       _autoTranslate = _storageService.getBool('auto_translate') ?? false;
       _ankiDecks = _storageService.getStringList('anki_decks') ?? ['Default'];
-      _currentAnkiDeck = _storageService.getStringSync('current_anki_deck') ?? 'Default';
-      _ankiConnectUrl = _storageService.getStringSync('anki_connect_url') ?? 'http://127.0.0.1:8765';
-      _ankiConnectEnabled = _storageService.getBool('anki_connect_enabled') ?? false;
-      _ankiConnectModel = _storageService.getStringSync('anki_connect_model') ?? 'Basic';
+      _currentAnkiDeck =
+          _storageService.getStringSync('current_anki_deck') ?? 'Default';
+      _ankiConnectUrl =
+          _storageService.getStringSync('anki_connect_url') ??
+          'http://127.0.0.1:8765';
+      _ankiConnectEnabled =
+          _storageService.getBool('anki_connect_enabled') ?? false;
+      _ankiConnectModel =
+          _storageService.getStringSync('anki_connect_model') ?? 'Basic';
       _ankiSyncOnSave = _storageService.getBool('anki_sync_on_save') ?? false;
       _profiles = _storageService.getStringList('profiles') ?? ['Default'];
-      _clipboardAutoDetect = _storageService.getBool('clipboard_auto_detect') ?? false;
-      _forvoAudioEnabled = _storageService.getBool('forvo_audio_enabled') ?? false;
-    _forvoApiKey = _storageService.getStringSync('forvo_api_key') ?? '';
-      _autoConvertJapanese = _storageService.getBool('auto_convert_japanese') ?? true;
+      _clipboardAutoDetect =
+          _storageService.getBool('clipboard_auto_detect') ?? false;
+      _clipboardAutoSearchMode = ClipboardAutoSearchMode.values.firstWhere(
+        (m) =>
+            m.name ==
+            (_storageService.getStringSync('clipboard_auto_search_mode') ??
+                ClipboardAutoSearchMode.historyOnly.name),
+        orElse: () => ClipboardAutoSearchMode.historyOnly,
+      );
+      _clipboardAutoSearchFocusedOnly =
+          _storageService.getBool('clipboard_auto_search_focused_only') ??
+          false;
+      _clipboardAutoSearchRegex =
+          _storageService.getStringSync('clipboard_auto_search_regex') ?? '';
+      _forvoAudioEnabled =
+          _storageService.getBool('forvo_audio_enabled') ?? false;
+      _forvoApiKey = _storageService.getStringSync('forvo_api_key') ?? '';
+      _autoConvertJapanese =
+          _storageService.getBool('auto_convert_japanese') ?? true;
       _defaultScreenIndex = _storageService.getInt('default_screen_index') ?? 0;
       _autoPasteReader = _storageService.getBool('auto_paste_reader') ?? false;
       _showWiktionary = _storageService.getBool('show_wiktionary') ?? true;
-    _showInlineDefinitions = _storageService.getBool('show_inline_definitions') ?? true;
-    _showHoverDefinitions = _storageService.getBool('show_hover_definitions') ?? true;
-    _useLocalTranslation = _storageService.getBool('use_local_translation') ?? false;
-final savedProvider = _storageService.getStringSync('translation_provider');
+      _showInlineDefinitions =
+          _storageService.getBool('show_inline_definitions') ?? true;
+      _showHoverDefinitions =
+          _storageService.getBool('show_hover_definitions') ?? true;
+      _useLocalTranslation =
+          _storageService.getBool('use_local_translation') ?? false;
+      final savedProvider = _storageService.getStringSync(
+        'translation_provider',
+      );
       _translationProvider = TranslationProvider.values.firstWhere(
         (e) => e.name == savedProvider,
         orElse: () => TranslationProvider.googleCloud,
@@ -618,11 +709,15 @@ final savedProvider = _storageService.getStringSync('translation_provider');
       // Load popup settings
       _hoverPopupSize = _storageService.getDouble('hover_popup_size') ?? 1.0;
       _hoverPopupDelay = _storageService.getInt('hover_popup_delay') ?? 300;
-      _hoverPopupModifier = _storageService.getStringSync('hover_popup_modifier') ?? 'none';
-      _hoverPopupLanguages = _storageService.getStringList('hover_popup_languages') ?? [];
+      _hoverPopupModifier =
+          _storageService.getStringSync('hover_popup_modifier') ?? 'none';
+      _hoverPopupLanguages =
+          _storageService.getStringList('hover_popup_languages') ?? [];
       // Load profile activation
-      _profileActivationScreen = _storageService.getStringSync('profile_activation_screen') ?? 'all';
-      _profileActivationApp = _storageService.getStringSync('profile_activation_app') ?? 'default';
+      _profileActivationScreen =
+          _storageService.getStringSync('profile_activation_screen') ?? 'all';
+      _profileActivationApp =
+          _storageService.getStringSync('profile_activation_app') ?? 'default';
       // Ensure value is within valid range (0-6 for the 7 screens)
       if (_defaultScreenIndex < 0 || _defaultScreenIndex > 6) {
         _defaultScreenIndex = 0;
@@ -653,7 +748,7 @@ final savedProvider = _storageService.getStringSync('translation_provider');
       _forvoAudioEnabled = false;
       _forvoApiKey = '';
       _showWiktionary = true;
-_showInlineDefinitions = true;
+      _showInlineDefinitions = true;
       _showHoverDefinitions = true;
       _useLocalTranslation = false;
       _translationProvider = TranslationProvider.googleCloud;
@@ -672,10 +767,14 @@ _showInlineDefinitions = true;
   void _loadSavedWords() async {
     try {
       _savedWords = _storageService.getStringList('saved_words') ?? [];
-      final savedDetailsJson = _storageService.getStringSync('saved_words_details');
+      final savedDetailsJson = _storageService.getStringSync(
+        'saved_words_details',
+      );
       if (savedDetailsJson != null) {
         try {
-          _savedWordsDetails = Map<String, dynamic>.from(await _storageService.getJson('saved_words_details') ?? {});
+          _savedWordsDetails = Map<String, dynamic>.from(
+            await _storageService.getJson('saved_words_details') ?? {},
+          );
         } catch (e) {
           _savedWordsDetails = {};
         }
@@ -749,7 +848,10 @@ _showInlineDefinitions = true;
   // Favorite words methods
   bool isWordFavorite(String word) => _favoriteWords.contains(word);
 
-  Future<void> toggleFavoriteWord(String word, {required bool isFavorite}) async {
+  Future<void> toggleFavoriteWord(
+    String word, {
+    required bool isFavorite,
+  }) async {
     if (isFavorite) {
       if (!_favoriteWords.contains(word)) {
         _favoriteWords.add(word);

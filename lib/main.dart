@@ -109,8 +109,16 @@ void main() async {
 
   // Clipboard history: record copied text in the activity feed
   await HistoryService.instance.load();
-  final clipboardMonitor = ClipboardMonitorService();
+  final clipboardMonitor = ClipboardMonitorService.instance;
+  // auto search mode: search copied text automatically
+  clipboardMonitor.onClipboardChanged = (text) {
+    analyzerProvider.searchWord(text);
+  };
   clipboardMonitor.startMonitoring(appState);
+  // restart monitor when clipboard settings change
+  appState.addListener(() {
+    clipboardMonitor.restartMonitoring(appState);
+  });
 
   final aiProvider = AiProvider(aiRepository);
   await aiProvider.init();

@@ -237,5 +237,17 @@
   "categoryAnalysis": "Analyses",
   "categoryClipboard": "Clipboard",
   "activityAnalysis": "Analyzed text",
-  "activityClipboard": "Copied text"
+  "activityClipboard": "Copied text",
+  "clipboardMonitorMode": "Clipboard monitor mode",
+  "clipboardModeHistoryOnly": "History only",
+  "clipboardModeHistoryOnlyDesc": "Record copied text to activity history without searching",
+  "clipboardModeAutoSearch": "Auto search",
+  "clipboardModeAutoSearchDesc": "Record and automatically search copied text",
+  "clipboardModeOff": "Off",
+  "clipboardModeOffDesc": "Do not monitor the clipboard",
+  "autoSearchOnlyWhenFocused": "Only when app is focused",
+  "autoSearchOnlyWhenFocusedDesc": "Skip auto search when the app window is not focused",
+  "autoSearchRegex": "Only matching text",
+  "autoSearchRegexDesc": "Auto search only when copied text matches a pattern: enter a regex, or 'ja' for any Japanese text",
+  "autoSearchRegexHint": "regex or 'ja'"
 }

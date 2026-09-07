@@ -1535,6 +1535,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Copied text'**
   String get activityClipboard;
+
+  /// No description provided for @clipboardMonitorMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Clipboard monitor mode'**
+  String get clipboardMonitorMode;
+
+  /// No description provided for @clipboardModeHistoryOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'History only'**
+  String get clipboardModeHistoryOnly;
+
+  /// No description provided for @clipboardModeHistoryOnlyDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Record copied text to activity history without searching'**
+  String get clipboardModeHistoryOnlyDesc;
+
+  /// No description provided for @clipboardModeAutoSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto search'**
+  String get clipboardModeAutoSearch;
+
+  /// No description provided for @clipboardModeAutoSearchDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Record and automatically search copied text'**
+  String get clipboardModeAutoSearchDesc;
+
+  /// No description provided for @clipboardModeOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get clipboardModeOff;
+
+  /// No description provided for @clipboardModeOffDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not monitor the clipboard'**
+  String get clipboardModeOffDesc;
+
+  /// No description provided for @autoSearchOnlyWhenFocused.
+  ///
+  /// In en, this message translates to:
+  /// **'Only when app is focused'**
+  String get autoSearchOnlyWhenFocused;
+
+  /// No description provided for @autoSearchOnlyWhenFocusedDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip auto search when the app window is not focused'**
+  String get autoSearchOnlyWhenFocusedDesc;
+
+  /// No description provided for @autoSearchRegex.
+  ///
+  /// In en, this message translates to:
+  /// **'Only matching text'**
+  String get autoSearchRegex;
+
+  /// No description provided for @autoSearchRegexDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto search only when copied text matches a pattern: enter a regex, or \'ja\' for any Japanese text'**
+  String get autoSearchRegexDesc;
+
+  /// No description provided for @autoSearchRegexHint.
+  ///
+  /// In en, this message translates to:
+  /// **'regex or \'ja\''**
+  String get autoSearchRegexHint;
 }
 
 class _AppLocalizationsDelegate
