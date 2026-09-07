@@ -11,12 +11,14 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_secure_storage_windows
   flutter_tts
   hotkey_manager_windows
+  irondash_engine_context
   local_notifier
   pdfx
   permission_handler_windows
   record_windows
   screen_retriever_windows
   sqlite3_flutter_libs
+  super_native_extensions
   syncfusion_pdfviewer_windows
   tray_manager
   url_launcher_windows

@@ -9,10 +9,12 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_secure_storage_linux
   gtk
   hotkey_manager_linux
+  irondash_engine_context
   local_notifier
   record_linux
   screen_retriever_linux
   sqlite3_flutter_libs
+  super_native_extensions
   syncfusion_pdfviewer_linux
   tray_manager
   url_launcher_linux
