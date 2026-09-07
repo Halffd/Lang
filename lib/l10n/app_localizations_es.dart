@@ -801,4 +801,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get autoSearchRegexHint => 'regex o \'ja\'';
+
+  @override
+  String get clipboardImage => 'Imagen';
 }

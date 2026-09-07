@@ -568,5 +568,6 @@
   "autoSearchOnlyWhenFocusedDesc": "アプリウィンドウがフォーカスしていないときは自動検索しない",
   "autoSearchRegex": "一致するテキストのみ",
   "autoSearchRegexDesc": "コピーしたテキストがパターンに一致するときのみ自動検索：正規表現、または 'ja' で日本語テキスト",
-  "autoSearchRegexHint": "正規表現または 'ja'"
+  "autoSearchRegexHint": "正規表現または 'ja'",
+  "clipboardImage": "画像"
 }

@@ -2192,7 +2192,12 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
 
   /// Items of the clipboard category from activity history.
   List<HistoryItem> _clipboardHistory() => HistoryService.instance.items
-      .where((i) => i.category == HistoryCategory.clipboard)
+      .where(
+        (i) =>
+            i.category == HistoryCategory.clipboard &&
+            !i.hasImage &&
+            (i.subtitle ?? '').isNotEmpty,
+      )
       .toList();
 
   Widget _bottomTabButton(

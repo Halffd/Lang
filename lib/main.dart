@@ -9,6 +9,7 @@ import 'core/services/audio_service.dart';
 import 'core/services/clipboard_monitor_service.dart';
 import 'core/services/history_service.dart';
 import 'core/services/supabase_service.dart';
+import 'data/services/ocr_service.dart';
 import 'core/services/srs_service.dart';
 import 'core/services/realtime_sync_service.dart';
 import 'core/services/storage_service.dart';
@@ -113,6 +114,21 @@ void main() async {
   // auto search mode: search copied text automatically
   clipboardMonitor.onClipboardChanged = (text) {
     analyzerProvider.searchWord(text);
+  };
+  // auto OCR for clipboard images: recognize then search
+  final ocrService = OcrService();
+  await ocrService.initialize();
+  clipboardMonitor.onClipboardImage = (imageBytes) async {
+    try {
+      final result = await ocrService.recognizeFromBytes(
+        imageBytes,
+        engine: OcrEngine.mlKit,
+      );
+      if (result.isSuccess) return result.text;
+      return null;
+    } catch (_) {
+      return null;
+    }
   };
   clipboardMonitor.startMonitoring(appState);
   // restart monitor when clipboard settings change

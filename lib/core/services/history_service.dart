@@ -22,6 +22,9 @@ class HistoryItem {
   final HistoryCategory category;
   final String title;
   final String? subtitle;
+
+  /// Base64-encoded image thumbnail (clipboard images).
+  final String? imageThumbnail;
   final int timestamp; // ms since epoch
 
   const HistoryItem({
@@ -30,13 +33,17 @@ class HistoryItem {
     required this.title,
     required this.timestamp,
     this.subtitle,
+    this.imageThumbnail,
   });
+
+  bool get hasImage => imageThumbnail != null && imageThumbnail!.isNotEmpty;
 
   Map<String, dynamic> toJson() => {
     'id': id,
     'category': category.name,
     'title': title,
     'subtitle': subtitle,
+    'image': imageThumbnail,
     'timestamp': timestamp,
   };
 
@@ -48,6 +55,7 @@ class HistoryItem {
     ),
     title: json['title'] as String,
     subtitle: json['subtitle'] as String?,
+    imageThumbnail: json['image'] as String?,
     timestamp: (json['timestamp'] as num).toInt(),
   );
 
@@ -113,6 +121,26 @@ class HistoryService extends ChangeNotifier {
       title: title,
       subtitle: subtitle,
       timestamp: DateTime.now().millisecondsSinceEpoch,
+    );
+    _items.insert(0, item);
+    if (_items.length > _maxItems) {
+      _items = _items.sublist(0, _maxItems);
+    }
+    notifyListeners();
+    _persist();
+  }
+
+  /// Record a clipboard image with a small preview thumbnail.
+  /// Record a clipboard image with a small preview thumbnail.
+  void recordImage(List<int> thumbnailBytes, {String? subtitle}) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final item = HistoryItem(
+      id: 'clipboard_image_$now',
+      category: HistoryCategory.clipboard,
+      title: 'image',
+      subtitle: subtitle,
+      imageThumbnail: base64Encode(thumbnailBytes),
+      timestamp: now,
     );
     _items.insert(0, item);
     if (_items.length > _maxItems) {

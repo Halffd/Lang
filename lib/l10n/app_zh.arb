@@ -129,5 +129,6 @@
   "autoSearchOnlyWhenFocusedDesc": "应用窗口未聚焦时跳过自动搜索",
   "autoSearchRegex": "仅匹配文本",
   "autoSearchRegexDesc": "复制的文本匹配时才自动搜索：输入正则表达式，或 'ja' 表示任意日文",
-  "autoSearchRegexHint": "正则或 'ja'"
+  "autoSearchRegexHint": "正则或 'ja'",
+  "clipboardImage": "图片"
 }

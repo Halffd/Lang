@@ -799,4 +799,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get autoSearchRegexHint => 'regex or \'ja\'';
+
+  @override
+  String get clipboardImage => 'Image';
 }

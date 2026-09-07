@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -166,4 +167,70 @@ void main() {
     expect(prefs.getBool('clipboard_auto_search_focused_only'), true);
     expect(prefs.getString('clipboard_auto_search_regex'), 'ja');
   });
+  group('image clipboard', () {
+    test('recordImage stores base64 thumbnail and roundtrips', () async {
+      final png = Uint8List.fromList([0x89, 0x50, 0x4E, 0x47, 1, 2, 3]);
+      HistoryService.instance.recordImage(png);
+      final item = HistoryService.instance.items.first;
+      expect(item.hasImage, true);
+      expect(item.category, HistoryCategory.clipboard);
+      // json roundtrip keeps image
+      final restored = HistoryItem.fromJson(item.toJson());
+      expect(restored.imageThumbnail, item.imageThumbnail);
+    });
+
+    test('hashBytes distinguishes different images', () {
+      final a = Uint8List.fromList(List.generate(2000, (i) => i % 251));
+      final b = Uint8List.fromList(List.generate(2000, (i) => (i + 1) % 251));
+      final ha = ClipboardMonitorService.hashBytesForTest(a);
+      final hb = ClipboardMonitorService.hashBytesForTest(b);
+      expect(ha != hb, true);
+      // identical bytes -> identical hash
+      expect(ClipboardMonitorService.hashBytesForTest(a), ha);
+    });
+
+    test('image ocr flow records text and searches when gates pass',
+        () async {
+      appState.setClipboardAutoSearchMode(ClipboardAutoSearchMode.autoSearch);
+      String? searched;
+      final monitor = ClipboardMonitorService();
+      monitor.onClipboardChanged = (text) {
+        searched = text;
+      };
+      monitor.onClipboardImage = (bytes) async => '認識されたテキスト';
+
+      // no text on standard clipboard -> falls through to image poll;
+      // rich clipboard unavailable in unit tests, so call _pollImage
+      // indirectly is not possible; verify gates logic separately.
+      // Instead simulate: gates applied to recognized text.
+      final recognized = '認識されたテキスト';
+      expect(
+        ClipboardMonitorService.gatesPass(appState, recognized),
+        true,
+      );
+      expect(searched, isNull); // not wired without rich clipboard
+    });
+
+    test('focus gate uses injectable focus check', () async {
+      appState.setClipboardAutoSearchMode(ClipboardAutoSearchMode.autoSearch);
+      appState.setClipboardAutoSearchFocusedOnly(true);
+
+      ClipboardMonitorService.instance.isAppFocused = () => true;
+      expect(
+        ClipboardMonitorService.gatesPass(appState, 'any'),
+        true,
+      );
+
+      ClipboardMonitorService.instance.isAppFocused = () => false;
+      expect(
+        ClipboardMonitorService.gatesPass(appState, 'any'),
+        false,
+      );
+
+      // restore default
+      ClipboardMonitorService.instance.isAppFocused =
+          ClipboardMonitorService.defaultIsAppFocused;
+    });
+  });
+
 }

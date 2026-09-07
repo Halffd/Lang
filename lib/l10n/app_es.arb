@@ -568,5 +568,6 @@
   "autoSearchOnlyWhenFocusedDesc": "Omitir la búsqueda automática cuando la ventana no está enfocada",
   "autoSearchRegex": "Solo texto coincidente",
   "autoSearchRegexDesc": "Buscar automáticamente solo cuando el texto coincide: introduce un regex, o 'ja' para texto japonés",
-  "autoSearchRegexHint": "regex o 'ja'"
+  "autoSearchRegexHint": "regex o 'ja'",
+  "clipboardImage": "Imagen"
 }

@@ -795,4 +795,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get autoSearchRegexHint => '正则或 \'ja\'';
+
+  @override
+  String get clipboardImage => '图片';
 }

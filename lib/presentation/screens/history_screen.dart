@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -211,8 +212,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ),
       onDismissed: (_) => HistoryService.instance.remove(item.id),
       child: ListTile(
-        leading: Icon(icon, size: 20, color: color),
-        title: Text(item.title),
+        leading: item.hasImage
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Image.memory(
+                  base64Decode(item.imageThumbnail!),
+                  width: 36,
+                  height: 36,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => Icon(icon, size: 20, color: color),
+                ),
+              )
+            : Icon(icon, size: 20, color: color),
+        title: Text(
+          item.category == HistoryCategory.clipboard && item.hasImage
+              ? AppLocalizations.of(context)!.clipboardImage
+              : item.title,
+        ),
         subtitle: subtitle == null || subtitle.isEmpty
             ? null
             : Text(
@@ -267,6 +283,34 @@ class _HistoryScreenState extends State<HistoryScreen> {
         }
         break;
       case HistoryCategory.clipboard:
+        if (item.hasImage) {
+          // show image preview
+          await showDialog<void>(
+            context: context,
+            builder: (context) => Dialog(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.memory(
+                    base64Decode(item.imageThumbnail!),
+                    errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Text(
+                      DateFormat.yMMMd().add_Hm().format(item.time),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white54,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+          break;
+        }
         // copy stored text back to the clipboard
         final text = item.subtitle;
         if (text != null && text.isNotEmpty) {

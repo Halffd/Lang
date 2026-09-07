@@ -249,5 +249,6 @@
   "autoSearchOnlyWhenFocusedDesc": "Skip auto search when the app window is not focused",
   "autoSearchRegex": "Only matching text",
   "autoSearchRegexDesc": "Auto search only when copied text matches a pattern: enter a regex, or 'ja' for any Japanese text",
-  "autoSearchRegexHint": "regex or 'ja'"
+  "autoSearchRegexHint": "regex or 'ja'",
+  "clipboardImage": "Image"
 }

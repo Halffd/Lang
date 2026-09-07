@@ -1607,6 +1607,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'regex or \'ja\''**
   String get autoSearchRegexHint;
+
+  /// No description provided for @clipboardImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get clipboardImage;
 }
 
 class _AppLocalizationsDelegate

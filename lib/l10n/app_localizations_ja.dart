@@ -785,4 +785,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get autoSearchRegexHint => '正規表現または \'ja\'';
+
+  @override
+  String get clipboardImage => '画像';
 }
