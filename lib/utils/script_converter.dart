@@ -23,63 +23,185 @@ class ScriptConverter {
   static final KanaKit _kanaKit = KanaKit();
 
   static const Map<String, String> _romajiToHiragana = {
-    'a': 'あ', 'i': 'い', 'u': 'う', 'e': 'え', 'o': 'お',
-    'ka': 'か', 'ki': 'き', 'ku': 'く', 'ke': 'け', 'ko': 'こ',
-    'kya': 'きゃ', 'kyu': 'きゅ', 'kyo': 'きょ',
-    'sa': 'さ', 'shi': 'し', 'su': 'す', 'se': 'せ', 'so': 'そ',
-    'sha': 'しゃ', 'shu': 'しゅ', 'sho': 'しょ',
-    'ta': 'た', 'chi': 'ち', 'tsu': 'つ', 'te': 'て', 'to': 'と',
-    'cha': 'ちゃ', 'chu': 'ちゅ', 'cho': 'ちょ',
-    'na': 'な', 'ni': 'に', 'nu': 'ぬ', 'ne': 'ね', 'no': 'の',
-    'nya': 'にゃ', 'nyu': 'にゅ', 'nyo': 'にょ',
-    'ha': 'は', 'hi': 'ひ', 'fu': 'ふ', 'he': 'へ', 'ho': 'ほ',
-    'hya': 'ひゃ', 'hyu': 'ひゅ', 'hyo': 'ひょ',
-    'ma': 'ま', 'mi': 'み', 'mu': 'む', 'me': 'め', 'mo': 'も',
-    'mya': 'みゃ', 'myu': 'みゅ', 'myo': 'みょ',
-    'ya': 'や', 'yu': 'ゆ', 'yo': 'よ',
-    'ra': 'ら', 'ri': 'り', 'ru': 'る', 're': 'れ', 'ro': 'ろ',
-    'rya': 'りゃ', 'ryu': 'りゅ', 'ryo': 'りょ',
-    'wa': 'わ', 'wo': 'を', 'n': 'ん',
-    'ga': 'が', 'gi': 'ぎ', 'gu': 'ぐ', 'ge': 'げ', 'go': 'ご',
-    'gya': 'ぎゃ', 'gyu': 'ぎゅ', 'gyo': 'ぎょ',
-    'za': 'ざ', 'ji': 'じ', 'zu': 'ず', 'ze': 'ぜ', 'zo': 'ぞ',
-    'ja': 'じゃ', 'ju': 'じゅ', 'jo': 'じょ',
-    'da': 'だ', 'dji': 'ぢ', 'dzu': 'づ', 'de': 'で', 'do': 'ど',
-    'ba': 'ば', 'bi': 'び', 'bu': 'ぶ', 'be': 'べ', 'bo': 'ぼ',
-    'bya': 'びゃ', 'byu': 'びゅ', 'byo': 'びょ',
-    'pa': 'ぱ', 'pi': 'ぴ', 'pu': 'ぷ', 'pe': 'ぺ', 'po': 'ぽ',
-    'pya': 'ぴゃ', 'pyu': 'ぴゅ', 'pyo': 'ぴょ',
-    'kka': 'っか', 'kki': 'っき', 'kku': 'っく', 'kke': 'っけ', 'kko': 'っこ',
-    'ssa': 'っさ', 'sshi': 'っし', 'ssu': 'っす', 'sse': 'っせ', 'sso': 'っそ',
-    'tta': 'った', 'tchi': 'っち', 'ttsu': 'っつ', 'tte': 'って', 'tto': 'っと',
+    'a': 'あ',
+    'i': 'い',
+    'u': 'う',
+    'e': 'え',
+    'o': 'お',
+    'ka': 'か',
+    'ki': 'き',
+    'ku': 'く',
+    'ke': 'け',
+    'ko': 'こ',
+    'kya': 'きゃ',
+    'kyu': 'きゅ',
+    'kyo': 'きょ',
+    'sa': 'さ',
+    'shi': 'し',
+    'su': 'す',
+    'se': 'せ',
+    'so': 'そ',
+    'sha': 'しゃ',
+    'shu': 'しゅ',
+    'sho': 'しょ',
+    'ta': 'た',
+    'chi': 'ち',
+    'tsu': 'つ',
+    'te': 'て',
+    'to': 'と',
+    'cha': 'ちゃ',
+    'chu': 'ちゅ',
+    'cho': 'ちょ',
+    'na': 'な',
+    'ni': 'に',
+    'nu': 'ぬ',
+    'ne': 'ね',
+    'no': 'の',
+    'nya': 'にゃ',
+    'nyu': 'にゅ',
+    'nyo': 'にょ',
+    'ha': 'は',
+    'hi': 'ひ',
+    'fu': 'ふ',
+    'he': 'へ',
+    'ho': 'ほ',
+    'hya': 'ひゃ',
+    'hyu': 'ひゅ',
+    'hyo': 'ひょ',
+    'ma': 'ま',
+    'mi': 'み',
+    'mu': 'む',
+    'me': 'め',
+    'mo': 'も',
+    'mya': 'みゃ',
+    'myu': 'みゅ',
+    'myo': 'みょ',
+    'ya': 'や',
+    'yu': 'ゆ',
+    'yo': 'よ',
+    'ra': 'ら',
+    'ri': 'り',
+    'ru': 'る',
+    're': 'れ',
+    'ro': 'ろ',
+    'rya': 'りゃ',
+    'ryu': 'りゅ',
+    'ryo': 'りょ',
+    'wa': 'わ',
+    'wo': 'を',
+    'n': 'ん',
+    'ga': 'が',
+    'gi': 'ぎ',
+    'gu': 'ぐ',
+    'ge': 'げ',
+    'go': 'ご',
+    'gya': 'ぎゃ',
+    'gyu': 'ぎゅ',
+    'gyo': 'ぎょ',
+    'za': 'ざ',
+    'ji': 'じ',
+    'zu': 'ず',
+    'ze': 'ぜ',
+    'zo': 'ぞ',
+    'ja': 'じゃ',
+    'ju': 'じゅ',
+    'jo': 'じょ',
+    'da': 'だ',
+    'dji': 'ぢ',
+    'dzu': 'づ',
+    'de': 'で',
+    'do': 'ど',
+    'ba': 'ば',
+    'bi': 'び',
+    'bu': 'ぶ',
+    'be': 'べ',
+    'bo': 'ぼ',
+    'bya': 'びゃ',
+    'byu': 'びゅ',
+    'byo': 'びょ',
+    'pa': 'ぱ',
+    'pi': 'ぴ',
+    'pu': 'ぷ',
+    'pe': 'ぺ',
+    'po': 'ぽ',
+    'pya': 'ぴゃ',
+    'pyu': 'ぴゅ',
+    'pyo': 'ぴょ',
+    'kka': 'っか',
+    'kki': 'っき',
+    'kku': 'っく',
+    'kke': 'っけ',
+    'kko': 'っこ',
+    'ssa': 'っさ',
+    'sshi': 'っし',
+    'ssu': 'っす',
+    'sse': 'っせ',
+    'sso': 'っそ',
+    'tta': 'った',
+    'tchi': 'っち',
+    'ttsu': 'っつ',
+    'tte': 'って',
+    'tto': 'っと',
   };
 
   static Map<String, String>? _hiraganaToRomaji;
 
   static Map<String, String> get _kanaToRomaji {
-    _hiraganaToRomaji ??= {for (final e in _romajiToHiragana.entries) e.value: e.key};
+    _hiraganaToRomaji ??= {
+      for (final e in _romajiToHiragana.entries) e.value: e.key,
+    };
     return _hiraganaToRomaji!;
   }
 
   static const Map<String, String> _bopomofoToPinyin = {
-    'ㄅ': 'b', 'ㄆ': 'p', 'ㄇ': 'm', 'ㄈ': 'f',
-    'ㄉ': 'd', 'ㄊ': 't', 'ㄋ': 'n', 'ㄌ': 'l',
-    'ㄍ': 'g', 'ㄎ': 'k', 'ㄏ': 'h',
-    'ㄐ': 'j', 'ㄑ': 'q', 'ㄒ': 'x',
-    'ㄓ': 'zh', 'ㄔ': 'ch', 'ㄕ': 'sh', 'ㄖ': 'r',
-    'ㄗ': 'z', 'ㄘ': 'c', 'ㄙ': 's',
-    'ㄚ': 'a', 'ㄛ': 'o', 'ㄜ': 'e', 'ㄝ': 'e',
-    'ㄞ': 'ai', 'ㄟ': 'ei', 'ㄠ': 'ao', 'ㄡ': 'ou',
-    'ㄢ': 'an', 'ㄣ': 'en', 'ㄤ': 'ang', 'ㄥ': 'eng',
+    'ㄅ': 'b',
+    'ㄆ': 'p',
+    'ㄇ': 'm',
+    'ㄈ': 'f',
+    'ㄉ': 'd',
+    'ㄊ': 't',
+    'ㄋ': 'n',
+    'ㄌ': 'l',
+    'ㄍ': 'g',
+    'ㄎ': 'k',
+    'ㄏ': 'h',
+    'ㄐ': 'j',
+    'ㄑ': 'q',
+    'ㄒ': 'x',
+    'ㄓ': 'zh',
+    'ㄔ': 'ch',
+    'ㄕ': 'sh',
+    'ㄖ': 'r',
+    'ㄗ': 'z',
+    'ㄘ': 'c',
+    'ㄙ': 's',
+    'ㄚ': 'a',
+    'ㄛ': 'o',
+    'ㄜ': 'e',
+    'ㄝ': 'e',
+    'ㄞ': 'ai',
+    'ㄟ': 'ei',
+    'ㄠ': 'ao',
+    'ㄡ': 'ou',
+    'ㄢ': 'an',
+    'ㄣ': 'en',
+    'ㄤ': 'ang',
+    'ㄥ': 'eng',
     'ㄦ': 'er',
-    'ㄧ': 'i', 'ㄨ': 'u', 'ㄩ': 'ü',
-    'ㄪ': 'v', 'ㄫ': 'ng', 'ㄬ': 'gn',
+    'ㄧ': 'i',
+    'ㄨ': 'u',
+    'ㄩ': 'ü',
+    'ㄪ': 'v',
+    'ㄫ': 'ng',
+    'ㄬ': 'gn',
   };
 
   static Map<String, String>? _pinyinToBopomofo;
 
   static Map<String, String> get _pinyinToBopomofoMap {
-    _pinyinToBopomofo ??= {for (final e in _bopomofoToPinyin.entries) e.value: e.key};
+    _pinyinToBopomofo ??= {
+      for (final e in _bopomofoToPinyin.entries) e.value: e.key,
+    };
     return _pinyinToBopomofo!;
   }
 
@@ -101,17 +223,28 @@ class ScriptConverter {
     for (final rune in text.runes) {
       if (rune >= 0x3040 && rune <= 0x309F) {
         hasHiragana = true;
-      } else if (rune >= 0x30A0 && rune <= 0x30FF) hasKatakana = true;
-      else if (rune >= 0x3400 && rune <= 0x4DBF) hasKanji = true;
-      else if (rune >= 0x4E00 && rune <= 0x9FFF) hasKanji = hasHanzi = true;
-      else if (rune >= 0x3105 && rune <= 0x312F) hasBopomofo = true;
-      else if (rune >= 0xAC00 && rune <= 0xD7AF) hasHangul = true;
-      else if (rune >= 0x0400 && rune <= 0x04FF) hasCyrillic = true;
-      else if (rune >= 0x0590 && rune <= 0x05FF) hasHebrew = true;
-      else if (rune >= 0x0600 && rune <= 0x06FF) hasArabic = true;
-      else if (rune >= 0x0900 && rune <= 0x097F) hasDevanagari = true;
-      else if (rune >= 0x0E00 && rune <= 0x0E7F) hasThai = true;
-      else if (rune >= 0x41 && rune <= 0x5A || rune >= 0x61 && rune <= 0x7A) hasLatin = true;
+      } else if (rune >= 0x30A0 && rune <= 0x30FF)
+        hasKatakana = true;
+      else if (rune >= 0x3400 && rune <= 0x4DBF)
+        hasKanji = true;
+      else if (rune >= 0x4E00 && rune <= 0x9FFF)
+        hasKanji = hasHanzi = true;
+      else if (rune >= 0x3105 && rune <= 0x312F)
+        hasBopomofo = true;
+      else if (rune >= 0xAC00 && rune <= 0xD7AF)
+        hasHangul = true;
+      else if (rune >= 0x0400 && rune <= 0x04FF)
+        hasCyrillic = true;
+      else if (rune >= 0x0590 && rune <= 0x05FF)
+        hasHebrew = true;
+      else if (rune >= 0x0600 && rune <= 0x06FF)
+        hasArabic = true;
+      else if (rune >= 0x0900 && rune <= 0x097F)
+        hasDevanagari = true;
+      else if (rune >= 0x0E00 && rune <= 0x0E7F)
+        hasThai = true;
+      else if (rune >= 0x41 && rune <= 0x5A || rune >= 0x61 && rune <= 0x7A)
+        hasLatin = true;
     }
 
     final unique = [
@@ -275,26 +408,70 @@ class ScriptConverter {
   // ============================================================
 
   static const Map<String, String> _hangulInitials = {
-    'g': 'ㄱ', 'k': 'ㅋ', 'n': 'ㄴ', 'd': 'ㄷ', 't': 'ㅌ',
-    'r': 'ㄹ', 'm': 'ㅁ', 'b': 'ㅂ', 'p': 'ㅍ',
-    's': 'ㅅ', 'ss': 'ㅆ', 'j': 'ㅈ', 'jj': 'ㅉ',
-    'ch': 'ㅊ', 'h': 'ㅎ', 'kk': 'ㄲ', 'tt': 'ㄸ', 'pp': 'ㅃ',
+    'g': 'ㄱ',
+    'k': 'ㅋ',
+    'n': 'ㄴ',
+    'd': 'ㄷ',
+    't': 'ㅌ',
+    'r': 'ㄹ',
+    'm': 'ㅁ',
+    'b': 'ㅂ',
+    'p': 'ㅍ',
+    's': 'ㅅ',
+    'ss': 'ㅆ',
+    'j': 'ㅈ',
+    'jj': 'ㅉ',
+    'ch': 'ㅊ',
+    'h': 'ㅎ',
+    'kk': 'ㄲ',
+    'tt': 'ㄸ',
+    'pp': 'ㅃ',
   };
 
   static const Map<String, String> _hangulVowels = {
-    'a': 'ㅏ', 'ya': 'ㅑ', 'eo': 'ㅓ', 'yeo': 'ㅕ',
-    'o': 'ㅗ', 'yo': 'ㅛ', 'u': 'ㅜ', 'yu': 'ㅠ',
-    'eu': 'ㅡ', 'i': 'ㅣ', 'ae': 'ㅐ', 'yae': 'ㅒ',
-    'e': 'ㅔ', 'ye': 'ㅖ', 'oe': 'ㅚ', 'wi': 'ㅟ',
-    'ui': 'ㅢ', 'eu-i': 'ㅢ',
+    'a': 'ㅏ',
+    'ya': 'ㅑ',
+    'eo': 'ㅓ',
+    'yeo': 'ㅕ',
+    'o': 'ㅗ',
+    'yo': 'ㅛ',
+    'u': 'ㅜ',
+    'yu': 'ㅠ',
+    'eu': 'ㅡ',
+    'i': 'ㅣ',
+    'ae': 'ㅐ',
+    'yae': 'ㅒ',
+    'e': 'ㅔ',
+    'ye': 'ㅖ',
+    'oe': 'ㅚ',
+    'wi': 'ㅟ',
+    'ui': 'ㅢ',
+    'eu-i': 'ㅢ',
   };
 
   static const Map<String, String> _hangulFinals = {
-    '': '', 'k': 'ㄱ', 'k-s': 'ㄳ', 'n': 'ㄴ', 'n-h': 'ㄵ', 'n-j': 'ㄶ',
-    't': 'ㅅ', 'l': 'ㄹ', 'l-k': 'ㄺ', 'l-m': 'ㄻ', 'l-p': 'ㄼ',
-    'l-s': 'ㄽ', 'l-t': 'ㄾ', 'l-p-s': 'ㅀ', 'l-h': 'ㅀ',
-    'm': 'ㅁ', 'p': 'ㅂ', 'p-s': 'ㅄ', 's': 'ㅅ',
-    'ng': 'ㅇ', 't-k': 'ㄱ', 't-h': 'ㅎ',
+    '': '',
+    'k': 'ㄱ',
+    'k-s': 'ㄳ',
+    'n': 'ㄴ',
+    'n-h': 'ㄵ',
+    'n-j': 'ㄶ',
+    't': 'ㅅ',
+    'l': 'ㄹ',
+    'l-k': 'ㄺ',
+    'l-m': 'ㄻ',
+    'l-p': 'ㄼ',
+    'l-s': 'ㄽ',
+    'l-t': 'ㄾ',
+    'l-p-s': 'ㅀ',
+    'l-h': 'ㅀ',
+    'm': 'ㅁ',
+    'p': 'ㅂ',
+    'p-s': 'ㅄ',
+    's': 'ㅅ',
+    'ng': 'ㅇ',
+    't-k': 'ㄱ',
+    't-h': 'ㅎ',
   };
 
   // Assemble a Hangul syllable from jamo (or pass through if impossible)
@@ -305,17 +482,78 @@ class ScriptConverter {
     const syllableBase = 0xAC00;
 
     final choList = [
-      'ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ',
-      'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ',
+      'ㄱ',
+      'ㄲ',
+      'ㄴ',
+      'ㄷ',
+      'ㄸ',
+      'ㄹ',
+      'ㅁ',
+      'ㅂ',
+      'ㅃ',
+      'ㅅ',
+      'ㅆ',
+      'ㅇ',
+      'ㅈ',
+      'ㅉ',
+      'ㅊ',
+      'ㅋ',
+      'ㅌ',
+      'ㅍ',
+      'ㅎ',
     ];
     final jungList = [
-      'ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ',
-      'ㅘ', 'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ',
+      'ㅏ',
+      'ㅐ',
+      'ㅑ',
+      'ㅒ',
+      'ㅓ',
+      'ㅔ',
+      'ㅕ',
+      'ㅖ',
+      'ㅗ',
+      'ㅘ',
+      'ㅙ',
+      'ㅚ',
+      'ㅛ',
+      'ㅜ',
+      'ㅝ',
+      'ㅞ',
+      'ㅟ',
+      'ㅠ',
+      'ㅡ',
+      'ㅢ',
+      'ㅣ',
     ];
     final jongList = [
-      '', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ',
-      'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ',
-      'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ',
+      '',
+      'ㄱ',
+      'ㄲ',
+      'ㄳ',
+      'ㄴ',
+      'ㄵ',
+      'ㄶ',
+      'ㄷ',
+      'ㄹ',
+      'ㄺ',
+      'ㄻ',
+      'ㄼ',
+      'ㄽ',
+      'ㄾ',
+      'ㄿ',
+      'ㅀ',
+      'ㅁ',
+      'ㅂ',
+      'ㅄ',
+      'ㅅ',
+      'ㅆ',
+      'ㅇ',
+      'ㅈ',
+      'ㅊ',
+      'ㅋ',
+      'ㅌ',
+      'ㅍ',
+      'ㅎ',
     ];
 
     final choIdx = choList.indexOf(cho);
@@ -406,18 +644,26 @@ class ScriptConverter {
         continue;
       }
 
-      // match final (2/3-char first for clusters)
+      // match final (longest first for clusters), but only accept a
+      // candidate when what follows it starts with a consonant (or
+      // nothing). A consonant followed by a vowel belongs to the
+      // next syllable as its initial ("haseyo" -> 하세, not 핫에;
+      // "hangul" -> 한글, not 항울).
       String? jong;
       int jongLen = 0;
       int fi = vi + jungLen;
       for (final len in [3, 2, 1]) {
         if (fi + len > lower.length) continue;
         final sub = lower.substring(fi, fi + len);
-        if (_hangulFinals.containsKey(sub)) {
-          jong = _hangulFinals[sub]!;
-          jongLen = len;
-          break;
-        }
+        if (!_hangulFinals.containsKey(sub)) continue;
+        final nextIdx = fi + len;
+        final nextIsVowel =
+            nextIdx < lower.length &&
+            _startsWithHangulVowel(lower.substring(nextIdx));
+        if (nextIsVowel) continue; // consonant goes to next syllable
+        jong = _hangulFinals[sub]!;
+        jongLen = len;
+        break;
       }
 
       final syllable = _assembleHangul(cho, jung, jong ?? '');
@@ -436,6 +682,15 @@ class ScriptConverter {
   static bool _isLatinChar(String c) {
     final code = c.codeUnitAt(0);
     return (code >= 0x61 && code <= 0x7A) || (code >= 0x41 && code <= 0x5A);
+  }
+
+  /// True when [s] begins with a romanized Hangul vowel.
+  static bool _startsWithHangulVowel(String s) {
+    for (final len in [3, 2, 1]) {
+      if (len > s.length) continue;
+      if (_hangulVowels.containsKey(s.substring(0, len))) return true;
+    }
+    return false;
   }
 
   // ============================================================
@@ -497,16 +752,50 @@ class ScriptConverter {
     'tz': 'צ', 'ts': 'צ', 'kh': 'ח', 'ch': 'כ', 'sh': 'ש',
     'ei': 'י',
     // singles - consonants only; Hebrew is an abjad so short
-    // vowels a/e/i/o/u are omitted
+    // vowels a/e/i/o/u are omitted (word-final vowels are
+    // written as matres lectionis, handled in latinToHebrew).
+    // Medial forms here; final (sofit) forms are applied by
+    // _applyHebrewFinalForms after assembly.
     'b': 'ב', 'g': 'ג', 'd': 'ד', 'h': 'ה', 'v': 'ו',
-    'z': 'ז', 'k': 'ק', 'y': 'י', 'l': 'ל', 'm': 'ם', 'n': 'ן',
+    'z': 'ז', 'k': 'ק', 'y': 'י', 'l': 'ל', 'm': 'מ', 'n': 'נ',
     's': 'ס', 'p': 'פ', 'f': 'פ', 'r': 'ר', 'c': 'כ', 't': 'ת',
     'oo': 'ו', 'ii': 'י',
     'a': '', 'e': '', 'i': '', 'o': '', 'u': '',
   };
 
+  /// Hebrew letters with special word-final (sofit) forms.
+  static const Map<String, String> _hebrewSofit = {
+    'מ': 'ם', 'נ': 'ן', 'צ': 'ץ', 'פ': 'ף', 'כ': 'ך',
+  };
+
+  /// Convert word-final letters to their sofit forms.
+  static String _applyHebrewFinalForms(String s) {
+    final buf = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      final ch = s[i];
+      final isLast = i + 1 >= s.length || !_isHebrewLetter(s[i + 1]);
+      buf.write(isLast ? (_hebrewSofit[ch] ?? ch) : ch);
+    }
+    return buf.toString();
+  }
+
+  static bool _isHebrewLetter(String c) {
+    final code = c.codeUnitAt(0);
+    return code >= 0x05D0 && code <= 0x05EA;
+  }
+
+  /// Word-final vowel letters (matres lectionis).
+  static const Map<String, String> _hebrewFinalVowels = {
+    'a': 'א',
+    'o': 'ו',
+    'u': 'ו',
+    'i': 'י',
+    'e': 'א',
+  };
+
   /// Convert romanized Hebrew to Hebrew script. Hebrew is an
-  /// abjad - vowels are typically omitted.
+  /// abjad - short vowels are typically omitted, but word-final
+  /// vowels are written (shalom -> שלום).
   static String latinToHebrew(String input) {
     if (input.isEmpty) return input;
     final result = StringBuffer();
@@ -514,6 +803,31 @@ class ScriptConverter {
     int i = 0;
 
     while (i < lower.length) {
+      // vowel in the final syllable -> mater lectionis:
+      // word-final vowel (ima -> אמא) or vowel followed by the
+      // single trailing consonant (shalom -> שלום)
+      final isVowel = _hebrewFinalVowels.containsKey(lower[i]);
+      if (isVowel) {
+        final isWordStart = i == 0 || !_isLatinChar(lower[i - 1]);
+        final isWordEnd = i + 1 >= lower.length || !_isLatinChar(lower[i + 1]);
+        // vowel + single trailing consonant: shalom -> שלום
+        final beforeFinalConsonant = i + 2 == lower.length;
+        if (isWordEnd || beforeFinalConsonant) {
+          result.write(_hebrewFinalVowels[lower[i]]!);
+          i++;
+          continue;
+        }
+        // word-initial vowel followed by a consonant gets an alef
+        // carrier: ima -> אמא, even -> אבן-ish
+        if (isWordStart &&
+            i + 1 < lower.length &&
+            _isLatinChar(lower[i + 1]) &&
+            !_hebrewFinalVowels.containsKey(lower[i + 1])) {
+          result.write(lower[i] == 'o' || lower[i] == 'u' ? 'ו' : 'א');
+          i++;
+          continue;
+        }
+      }
       String? match;
       int len = 0;
       for (int l = 2; l >= 1; l--) {
@@ -534,7 +848,7 @@ class ScriptConverter {
       }
     }
 
-    return result.toString();
+    return _applyHebrewFinalForms(result.toString());
   }
 
   // ============================================================
@@ -554,7 +868,9 @@ class ScriptConverter {
     "'": 'ء',
   };
 
-  /// Convert romanized Arabic to Arabic script.
+  /// Convert romanized Arabic to Arabic script. Short vowels are
+  /// omitted (abjad), but a word-final 'a' is written as alif
+  /// (marhaba -> مرحبا).
   static String latinToArabic(String input) {
     if (input.isEmpty) return input;
     final result = StringBuffer();
@@ -562,6 +878,13 @@ class ScriptConverter {
     int i = 0;
 
     while (i < lower.length) {
+      // word-final 'a' -> alif
+      final isWordEnd = i + 1 >= lower.length || !_isLatinChar(lower[i + 1]);
+      if (isWordEnd && lower[i] == 'a') {
+        result.write('ا');
+        i++;
+        continue;
+      }
       String? match;
       int len = 0;
       for (int l = 2; l >= 1; l--) {
@@ -683,20 +1006,64 @@ class ScriptConverter {
   }
 
   static const List<String> _devanagariConsonants = [
-    'क', 'ख', 'ग', 'घ', 'च', 'छ', 'ज', 'झ',
-    'ट', 'ठ', 'ड', 'ढ', 'ण', 'त', 'थ', 'द',
-    'ध', 'न', 'प', 'फ', 'ब', 'भ', 'म', 'य',
-    'र', 'ल', 'व', 'श', 'ष', 'स', 'ह', 'ऋ',
+    'क',
+    'ख',
+    'ग',
+    'घ',
+    'च',
+    'छ',
+    'ज',
+    'झ',
+    'ट',
+    'ठ',
+    'ड',
+    'ढ',
+    'ण',
+    'त',
+    'थ',
+    'द',
+    'ध',
+    'न',
+    'प',
+    'फ',
+    'ब',
+    'भ',
+    'म',
+    'य',
+    'र',
+    'ल',
+    'व',
+    'श',
+    'ष',
+    'स',
+    'ह',
+    'ऋ',
   ];
 
   static const List<String> _devanagariVowels = [
-    'अ', 'आ', 'इ', 'ई', 'उ', 'ऊ', 'ए', 'ऐ', 'ओ', 'औ',
+    'अ',
+    'आ',
+    'इ',
+    'ई',
+    'उ',
+    'ऊ',
+    'ए',
+    'ऐ',
+    'ओ',
+    'औ',
   ];
 
   static const Map<String, String> _devanagariVowelSigns = {
-    'अ': '', 'आ': 'ा', 'इ': 'ि', 'ई': 'ी',
-    'उ': 'ु', 'ऊ': 'ू', 'ए': 'े', 'ऐ': 'ै',
-    'ओ': 'ो', 'औ': 'ौ',
+    'अ': '',
+    'आ': 'ा',
+    'इ': 'ि',
+    'ई': 'ी',
+    'उ': 'ु',
+    'ऊ': 'ू',
+    'ए': 'े',
+    'ऐ': 'ै',
+    'ओ': 'ो',
+    'औ': 'ौ',
   };
 
   // ============================================================
@@ -792,7 +1159,16 @@ class ScriptConverter {
 
   /// True when [language] has a romanized-input converter.
   static bool supportsLatinToScript(String language) {
-    return const ['ja', 'zh', 'ko', 'ru', 'he', 'iw', 'ar', 'hi', 'th']
-        .contains(language);
+    return const [
+      'ja',
+      'zh',
+      'ko',
+      'ru',
+      'he',
+      'iw',
+      'ar',
+      'hi',
+      'th',
+    ].contains(language);
   }
 }

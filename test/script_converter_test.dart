@@ -38,6 +38,22 @@ void main() {
       // a-n => 안 (vowel initial uses ieung)
       expect(ScriptConverter.latinToHangul('an'), '안');
     });
+
+    test('k vs g initials (Revised Romanization)', () {
+      expect(ScriptConverter.latinToHangul('ko'), '코');
+      expect(ScriptConverter.latinToHangul('go'), '고');
+    });
+
+    test('intervocalic consonant starts next syllable', () {
+      // ha-se-yo, not 핫-에-요
+      expect(ScriptConverter.latinToHangul('haseyo'), '하세요');
+      expect(ScriptConverter.latinToHangul('annyeonghaseyo'), '안녕하세요');
+    });
+
+    test('greedy ng final does not steal syllable-initial g', () {
+      // han-geul: han + geul, not hang + ul
+      expect(ScriptConverter.latinToHangul('hangeul'), '한글');
+    });
   });
 
   group('ScriptConverter.latinToCyrillic', () {
@@ -56,16 +72,26 @@ void main() {
   group('ScriptConverter.latinToHebrew', () {
     test('shalom', () {
       final r = ScriptConverter.latinToHebrew('shalom');
-      // sh->ש l->ל m->ם o dropped... order: ש ל (o skip) ם
-      expect(r, 'שלם');
+      // sh->ש l->ל o (mater, vowel before final consonant)->ו m->ם
+      expect(r, 'שלום');
+    });
+
+    test('ima word-initial vowel gets alef carrier', () {
+      expect(ScriptConverter.latinToHebrew('ima'), 'אמא');
+    });
+
+    test('inner short vowels omitted', () {
+      // abjad: inner vowels dropped
+      final r = ScriptConverter.latinToHebrew('shalom');
+      expect(r.runes.length, 4);
     });
   });
 
   group('ScriptConverter.latinToArabic', () {
     test('marhaba', () {
       final r = ScriptConverter.latinToArabic('marhaba');
-      // m->م a drop r->ر h->ه b->ب a drop
-      expect(r, 'مرهْب'.replaceAll('\u0652', ''));
+      // m->م a drop r->ر h->ه b->ب a (word-final)->ا
+      expect(r, 'مرهبا');
       expect(r.codeUnitAt(2), 0x0647); // ه he
     });
   });
