@@ -188,4 +188,36 @@ void main() {
     });
   });
 
+  group('ScriptConverter.latinToGeorgian', () {
+    test('gamarjoba', () {
+      expect(ScriptConverter.latinToGeorgian('gamarjoba'), 'გამარჯობა');
+    });
+
+    test('dispatch by language', () {
+      expect(ScriptConverter.latinToScript('gamarjoba', 'ka'), 'გამარჯობა');
+    });
+
+    test('detect georgian script', () {
+      expect(ScriptConverter.detect('გამარჯობა'), ScriptType.georgian);
+    });
+  });
+
+  group('ScriptConverter.latinToArmenian', () {
+    test('barev', () {
+      expect(ScriptConverter.latinToArmenian('barev'), 'բարեվ');
+    });
+
+    test('hayastan', () {
+      expect(ScriptConverter.latinToArmenian('hayastan'), 'հայաստան');
+    });
+
+    test('dispatch by language', () {
+      expect(ScriptConverter.latinToScript('hayastan', 'hy'), 'հայաստան');
+    });
+
+    test('detect armenian script', () {
+      expect(ScriptConverter.detect('հայաստան'), ScriptType.armenian);
+    });
+  });
+
 }

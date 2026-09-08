@@ -56,6 +56,16 @@ class LanguageDetector {
       return 'el';
     }
 
+    // Georgian
+    if (RegExp(r'[\u10A0-\u10FF\u2D00-\u2D2F]').hasMatch(text)) {
+      return 'ka';
+    }
+
+    // Armenian
+    if (RegExp(r'[\u0530-\u058F\uFB13-\uFB17]').hasMatch(text)) {
+      return 'hy';
+    }
+
     // Thai
     if (RegExp(r'[\u0E00-\u0E7F]').hasMatch(text)) {
       return 'th';

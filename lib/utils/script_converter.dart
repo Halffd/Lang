@@ -12,6 +12,8 @@ enum ScriptType {
   hangul,
   cyrillic,
   greek,
+  georgian,
+  armenian,
   hebrew,
   arabic,
   devanagari,
@@ -217,6 +219,8 @@ class ScriptConverter {
     bool hasHangul = false;
     bool hasCyrillic = false;
     bool hasGreek = false;
+    bool hasGeorgian = false;
+    bool hasArmenian = false;
     bool hasHebrew = false;
     bool hasArabic = false;
     bool hasDevanagari = false;
@@ -239,6 +243,10 @@ class ScriptConverter {
         hasCyrillic = true;
       else if (rune >= 0x0370 && rune <= 0x03FF)
         hasGreek = true;
+      else if (rune >= 0x10A0 && rune <= 0x10FF)
+        hasGeorgian = true;
+      else if (rune >= 0x0530 && rune <= 0x058F)
+        hasArmenian = true;
       else if (rune >= 0x0590 && rune <= 0x05FF)
         hasHebrew = true;
       else if (rune >= 0x0600 && rune <= 0x06FF)
@@ -260,6 +268,8 @@ class ScriptConverter {
       hasHangul,
       hasCyrillic,
       hasGreek,
+      hasGeorgian,
+      hasArmenian,
       hasHebrew,
       hasArabic,
       hasDevanagari,
@@ -274,6 +284,8 @@ class ScriptConverter {
     if (hasHangul) return ScriptType.hangul;
     if (hasCyrillic) return ScriptType.cyrillic;
     if (hasGreek) return ScriptType.greek;
+    if (hasGeorgian) return ScriptType.georgian;
+    if (hasArmenian) return ScriptType.armenian;
     if (hasHebrew) return ScriptType.hebrew;
     if (hasArabic) return ScriptType.arabic;
     if (hasDevanagari) return ScriptType.devanagari;
@@ -880,6 +892,50 @@ class ScriptConverter {
     return _mapLongestFirst(input, _latinToSerbian, maxLen: 2);
   }
 
+  // ============================================================
+  // ============================================================
+  // Georgian: romanized latin -> Mkhedruli (modern Georgian)
+  // National Romanization (georgian.gov.ge scheme)
+  // ============================================================
+
+  static const Map<String, String> _latinToGeorgian = {
+    // multi-char
+    'ts': 'ც', 'ch': 'ჩ', 'sh': 'შ', 'zh': 'ჟ',
+    'kh': 'ხ', 'gh': 'ღ', 'dz': 'ძ',
+    // singles
+    'a': 'ა', 'b': 'ბ', 'g': 'გ', 'd': 'დ', 'e': 'ე', 'v': 'ვ',
+    'z': 'ზ', 't': 'ტ', 'i': 'ი', 'k': 'კ', 'l': 'ლ', 'm': 'მ',
+    'n': 'ნ', 'o': 'ო', 'p': 'პ', 'j': 'ჯ', 'r': 'რ', 's': 'ს',
+    'u': 'უ', 'q': 'ყ', 'h': 'ჰ', 'c': 'ც', 'w': 'ჳ', 'y': 'ჲ',
+    'f': 'ჶ',
+  };
+
+  /// Convert romanized Georgian to Mkhedruli script.
+  static String latinToGeorgian(String input) {
+    return _mapLongestFirst(input, _latinToGeorgian, maxLen: 2);
+  }
+
+  // ============================================================
+  // Armenian: romanized latin -> Armenian letters
+  // (classical transliteration scheme)
+  // ============================================================
+
+  static const Map<String, String> _latinToArmenian = {
+    // multi-char
+    'kh': 'խ', 'gh': 'ղ', 'ts': 'ծ', 'dz': 'ձ', 'ch': 'չ',
+    'sh': 'շ', 'zh': 'ժ',
+    // singles
+    'a': 'ա', 'b': 'բ', 'g': 'գ', 'd': 'դ', 'e': 'ե', 'z': 'զ',
+    'i': 'ի', 'l': 'լ', 'x': 'խ', 'k': 'կ', 'h': 'հ', 'j': 'ջ',
+    'm': 'մ', 'n': 'ն', 'o': 'օ', 'p': 'պ', 'r': 'ր', 's': 'ս',
+    'v': 'վ', 't': 'տ', 'u': 'ու', 'q': 'ք', 'c': 'ծ', 'y': 'յ',
+  };
+
+  /// Convert romanized Armenian to Armenian script.
+  static String latinToArmenian(String input) {
+    return _mapLongestFirst(input, _latinToArmenian, maxLen: 2);
+  }
+
   /// Generic longest-first single-pass mapper.
   static String _mapLongestFirst(
     String input,
@@ -1327,6 +1383,10 @@ class ScriptConverter {
         return latinToSerbian(input);
       case 'el':
         return latinToGreek(input);
+      case 'ka':
+        return latinToGeorgian(input);
+      case 'hy':
+        return latinToArmenian(input);
       case 'he':
       case 'iw':
         return latinToHebrew(input);
@@ -1352,6 +1412,8 @@ class ScriptConverter {
       'bg',
       'sr',
       'el',
+      'ka',
+      'hy',
       'he',
       'iw',
       'ar',

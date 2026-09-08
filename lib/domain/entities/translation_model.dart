@@ -32,10 +32,7 @@ class WordTranslation {
   final String source;
   final String translation;
 
-  WordTranslation({
-    required this.source,
-    required this.translation,
-  });
+  WordTranslation({required this.source, required this.translation});
 }
 
 class LanguageOption {
@@ -59,8 +56,10 @@ class LanguageOption {
     LanguageOption('tl', 'Filipino'),
     LanguageOption('fi', 'Finnish'),
     LanguageOption('fr', 'French'),
+    LanguageOption('ka', 'Georgian'),
     LanguageOption('de', 'German'),
     LanguageOption('el', 'Greek'),
+    LanguageOption('hy', 'Armenian'),
     LanguageOption('iw', 'Hebrew'),
     LanguageOption('hi', 'Hindi'),
     LanguageOption('hu', 'Hungarian'),
