@@ -139,4 +139,53 @@ void main() {
       expect(ScriptConverter.supportsLatinToScript('en'), false);
     });
   });
+  group('ScriptConverter.latinToGreek', () {
+    test('ellinikos with final sigma', () {
+      // ends with sigma -> sofit form ς
+      final r = ScriptConverter.latinToGreek('ellinikos');
+      expect(r, 'ελλινικος');
+      expect(r.runes.last, 0x03C2); // ς final sigma
+    });
+
+    test('theta digraph', () {
+      expect(ScriptConverter.latinToGreek('thermos'), 'θερμος');
+    });
+
+    test('dispatch by language', () {
+      expect(ScriptConverter.latinToScript('thermos', 'el'), 'θερμος');
+    });
+  });
+
+  group('ScriptConverter.latinToUkrainian', () {
+    test('pryvit', () {
+      // pryvit -> привіт (і = Ukrainian i, not Russian и)
+      expect(ScriptConverter.latinToUkrainian('pryvit'), 'привіт');
+    });
+
+    test('dispatch by language', () {
+      expect(ScriptConverter.latinToScript('pryvit', 'uk'), 'привіт');
+    });
+  });
+
+  group('ScriptConverter.latinToBulgarian', () {
+    test('blagodaria', () {
+      expect(ScriptConverter.latinToBulgarian('blagodaria'), 'благодаря');
+    });
+
+    test('dispatch by language', () {
+      expect(ScriptConverter.latinToScript('blagodaria', 'bg'), 'благодаря');
+    });
+  });
+
+  group('ScriptConverter.latinToSerbian', () {
+    test('lj nj dz digraphs', () {
+      expect(ScriptConverter.latinToSerbian('ljudi'), 'људи');
+      expect(ScriptConverter.latinToSerbian('konj'), 'коњ');
+    });
+
+    test('dispatch by language', () {
+      expect(ScriptConverter.latinToScript('zdravo', 'sr'), 'здраво');
+    });
+  });
+
 }

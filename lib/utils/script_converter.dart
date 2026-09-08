@@ -11,6 +11,7 @@ enum ScriptType {
   bopomofo,
   hangul,
   cyrillic,
+  greek,
   hebrew,
   arabic,
   devanagari,
@@ -215,6 +216,7 @@ class ScriptConverter {
     bool hasBopomofo = false;
     bool hasHangul = false;
     bool hasCyrillic = false;
+    bool hasGreek = false;
     bool hasHebrew = false;
     bool hasArabic = false;
     bool hasDevanagari = false;
@@ -235,6 +237,8 @@ class ScriptConverter {
         hasHangul = true;
       else if (rune >= 0x0400 && rune <= 0x04FF)
         hasCyrillic = true;
+      else if (rune >= 0x0370 && rune <= 0x03FF)
+        hasGreek = true;
       else if (rune >= 0x0590 && rune <= 0x05FF)
         hasHebrew = true;
       else if (rune >= 0x0600 && rune <= 0x06FF)
@@ -255,6 +259,7 @@ class ScriptConverter {
       hasBopomofo,
       hasHangul,
       hasCyrillic,
+      hasGreek,
       hasHebrew,
       hasArabic,
       hasDevanagari,
@@ -268,6 +273,7 @@ class ScriptConverter {
     if (hasKatakana) return ScriptType.katakana;
     if (hasHangul) return ScriptType.hangul;
     if (hasCyrillic) return ScriptType.cyrillic;
+    if (hasGreek) return ScriptType.greek;
     if (hasHebrew) return ScriptType.hebrew;
     if (hasArabic) return ScriptType.arabic;
     if (hasDevanagari) return ScriptType.devanagari;
@@ -744,6 +750,172 @@ class ScriptConverter {
   }
 
   // ============================================================
+  // Greek: romanized latin -> Greek letters
+  // Modern Greek transliteration (ELOT 743-ish)
+  // ============================================================
+
+  static const Map<String, String> _latinToGreek = {
+    // multi-char digraphs
+    'th': 'θ', 'ch': 'χ', 'ps': 'ψ', 'ks': 'ξ', 'ph': 'φ',
+    'ai': 'αι', 'ei': 'ει', 'oi': 'οι', 'ou': 'ου', 'au': 'αυ',
+    'ng': 'γγ', 'mp': 'μπ', 'nt': 'ντ', 'gg': 'γκ',
+    // singles
+    'a': 'α', 'b': 'β', 'g': 'γ', 'd': 'δ', 'e': 'ε', 'z': 'ζ',
+    'h': 'η', 'i': 'ι', 'k': 'κ', 'l': 'λ', 'm': 'μ', 'n': 'ν',
+    'o': 'ο', 'p': 'π', 'r': 'ρ', 's': 'σ', 't': 'τ', 'u': 'υ',
+    'f': 'φ', 'x': 'χ', 'y': 'υ', 'c': 'κ', 'v': 'β',
+    'w': 'ω',
+  };
+
+  /// Convert romanized Greek to Greek script. Final sigma gets its
+  /// word-final form (ς).
+  static String latinToGreek(String input) {
+    if (input.isEmpty) return input;
+    final result = StringBuffer();
+    final lower = input.toLowerCase();
+    int i = 0;
+
+    while (i < lower.length) {
+      String? match;
+      int len = 0;
+      for (int l = 2; l >= 1; l--) {
+        if (i + l > lower.length) continue;
+        final sub = lower.substring(i, i + l);
+        if (_latinToGreek.containsKey(sub)) {
+          match = _latinToGreek[sub]!;
+          len = l;
+          break;
+        }
+      }
+      if (match != null) {
+        result.write(match);
+        i += len;
+      } else {
+        result.write(input[i]);
+        i++;
+      }
+    }
+
+    // word-final sigma: σ -> ς
+    return _applyGreekFinalSigma(result.toString());
+  }
+
+  static String _applyGreekFinalSigma(String s) {
+    final buf = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      final ch = s[i];
+      final isFinal =
+          ch == 'σ' && (i + 1 >= s.length || !_isGreekLetter(s[i + 1]));
+      buf.write(isFinal ? 'ς' : ch);
+    }
+    return buf.toString();
+  }
+
+  static bool _isGreekLetter(String c) {
+    final code = c.codeUnitAt(0);
+    return (code >= 0x0370 && code <= 0x03FF) ||
+        (code >= 0x1F00 && code <= 0x1FFF);
+  }
+
+  // ============================================================
+  // Ukrainian: romanized latin -> Ukrainian Cyrillic
+  // ============================================================
+
+  static const Map<String, String> _latinToUkrainian = {
+    // multi-char
+    'shch': 'щ', 'zh': 'ж', 'ts': 'ц', 'ch': 'ч', 'sh': 'ш',
+    'yu': 'ю', 'ya': 'я', 'ye': 'є', 'yi': 'ї',
+    // singles (Ukrainian: i = і, g = г, h = г)
+    'a': 'а', 'b': 'б', 'v': 'в', 'h': 'г', 'd': 'д', 'e': 'е',
+    'g': 'ґ', 'z': 'з', 'y': 'и', 'i': 'і', 'j': 'й', 'k': 'к',
+    'l': 'л', 'm': 'м', 'n': 'н', 'o': 'о', 'p': 'п', 'r': 'р',
+    's': 'с', 't': 'т', 'u': 'у', 'f': 'ф',
+    "'": 'ь',
+  };
+
+  /// Convert romanized Ukrainian to Cyrillic script.
+  static String latinToUkrainian(String input) {
+    return _mapLongestFirst(input, _latinToUkrainian, maxLen: 4);
+  }
+
+  // ============================================================
+  // Bulgarian: romanized latin -> Bulgarian Cyrillic
+  // ============================================================
+
+  static const Map<String, String> _latinToBulgarian = {
+    // multi-char
+    'sht': 'щ', 'zh': 'ж', 'ts': 'ц', 'ch': 'ч', 'sh': 'ш',
+    'yu': 'ю', 'ya': 'я', 'ia': 'я', 'iu': 'ю', 'ai': 'ай',
+    // singles (Bulgarian: latin v = в, jat ѣ merged into е/я)
+    'a': 'а', 'b': 'б', 'v': 'в', 'g': 'г', 'd': 'д', 'e': 'е',
+    'z': 'з', 'i': 'и', 'j': 'й', 'k': 'к', 'l': 'л', 'm': 'м',
+    'n': 'н', 'o': 'о', 'p': 'п', 'r': 'р', 's': 'с', 't': 'т',
+    'u': 'у', 'f': 'ф', 'h': 'х', 'w': 'в',
+    'y': 'ъ',
+  };
+
+  /// Convert romanized Bulgarian to Cyrillic script.
+  static String latinToBulgarian(String input) {
+    return _mapLongestFirst(input, _latinToBulgarian, maxLen: 3);
+  }
+
+  // ============================================================
+  // Serbian: romanized latin -> Serbian Cyrillic
+  // ============================================================
+
+  static const Map<String, String> _latinToSerbian = {
+    // multi-char (Serbian lj/nj/dž are single letters)
+    'lj': 'љ', 'nj': 'њ', 'dž': 'џ',
+    'ž': 'ж', 'č': 'ч', 'š': 'ш', 'ć': 'ћ', 'đ': 'ђ',
+    // singles
+    'a': 'а', 'b': 'б', 'v': 'в', 'g': 'г', 'd': 'д', 'e': 'е',
+    'z': 'з', 'i': 'и', 'j': 'ј', 'k': 'к', 'l': 'л', 'm': 'м',
+    'n': 'н', 'o': 'о', 'p': 'п', 'r': 'р', 's': 'с', 't': 'т',
+    'u': 'у', 'f': 'ф', 'h': 'х', 'c': 'ц',
+  };
+
+  /// Convert romanized Serbian (Serbian Latin/Gaj's Latin) to
+  /// Cyrillic script.
+  static String latinToSerbian(String input) {
+    return _mapLongestFirst(input, _latinToSerbian, maxLen: 2);
+  }
+
+  /// Generic longest-first single-pass mapper.
+  static String _mapLongestFirst(
+    String input,
+    Map<String, String> map, {
+    int maxLen = 2,
+  }) {
+    if (input.isEmpty) return input;
+    final result = StringBuffer();
+    final lower = input.toLowerCase();
+    int i = 0;
+
+    while (i < lower.length) {
+      String? match;
+      int len = 0;
+      for (int l = maxLen; l >= 1; l--) {
+        if (i + l > lower.length) continue;
+        final sub = lower.substring(i, i + l);
+        if (map.containsKey(sub)) {
+          match = map[sub]!;
+          len = l;
+          break;
+        }
+      }
+      if (match != null) {
+        result.write(match);
+        i += len;
+      } else {
+        result.write(input[i]);
+        i++;
+      }
+    }
+
+    return result.toString();
+  }
+
+  // ============================================================
   // Hebrew: romanized latin -> Hebrew letters
   // ============================================================
 
@@ -765,7 +937,11 @@ class ScriptConverter {
 
   /// Hebrew letters with special word-final (sofit) forms.
   static const Map<String, String> _hebrewSofit = {
-    'מ': 'ם', 'נ': 'ן', 'צ': 'ץ', 'פ': 'ף', 'כ': 'ך',
+    'מ': 'ם',
+    'נ': 'ן',
+    'צ': 'ץ',
+    'פ': 'ף',
+    'כ': 'ך',
   };
 
   /// Convert word-final letters to their sofit forms.
@@ -1143,6 +1319,14 @@ class ScriptConverter {
         return latinToHangul(input);
       case 'ru':
         return latinToCyrillic(input);
+      case 'uk':
+        return latinToUkrainian(input);
+      case 'bg':
+        return latinToBulgarian(input);
+      case 'sr':
+        return latinToSerbian(input);
+      case 'el':
+        return latinToGreek(input);
       case 'he':
       case 'iw':
         return latinToHebrew(input);
@@ -1164,6 +1348,10 @@ class ScriptConverter {
       'zh',
       'ko',
       'ru',
+      'uk',
+      'bg',
+      'sr',
+      'el',
       'he',
       'iw',
       'ar',

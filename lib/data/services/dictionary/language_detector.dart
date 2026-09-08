@@ -18,7 +18,7 @@ class LanguageDetector {
     if (ChineseUtil.containsChinese(text)) {
       return 'zh';
     }
-    
+
     // Japanese - hiragana, katakana
     if (RegExp(r'[\u3040-\u309F\u30A0-\u30FF]').hasMatch(text)) {
       return 'ja';
@@ -30,7 +30,9 @@ class LanguageDetector {
     }
 
     // Arabic script
-    if (RegExp(r'[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]').hasMatch(text)) {
+    if (RegExp(
+      r'[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]',
+    ).hasMatch(text)) {
       return 'ar';
     }
 
@@ -47,6 +49,16 @@ class LanguageDetector {
     // Devanagari (Hindi, etc.)
     if (RegExp(r'[\u0900-\u097F\u1CD0-\u1CFF]').hasMatch(text)) {
       return 'hi';
+    }
+
+    // Greek
+    if (RegExp(r'[\u0370-\u03FF\u1F00-\u1FFF]').hasMatch(text)) {
+      return 'el';
+    }
+
+    // Thai
+    if (RegExp(r'[\u0E00-\u0E7F]').hasMatch(text)) {
+      return 'th';
     }
 
     // Khmer
@@ -80,7 +92,8 @@ class LanguageDetector {
       if ((codeUnit >= 65 && codeUnit <= 122) || // A-Z, a-z
           (codeUnit >= 48 && codeUnit <= 57) || // 0-9
           codeUnit == 32 || // space
-          (codeUnit >= 192 && codeUnit <= 687)) { // Extended Latin characters used in European languages
+          (codeUnit >= 192 && codeUnit <= 687)) {
+        // Extended Latin characters used in European languages
         latinCount++;
       } else {
         otherCount++;
