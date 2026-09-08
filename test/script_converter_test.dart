@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lang/utils/script_converter.dart';
+import 'package:lang/utils/pinyin_util.dart';
 
 void main() {
   group('ScriptConverter.detect', () {
@@ -217,6 +218,241 @@ void main() {
 
     test('detect armenian script', () {
       expect(ScriptConverter.detect('հայաստան'), ScriptType.armenian);
+    });
+  });
+
+  group('ScriptConverter.detect more scripts', () {
+    test('detects hiragana vs katakana', () {
+      expect(ScriptConverter.detect('あ'), ScriptType.hiragana);
+      expect(ScriptConverter.detect('ア'), ScriptType.katakana);
+    });
+    test('detects latin', () {
+      expect(ScriptConverter.detect('abc'), ScriptType.latin);
+    });
+    test('detects mixed', () {
+      expect(ScriptConverter.detect('abcあ'), ScriptType.mixed);
+    });
+    test('detects empty as unknown', () {
+      expect(ScriptConverter.detect(''), ScriptType.unknown);
+    });
+    test('detects hanzi/kanji', () {
+      expect(ScriptConverter.detect('漢'), ScriptType.hanzi);
+    });
+    test('detects bopomofo', () {
+      expect(ScriptConverter.detect('ㄅ'), ScriptType.bopomofo);
+    });
+    test('detects greek', () {
+      expect(ScriptConverter.detect('ελ'), ScriptType.greek);
+    });
+    test('detects cyrillic ukrainian text', () {
+      expect(ScriptConverter.detect('привіт'), ScriptType.cyrillic);
+    });
+  });
+
+  group('ScriptConverter romaji/kana', () {
+    test('romajiToHiragana basics', () {
+      expect(ScriptConverter.romajiToHiragana('neko'), 'ねこ');
+      expect(ScriptConverter.romajiToHiragana('shi'), 'し');
+      expect(ScriptConverter.romajiToHiragana('tsu'), 'つ');
+    });
+    test('romajiToHiragana digraphs', () {
+      expect(ScriptConverter.romajiToHiragana('kya'), 'きゃ');
+      expect(ScriptConverter.romajiToHiragana('sha'), 'しゃ');
+    });
+    test('romajiToHiragana geminate', () {
+      expect(ScriptConverter.romajiToHiragana('kka'), 'っか');
+    });
+    test('romajiToHiragana passes through unknown', () {
+      expect(ScriptConverter.romajiToHiragana('neko!'), 'ねこ!');
+    });
+    test('romajiToKatakana', () {
+      expect(ScriptConverter.romajiToKatakana('neko'), 'ネコ');
+    });
+    test('kanaToRomaji roundtrip', () {
+      expect(ScriptConverter.kanaToRomaji('ねこ'), 'neko');
+      expect(ScriptConverter.kanaToRomaji('きゃ'), 'kya');
+    });
+    test('hiragana <-> katakana', () {
+      expect(ScriptConverter.hiraganaToKatakana('さくら'), 'サクラ');
+      expect(ScriptConverter.katakanaToHiragana('サクラ'), 'さくら');
+    });
+  });
+
+  group('PinyinUtil tone placement', () {
+    test('tone goes on the main vowel', () {
+      expect(PinyinUtil.convertToneNumbers('hao3'), 'hǎo');
+      expect(PinyinUtil.convertToneNumbers('ni3'), 'nǐ');
+    });
+    test('joined syllables', () {
+      expect(PinyinUtil.convertToneNumbers('zhong1wen2'), 'zhōngwén');
+      expect(PinyinUtil.convertToneNumbers('ni3hao3'), 'nǐhǎo');
+    });
+    test('space separated', () {
+      expect(PinyinUtil.convertToneNumbers('ni3 hao3'), 'nǐ hǎo');
+    });
+    test('iu and ui rules', () {
+      expect(PinyinUtil.convertToneNumbers('liu2'), 'liú');
+      expect(PinyinUtil.convertToneNumbers('gui4'), 'guì');
+      expect(PinyinUtil.convertToneNumbers('shui3'), 'shuǐ');
+    });
+    test('ou rule marks o', () {
+      expect(PinyinUtil.convertToneNumbers('zou3'), 'zǒu');
+    });
+    test('neutral tone 5 has no mark', () {
+      expect(PinyinUtil.convertToneNumbers('ma5'), 'ma');
+      expect(PinyinUtil.convertToneNumbers('men5'), 'men');
+    });
+    test('v and u: substitutes for ü', () {
+      expect(PinyinUtil.convertToneNumbers('lv4'), 'lǜ');
+      expect(PinyinUtil.convertToneNumbers('lu:4'), 'lǜ');
+      expect(PinyinUtil.convertToneNumbers('nu:3'), 'nǚ');
+    });
+    test('no tone digit passes through', () {
+      expect(PinyinUtil.convertToneNumbers('hao'), 'hao');
+      expect(PinyinUtil.convertToneNumbers(''), '');
+    });
+  });
+
+  group('ScriptConverter pinyin/bopomofo', () {
+    test('latinToPinyin dispatch', () {
+      expect(ScriptConverter.latinToPinyin('zhong1wen2'), 'zhōngwén');
+      expect(ScriptConverter.latinToPinyin('ni3 hao3'), 'nǐ hǎo');
+    });
+    test('bopomofoToPinyin', () {
+      expect(ScriptConverter.bopomofoToPinyin('ㄅ'), 'b');
+      expect(ScriptConverter.bopomofoToPinyin('ㄓ'), 'zh');
+    });
+    test('pinyinToBopomofo', () {
+      expect(ScriptConverter.pinyinToBopomofo('b'), 'ㄅ');
+    });
+  });
+
+  group('ScriptConverter.latinToHangul more', () {
+    test('tense consonants', () {
+      expect(ScriptConverter.latinToHangul('ppal'), '빨');
+      expect(ScriptConverter.latinToHangul('kkam'), '깜');
+    });
+    test('spaces preserved', () {
+      expect(ScriptConverter.latinToHangul('jal ga'), '잘 가');
+    });
+    test('uppercase input tolerated', () {
+      expect(ScriptConverter.latinToHangul('GO'), '고');
+    });
+    test('gamsa', () {
+      expect(ScriptConverter.latinToHangul('gamsa'), '감사');
+    });
+    test('naneun', () {
+      expect(ScriptConverter.latinToHangul('naneun'), '나는');
+    });
+  });
+
+  group('ScriptConverter.latinToCyrillic more', () {
+    test('shch digraph', () {
+      expect(ScriptConverter.latinToCyrillic('shchuka'), 'щука');
+    });
+    test('yu ya digraphs', () {
+      expect(ScriptConverter.latinToCyrillic('yulia'), 'юлиа');
+    });
+    test('hard sign', () {
+      expect(ScriptConverter.latinToCyrillic("pod''ezd"), 'подъезд');
+    });
+  });
+
+  group('ScriptConverter.latinToGreek more', () {
+    test('final sigma', () {
+      final r = ScriptConverter.latinToGreek('sos');
+      expect(r.runes.last, 0x03C2);
+    });
+    test('medial sigma stays sigma', () {
+      expect(ScriptConverter.latinToGreek('sosi'), 'σοσι');
+    });
+    test('digraphs', () {
+      expect(ScriptConverter.latinToGreek('thermos'), 'θερμος');
+    });
+  });
+
+  group('ScriptConverter.latinToGeorgian more', () {
+    test('digraphs', () {
+      expect(ScriptConverter.latinToGeorgian('tskhali'), 'ცხალი');
+      expect(ScriptConverter.latinToGeorgian('dzveli'), 'ძველი');
+    });
+  });
+
+  group('ScriptConverter.latinToArmenian more', () {
+    test('digraph', () {
+      expect(ScriptConverter.latinToArmenian('khach'), 'խաչ');
+    });
+  });
+
+  group('ScriptConverter.latinToHebrew more', () {
+    test('mi with final yod', () {
+      final r = ScriptConverter.latinToHebrew('mi');
+      expect(r.runes.last, 0x05D9); // י yod
+    });
+    test('word-final alef', () {
+      final r = ScriptConverter.latinToHebrew('ima');
+      expect(r.runes.last, 0x05D0); // א alef
+    });
+    test('sofit final mem', () {
+      final r = ScriptConverter.latinToHebrew('shalom');
+      expect(r.runes.last, 0x05DD); // ם mem sofit
+    });
+  });
+
+  group('ScriptConverter.latinToArabic more', () {
+    test('word-final alif', () {
+      final r = ScriptConverter.latinToArabic('marhaba');
+      expect(r.runes.last, 0x0627); // ا alif
+    });
+    test('short vowels omitted inside', () {
+      final r = ScriptConverter.latinToArabic('klb');
+      expect(r, 'كلب'); // k-l-b
+    });
+    test('hamza apostrophe', () {
+      // apostrophe is a hamza carrier and does not end the word:
+      // 'a' before it stays omitted, no bogus word-final alif
+      expect(ScriptConverter.latinToArabic("ta'nin"), 'تءنن');
+      expect(ScriptConverter.latinToArabic('taniin'), 'تنين');
+    });
+  });
+
+  group('ScriptConverter edge cases', () {
+    test('empty input returns empty', () {
+      expect(ScriptConverter.latinToHangul(''), '');
+      expect(ScriptConverter.latinToGreek(''), '');
+      expect(ScriptConverter.latinToHebrew(''), '');
+      expect(ScriptConverter.latinToArabic(''), '');
+      expect(ScriptConverter.latinToGeorgian(''), '');
+      expect(ScriptConverter.latinToArmenian(''), '');
+      expect(ScriptConverter.latinToCyrillic(''), '');
+      expect(ScriptConverter.latinToThai(''), '');
+      expect(ScriptConverter.latinToDevanagari(''), '');
+      expect(ScriptConverter.latinToUkrainian(''), '');
+      expect(ScriptConverter.latinToBulgarian(''), '');
+      expect(ScriptConverter.latinToSerbian(''), '');
+    });
+    test('non-latin pass through untouched', () {
+      expect(ScriptConverter.latinToHangul('안녕'), '안녕');
+      expect(ScriptConverter.latinToGreek('ε'), 'ε');
+    });
+    test('looksLikeRomaji', () {
+      expect(ScriptConverter.looksLikeRomaji('abc'), true);
+      expect(ScriptConverter.looksLikeRomaji('a b-c'), true);
+      expect(ScriptConverter.looksLikeRomaji('あ'), false);
+      expect(ScriptConverter.looksLikeRomaji('123'), false);
+    });
+    test('supportsLatinToScript full coverage', () {
+      for (final lang in [
+        'ja', 'zh', 'ko', 'ru', 'uk', 'bg', 'sr', 'el',
+        'ka', 'hy', 'he', 'iw', 'ar', 'hi', 'th',
+      ]) {
+        expect(ScriptConverter.supportsLatinToScript(lang), true,
+            reason: lang);
+      }
+      for (final lang in ['en', 'fr', 'de', 'xx', '']) {
+        expect(ScriptConverter.supportsLatinToScript(lang), false,
+            reason: lang);
+      }
     });
   });
 

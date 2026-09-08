@@ -1110,8 +1110,11 @@ class ScriptConverter {
     int i = 0;
 
     while (i < lower.length) {
-      // word-final 'a' -> alif
-      final isWordEnd = i + 1 >= lower.length || !_isLatinChar(lower[i + 1]);
+      // word-final 'a' -> alif; apostrophe (hamza carrier) keeps
+      // the word going so "ta'nin" is not "word-final a"
+      final nextCh = i + 1 < lower.length ? lower[i + 1] : '';
+      final isWordEnd =
+          nextCh.isEmpty || (!_isLatinChar(nextCh) && nextCh != "'");
       if (isWordEnd && lower[i] == 'a') {
         result.write('ا');
         i++;
