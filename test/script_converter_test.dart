@@ -456,4 +456,69 @@ void main() {
     });
   });
 
+  group('ScriptConverter.latinToDevanagari more', () {
+    test('inherent vowel', () {
+      // ka -> क (a is inherent, not written)
+      expect(ScriptConverter.latinToDevanagari('ka'), 'क');
+      expect(ScriptConverter.latinToDevanagari('na'), 'न');
+    });
+    test('vowel signs', () {
+      // ki -> कि, kaa -> का
+      expect(ScriptConverter.latinToDevanagari('ki'), 'कि');
+      expect(ScriptConverter.latinToDevanagari('kaa'), 'का');
+      expect(ScriptConverter.latinToDevanagari('ku'), 'कु');
+      expect(ScriptConverter.latinToDevanagari('ke'), 'के');
+    });
+    test('aspirated consonants', () {
+      expect(ScriptConverter.latinToDevanagari('dha'), 'ध');
+      expect(ScriptConverter.latinToDevanagari('kha'), 'ख');
+      expect(ScriptConverter.latinToDevanagari('bha'), 'भ');
+    });
+    test('namaste', () {
+      expect(ScriptConverter.latinToDevanagari('namaste'), 'नमस्ते');
+    });
+  });
+
+  group('ScriptConverter.latinToThai more', () {
+    test('aspirated consonants', () {
+      // kh -> ข, ph -> พ, th -> ท
+      final r = ScriptConverter.latinToThai('khao');
+      expect(r, contains('ข'));
+      final r2 = ScriptConverter.latinToThai('phom');
+      expect(r2, contains('พ'));
+    });
+    test('ng digraph', () {
+      expect(ScriptConverter.latinToThai('ng'), 'ง');
+    });
+  });
+
+  group('ScriptConverter.hanziToPinyin', () {
+    test('common word', () async {
+      expect(await ScriptConverter.hanziToPinyin('你好'), 'nǐ hǎo');
+    });
+    test('mixed hanzi and latin', () async {
+      expect(await ScriptConverter.hanziToPinyin('漢x'), '漢 x');
+    });
+  });
+
+  group('ScriptConverter.looksLikePinyin', () {
+    test('accepts pinyin-shaped words', () {
+      expect(ScriptConverter.looksLikePinyin('ni hao'), true);
+      expect(ScriptConverter.looksLikePinyin('zhongwen'), true);
+    });
+  });
+
+  group('ScriptConverter.latinToHebrew multi-word', () {
+    test('mater works per word, not per string', () {
+      // shalom ima -> שלום אמא (shalom keeps its ו mid-sentence)
+      final r = ScriptConverter.latinToHebrew('shalom ima');
+      expect(r, 'שלום אמא');
+    });
+    test('sofit per word', () {
+      // both words get final forms: ם for m, א for a
+      final r = ScriptConverter.latinToHebrew('shalom, ima');
+      expect(r, 'שלום, אמא');
+    });
+  });
+
 }

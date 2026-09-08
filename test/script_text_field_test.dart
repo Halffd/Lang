@@ -103,4 +103,134 @@ void main() {
     controller.dispose();
     node.dispose();
   });
+  testWidgets('ScriptTextField typing converts for greek',
+      (tester) async {
+    final controller = TextEditingController();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ScriptTextField(
+            controller: controller,
+            language: 'el',
+            enabled: true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // type word + space: word-boundary conversion triggers
+    await tester.enterText(find.byType(TextField), 'thermos ');
+    await tester.pump();
+
+    expect(controller.text, isNot('thermos'));
+    expect(controller.text, contains('θ'));
+    controller.dispose();
+  });
+
+  testWidgets('ScriptTextField typing converts for ukrainian',
+      (tester) async {
+    final controller = TextEditingController();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ScriptTextField(
+            controller: controller,
+            language: 'uk',
+            enabled: true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'pryvit ');
+    await tester.pump();
+
+    expect(controller.text, isNot('pryvit'));
+    // Ukrainian і (0x456), not Russian и
+    expect(controller.text.contains('і'), true);
+    controller.dispose();
+  });
+
+  testWidgets('ScriptTextField typing converts for georgian',
+      (tester) async {
+    final controller = TextEditingController();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ScriptTextField(
+            controller: controller,
+            language: 'ka',
+            enabled: true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'gamarjoba ');
+    await tester.pump();
+
+    expect(controller.text, isNot('gamarjoba'));
+    expect(controller.text.contains('გ'), true);
+    controller.dispose();
+  });
+
+  testWidgets('ScriptTextField typing converts for armenian',
+      (tester) async {
+    final controller = TextEditingController();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ScriptTextField(
+            controller: controller,
+            language: 'hy',
+            enabled: true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'barev ');
+    await tester.pump();
+
+    expect(controller.text, isNot('barev'));
+    expect(controller.text.contains('բ'), true);
+    controller.dispose();
+  });
+
+  testWidgets('ScriptTextField blur converts remaining latin (hebrew)',
+      (tester) async {
+    final controller = TextEditingController();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ScriptTextField(
+            controller: controller,
+            language: 'he',
+            enabled: true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // type without separator; conversion deferred to blur
+    await tester.enterText(find.byType(TextField), 'shalom');
+    await tester.pump();
+    expect(controller.text, 'shalom');
+
+    // unfocus -> _convertAll runs
+    final field = find.byType(ScriptTextField);
+    await tester.tap(field);
+    await tester.pump();
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+
+    expect(controller.text, 'שלום');
+    controller.dispose();
+  });
+
 }

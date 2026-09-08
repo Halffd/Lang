@@ -1042,8 +1042,14 @@ class ScriptConverter {
       if (isVowel) {
         final isWordStart = i == 0 || !_isLatinChar(lower[i - 1]);
         final isWordEnd = i + 1 >= lower.length || !_isLatinChar(lower[i + 1]);
-        // vowel + single trailing consonant: shalom -> שלום
-        final beforeFinalConsonant = i + 2 == lower.length;
+        // vowel + single trailing consonant of the word:
+        // shalom -> שלום (works mid-sentence too: "shalom ima")
+        final nextNext = i + 2 < lower.length ? lower[i + 2] : '';
+        final beforeFinalConsonant =
+            i + 2 == lower.length ||
+            (nextNext.isNotEmpty &&
+                !_isLatinChar(nextNext) &&
+                _isLatinChar(lower[i + 1]));
         if (isWordEnd || beforeFinalConsonant) {
           result.write(_hebrewFinalVowels[lower[i]]!);
           i++;
