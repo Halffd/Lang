@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lang/domain/entities/srs_deck.dart';
 import 'package:lang/data/repositories/srs_service.dart';
+import 'package:lang/utils/font_scale.dart';
 
 class DeckManagerSheet extends StatefulWidget {
   final SRSService srsService;
@@ -157,7 +158,7 @@ class _DeckManagerSheetState extends State<DeckManagerSheet> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                const Text('Decks', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                Text('Decks', style: TextStyle(fontSize: fs(context, 20, 'words'), fontWeight: FontWeight.bold)),
                 const Spacer(),
                 IconButton(icon: const Icon(Icons.add), onPressed: () => _showAddDeckDialog()),
                 IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),

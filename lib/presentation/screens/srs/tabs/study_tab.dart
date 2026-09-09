@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:lang/domain/entities/srs_card.dart';
 import 'package:lang/data/repositories/srs_service.dart';
 import 'package:lang/utils/screen_size.dart';
+import 'package:lang/utils/font_scale.dart';
 
 class StudyTab extends StatefulWidget {
   final SRSService srsService;
@@ -139,7 +140,7 @@ class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin
             const SizedBox(height: 16),
             Text(
               'No cards due!',
-              style: TextStyle(fontSize: ScreenSize.adaptiveFontSize(context, 24)),
+              style: TextStyle(fontSize: fs(context, 24, 'ui')),
             ),
             const SizedBox(height: 8),
             const Text('Add cards or come back later', style: TextStyle(color: Colors.grey)),
@@ -236,7 +237,7 @@ class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin
               Text(
                 card.word,
                 style: TextStyle(
-                  fontSize: ScreenSize.adaptiveFontSize(context, 36),
+                  fontSize: fs(context, 36, 'kanji'),
                   fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center,
@@ -245,7 +246,7 @@ class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin
                 const SizedBox(height: 8),
                 Text(
                   card.reading!,
-                  style: TextStyle(fontSize: 20, color: theme.colorScheme.onSurfaceVariant),
+                  style: TextStyle(fontSize: fs(context, 20, 'words'), color: theme.colorScheme.onSurfaceVariant),
                 ),
               ],
               const SizedBox(height: 32),
@@ -257,7 +258,7 @@ class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin
               Text(
                 card.word,
                 style: TextStyle(
-                  fontSize: ScreenSize.adaptiveFontSize(context, 28),
+                  fontSize: fs(context, 28, 'words'),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -265,7 +266,7 @@ class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin
                 const SizedBox(height: 4),
                 Text(
                   card.reading!,
-                  style: TextStyle(fontSize: 16, color: theme.colorScheme.onSurfaceVariant),
+                  style: TextStyle(fontSize: fs(context, 16, 'words'), color: theme.colorScheme.onSurfaceVariant),
                 ),
               ],
               const SizedBox(height: 16),
@@ -278,7 +279,7 @@ class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin
                 ),
                 child: Text(
                   card.meaning,
-                  style: TextStyle(fontSize: 18, color: theme.colorScheme.onPrimaryContainer),
+                  style: TextStyle(fontSize: fs(context, 18, 'words'), color: theme.colorScheme.onPrimaryContainer),
                   textAlign: TextAlign.center,
                 ),
               ),

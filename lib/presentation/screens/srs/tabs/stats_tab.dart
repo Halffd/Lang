@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:lang/domain/entities/srs_card.dart';
 import 'package:lang/data/repositories/srs_service.dart';
+import 'package:lang/utils/font_scale.dart';
 
 class StatsTab extends StatelessWidget {
   final SRSService srsService;
@@ -36,7 +37,7 @@ class StatsTab extends StatelessWidget {
         const SizedBox(height: 16),
         _IntervalDistributionChart(cards: cards),
         const SizedBox(height: 16),
-        _buildStatsSummary(totalCards, dueCount, reviewed, suspended, avgEase, avgInterval),
+        _buildStatsSummary(context, totalCards, dueCount, reviewed, suspended, avgEase, avgInterval),
       ],
     );
   }
@@ -75,6 +76,7 @@ class StatsTab extends StatelessWidget {
   }
 
   Widget _buildStatsSummary(
+    BuildContext context,
     int total, int due, int reviewed, int suspended,
     double avgEase, double avgInterval,
   ) {
@@ -84,7 +86,7 @@ class StatsTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Summary', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('Summary', style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             _detailRow('Total Cards', '$total'),
             _detailRow('Due for Review', '$due'),
@@ -127,7 +129,7 @@ class _StatCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(value, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: color)),
+            Text(value, style: TextStyle(fontSize: fs(context, 28, 'words'), fontWeight: FontWeight.bold, color: color)),
             Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
           ],
         ),
@@ -203,7 +205,7 @@ class _EaseDistributionChart extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Ease Factor Distribution', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('Ease Factor Distribution', style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             SizedBox(
               height: 150,
@@ -322,7 +324,7 @@ class _IntervalDistributionChart extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Interval Distribution', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('Interval Distribution', style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             SizedBox(
               height: 150,

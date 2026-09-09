@@ -8,6 +8,7 @@ import 'package:lang/domain/entities/srs_card.dart';
 import 'package:lang/data/repositories/srs_service.dart';
 import 'package:lang/data/repositories/anki_package_service.dart';
 import 'package:lang/presentation/screens/srs/sheets/deck_manager_sheet.dart';
+import 'package:lang/utils/font_scale.dart';
 import 'package:lang/presentation/screens/srs/sheets/add_card_sheet.dart';
 import 'package:lang/presentation/screens/srs/sheets/card_detail_sheet.dart';
 import 'package:lang/presentation/screens/srs/sheets/import_words_sheet.dart';
@@ -330,7 +331,7 @@ class _CardsTabState extends State<CardsTab> {
                   Expanded(
                     child: Text(
                       card.word,
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, decoration: isSuspended ? TextDecoration.lineThrough : null),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: fs(context, 14, 'words'), decoration: isSuspended ? TextDecoration.lineThrough : null),
                       textAlign: TextAlign.center,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -343,7 +344,7 @@ class _CardsTabState extends State<CardsTab> {
                 const SizedBox(height: 2),
                 Text(
                   card.reading!,
-                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: fs(context, 11, 'ui'), color: Colors.grey[600]),
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -352,7 +353,7 @@ class _CardsTabState extends State<CardsTab> {
               const SizedBox(height: 4),
               Text(
                 card.meaning,
-                style: const TextStyle(fontSize: 11, color: Colors.grey),
+                style: TextStyle(fontSize: fs(context, 11, 'ui'), color: Colors.grey),
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -361,7 +362,7 @@ class _CardsTabState extends State<CardsTab> {
                 const Spacer(),
                 Text(
                   card.tags.take(2).join(', '),
-                  style: const TextStyle(fontSize: 9, color: Colors.grey),
+                  style: TextStyle(fontSize: fs(context, 9, 'ui'), color: Colors.grey),
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -410,7 +411,7 @@ class _CardsTabState extends State<CardsTab> {
               ),
               if (card.tags.isNotEmpty) Wrap(
                 spacing: 4,
-                children: card.tags.take(3).map((t) => Text(t, style: const TextStyle(fontSize: 10, color: Colors.grey))).toList(),
+                children: card.tags.take(3).map((t) => Text(t, style: TextStyle(fontSize: fs(context, 10, 'ui'), color: Colors.grey))).toList(),
               ),
             ],
           ),

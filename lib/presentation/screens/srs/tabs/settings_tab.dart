@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lang/data/repositories/srs_service.dart';
+import 'package:lang/utils/font_scale.dart';
 
 class SettingsTab extends StatefulWidget {
   final SRSService srsService;

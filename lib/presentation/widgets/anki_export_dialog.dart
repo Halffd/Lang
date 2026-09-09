@@ -9,6 +9,7 @@ import 'package:lang/domain/entities/analyzed_word.dart';
 import 'package:lang/domain/entities/anki_note_data.dart';
 import 'package:lang/domain/entities/anki_note_types.dart';
 import 'package:lang/presentation/providers/analyzer_provider.dart';
+import 'package:lang/utils/font_scale.dart';
 
 /// Rich Anki export dialog for a word.
 ///
@@ -384,7 +385,7 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
               _sectionLabel('Profile'),
               Text(
                 'Current: ${context.read<AppState>().currentProfile}',
-                style: TextStyle(color: theme.hintColor, fontSize: 13),
+                style: TextStyle(color: theme.hintColor, fontSize: fs(context, 13)),
               ),
               const SizedBox(height: 12),
 
@@ -519,7 +520,7 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
       padding: const EdgeInsets.only(bottom: 4),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        style: TextStyle(fontSize: fs(context, 12), fontWeight: FontWeight.w600),
       ),
     );
   }

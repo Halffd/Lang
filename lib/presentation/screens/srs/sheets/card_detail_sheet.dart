@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lang/domain/entities/srs_card.dart';
 import 'package:lang/data/repositories/srs_service.dart';
+import 'package:lang/utils/font_scale.dart';
 
 class CardDetailSheet extends StatefulWidget {
   final SRSCard card;
@@ -63,7 +64,7 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
                     children: [
                       Text(
                         _card.word,
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: fs(context, 24, 'kanji'), fontWeight: FontWeight.bold),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -71,7 +72,7 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
                         const SizedBox(height: 4),
                         Text(
                           _card.reading!,
-                          style: TextStyle(fontSize: 16, color: theme.colorScheme.onSurfaceVariant),
+                          style: TextStyle(fontSize: fs(context, 16, 'words'), color: theme.colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ],

@@ -8,6 +8,7 @@ import 'package:screenshot/screenshot.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:lang/domain/entities/srs_card.dart';
 import 'package:lang/data/repositories/srs_service.dart';
+import 'package:lang/utils/font_scale.dart';
 
 class AddCardSheet extends StatefulWidget {
   final SRSCard? editCard;
@@ -291,7 +292,7 @@ class _AddCardSheetState extends State<AddCardSheet> {
                       children: [
                         Text(
                           'Priority: $_priority',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         Slider(
                           value: _priority.toDouble(),
@@ -311,7 +312,7 @@ class _AddCardSheetState extends State<AddCardSheet> {
                       children: [
                         Text(
                           'Language Level: $_languageLevel',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         Slider(
                           value: _languageLevel.toDouble(),
@@ -328,9 +329,9 @@ class _AddCardSheetState extends State<AddCardSheet> {
                 ],
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Media',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               if (_imageBase64 != null)

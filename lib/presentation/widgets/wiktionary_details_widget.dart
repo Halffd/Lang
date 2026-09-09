@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lang/data/datasources/remote/wiktionary_etymology_service.dart';
 import 'package:lang/utils/html_renderer.dart';
+import 'package:lang/utils/font_scale.dart';
 
 class WiktionaryDetailsWidget extends StatelessWidget {
   final List<WiktionaryEntry> wiktionaryEntries;
@@ -66,7 +67,7 @@ class WiktionaryDetailsWidget extends StatelessWidget {
           child: Text(
             entry.partOfSpeech,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: fs(context, 12),
               fontWeight: FontWeight.w500,
               color: Colors.blue[800],
             ),
@@ -90,7 +91,7 @@ class WiktionaryDetailsWidget extends StatelessWidget {
         Text(
           'Examples:',
           style: TextStyle(
-            fontSize: 12,
+            fontSize: fs(context, 12),
             fontWeight: FontWeight.w600,
             color: Colors.blue[700],
           ),
@@ -105,7 +106,7 @@ class WiktionaryDetailsWidget extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('• ', style: TextStyle(fontSize: 14)),
+                Text('• ', style: TextStyle(fontSize: fs(context, 14, 'translations'))),
                 Expanded(
                   child: HtmlRenderer.renderHtmlSafe(example),
                 ),
@@ -131,7 +132,7 @@ class WiktionaryDetailsWidget extends StatelessWidget {
               Text(
                 'Synonyms: ',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: fs(context, 11),
                   fontWeight: FontWeight.w500,
                   color: Colors.blue[700],
                 ),
@@ -150,7 +151,7 @@ class WiktionaryDetailsWidget extends StatelessWidget {
                       child: Text(
                         synonym,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: fs(context, 11),
                           color: Colors.blue[800],
                         ),
                       ),
@@ -174,7 +175,7 @@ class WiktionaryDetailsWidget extends StatelessWidget {
               Text(
                 'Antonyms: ',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: fs(context, 11),
                   fontWeight: FontWeight.w500,
                   color: Colors.blue[700],
                 ),
@@ -193,7 +194,7 @@ class WiktionaryDetailsWidget extends StatelessWidget {
                       child: Text(
                         antonym,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: fs(context, 11),
                           color: Colors.red[800],
                         ),
                       ),
