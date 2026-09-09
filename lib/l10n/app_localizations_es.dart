@@ -804,4 +804,25 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get clipboardImage => 'Imagen';
+
+  @override
+  String get fontGroupSizes => 'Tamaños por sección';
+
+  @override
+  String get fontGroupHeaders => 'Encabezados';
+
+  @override
+  String get fontGroupSentences => 'Frases';
+
+  @override
+  String get fontGroupTranslations => 'Traducciones';
+
+  @override
+  String get fontGroupWords => 'Palabras';
+
+  @override
+  String get fontGroupKanji => 'Kanji';
+
+  @override
+  String get fontGroupUi => 'Texto UI pequeño';
 }

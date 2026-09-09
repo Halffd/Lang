@@ -423,6 +423,36 @@ class SettingsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const Divider(),
+                  // Per-section font size multipliers
+                  Text(
+                    AppLocalizations.of(context)!.fontGroupSizes,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  _FontGroupSlider(
+                    label: AppLocalizations.of(context)!.fontGroupHeaders,
+                    group: 'headers',
+                  ),
+                  _FontGroupSlider(
+                    label: AppLocalizations.of(context)!.fontGroupSentences,
+                    group: 'sentences',
+                  ),
+                  _FontGroupSlider(
+                    label: AppLocalizations.of(context)!.fontGroupTranslations,
+                    group: 'translations',
+                  ),
+                  _FontGroupSlider(
+                    label: AppLocalizations.of(context)!.fontGroupWords,
+                    group: 'words',
+                  ),
+                  _FontGroupSlider(
+                    label: AppLocalizations.of(context)!.fontGroupKanji,
+                    group: 'kanji',
+                  ),
+                  _FontGroupSlider(
+                    label: AppLocalizations.of(context)!.fontGroupUi,
+                    group: 'ui',
+                  ),
                 ],
               ),
             ),
@@ -1362,6 +1392,53 @@ class _ClipboardSettingsState extends State<_ClipboardSettings> {
           },
         ),
       ],
+    );
+  }
+}
+
+/// One slider row for a per-section font multiplier.
+class _FontGroupSlider extends StatelessWidget {
+  final String label;
+  final String group;
+
+  const _FontGroupSlider({required this.label, required this.group});
+
+  @override
+  Widget build(BuildContext context) {
+    final appState = context.watch<AppState>();
+    final value = switch (group) {
+      'headers' => appState.fontSettings.headers,
+      'sentences' => appState.fontSettings.sentences,
+      'translations' => appState.fontSettings.translations,
+      'words' => appState.fontSettings.words,
+      'kanji' => appState.fontSettings.kanji,
+      _ => appState.fontSettings.ui,
+    };
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Row(
+        children: [
+          SizedBox(width: 110, child: Text(label)),
+          Expanded(
+            child: Slider(
+              value: value,
+              min: 0.5,
+              max: 3.0,
+              divisions: 25, // 0.1 increments
+              label: 'x$value',
+              onChanged: (v) => appState.setFontGroup(group, v),
+            ),
+          ),
+          SizedBox(
+            width: 44,
+            child: Text(
+              'x${value.toStringAsFixed(1)}',
+              textAlign: TextAlign.end,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

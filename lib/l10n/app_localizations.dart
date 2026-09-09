@@ -1613,6 +1613,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Image'**
   String get clipboardImage;
+
+  /// No description provided for @fontGroupSizes.
+  ///
+  /// In en, this message translates to:
+  /// **'Font sizes by section'**
+  String get fontGroupSizes;
+
+  /// No description provided for @fontGroupHeaders.
+  ///
+  /// In en, this message translates to:
+  /// **'Headers'**
+  String get fontGroupHeaders;
+
+  /// No description provided for @fontGroupSentences.
+  ///
+  /// In en, this message translates to:
+  /// **'Sentences'**
+  String get fontGroupSentences;
+
+  /// No description provided for @fontGroupTranslations.
+  ///
+  /// In en, this message translates to:
+  /// **'Translations'**
+  String get fontGroupTranslations;
+
+  /// No description provided for @fontGroupWords.
+  ///
+  /// In en, this message translates to:
+  /// **'Words'**
+  String get fontGroupWords;
+
+  /// No description provided for @fontGroupKanji.
+  ///
+  /// In en, this message translates to:
+  /// **'Kanji'**
+  String get fontGroupKanji;
+
+  /// No description provided for @fontGroupUi.
+  ///
+  /// In en, this message translates to:
+  /// **'Small UI text'**
+  String get fontGroupUi;
 }
 
 class _AppLocalizationsDelegate

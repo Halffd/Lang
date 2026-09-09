@@ -569,5 +569,12 @@
   "autoSearchRegex": "Solo texto coincidente",
   "autoSearchRegexDesc": "Buscar automáticamente solo cuando el texto coincide: introduce un regex, o 'ja' para texto japonés",
   "autoSearchRegexHint": "regex o 'ja'",
-  "clipboardImage": "Imagen"
+  "clipboardImage": "Imagen",
+  "fontGroupSizes": "Tamaños por sección",
+  "fontGroupHeaders": "Encabezados",
+  "fontGroupSentences": "Frases",
+  "fontGroupTranslations": "Traducciones",
+  "fontGroupWords": "Palabras",
+  "fontGroupKanji": "Kanji",
+  "fontGroupUi": "Texto UI pequeño"
 }

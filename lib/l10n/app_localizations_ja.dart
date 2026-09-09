@@ -788,4 +788,25 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get clipboardImage => '画像';
+
+  @override
+  String get fontGroupSizes => 'セクション別フォントサイズ';
+
+  @override
+  String get fontGroupHeaders => '見出し';
+
+  @override
+  String get fontGroupSentences => '文';
+
+  @override
+  String get fontGroupTranslations => '翻訳';
+
+  @override
+  String get fontGroupWords => '単語';
+
+  @override
+  String get fontGroupKanji => '漢字';
+
+  @override
+  String get fontGroupUi => '小さいUI文字';
 }

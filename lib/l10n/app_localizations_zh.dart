@@ -798,4 +798,25 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get clipboardImage => '图片';
+
+  @override
+  String get fontGroupSizes => '按区域设置字号';
+
+  @override
+  String get fontGroupHeaders => '标题';
+
+  @override
+  String get fontGroupSentences => '句子';
+
+  @override
+  String get fontGroupTranslations => '翻译';
+
+  @override
+  String get fontGroupWords => '单词';
+
+  @override
+  String get fontGroupKanji => '汉字';
+
+  @override
+  String get fontGroupUi => '小字文本';
 }

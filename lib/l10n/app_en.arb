@@ -250,5 +250,12 @@
   "autoSearchRegex": "Only matching text",
   "autoSearchRegexDesc": "Auto search only when copied text matches a pattern: enter a regex, or 'ja' for any Japanese text",
   "autoSearchRegexHint": "regex or 'ja'",
-  "clipboardImage": "Image"
+  "clipboardImage": "Image",
+  "fontGroupSizes": "Font sizes by section",
+  "fontGroupHeaders": "Headers",
+  "fontGroupSentences": "Sentences",
+  "fontGroupTranslations": "Translations",
+  "fontGroupWords": "Words",
+  "fontGroupKanji": "Kanji",
+  "fontGroupUi": "Small UI text"
 }

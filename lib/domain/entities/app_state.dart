@@ -3,6 +3,7 @@ import '../../core/services/storage_service.dart';
 import 'yomitan_options.dart';
 import 'anki_note_types.dart';
 import 'dictionary_display_options.dart';
+import 'font_settings.dart';
 import '../../data/repositories/translation_service.dart';
 import 'translation_model.dart';
 
@@ -36,6 +37,7 @@ class AppState extends ChangeNotifier {
   bool _autoHideNavigation = true;
   double _zoomLevel = 1.0; // Default zoom level
   double _fontSizeMultiplier = 1.0; // Default font size multiplier
+  FontSettings _fontSettings = const FontSettings();
   bool _defaultFlexMode = false;
   int _defaultScreenIndex = 0; // Default to 0 (Search screen)
   List<String> _etymologyLanguages = [
@@ -98,6 +100,7 @@ class AppState extends ChangeNotifier {
   bool get defaultFlexMode => _defaultFlexMode;
   double get zoomLevel => _zoomLevel;
   double get fontSizeMultiplier => _fontSizeMultiplier;
+  FontSettings get fontSettings => _fontSettings;
   String get currentQuery => _currentQuery;
   List<String> get searchHistory => _searchHistory;
   String get currentProfile => _currentProfile;
@@ -288,6 +291,26 @@ class AppState extends ChangeNotifier {
     _fontSizeMultiplier = multiplier.clamp(0.8, 2.0);
     _storageService.setDouble('font_size_multiplier', _fontSizeMultiplier);
     notifyListeners();
+  }
+
+  /// Per-item-group font multipliers (headers, sentences,
+  /// translations, words, kanji, ui).
+  void setFontSettings(FontSettings settings) {
+    _fontSettings = settings;
+    _storageService.setString('font_settings', settings.serialize());
+    notifyListeners();
+  }
+
+  /// Update one group multiplier, keeping the others.
+  void setFontGroup(String group, double multiplier) {
+    setFontSettings(_fontSettings.copyWith(
+      headers: group == 'headers' ? multiplier : null,
+      sentences: group == 'sentences' ? multiplier : null,
+      translations: group == 'translations' ? multiplier : null,
+      words: group == 'words' ? multiplier : null,
+      kanji: group == 'kanji' ? multiplier : null,
+      ui: group == 'ui' ? multiplier : null,
+    ));
   }
 
   void setCurrentProfile(String value) {
@@ -652,6 +675,9 @@ class AppState extends ChangeNotifier {
       _zoomLevel = _storageService.getDouble('zoom_level') ?? 1.0;
       _fontSizeMultiplier =
           _storageService.getDouble('font_size_multiplier') ?? 1.0;
+      _fontSettings = FontSettings.deserialize(
+        _storageService.getStringSync('font_settings'),
+      );
       _currentProfile =
           _storageService.getStringSync('current_profile') ?? 'Default';
       _searchHistory = _storageService.getStringList('search_history') ?? [];

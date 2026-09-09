@@ -569,5 +569,12 @@
   "autoSearchRegex": "一致するテキストのみ",
   "autoSearchRegexDesc": "コピーしたテキストがパターンに一致するときのみ自動検索：正規表現、または 'ja' で日本語テキスト",
   "autoSearchRegexHint": "正規表現または 'ja'",
-  "clipboardImage": "画像"
+  "clipboardImage": "画像",
+  "fontGroupSizes": "セクション別フォントサイズ",
+  "fontGroupHeaders": "見出し",
+  "fontGroupSentences": "文",
+  "fontGroupTranslations": "翻訳",
+  "fontGroupWords": "単語",
+  "fontGroupKanji": "漢字",
+  "fontGroupUi": "小さいUI文字"
 }

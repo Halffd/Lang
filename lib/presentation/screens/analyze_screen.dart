@@ -172,6 +172,24 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     }
   }
 
+  /// Font size for a text group: base * global multiplier *
+  /// per-group multiplier. Groups: headers, sentences,
+  /// translations, words, kanji, ui.
+  double fs(double base, [String group = 'ui']) {
+    final appState = this.context.read<AppState>();
+    final global = appState.fontSizeMultiplier;
+    final s = appState.fontSettings;
+    final groupMult = switch (group) {
+      'headers' => s.headers,
+      'sentences' => s.sentences,
+      'translations' => s.translations,
+      'words' => s.words,
+      'kanji' => s.kanji,
+      _ => s.ui,
+    };
+    return base * global * groupMult;
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<AnalyzerProvider>(context);
@@ -402,7 +420,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                   language: provider.currentLanguage,
                   enabled: context.read<AppState>().autoConvertJapanese,
                   maxLines: 4,
-                  style: const TextStyle(fontSize: 15, height: 1.4),
+                  style: TextStyle(fontSize: fs(15, 'sentences'), height: 1.4),
                   decoration: InputDecoration(
                     hintText: l10n.pasteTextHere,
                     hintStyle: TextStyle(
@@ -460,8 +478,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                       : const Icon(Icons.analytics_outlined, size: 22),
                   label: Text(
                     isLoading ? l10n.processing : l10n.analyzeText,
-                    style: const TextStyle(
-                      fontSize: 14,
+                    style: TextStyle(
+                      fontSize: fs(14, 'ui'),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -548,7 +566,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
           Text(
             value,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: fs(12, 'ui'),
               fontWeight: FontWeight.w600,
               color: theme.colorScheme.onSurface,
             ),
@@ -557,7 +575,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: fs(11, 'ui'),
               color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),
@@ -654,8 +672,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                       ),
                       child: Text(
                         '${idx + 1}',
-                        style: const TextStyle(
-                          fontSize: 11,
+                        style: TextStyle(
+                          fontSize: fs(11, 'ui'),
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
@@ -665,7 +683,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                       child: Text(
                         sentence,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: fs(14, 'sentences'),
                           height: 1.5,
                           color: theme.colorScheme.onSurface.withValues(
                             alpha: isSelected ? 1 : 0.85,
@@ -791,7 +809,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: fs(12, 'ui'),
                             color: theme.colorScheme.onSurface.withValues(
                               alpha: 0.55,
                             ),
@@ -802,7 +820,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                       Text(
                         '${group.value.length}',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: fs(11, 'sentences'),
                           color: theme.colorScheme.onSurface.withValues(
                             alpha: 0.4,
                           ),
@@ -910,7 +928,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
             Text(
               '${provider.itemsPerRow} ${l10n.columns}',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: fs(12, 'ui'),
                 fontWeight: FontWeight.w500,
                 color: theme.colorScheme.onSurface,
               ),
@@ -1335,7 +1353,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                           Text(
                             word.word,
                             style: TextStyle(
-                              fontSize: 17,
+                              fontSize: fs(17, 'kanji'),
                               fontWeight: FontWeight.bold,
                               color: theme.colorScheme.onSurface,
                             ),
@@ -1347,7 +1365,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                             Text(
                               reading.isNotEmpty ? reading : pinyin,
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: fs(11, 'ui'),
                                 color: theme.colorScheme.onSurface.withValues(
                                   alpha: 0.55,
                                 ),
@@ -1399,7 +1417,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                             child: Text(
                               '$freq',
                               style: TextStyle(
-                                fontSize: 9,
+                                fontSize: fs(9, 'ui'),
                                 fontWeight: FontWeight.bold,
                                 color: freqColor,
                               ),
@@ -1422,7 +1440,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                                         .join('; ')
                                   : (reading.isNotEmpty ? reading : pinyin)),
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: fs(12, 'translations'),
                           height: 1.4,
                           color: theme.colorScheme.onSurface.withValues(
                             alpha: 0.85,
@@ -1438,7 +1456,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                       child: Text(
                         AppLocalizations.of(context)!.definitionsHidden,
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: fs(10, 'ui'),
                           color: theme.colorScheme.onSurface.withValues(
                             alpha: 0.35,
                           ),
@@ -1476,7 +1494,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                                 ? '${sentence.substring(0, 80)}…'
                                 : sentence,
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: fs(11, 'ui'),
                               color: theme.colorScheme.onSurface.withValues(
                                 alpha: 0.75,
                               ),
@@ -1576,7 +1594,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                             child: Text(
                               '${index + 1}',
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: fs(11, 'ui'),
                                 fontWeight: FontWeight.bold,
                                 color: theme.colorScheme.primary,
                               ),
@@ -1588,7 +1606,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                           child: Text(
                             sentence,
                             style: TextStyle(
-                              fontSize: 13.5,
+                              fontSize: fs(13.5, 'sentences'),
                               height: 1.5,
                               color: theme.colorScheme.onSurface,
                             ),
@@ -1625,7 +1643,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                               child: Text(
                                 translation,
                                 style: TextStyle(
-                                  fontSize: 12.5,
+                                  fontSize: fs(12.5, 'translations'),
                                   height: 1.4,
                                   color: theme.colorScheme.onSurface.withValues(
                                     alpha: 0.85,
@@ -1658,7 +1676,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                             Text(
                               l10n.translationUnavailable,
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: fs(12, 'translations'),
                                 color: theme.colorScheme.onSurface.withValues(
                                   alpha: 0.5,
                                 ),
@@ -1717,7 +1735,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
             child: SelectableText(
               fullTranslation,
               style: TextStyle(
-                fontSize: 13.5,
+                fontSize: fs(13.5, 'translations'),
                 height: 1.6,
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
               ),
@@ -1758,6 +1776,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
               title,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
+                fontSize: fs(16, 'headers'),
               ),
             ),
             if (provider?.isTranslating == true &&
@@ -1859,7 +1878,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.primary,
-                      fontSize: 14,
+                      fontSize: fs(14, 'ui'),
                     ),
                   ),
                 ),
@@ -1974,7 +1993,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 11.5,
+                  fontSize: fs(11.5, 'words'),
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
                 ),
               ),
@@ -1995,7 +2014,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
               valueIndicatorColor: theme.colorScheme.primary,
               valueIndicatorTextStyle: TextStyle(
                 color: theme.colorScheme.onPrimary,
-                fontSize: 11,
+                fontSize: fs(11, 'ui'),
               ),
             ),
             child: Slider(
@@ -2058,7 +2077,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
               AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 200),
                 style: TextStyle(
-                  fontSize: 13.5,
+                  fontSize: fs(13.5, 'ui'),
                   fontWeight: FontWeight.w600,
                   color: _showDefinitions
                       ? theme.colorScheme.primary
@@ -2254,7 +2273,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
               Text(
                 '$label ($count)',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: fs(11, 'ui'),
                   fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                   color: selected
                       ? theme.colorScheme.secondary
@@ -2401,7 +2420,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
             label,
             style: TextStyle(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
-              fontSize: 12.5,
+              fontSize: fs(12.5, 'ui'),
             ),
           ),
         ],
@@ -2448,7 +2467,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                   maxLines: maxLines,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: fs(12.5, 'ui'),
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                   ),
                 ),
@@ -2511,7 +2530,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                 Text(
                   word,
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: fs(12.5, 'ui'),
                     fontWeight: isSaved ? FontWeight.w600 : FontWeight.w500,
                     color: isSaved
                         ? theme.colorScheme.secondary
@@ -2556,7 +2575,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
             Text(
               '+$count',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: fs(12, 'ui'),
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                 fontWeight: FontWeight.w500,
               ),
@@ -2660,7 +2679,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
           Text(
             keys,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: fs(11, 'ui'),
               fontWeight: FontWeight.w600,
               fontFamily: 'monospace',
               color: theme.colorScheme.onSurface,
@@ -2670,7 +2689,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: fs(11, 'ui'),
               color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),
