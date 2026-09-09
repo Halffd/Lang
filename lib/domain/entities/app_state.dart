@@ -124,7 +124,7 @@ class AppState extends ChangeNotifier {
   String get clipboardAutoSearchRegex => _clipboardAutoSearchRegex;
   bool get forvoAudioEnabled => _forvoAudioEnabled;
   String get forvoApiKey => _forvoApiKey;
-  bool get autoConvertJapanese => _autoConvertJapanese;
+  bool get autoConvertInput => _autoConvertInput;
   int get defaultScreenIndex => _defaultScreenIndex;
   bool get autoPasteReader => _autoPasteReader;
   bool get showWiktionary => _showWiktionary;
@@ -159,7 +159,7 @@ class AppState extends ChangeNotifier {
   String _clipboardAutoSearchRegex = '';
   bool _forvoAudioEnabled = false;
   String _forvoApiKey = '';
-  bool _autoConvertJapanese =
+  bool _autoConvertInput =
       true; // Default to auto-convert letters to Japanese
   List<String> _profiles = ['Default'];
   bool _autoPasteReader = false; // Auto-paste from clipboard in reader mode
@@ -457,8 +457,8 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setAutoConvertJapanese(bool value) {
-    _autoConvertJapanese = value;
+  void setAutoConvertInput(bool value) {
+    _autoConvertInput = value;
     _storageService.setBool('auto_convert_japanese', value);
     notifyListeners();
   }
@@ -714,7 +714,7 @@ class AppState extends ChangeNotifier {
       _forvoAudioEnabled =
           _storageService.getBool('forvo_audio_enabled') ?? false;
       _forvoApiKey = _storageService.getStringSync('forvo_api_key') ?? '';
-      _autoConvertJapanese =
+      _autoConvertInput =
           _storageService.getBool('auto_convert_japanese') ?? true;
       _defaultScreenIndex = _storageService.getInt('default_screen_index') ?? 0;
       _autoPasteReader = _storageService.getBool('auto_paste_reader') ?? false;

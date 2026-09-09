@@ -1655,6 +1655,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Small UI text'**
   String get fontGroupUi;
+
+  /// No description provided for @convertRomanizedToScript.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert romanized text to native script while typing'**
+  String get convertRomanizedToScript;
+
+  /// No description provided for @scriptConversionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Script conversion while typing'**
+  String get scriptConversionTitle;
 }
 
 class _AppLocalizationsDelegate

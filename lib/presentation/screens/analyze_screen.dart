@@ -406,7 +406,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                 child: ScriptTextField(
                   controller: _controller,
                   language: provider.currentLanguage,
-                  enabled: context.read<AppState>().autoConvertJapanese,
+                  enabled: context.read<AppState>().autoConvertInput,
                   maxLines: 4,
                   style: TextStyle(fontSize: fs(15, 'sentences'), height: 1.4),
                   decoration: InputDecoration(

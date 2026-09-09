@@ -825,4 +825,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get fontGroupUi => 'Texto UI pequeño';
+
+  @override
+  String get convertRomanizedToScript =>
+      'Convertir texto romanizado al sistema nativo al escribir';
+
+  @override
+  String get scriptConversionTitle => 'Conversión de escritura al escribir';
 }

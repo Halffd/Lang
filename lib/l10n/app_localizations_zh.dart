@@ -819,4 +819,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get fontGroupUi => '小字文本';
+
+  @override
+  String get convertRomanizedToScript => '输入时将罗马字转换为原文字符';
+
+  @override
+  String get scriptConversionTitle => '输入时文字转换';
 }

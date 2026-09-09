@@ -137,5 +137,7 @@
   "fontGroupTranslations": "翻译",
   "fontGroupWords": "单词",
   "fontGroupKanji": "汉字",
-  "fontGroupUi": "小字文本"
+  "fontGroupUi": "小字文本",
+  "convertRomanizedToScript": "输入时将罗马字转换为原文字符",
+  "scriptConversionTitle": "输入时文字转换"
 }

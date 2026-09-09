@@ -116,7 +116,10 @@ class SettingsScreen extends StatelessWidget {
           // General settings section
           Text(
             AppLocalizations.of(context)!.generalSettings,
-            style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: fs(context, 18, 'headers'),
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
 
@@ -239,7 +242,10 @@ class SettingsScreen extends StatelessWidget {
           // Search settings section
           Text(
             AppLocalizations.of(context)!.uiAndNavigation,
-            style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: fs(context, 18, 'headers'),
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
 
@@ -288,17 +294,17 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   const Divider(),
-                  // Auto-Kana conversion setting
+                  // Script input conversion setting
                   SwitchListTile(
                     title: Text(
-                      AppLocalizations.of(context)!.autoKanaConversion,
+                      AppLocalizations.of(context)!.scriptConversionTitle,
                     ),
                     subtitle: Text(
-                      AppLocalizations.of(context)!.convertRomajiToKana,
+                      AppLocalizations.of(context)!.convertRomanizedToScript,
                     ),
-                    value: appState.autoConvertJapanese,
+                    value: appState.autoConvertInput,
                     onChanged: (value) {
-                      appState.setAutoConvertJapanese(value);
+                      appState.setAutoConvertInput(value);
                     },
                   ),
                   const Divider(),
@@ -463,7 +469,10 @@ class SettingsScreen extends StatelessWidget {
           // Search settings section
           Text(
             AppLocalizations.of(context)!.searchSettings,
-            style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: fs(context, 18, 'headers'),
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
 
@@ -561,7 +570,10 @@ class SettingsScreen extends StatelessWidget {
           // Advanced settings section
           Text(
             AppLocalizations.of(context)!.advancedSettings,
-            style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: fs(context, 18, 'headers'),
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
 
@@ -795,7 +807,10 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   if (appState.ankiConnectEnabled) ...[
                     // Connection URL
-                    Text('API URL', style: TextStyle(fontSize: fs(context, 13))),
+                    Text(
+                      'API URL',
+                      style: TextStyle(fontSize: fs(context, 13)),
+                    ),
                     const SizedBox(height: 4),
                     TextField(
                       decoration: const InputDecoration(
@@ -1170,7 +1185,10 @@ class SettingsScreen extends StatelessWidget {
           // Dictionaries section
           Text(
             AppLocalizations.of(context)!.dictionaries,
-            style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: fs(context, 18, 'headers'),
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
           Card(
@@ -1235,7 +1253,10 @@ class SettingsScreen extends StatelessWidget {
           // About section
           Text(
             AppLocalizations.of(context)!.about,
-            style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: fs(context, 18, 'headers'),
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
 
@@ -1367,7 +1388,10 @@ class _ClipboardSettingsState extends State<_ClipboardSettings> {
                 const SizedBox(height: 2),
                 Text(
                   l10n.autoSearchRegexDesc,
-                  style: TextStyle(fontSize: fs(context, 12), color: Colors.white54),
+                  style: TextStyle(
+                    fontSize: fs(context, 12),
+                    color: Colors.white54,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(

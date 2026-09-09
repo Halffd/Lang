@@ -809,4 +809,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get fontGroupUi => '小さいUI文字';
+
+  @override
+  String get convertRomanizedToScript => '入力中にローマ字を文字体系に変換';
+
+  @override
+  String get scriptConversionTitle => '入力時の文字変換';
 }

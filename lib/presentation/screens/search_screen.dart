@@ -234,7 +234,7 @@ class _SearchScreenState extends State<SearchScreen> {
     return ScriptTextField(
       controller: _searchController,
       language: provider.currentLanguage,
-      enabled: appState.autoConvertJapanese,
+      enabled: appState.autoConvertInput,
       decoration: InputDecoration(
         hintText: 'Search for a word...',
         prefixIcon: const Icon(Icons.search),
@@ -266,7 +266,7 @@ class _SearchScreenState extends State<SearchScreen> {
           child: ScriptTextField(
             controller: _sentenceController,
             language: provider.currentLanguage,
-            enabled: appState.autoConvertJapanese,
+            enabled: appState.autoConvertInput,
             maxLines: 2,
             decoration: const InputDecoration(
               hintText: 'Enter a sentence to split into words...',
@@ -297,7 +297,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 controller: _ocrController,
                 focusNode: _focusNode,
                 language: provider.currentLanguage,
-                enabled: context.read<AppState>().autoConvertJapanese,
+                enabled: context.read<AppState>().autoConvertInput,
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText: 'Paste or type text, or pick an image...',

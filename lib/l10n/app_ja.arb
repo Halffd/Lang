@@ -576,5 +576,7 @@
   "fontGroupTranslations": "翻訳",
   "fontGroupWords": "単語",
   "fontGroupKanji": "漢字",
-  "fontGroupUi": "小さいUI文字"
+  "fontGroupUi": "小さいUI文字",
+  "convertRomanizedToScript": "入力中にローマ字を文字体系に変換",
+  "scriptConversionTitle": "入力時の文字変換"
 }

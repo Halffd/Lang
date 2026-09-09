@@ -576,5 +576,7 @@
   "fontGroupTranslations": "Traducciones",
   "fontGroupWords": "Palabras",
   "fontGroupKanji": "Kanji",
-  "fontGroupUi": "Texto UI pequeño"
+  "fontGroupUi": "Texto UI pequeño",
+  "convertRomanizedToScript": "Convertir texto romanizado al sistema nativo al escribir",
+  "scriptConversionTitle": "Conversión de escritura al escribir"
 }

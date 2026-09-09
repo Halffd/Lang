@@ -823,4 +823,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fontGroupUi => 'Small UI text';
+
+  @override
+  String get convertRomanizedToScript =>
+      'Convert romanized text to native script while typing';
+
+  @override
+  String get scriptConversionTitle => 'Script conversion while typing';
 }

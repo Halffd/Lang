@@ -257,5 +257,7 @@
   "fontGroupTranslations": "Translations",
   "fontGroupWords": "Words",
   "fontGroupKanji": "Kanji",
-  "fontGroupUi": "Small UI text"
+  "fontGroupUi": "Small UI text",
+  "convertRomanizedToScript": "Convert romanized text to native script while typing",
+  "scriptConversionTitle": "Script conversion while typing"
 }
