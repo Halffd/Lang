@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:lang/core/services/history_service.dart';
+import 'package:lang/utils/font_scale.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/presentation/widgets/word_detail_sheet.dart';
@@ -228,6 +229,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           item.category == HistoryCategory.clipboard && item.hasImage
               ? AppLocalizations.of(context)!.clipboardImage
               : item.title,
+          style: TextStyle(fontSize: fs(context, 14, 'sentences')),
         ),
         subtitle: subtitle == null || subtitle.isEmpty
             ? null
@@ -235,11 +237,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 12, color: Colors.white54),
+                style: TextStyle(
+                  fontSize: fs(context, 12),
+                  color: Colors.white54,
+                ),
               ),
         trailing: Text(
           time,
-          style: const TextStyle(fontSize: 11, color: Colors.white38),
+          style: TextStyle(fontSize: fs(context, 11), color: Colors.white38),
         ),
         onTap: () => _openItem(context, item, actionLabel),
         onLongPress: () => HistoryService.instance.remove(item.id),

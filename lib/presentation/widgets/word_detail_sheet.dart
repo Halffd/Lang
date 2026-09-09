@@ -9,6 +9,7 @@ import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/presentation/widgets/anki_export_dialog.dart';
 import 'package:lang/presentation/providers/ai_provider.dart';
 import 'package:lang/utils/pinyin_util.dart';
+import 'package:lang/utils/font_scale.dart';
 
 class WordDetailSheet extends StatelessWidget {
   final AnalyzedWord word;
@@ -87,7 +88,7 @@ class WordDetailSheet extends StatelessWidget {
               child: Text(
                 PinyinUtil.getPinyin(word.word) ?? '',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: fs(context, 14, 'words'),
                   color: Colors.white70,
                   fontStyle: FontStyle.italic,
                 ),
@@ -160,7 +161,10 @@ class WordDetailSheet extends StatelessWidget {
             ),
             Text(
               sentence,
-              style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 16),
+              style: TextStyle(
+                fontStyle: FontStyle.italic,
+                fontSize: fs(context, 16, 'sentences'),
+              ),
             ),
             const SizedBox(height: 20),
           ],
@@ -236,8 +240,8 @@ class WordDetailSheet extends StatelessWidget {
                             ...(details['on_readings'] as List),
                           ].join(", "),
                         ),
-                        style: const TextStyle(
-                          fontSize: 12,
+                        style: TextStyle(
+                          fontSize: fs(context, 12, 'kanji'),
                           color: Colors.white70,
                         ),
                       ),
@@ -247,16 +251,16 @@ class WordDetailSheet extends StatelessWidget {
                       if (kjp['origin'] != null)
                         HtmlWidget(
                           '<b>${AppLocalizations.of(context)!.origin}:</b> ${kjp['origin']!}',
-                          textStyle: const TextStyle(
-                            fontSize: 12,
+                          textStyle: TextStyle(
+                            fontSize: fs(context, 12, 'kanji'),
                             color: Colors.pinkAccent,
                           ),
                         ),
                       if (kjp['usage'] != null)
                         HtmlWidget(
                           '<b>${AppLocalizations.of(context)!.usage}:</b> ${kjp['usage']!}',
-                          textStyle: const TextStyle(
-                            fontSize: 12,
+                          textStyle: TextStyle(
+                            fontSize: fs(context, 12, 'kanji'),
                             color: Colors.white70,
                           ),
                         ),
@@ -288,7 +292,10 @@ class WordDetailSheet extends StatelessWidget {
               title: AppLocalizations.of(context)!.wiktionary,
               color: Colors.orangeAccent,
             ),
-            HtmlWidget(wikiHtml, textStyle: const TextStyle(fontSize: 14)),
+            HtmlWidget(
+              wikiHtml,
+              textStyle: TextStyle(fontSize: fs(context, 14, 'translations')),
+            ),
           ],
         ],
       ),
@@ -326,7 +333,7 @@ class _SectionHeader extends StatelessWidget {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: color,
-              fontSize: 16,
+              fontSize: fs(context, 16, 'headers'),
             ),
           ),
         ],
@@ -377,7 +384,7 @@ class _NestedWordTile extends StatelessWidget {
                   child: Text(
                     word.reading!,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: fs(context, 12, 'words'),
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -399,7 +406,7 @@ class _NestedWordTile extends StatelessWidget {
                 child: Text(
                   def,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: fs(context, 12, 'translations'),
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
                   ),
                 ),
@@ -413,7 +420,7 @@ class _NestedWordTile extends StatelessWidget {
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   minimumSize: const Size(0, 30),
-                  textStyle: const TextStyle(fontSize: 12),
+                  textStyle: TextStyle(fontSize: fs(context, 12)),
                 ),
               ),
             ),

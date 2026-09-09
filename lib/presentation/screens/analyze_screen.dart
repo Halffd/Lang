@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:lang/core/services/history_service.dart';
 import 'package:lang/l10n/app_localizations.dart';
+import 'package:lang/utils/font_scale.dart' as font_scale;
+
 import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/presentation/widgets/word_detail_sheet.dart';
@@ -172,23 +174,9 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     }
   }
 
-  /// Font size for a text group: base * global multiplier *
-  /// per-group multiplier. Groups: headers, sentences,
-  /// translations, words, kanji, ui.
-  double fs(double base, [String group = 'ui']) {
-    final appState = this.context.read<AppState>();
-    final global = appState.fontSizeMultiplier;
-    final s = appState.fontSettings;
-    final groupMult = switch (group) {
-      'headers' => s.headers,
-      'sentences' => s.sentences,
-      'translations' => s.translations,
-      'words' => s.words,
-      'kanji' => s.kanji,
-      _ => s.ui,
-    };
-    return base * global * groupMult;
-  }
+  /// Font size for a text group (see lib/utils/font_scale.dart).
+  double fs(double base, [String group = 'ui']) =>
+      font_scale.fs(context, base, group);
 
   @override
   Widget build(BuildContext context) {

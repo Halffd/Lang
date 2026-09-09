@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:lang/domain/entities/dictionary.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/utils/dictionary_media_registry.dart';
+import 'package:lang/utils/font_scale.dart';
 import 'package:lang/domain/entities/dictionary_display_options.dart';
 import 'package:lang/utils/json_html_renderer.dart';
 import 'package:lang/utils/screen_size.dart';
@@ -178,6 +179,7 @@ class DictionaryEntryCard extends StatelessWidget {
                         entry.term,
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
+                          fontSize: fs(context, 20, 'kanji'),
                         ),
                       ),
                       if (entry.reading.isNotEmpty && entry.reading != entry.term)
@@ -185,6 +187,7 @@ class DictionaryEntryCard extends StatelessWidget {
                           entry.reading,
                           style: theme.textTheme.titleMedium?.copyWith(
                             color: theme.colorScheme.secondary,
+                            fontSize: fs(context, 15, 'words'),
                           ),
                         ),
                     ],
@@ -295,7 +298,7 @@ class DictionaryEntryCard extends StatelessWidget {
                     label: Text(
                       tag,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: fs(context, 12),
                         color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                       ),
                     ),

@@ -6,6 +6,7 @@ import 'package:lang/domain/entities/dictionary.dart';
 import 'package:lang/domain/entities/srs_card.dart';
 import 'package:lang/data/repositories/srs_service.dart';
 import 'package:lang/utils/srs_conversion_utils.dart';
+import 'package:lang/utils/font_scale.dart';
 import 'package:lang/presentation/widgets/dictionary_entry_card.dart';
 import 'package:lang/utils/screen_size.dart';
 
@@ -135,7 +136,7 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
                     'Filtered from ${appState.savedWords.length} total',
                     style: TextStyle(
                       color: Theme.of(context).textTheme.bodySmall?.color,
-                      fontSize: 12,
+                      fontSize: fs(context, 12),
                     ),
                   ),
               ],
@@ -147,24 +148,24 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
           // Saved words list
           Expanded(
             child: appState.savedWords.isEmpty
-                ? const Center(
+                ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.bookmark_border,
                           size: 64,
                           color: Colors.grey,
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         Text(
                           'No saved words yet',
-                          style: TextStyle(fontSize: 18),
+                          style: TextStyle(fontSize: fs(context, 18, 'words')),
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Text(
                           'Words you save will appear here',
-                          style: TextStyle(color: Colors.grey),
+                          style: const TextStyle(color: Colors.grey),
                         ),
                       ],
                     ),
@@ -270,9 +271,12 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Sort by',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: fs(context, 18, 'headers'),
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 16),
               ListTile(
