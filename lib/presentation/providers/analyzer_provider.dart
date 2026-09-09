@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lang/core/services/history_service.dart';
+import 'package:lang/data/datasources/local_translation_service.dart';
+import 'package:lang/data/repositories/translation_service.dart';
 import 'package:lang/data/services/dictionary/local_dictionary_service.dart';
 import 'package:lang/data/services/dictionary/yomichan_service.dart';
 import 'package:lang/data/services/dictionary/remote_dictionary_service.dart';
@@ -8,6 +11,7 @@ import 'package:lang/data/services/dictionary/search_service.dart';
 import 'package:lang/data/services/dictionary/tokenizer_service.dart';
 import 'package:lang/domain/entities/analyzed_word.dart';
 import 'package:lang/domain/entities/dictionary.dart';
+import 'package:lang/domain/entities/translation_model.dart';
 import 'package:lang/utils/recursive_lookup.dart';
 import 'package:lang/domain/entities/app_state.dart';
 
@@ -23,6 +27,13 @@ class AnalyzerProvider extends ChangeNotifier {
   final LanguageDetector _languageDetector = LanguageDetector();
   final TokenizerService _tokenizerService = TokenizerService();
   final SearchService _searchService = SearchService();
+
+  // Translations (sentence-level and full-text)
+  TranslationService? _translationService;
+  final Map<String, String> _sentenceTranslations = {};
+  String _fullTranslation = '';
+  bool _isTranslating = false;
+  String _lastTranslatedText = '';
 
   // Settings
   String _currentLanguage = 'ja';
@@ -672,6 +683,11 @@ class AnalyzerProvider extends ChangeNotifier {
       final tokens = await _tokenizerService.tokenize(text);
       _sentences = _tokenizerService.splitSentences(tokens);
 
+      // reset stale translations from a previous analysis
+      _sentenceTranslations.clear();
+      _fullTranslation = '';
+      _lastTranslatedText = '';
+
       final uniqueTokens = tokens
           .toSet()
           .toList()
@@ -710,6 +726,11 @@ class AnalyzerProvider extends ChangeNotifier {
 
         _analyzedWords.addAll(chunkResults.whereType<AnalyzedWord>());
         notifyListeners();
+      }
+
+      // auto-translate when the setting is enabled
+      if (appState?.autoTranslate ?? false) {
+        await translateSentences();
       }
     } catch (e) {
       debugPrint('Analysis error: $e');
@@ -795,14 +816,96 @@ class AnalyzerProvider extends ChangeNotifier {
 
   // --- Translation Methods ---
 
-  String getSentenceTranslation(String sentence) {
-    // This would typically use a translation service
-    return '';
+  /// Lazily build the translation service from app settings.
+  Future<TranslationService> _ensureTranslationService() async {
+    if (_translationService != null) return _translationService!;
+    String? geminiKey;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('geminiApiKey') ?? '';
+      if (raw.isNotEmpty) geminiKey = raw;
+    } catch (_) {}
+    _translationService = TranslationService(
+      localService: LocalTranslationService(),
+      geminiApiKey: geminiKey,
+      provider:
+          appState?.translationProvider ?? TranslationProvider.googleCloud,
+    );
+    return _translationService!;
   }
 
+  /// UI language is the translation target; learning language the
+  /// source. Falls back to 'en' for both.
+  String get _targetLanguage => _uiLanguage();
+
+  String _uiLanguage() {
+    final ui = appState?.language ?? 'en';
+    return ui.isEmpty ? 'en' : ui;
+  }
+
+  /// Translate every analyzed sentence. Results populate
+  /// [getSentenceTranslation]; the full text translation joins
+  /// them.
+  Future<void> translateSentences() async {
+    if (_sentences.isEmpty) return;
+    final text = _sentences.values.join('\n\n');
+    if (text == _lastTranslatedText && _sentenceTranslations.isNotEmpty) {
+      return; // already translated this text
+    }
+    _isTranslating = true;
+    notifyListeners();
+
+    try {
+      final service = await _ensureTranslationService();
+      final result = await service.translate(
+        TranslationRequest(
+          sourceText: text,
+          sourceLanguage: _currentLanguage,
+          targetLanguage: _targetLanguage,
+        ),
+      );
+      final full = result.fullTranslation.trim();
+      if (full.isNotEmpty) {
+        // Split full translation back onto sentences: the
+        // service receives sentences joined with blank lines and
+        // most engines keep the block structure.
+        final blocks = full
+            .split(RegExp(r'\n\s*\n'))
+            .where((b) => b.trim().isNotEmpty)
+            .toList();
+        final keys = _sentences.keys.toList();
+        if (blocks.length == keys.length) {
+          for (var i = 0; i < keys.length; i++) {
+            _sentenceTranslations[_sentences[keys[i]]!] = blocks[i].trim();
+          }
+        }
+        _fullTranslation = full;
+        _lastTranslatedText = text;
+      }
+    } catch (e) {
+      debugPrint('Sentence translation error: $e');
+    } finally {
+      _isTranslating = false;
+      notifyListeners();
+    }
+  }
+
+  /// Translation for one analyzed sentence ('' until translated).
+  String getSentenceTranslation(String sentence) {
+    return _sentenceTranslations[sentence] ?? '';
+  }
+
+  /// Full-text translation ('' until translated).
   String getFullTranslation() {
-    if (_sentences.isEmpty) return '';
-    return _sentences.values.join('\n\n');
+    return _fullTranslation;
+  }
+
+  bool get isTranslating => _isTranslating;
+
+  /// Test hook: inject sentence map without running analysis.
+  @visibleForTesting
+  void testSetSentences(Map<String, String> sentences) {
+    _sentences = sentences;
   }
 
   // --- Filter, Sort, Group Enums ---

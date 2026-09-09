@@ -1525,6 +1525,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
       onToggle: () => setState(
         () => _showSentenceTranslations = !_showSentenceTranslations,
       ),
+      provider: provider,
       child: ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -1697,6 +1698,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
       isExpanded: _showFullTranslation,
       onToggle: () =>
           setState(() => _showFullTranslation = !_showFullTranslation),
+      provider: provider,
       child: Padding(
         padding: const EdgeInsets.all(4),
         child: Card(
@@ -1736,6 +1738,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     required bool isExpanded,
     required VoidCallback onToggle,
     required Widget child,
+    AnalyzerProvider? provider,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1757,6 +1760,16 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                 fontWeight: FontWeight.bold,
               ),
             ),
+            if (provider?.isTranslating == true &&
+                (title == l10n.sentenceTranslations ||
+                    title == l10n.fullTranslation)) ...[
+              const SizedBox(width: 8),
+              const SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ],
             const Spacer(),
             IconButton(
               icon: AnimatedRotation(
