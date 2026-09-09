@@ -109,4 +109,21 @@ void main() {
       expect(JapaneseUtils.particles, contains('の'));
     });
   });
+  group('JapaneseUtils romajiToKana', () {
+    test('romajiToKana hiragana output', () {
+      expect(JapaneseUtils.romajiToKana('neko'), 'ねこ');
+      expect(JapaneseUtils.romajiToKana('sakura'), 'さくら');
+    });
+
+    test('romajiToKana katakana with shift', () {
+      expect(JapaneseUtils.romajiToKana('neko', katakana: true), 'ネコ');
+      expect(JapaneseUtils.romajiToKana('sakura', katakana: true), 'サクラ');
+    });
+
+    test('romajiToKana digraphs', () {
+      expect(JapaneseUtils.romajiToKana('kya'), 'きゃ');
+      expect(JapaneseUtils.romajiToKana('shu'), 'しゅ');
+    });
+  });
+
 }

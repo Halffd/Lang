@@ -521,4 +521,17 @@ void main() {
     });
   });
 
+  group('ScriptConverter kana edge cases', () {
+    test('kanaToRomaji handles katakana', () {
+      expect(ScriptConverter.kanaToRomaji('ネコ'), 'neko');
+      expect(ScriptConverter.kanaToRomaji('サクラ'), 'sakura');
+    });
+    test('kanaToRomaji mixed scripts', () {
+      expect(ScriptConverter.kanaToRomaji('あア'), 'aa');
+    });
+    test('iw legacy hebrew code dispatches', () {
+      expect(ScriptConverter.latinToScript('shalom', 'iw'), 'שלום');
+    });
+  });
+
 }

@@ -328,14 +328,16 @@ class ScriptConverter {
   }
 
   static String kanaToRomaji(String input) {
+    // normalize katakana to hiragana so both map to romaji
+    final hiragana = _kanaKit.toHiragana(input);
     final result = StringBuffer();
     int i = 0;
-    while (i < input.length) {
+    while (i < hiragana.length) {
       String? match;
       int matchLen = 0;
       for (int len = 2; len >= 1; len--) {
-        if (i + len <= input.length) {
-          final sub = input.substring(i, i + len);
+        if (i + len <= hiragana.length) {
+          final sub = hiragana.substring(i, i + len);
           if (_kanaToRomaji.containsKey(sub)) {
             match = _kanaToRomaji[sub];
             matchLen = len;
@@ -347,7 +349,7 @@ class ScriptConverter {
         result.write(match);
         i += matchLen;
       } else {
-        result.write(input[i]);
+        result.write(hiragana[i]);
         i++;
       }
     }
