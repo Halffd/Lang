@@ -95,7 +95,9 @@ class DesktopIPCService with TrayListener, WindowListener {
 
   Future<void> _initTrayManager() async {
     try {
-      final iconPath = Platform.isWindows ? 'assets/app_icon.ico' : 'assets/app_icon.png';
+      final iconPath = Platform.isWindows
+          ? 'assets/app_icon.ico'
+          : 'assets/app_icon.png';
       await trayManager.setIcon(iconPath);
     } catch (e) {
       debugPrint('TrayManager: Could not set icon: $e');
@@ -211,12 +213,19 @@ class DesktopIPCService with TrayListener, WindowListener {
   }
 
   // Global hotkeys
-  Future<void> registerHotkey(String keyId, HotKey hotkey, VoidCallback callback) async {
+  Future<void> registerHotkey(
+    String keyId,
+    HotKey hotkey,
+    VoidCallback callback,
+  ) async {
     try {
-      await hotKeyManager.register(hotkey, keyDownHandler: (hotKey) {
-        callback();
-        _hotkeyCallbacks[keyId]?.call();
-      });
+      await hotKeyManager.register(
+        hotkey,
+        keyDownHandler: (hotKey) {
+          callback();
+          _hotkeyCallbacks[keyId]?.call();
+        },
+      );
       _hotkeyCallbacks[keyId] = callback;
     } catch (e) {
       debugPrint('HotKeyManager: Could not register $keyId: $e');
@@ -280,6 +289,75 @@ class DesktopIPCService with TrayListener, WindowListener {
     );
   }
 
+  // Register screenshot hotkeys. Each capture kind gets one combo
+  // (PrintScreen as base key, modified with Ctrl / Shift / Alt):
+  // - Ctrl+Shift+PrintScreen: fullscreen
+  // - Ctrl+PrintScreen: monitor
+  // - Shift+PrintScreen: window
+  // - Alt+PrintScreen: region (interactive)
+  // - Alt+Shift+PrintScreen: previous region
+  // - Ctrl+Alt+PrintScreen: toggle auto screenshot (interval from
+  //   AppState; 0 = off)
+  Future<void> registerScreenshotHotkeys({
+    required Future<void> Function() onFullscreen,
+    required Future<void> Function() onMonitor,
+    required Future<void> Function() onWindow,
+    required Future<void> Function() onRegion,
+    required Future<void> Function() onPreviousRegion,
+    required Future<void> Function() onToggleAuto,
+  }) async {
+    if (!isSupported) return;
+
+    await registerHotkey(
+      'screenshot_fullscreen',
+      HotKey(
+        key: PhysicalKeyboardKey.printScreen,
+        modifiers: [HotKeyModifier.control, HotKeyModifier.shift],
+      ),
+      () => onFullscreen(),
+    );
+    await registerHotkey(
+      'screenshot_monitor',
+      HotKey(
+        key: PhysicalKeyboardKey.printScreen,
+        modifiers: [HotKeyModifier.control],
+      ),
+      () => onMonitor(),
+    );
+    await registerHotkey(
+      'screenshot_window',
+      HotKey(
+        key: PhysicalKeyboardKey.printScreen,
+        modifiers: [HotKeyModifier.shift],
+      ),
+      () => onWindow(),
+    );
+    await registerHotkey(
+      'screenshot_region',
+      HotKey(
+        key: PhysicalKeyboardKey.printScreen,
+        modifiers: [HotKeyModifier.alt],
+      ),
+      () => onRegion(),
+    );
+    await registerHotkey(
+      'screenshot_previous_region',
+      HotKey(
+        key: PhysicalKeyboardKey.printScreen,
+        modifiers: [HotKeyModifier.alt, HotKeyModifier.shift],
+      ),
+      () => onPreviousRegion(),
+    );
+    await registerHotkey(
+      'screenshot_auto_toggle',
+      HotKey(
+        key: PhysicalKeyboardKey.printScreen,
+        modifiers: [HotKeyModifier.control, HotKeyModifier.alt],
+      ),
+      () => onToggleAuto(),
+    );
+  }
+
   // Desktop notifications
   Future<void> showNotification({
     required String title,
@@ -289,10 +367,7 @@ class DesktopIPCService with TrayListener, WindowListener {
     if (!isSupported) return;
 
     try {
-      final notification = LocalNotification(
-        title: title,
-        body: body,
-      );
+      final notification = LocalNotification(title: title, body: body);
       await notification.show();
     } catch (e) {
       debugPrint('LocalNotifier: Show failed: $e');
@@ -309,11 +384,7 @@ class DesktopIPCService with TrayListener, WindowListener {
   }
 
   Future<void> showAchievementNotification(String title, String body) async {
-    await showNotification(
-      title: '🏆 $title',
-      body: body,
-      isUrgent: false,
-    );
+    await showNotification(title: '🏆 $title', body: body, isUrgent: false);
   }
 
   // File drop handling
@@ -336,15 +407,22 @@ class DesktopIPCService with TrayListener, WindowListener {
 
   Future<List<String>> pickMediaFiles() async {
     return pickFiles(
-      allowedExtensions: ['mp3', 'mp4', 'wav', 'ogg', 'jpg', 'jpeg', 'png', 'gif', 'webp'],
+      allowedExtensions: [
+        'mp3',
+        'mp4',
+        'wav',
+        'ogg',
+        'jpg',
+        'jpeg',
+        'png',
+        'gif',
+        'webp',
+      ],
     );
   }
 
   Future<List<String>> pickAnkiFiles() async {
-    return pickFiles(
-      allowedExtensions: ['apkg'],
-      allowMultiple: true,
-    );
+    return pickFiles(allowedExtensions: ['apkg'], allowMultiple: true);
   }
 
   // TrayListener implementation

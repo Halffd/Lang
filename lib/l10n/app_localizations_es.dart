@@ -832,4 +832,67 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get scriptConversionTitle => 'Conversión de escritura al escribir';
+
+  @override
+  String get screenshotTab => 'Capturas';
+
+  @override
+  String get textTab => 'Texto';
+
+  @override
+  String get captureFullscreen => 'Pantalla completa';
+
+  @override
+  String get captureMonitor => 'Monitor';
+
+  @override
+  String get captureWindow => 'Ventana';
+
+  @override
+  String get captureRegion => 'Región';
+
+  @override
+  String get capturePreviousRegion => 'Región anterior';
+
+  @override
+  String get autoScreenshot => 'Captura automática';
+
+  @override
+  String get autoOcr => 'OCR automático tras capturar';
+
+  @override
+  String get copyOcrText => 'Copiar texto OCR al portapapeles';
+
+  @override
+  String get copyImage => 'Copiar imagen al portapapeles';
+
+  @override
+  String get screenshotHistory => 'Historial';
+
+  @override
+  String get screenshotAlbum => 'Álbum';
+
+  @override
+  String get noScreenshots => 'Aún no hay capturas';
+
+  @override
+  String get screenshotFailed => 'Captura fallida';
+
+  @override
+  String get screenshotCaptured => 'Captura guardada';
+
+  @override
+  String get deleteAllScreenshots => 'Eliminar todas las capturas';
+
+  @override
+  String intervalMinutes(int minutes) {
+    return 'Cada $minutes min';
+  }
+
+  @override
+  String get off => 'Apagado';
+
+  @override
+  String get screenshotHotkeys =>
+      'Atajos: Ctrl+Shift+PrtSc pantalla · Ctrl+PrtSc monitor · Shift+PrtSc ventana · Alt+PrtSc región · Alt+Shift+PrtSc región anterior · Ctrl+Alt+PrtSc auto';
 }

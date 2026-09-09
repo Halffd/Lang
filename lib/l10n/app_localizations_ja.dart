@@ -815,4 +815,67 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get scriptConversionTitle => '入力時の文字変換';
+
+  @override
+  String get screenshotTab => 'スクリーンショット';
+
+  @override
+  String get textTab => 'テキスト';
+
+  @override
+  String get captureFullscreen => '全画面';
+
+  @override
+  String get captureMonitor => 'モニター';
+
+  @override
+  String get captureWindow => 'ウィンドウ';
+
+  @override
+  String get captureRegion => '領域';
+
+  @override
+  String get capturePreviousRegion => '前回の領域';
+
+  @override
+  String get autoScreenshot => '自動スクリーンショット';
+
+  @override
+  String get autoOcr => 'キャプチャ後の自動OCR';
+
+  @override
+  String get copyOcrText => 'OCRテキストをクリップボードにコピー';
+
+  @override
+  String get copyImage => '画像をクリップボードにコピー';
+
+  @override
+  String get screenshotHistory => '履歴';
+
+  @override
+  String get screenshotAlbum => 'アルバム';
+
+  @override
+  String get noScreenshots => 'スクリーンショットはまだありません';
+
+  @override
+  String get screenshotFailed => 'スクリーンショット失敗';
+
+  @override
+  String get screenshotCaptured => 'スクリーンショット保存済み';
+
+  @override
+  String get deleteAllScreenshots => 'すべてのスクリーンショットを削除';
+
+  @override
+  String intervalMinutes(int minutes) {
+    return '$minutes分ごと';
+  }
+
+  @override
+  String get off => 'オフ';
+
+  @override
+  String get screenshotHotkeys =>
+      'ホットキー：Ctrl+Shift+PrtSc 全画面 · Ctrl+PrtSc モニター · Shift+PrtSc ウィンドウ · Alt+PrtSc 領域 · Alt+Shift+PrtSc 前回の領域 · Ctrl+Alt+PrtSc 自動';
 }

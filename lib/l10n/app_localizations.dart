@@ -1667,6 +1667,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Script conversion while typing'**
   String get scriptConversionTitle;
+
+  /// No description provided for @screenshotTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshots'**
+  String get screenshotTab;
+
+  /// No description provided for @textTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get textTab;
+
+  /// No description provided for @captureFullscreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Full screen'**
+  String get captureFullscreen;
+
+  /// No description provided for @captureMonitor.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor'**
+  String get captureMonitor;
+
+  /// No description provided for @captureWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Window'**
+  String get captureWindow;
+
+  /// No description provided for @captureRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Region'**
+  String get captureRegion;
+
+  /// No description provided for @capturePreviousRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous region'**
+  String get capturePreviousRegion;
+
+  /// No description provided for @autoScreenshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto screenshot'**
+  String get autoScreenshot;
+
+  /// No description provided for @autoOcr.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto OCR after capture'**
+  String get autoOcr;
+
+  /// No description provided for @copyOcrText.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy OCR text to clipboard'**
+  String get copyOcrText;
+
+  /// No description provided for @copyImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy image to clipboard'**
+  String get copyImage;
+
+  /// No description provided for @screenshotHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get screenshotHistory;
+
+  /// No description provided for @screenshotAlbum.
+  ///
+  /// In en, this message translates to:
+  /// **'Album'**
+  String get screenshotAlbum;
+
+  /// No description provided for @noScreenshots.
+  ///
+  /// In en, this message translates to:
+  /// **'No screenshots yet'**
+  String get noScreenshots;
+
+  /// No description provided for @screenshotFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshot failed'**
+  String get screenshotFailed;
+
+  /// No description provided for @screenshotCaptured.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshot saved'**
+  String get screenshotCaptured;
+
+  /// No description provided for @deleteAllScreenshots.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all screenshots'**
+  String get deleteAllScreenshots;
+
+  /// No description provided for @intervalMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {minutes} min'**
+  String intervalMinutes(int minutes);
+
+  /// No description provided for @off.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get off;
+
+  /// No description provided for @screenshotHotkeys.
+  ///
+  /// In en, this message translates to:
+  /// **'Hotkeys: Ctrl+Shift+PrtSc full · Ctrl+PrtSc monitor · Shift+PrtSc window · Alt+PrtSc region · Alt+Shift+PrtSc previous region · Ctrl+Alt+PrtSc auto'**
+  String get screenshotHotkeys;
 }
 
 class _AppLocalizationsDelegate

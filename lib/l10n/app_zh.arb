@@ -139,5 +139,32 @@
   "fontGroupKanji": "汉字",
   "fontGroupUi": "小字文本",
   "convertRomanizedToScript": "输入时将罗马字转换为原文字符",
-  "scriptConversionTitle": "输入时文字转换"
+  "scriptConversionTitle": "输入时文字转换",
+  "screenshotTab": "截图",
+  "textTab": "文本",
+  "captureFullscreen": "全屏",
+  "captureMonitor": "显示器",
+  "captureWindow": "窗口",
+  "captureRegion": "区域",
+  "capturePreviousRegion": "上次区域",
+  "autoScreenshot": "自动截图",
+  "autoOcr": "截图后自动OCR",
+  "copyOcrText": "复制OCR文本到剪贴板",
+  "copyImage": "复制图片到剪贴板",
+  "screenshotHistory": "历史",
+  "screenshotAlbum": "相册",
+  "noScreenshots": "还没有截图",
+  "screenshotFailed": "截图失败",
+  "screenshotCaptured": "截图已保存",
+  "deleteAllScreenshots": "删除全部截图",
+  "intervalMinutes": "每 {minutes} 分钟",
+  "@intervalMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "off": "关闭",
+  "screenshotHotkeys": "快捷键：Ctrl+Shift+PrtSc 全屏 · Ctrl+PrtSc 显示器 · Shift+PrtSc 窗口 · Alt+PrtSc 区域 · Alt+Shift+PrtSc 上次区域 · Ctrl+Alt+PrtSc 自动"
 }

@@ -124,6 +124,10 @@ class AppState extends ChangeNotifier {
   String get clipboardAutoSearchRegex => _clipboardAutoSearchRegex;
   bool get forvoAudioEnabled => _forvoAudioEnabled;
   String get forvoApiKey => _forvoApiKey;
+  bool get screenshotAutoOcr => _screenshotAutoOcr;
+  bool get screenshotCopyOcrText => _screenshotCopyOcrText;
+  bool get screenshotCopyImage => _screenshotCopyImage;
+  int get screenshotAutoIntervalMin => _screenshotAutoIntervalMin;
   bool get autoConvertInput => _autoConvertInput;
   int get defaultScreenIndex => _defaultScreenIndex;
   bool get autoPasteReader => _autoPasteReader;
@@ -159,8 +163,12 @@ class AppState extends ChangeNotifier {
   String _clipboardAutoSearchRegex = '';
   bool _forvoAudioEnabled = false;
   String _forvoApiKey = '';
-  bool _autoConvertInput =
-      true; // Default to auto-convert letters to Japanese
+  // screenshot settings (ocr screen screenshot tab)
+  bool _screenshotAutoOcr = false;
+  bool _screenshotCopyOcrText = false;
+  bool _screenshotCopyImage = false;
+  int _screenshotAutoIntervalMin = 0; // 0 = off, minutes otherwise
+  bool _autoConvertInput = true; // Default to auto-convert letters to Japanese
   List<String> _profiles = ['Default'];
   bool _autoPasteReader = false; // Auto-paste from clipboard in reader mode
   bool _showWiktionary = true; // Show Wiktionary definitions by default
@@ -303,14 +311,16 @@ class AppState extends ChangeNotifier {
 
   /// Update one group multiplier, keeping the others.
   void setFontGroup(String group, double multiplier) {
-    setFontSettings(_fontSettings.copyWith(
-      headers: group == 'headers' ? multiplier : null,
-      sentences: group == 'sentences' ? multiplier : null,
-      translations: group == 'translations' ? multiplier : null,
-      words: group == 'words' ? multiplier : null,
-      kanji: group == 'kanji' ? multiplier : null,
-      ui: group == 'ui' ? multiplier : null,
-    ));
+    setFontSettings(
+      _fontSettings.copyWith(
+        headers: group == 'headers' ? multiplier : null,
+        sentences: group == 'sentences' ? multiplier : null,
+        translations: group == 'translations' ? multiplier : null,
+        words: group == 'words' ? multiplier : null,
+        kanji: group == 'kanji' ? multiplier : null,
+        ui: group == 'ui' ? multiplier : null,
+      ),
+    );
   }
 
   void setCurrentProfile(String value) {
@@ -454,6 +464,30 @@ class AppState extends ChangeNotifier {
   void setForvoApiKey(String value) {
     _forvoApiKey = value;
     _storageService.setString('forvo_api_key', value);
+    notifyListeners();
+  }
+
+  void setScreenshotAutoOcr(bool value) {
+    _screenshotAutoOcr = value;
+    _storageService.setBool('screenshot_auto_ocr', value);
+    notifyListeners();
+  }
+
+  void setScreenshotCopyOcrText(bool value) {
+    _screenshotCopyOcrText = value;
+    _storageService.setBool('screenshot_copy_ocr_text', value);
+    notifyListeners();
+  }
+
+  void setScreenshotCopyImage(bool value) {
+    _screenshotCopyImage = value;
+    _storageService.setBool('screenshot_copy_image', value);
+    notifyListeners();
+  }
+
+  void setScreenshotAutoIntervalMin(int value) {
+    _screenshotAutoIntervalMin = value;
+    _storageService.setInt('screenshot_auto_interval_min', value);
     notifyListeners();
   }
 
@@ -714,6 +748,14 @@ class AppState extends ChangeNotifier {
       _forvoAudioEnabled =
           _storageService.getBool('forvo_audio_enabled') ?? false;
       _forvoApiKey = _storageService.getStringSync('forvo_api_key') ?? '';
+      _screenshotAutoOcr =
+          _storageService.getBool('screenshot_auto_ocr') ?? false;
+      _screenshotCopyOcrText =
+          _storageService.getBool('screenshot_copy_ocr_text') ?? false;
+      _screenshotCopyImage =
+          _storageService.getBool('screenshot_copy_image') ?? false;
+      _screenshotAutoIntervalMin =
+          _storageService.getInt('screenshot_auto_interval_min') ?? 0;
       _autoConvertInput =
           _storageService.getBool('auto_convert_japanese') ?? true;
       _defaultScreenIndex = _storageService.getInt('default_screen_index') ?? 0;

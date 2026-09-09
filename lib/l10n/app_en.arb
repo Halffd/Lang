@@ -259,5 +259,32 @@
   "fontGroupKanji": "Kanji",
   "fontGroupUi": "Small UI text",
   "convertRomanizedToScript": "Convert romanized text to native script while typing",
-  "scriptConversionTitle": "Script conversion while typing"
+  "scriptConversionTitle": "Script conversion while typing",
+  "screenshotTab": "Screenshots",
+  "textTab": "Text",
+  "captureFullscreen": "Full screen",
+  "captureMonitor": "Monitor",
+  "captureWindow": "Window",
+  "captureRegion": "Region",
+  "capturePreviousRegion": "Previous region",
+  "autoScreenshot": "Auto screenshot",
+  "autoOcr": "Auto OCR after capture",
+  "copyOcrText": "Copy OCR text to clipboard",
+  "copyImage": "Copy image to clipboard",
+  "screenshotHistory": "History",
+  "screenshotAlbum": "Album",
+  "noScreenshots": "No screenshots yet",
+  "screenshotFailed": "Screenshot failed",
+  "screenshotCaptured": "Screenshot saved",
+  "deleteAllScreenshots": "Delete all screenshots",
+  "intervalMinutes": "Every {minutes} min",
+  "@intervalMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "off": "Off",
+  "screenshotHotkeys": "Hotkeys: Ctrl+Shift+PrtSc full · Ctrl+PrtSc monitor · Shift+PrtSc window · Alt+PrtSc region · Alt+Shift+PrtSc previous region · Ctrl+Alt+PrtSc auto"
 }

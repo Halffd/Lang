@@ -825,4 +825,67 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get scriptConversionTitle => '输入时文字转换';
+
+  @override
+  String get screenshotTab => '截图';
+
+  @override
+  String get textTab => '文本';
+
+  @override
+  String get captureFullscreen => '全屏';
+
+  @override
+  String get captureMonitor => '显示器';
+
+  @override
+  String get captureWindow => '窗口';
+
+  @override
+  String get captureRegion => '区域';
+
+  @override
+  String get capturePreviousRegion => '上次区域';
+
+  @override
+  String get autoScreenshot => '自动截图';
+
+  @override
+  String get autoOcr => '截图后自动OCR';
+
+  @override
+  String get copyOcrText => '复制OCR文本到剪贴板';
+
+  @override
+  String get copyImage => '复制图片到剪贴板';
+
+  @override
+  String get screenshotHistory => '历史';
+
+  @override
+  String get screenshotAlbum => '相册';
+
+  @override
+  String get noScreenshots => '还没有截图';
+
+  @override
+  String get screenshotFailed => '截图失败';
+
+  @override
+  String get screenshotCaptured => '截图已保存';
+
+  @override
+  String get deleteAllScreenshots => '删除全部截图';
+
+  @override
+  String intervalMinutes(int minutes) {
+    return '每 $minutes 分钟';
+  }
+
+  @override
+  String get off => '关闭';
+
+  @override
+  String get screenshotHotkeys =>
+      '快捷键：Ctrl+Shift+PrtSc 全屏 · Ctrl+PrtSc 显示器 · Shift+PrtSc 窗口 · Alt+PrtSc 区域 · Alt+Shift+PrtSc 上次区域 · Ctrl+Alt+PrtSc 自动';
 }

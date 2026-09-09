@@ -578,5 +578,32 @@
   "fontGroupKanji": "漢字",
   "fontGroupUi": "小さいUI文字",
   "convertRomanizedToScript": "入力中にローマ字を文字体系に変換",
-  "scriptConversionTitle": "入力時の文字変換"
+  "scriptConversionTitle": "入力時の文字変換",
+  "screenshotTab": "スクリーンショット",
+  "textTab": "テキスト",
+  "captureFullscreen": "全画面",
+  "captureMonitor": "モニター",
+  "captureWindow": "ウィンドウ",
+  "captureRegion": "領域",
+  "capturePreviousRegion": "前回の領域",
+  "autoScreenshot": "自動スクリーンショット",
+  "autoOcr": "キャプチャ後の自動OCR",
+  "copyOcrText": "OCRテキストをクリップボードにコピー",
+  "copyImage": "画像をクリップボードにコピー",
+  "screenshotHistory": "履歴",
+  "screenshotAlbum": "アルバム",
+  "noScreenshots": "スクリーンショットはまだありません",
+  "screenshotFailed": "スクリーンショット失敗",
+  "screenshotCaptured": "スクリーンショット保存済み",
+  "deleteAllScreenshots": "すべてのスクリーンショットを削除",
+  "intervalMinutes": "{minutes}分ごと",
+  "@intervalMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "off": "オフ",
+  "screenshotHotkeys": "ホットキー：Ctrl+Shift+PrtSc 全画面 · Ctrl+PrtSc モニター · Shift+PrtSc ウィンドウ · Alt+PrtSc 領域 · Alt+Shift+PrtSc 前回の領域 · Ctrl+Alt+PrtSc 自動"
 }

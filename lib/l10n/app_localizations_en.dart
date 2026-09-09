@@ -830,4 +830,67 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scriptConversionTitle => 'Script conversion while typing';
+
+  @override
+  String get screenshotTab => 'Screenshots';
+
+  @override
+  String get textTab => 'Text';
+
+  @override
+  String get captureFullscreen => 'Full screen';
+
+  @override
+  String get captureMonitor => 'Monitor';
+
+  @override
+  String get captureWindow => 'Window';
+
+  @override
+  String get captureRegion => 'Region';
+
+  @override
+  String get capturePreviousRegion => 'Previous region';
+
+  @override
+  String get autoScreenshot => 'Auto screenshot';
+
+  @override
+  String get autoOcr => 'Auto OCR after capture';
+
+  @override
+  String get copyOcrText => 'Copy OCR text to clipboard';
+
+  @override
+  String get copyImage => 'Copy image to clipboard';
+
+  @override
+  String get screenshotHistory => 'History';
+
+  @override
+  String get screenshotAlbum => 'Album';
+
+  @override
+  String get noScreenshots => 'No screenshots yet';
+
+  @override
+  String get screenshotFailed => 'Screenshot failed';
+
+  @override
+  String get screenshotCaptured => 'Screenshot saved';
+
+  @override
+  String get deleteAllScreenshots => 'Delete all screenshots';
+
+  @override
+  String intervalMinutes(int minutes) {
+    return 'Every $minutes min';
+  }
+
+  @override
+  String get off => 'Off';
+
+  @override
+  String get screenshotHotkeys =>
+      'Hotkeys: Ctrl+Shift+PrtSc full · Ctrl+PrtSc monitor · Shift+PrtSc window · Alt+PrtSc region · Alt+Shift+PrtSc previous region · Ctrl+Alt+PrtSc auto';
 }

@@ -10,9 +10,13 @@ import 'package:lang/presentation/providers/ai_provider.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/presentation/widgets/script_text_field.dart';
 import 'package:lang/presentation/widgets/word_detail_sheet.dart';
+import 'package:lang/presentation/screens/screenshot_tab.dart';
+import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/utils/font_scale.dart';
 
 enum OcrMode { mlKit, tesseract, easyOcr, ai }
+
+enum OcrTab { text, screenshot }
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -31,6 +35,7 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _isProcessingImage = false;
   int _columnCount = 6;
   OcrMode _ocrMode = OcrMode.mlKit;
+  OcrTab _ocrTab = OcrTab.text;
 
   @override
   void initState() {
@@ -72,28 +77,54 @@ class _SearchScreenState extends State<SearchScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_getTitle()),
-        actions: [
-          _buildModeSelector(theme),
-        ],
+        actions: [_buildModeSelector(theme)],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            if (_isSentenceMode)
-              _buildSentenceInput(theme, provider)
-            else if (_isOcrMode)
-              _buildOcrInput(theme, provider)
-            else
+            if (_isSentenceMode) ...[
+              _buildSentenceInput(theme, provider),
+              const SizedBox(height: 16),
+              Expanded(child: _buildSentenceWordGrid(theme, provider)),
+            ] else if (_isOcrMode) ...[
+              // text / screenshot tabs inside OCR mode
+              SegmentedButton<OcrTab>(
+                segments: [
+                  ButtonSegment(
+                    value: OcrTab.text,
+                    icon: const Icon(Icons.text_fields, size: 16),
+                    label: Text(
+                      AppLocalizations.of(context)!.textTab,
+                      style: TextStyle(fontSize: fs(context, 12)),
+                    ),
+                  ),
+                  ButtonSegment(
+                    value: OcrTab.screenshot,
+                    icon: const Icon(Icons.screenshot_monitor, size: 16),
+                    label: Text(
+                      AppLocalizations.of(context)!.screenshotTab,
+                      style: TextStyle(fontSize: fs(context, 12)),
+                    ),
+                  ),
+                ],
+                selected: {_ocrTab},
+                onSelectionChanged: (selection) {
+                  setState(() => _ocrTab = selection.first);
+                },
+              ),
+              const SizedBox(height: 16),
+              if (_ocrTab == OcrTab.text) ...[
+                _buildOcrInput(theme, provider),
+                const SizedBox(height: 16),
+                Expanded(child: _buildOcrResults(theme, provider)),
+              ] else
+                Expanded(child: ScreenshotTab()),
+            ] else ...[
               _buildSearchInput(theme, provider),
-            const SizedBox(height: 16),
-            Expanded(
-              child: _isSentenceMode
-                  ? _buildSentenceWordGrid(theme, provider)
-                  : _isOcrMode
-                      ? _buildOcrResults(theme, provider)
-                      : _buildSearchResults(theme, provider),
-            ),
+              const SizedBox(height: 16),
+              Expanded(child: _buildSearchResults(theme, provider)),
+            ],
           ],
         ),
       ),
@@ -170,7 +201,10 @@ class _SearchScreenState extends State<SearchScreen> {
                 children: [
                   const Icon(Icons.document_scanner, size: 14),
                   const SizedBox(width: 4),
-                  Text('Tesseract', style: TextStyle(fontSize: fs(context, 12))),
+                  Text(
+                    'Tesseract',
+                    style: TextStyle(fontSize: fs(context, 12)),
+                  ),
                 ],
               ),
             ),
@@ -216,10 +250,17 @@ class _SearchScreenState extends State<SearchScreen> {
         child: DropdownButton<int>(
           value: _columnCount,
           isDense: true,
-          items: [3, 4, 5, 6, 7, 8, 9, 10].map((n) => DropdownMenuItem(
-            value: n,
-            child: Text('$n', style: TextStyle(fontSize: fs(context, 12))),
-          )).toList(),
+          items: [3, 4, 5, 6, 7, 8, 9, 10]
+              .map(
+                (n) => DropdownMenuItem(
+                  value: n,
+                  child: Text(
+                    '$n',
+                    style: TextStyle(fontSize: fs(context, 12)),
+                  ),
+                ),
+              )
+              .toList(),
           onChanged: (val) {
             if (val != null) setState(() => _columnCount = val);
           },
@@ -242,14 +283,14 @@ class _SearchScreenState extends State<SearchScreen> {
           valueListenable: _searchController,
           builder: (context, value, child) {
             return _searchController.text.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _searchController.clear();
-                    provider.clearSearch();
-                  },
-                )
-              : const SizedBox.shrink();
+                ? IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      _searchController.clear();
+                      provider.clearSearch();
+                    },
+                  )
+                : const SizedBox.shrink();
           },
         ),
       ),
@@ -280,7 +321,9 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
         const SizedBox(width: 8),
         IconButton(
-          onPressed: _sentenceController.text.isNotEmpty ? () => provider.searchWord(_sentenceController.text) : null,
+          onPressed: _sentenceController.text.isNotEmpty
+              ? () => provider.searchWord(_sentenceController.text)
+              : null,
           icon: const Icon(Icons.search),
         ),
       ],
@@ -303,11 +346,11 @@ class _SearchScreenState extends State<SearchScreen> {
                   hintText: 'Paste or type text, or pick an image...',
                   prefixIcon: const Icon(Icons.image),
                   suffixIcon: _ocrController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () => _ocrController.clear(),
-                      )
-                    : null,
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () => _ocrController.clear(),
+                        )
+                      : null,
                 ),
               ),
             ),
@@ -317,8 +360,12 @@ class _SearchScreenState extends State<SearchScreen> {
                 IconButton(
                   onPressed: _isProcessingImage ? null : _pickImage,
                   icon: _isProcessingImage
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.attach_file),
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.attach_file),
                   tooltip: 'Pick image from file',
                 ),
                 IconButton(
@@ -331,12 +378,11 @@ class _SearchScreenState extends State<SearchScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        if (_isProcessingImage)
-          const LinearProgressIndicator(),
+        if (_isProcessingImage) const LinearProgressIndicator(),
         ElevatedButton.icon(
           onPressed: _ocrController.text.isNotEmpty && !_isProcessingImage
-            ? () => _performOcr(_ocrController.text)
-            : null,
+              ? () => _performOcr(_ocrController.text)
+              : null,
           icon: const Icon(Icons.document_scanner),
           label: const Text('Extract Text from Image'),
         ),
@@ -352,7 +398,9 @@ class _SearchScreenState extends State<SearchScreen> {
     if (provider.searchResults.isEmpty) {
       return Center(
         child: Text(
-          _searchController.text.isEmpty ? 'Type something to search' : 'No results found',
+          _searchController.text.isEmpty
+              ? 'Type something to search'
+              : 'No results found',
           style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
         ),
       );
@@ -364,7 +412,10 @@ class _SearchScreenState extends State<SearchScreen> {
         final word = provider.searchResults[index];
         return Card(
           child: ListTile(
-            title: Text(word.word, style: const TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(
+              word.word,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             subtitle: Text('Freq: ${word.frequency ?? "?"}'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => WordDetailSheet.show(context, provider, word),
@@ -397,10 +448,18 @@ class _SearchScreenState extends State<SearchScreen> {
           padding: const EdgeInsets.only(bottom: 8),
           child: Text(
             '${words.length} words in $_columnCount columns',
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.primary,
+            ),
           ),
         ),
-        Expanded(child: _WordGrid(words: words, columns: _columnCount, onWordTap: (word) => _handleWordTap(context, provider, word))),
+        Expanded(
+          child: _WordGrid(
+            words: words,
+            columns: _columnCount,
+            onWordTap: (word) => _handleWordTap(context, provider, word),
+          ),
+        ),
       ],
     );
   }
@@ -411,17 +470,33 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.document_scanner, size: 64, color: Colors.white.withValues(alpha: 0.2)),
+            Icon(
+              Icons.document_scanner,
+              size: 64,
+              color: Colors.white.withValues(alpha: 0.2),
+            ),
             const SizedBox(height: 16),
-            Text('Pick an image or paste from clipboard', style: TextStyle(color: Colors.white.withValues(alpha: 0.5))),
+            Text(
+              'Pick an image or paste from clipboard',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+            ),
             const SizedBox(height: 8),
-            Text('Supported: PNG, JPG, JPEG, BMP, GIF', style: TextStyle(fontSize: fs(context, 12), color: Colors.white.withValues(alpha: 0.3))),
+            Text(
+              'Supported: PNG, JPG, JPEG, BMP, GIF',
+              style: TextStyle(
+                fontSize: fs(context, 12),
+                color: Colors.white.withValues(alpha: 0.3),
+              ),
+            ),
           ],
         ),
       );
     }
 
-    final lines = _ocrController.text.split('\n').where((l) => l.trim().isNotEmpty).toList();
+    final lines = _ocrController.text
+        .split('\n')
+        .where((l) => l.trim().isNotEmpty)
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -431,7 +506,12 @@ class _SearchScreenState extends State<SearchScreen> {
             padding: const EdgeInsets.only(bottom: 8),
             child: Row(
               children: [
-                Text('${lines.length} lines detected', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary)),
+                Text(
+                  '${lines.length} lines detected',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
                 const Spacer(),
                 TextButton.icon(
                   onPressed: () {
@@ -455,7 +535,10 @@ class _SearchScreenState extends State<SearchScreen> {
               return Card(
                 margin: const EdgeInsets.only(bottom: 4),
                 child: ListTile(
-                  title: Text(lines[index], style: TextStyle(fontSize: fs(context, 14))),
+                  title: Text(
+                    lines[index],
+                    style: TextStyle(fontSize: fs(context, 14)),
+                  ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -475,7 +558,9 @@ class _SearchScreenState extends State<SearchScreen> {
                         onPressed: () {
                           Clipboard.setData(ClipboardData(text: lines[index]));
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Copied to clipboard')),
+                            const SnackBar(
+                              content: Text('Copied to clipboard'),
+                            ),
                           );
                         },
                         tooltip: 'Copy',
@@ -502,13 +587,25 @@ class _SearchScreenState extends State<SearchScreen> {
     return text
         .split(RegExp(r'[\s\n]+', multiLine: true))
         .map((w) => w.trim())
-        .where((w) => w.isNotEmpty && !RegExp(r'^[^\w\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\uAC00-\uD7AF]+$').hasMatch(w))
+        .where(
+          (w) =>
+              w.isNotEmpty &&
+              !RegExp(
+                r'^[^\w\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\uAC00-\uD7AF]+$',
+              ).hasMatch(w),
+        )
         .toList();
   }
 
-  void _handleWordTap(BuildContext context, AnalyzerProvider provider, String word) {
+  void _handleWordTap(
+    BuildContext context,
+    AnalyzerProvider provider,
+    String word,
+  ) {
     provider.searchWord(word);
-    final match = provider.searchResults.where((w) => w.word == word).firstOrNull;
+    final match = provider.searchResults
+        .where((w) => w.word == word)
+        .firstOrNull;
     if (match != null) {
       WordDetailSheet.show(context, provider, match);
     }
@@ -527,9 +624,9 @@ class _SearchScreenState extends State<SearchScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
       }
     }
   }
@@ -542,9 +639,9 @@ class _SearchScreenState extends State<SearchScreen> {
         setState(() {});
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No text in clipboard')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('No text in clipboard')));
         }
       }
     } catch (e) {
@@ -596,7 +693,9 @@ class _SearchScreenState extends State<SearchScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('EasyOCR requires a Python backend. Using ML Kit instead...'),
+                content: Text(
+                  'EasyOCR requires a Python backend. Using ML Kit instead...',
+                ),
                 action: SnackBarAction(
                   label: 'Switch',
                   onPressed: () => setState(() => _ocrMode = OcrMode.mlKit),
@@ -615,9 +714,9 @@ class _SearchScreenState extends State<SearchScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('OCR Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('OCR Error: $e')));
       }
     } finally {
       setState(() => _isProcessingImage = false);
@@ -626,7 +725,10 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Future<void> _performOcr(String text) async {
-    if (text.startsWith('http://') || text.startsWith('https://') || text.startsWith('file://') || text.startsWith('/')) {
+    if (text.startsWith('http://') ||
+        text.startsWith('https://') ||
+        text.startsWith('file://') ||
+        text.startsWith('/')) {
       setState(() => _isProcessingImage = true);
       try {
         if (text.startsWith('file://')) {
@@ -635,9 +737,9 @@ class _SearchScreenState extends State<SearchScreen> {
         await _processImage(File(text));
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error processing image: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error processing image: $e')));
         }
       } finally {
         setState(() => _isProcessingImage = false);
@@ -683,7 +785,10 @@ class _WordGrid extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: Text(
                         word,
-                        style: TextStyle(fontWeight: FontWeight.w500, fontSize: fs(context, 14)),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: fs(context, 14),
+                        ),
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,

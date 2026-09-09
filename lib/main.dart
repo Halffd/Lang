@@ -1,13 +1,16 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:super_clipboard/super_clipboard.dart';
 import 'l10n/app_localizations.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'core/services/audio_service.dart';
 import 'core/services/clipboard_monitor_service.dart';
 import 'core/services/history_service.dart';
+import 'core/services/screenshot_service.dart';
 import 'core/services/supabase_service.dart';
 import 'data/services/ocr_service.dart';
 import 'core/services/srs_service.dart';
@@ -135,6 +138,100 @@ void main() async {
   appState.addListener(() {
     clipboardMonitor.restartMonitoring(appState);
   });
+
+  // screenshots: restore registry, restart auto capture on its saved
+  // interval, register global hotkeys for each capture kind
+  await ScreenshotService.instance.load();
+
+  Future<void> runAutoOcr(ScreenshotItem item) async {
+    if (!appState.screenshotAutoOcr) return;
+    try {
+      final result = await ocrService.recognizeFromFile(
+        item.path,
+        engine: OcrEngine.mlKit,
+      );
+      final text = result.isSuccess ? result.text.trim() : '';
+      if (text.isNotEmpty) {
+        ScreenshotService.instance.setOcrText(item.id, text);
+        if (appState.screenshotCopyOcrText) {
+          await Clipboard.setData(ClipboardData(text: text));
+        }
+      }
+    } catch (_) {
+      // auto OCR is best-effort
+    }
+  }
+
+  Future<String?> ocrRunner(String path) async {
+    try {
+      final result = await ocrService.recognizeFromFile(
+        path,
+        engine: OcrEngine.mlKit,
+      );
+      return result.isSuccess ? result.text : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> copyImageRunner(String path) async {
+    final bytes = await File(path).readAsBytes();
+    final item = DataWriterItem(suggestedName: 'screenshot.png');
+    item.add(Formats.png(bytes));
+    await ClipboardWriter.instance.write([item]);
+  }
+
+  Future<void> copyTextRunner(String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+  }
+
+  if (appState.screenshotAutoIntervalMin > 0) {
+    ScreenshotService.instance.startAutoCapture(
+      intervalMinutes: appState.screenshotAutoIntervalMin,
+      onCaptured: runAutoOcr,
+    );
+  }
+  if (!kIsWeb && (Platform.isLinux || Platform.isMacOS || Platform.isWindows)) {
+    Future<void> captureHotkey(ScreenshotKind kind) async {
+      final item = await ScreenshotService.instance.captureWithPipeline(
+        kind,
+        autoOcr: appState.screenshotAutoOcr,
+        copyOcrText: appState.screenshotCopyOcrText,
+        copyImage: appState.screenshotCopyImage,
+        ocrRunner: ocrRunner,
+        copyImageRunner: copyImageRunner,
+        copyTextRunner: copyTextRunner,
+      );
+      if (item != null) {
+        await desktopIPC.showNotification(
+          title: 'Screenshot',
+          body: 'Captured ${kind.name}',
+        );
+      }
+    }
+
+    desktopIPC.registerScreenshotHotkeys(
+      onFullscreen: () => captureHotkey(ScreenshotKind.fullscreen),
+      onMonitor: () => captureHotkey(ScreenshotKind.monitor),
+      onWindow: () => captureHotkey(ScreenshotKind.window),
+      onRegion: () => captureHotkey(ScreenshotKind.region),
+      onPreviousRegion: () => captureHotkey(ScreenshotKind.previousRegion),
+      onToggleAuto: () async {
+        // toggle between off and the saved interval (1 min default)
+        final current = appState.screenshotAutoIntervalMin;
+        final next = current > 0 ? 0 : 1;
+        appState.setScreenshotAutoIntervalMin(next);
+        if (next > 0) {
+          ScreenshotService.instance.startAutoCapture(
+            intervalMinutes: next,
+            onCaptured: runAutoOcr,
+          );
+        } else {
+          ScreenshotService.instance.stopAutoCapture();
+        }
+      },
+    );
+  }
 
   final aiProvider = AiProvider(aiRepository);
   await aiProvider.init();
