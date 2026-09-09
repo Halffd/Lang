@@ -113,10 +113,10 @@ class _ShortcutRow extends StatelessWidget {
               color: Colors.grey[300],
               borderRadius: BorderRadius.circular(4),
             ),
-            child: Text(shortcutKey, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            child: Text(shortcutKey, style: TextStyle(fontWeight: FontWeight.bold, fontSize: fs(context, 12))),
           ),
           const SizedBox(width: 8),
-          Text(action, style: const TextStyle(fontSize: 14)),
+          Text(action, style: TextStyle(fontSize: fs(context, 14))),
         ],
       ),
     );

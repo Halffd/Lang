@@ -82,7 +82,7 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(color: Colors.grey, borderRadius: BorderRadius.circular(12)),
-                    child: const Text('SUSPENDED', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                    child: Text('SUSPENDED', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: fs(context, 12))),
                   ),
               ],
             ),
@@ -95,12 +95,12 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
                   children: [
                     Text('Meaning', style: theme.textTheme.titleMedium),
                     const SizedBox(height: 8),
-                    Text(_card.meaning, style: const TextStyle(fontSize: 16)),
+                    Text(_card.meaning, style: TextStyle(fontSize: fs(context, 16, 'words'))),
                     if (_card.notes != null && _card.notes!.isNotEmpty) ...[
                       const SizedBox(height: 16),
                       Text('Notes', style: theme.textTheme.titleMedium),
                       const SizedBox(height: 8),
-                      Text(_card.notes!, style: const TextStyle(fontSize: 14)),
+                      Text(_card.notes!, style: TextStyle(fontSize: fs(context, 14, 'translations'))),
                     ],
                   ],
                 ),

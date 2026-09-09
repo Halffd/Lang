@@ -56,7 +56,7 @@ class _DeckManagerSheetState extends State<DeckManagerSheet> {
                         border: Border.all(color: selectedIcon == icon ? Theme.of(context).primaryColor : Colors.grey[300]!, width: selectedIcon == icon ? 2 : 1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Text(icon, style: const TextStyle(fontSize: 20)),
+                      child: Text(icon, style: TextStyle(fontSize: fs(context, 20, 'words'))),
                     ),
                   )).toList(),
                 ),
@@ -181,7 +181,7 @@ class _DeckManagerSheetState extends State<DeckManagerSheet> {
                       return ListTile(
                         leading: CircleAvatar(
                           backgroundColor: deckColor.withValues(alpha: 0.2),
-                          child: Text(deck.icon, style: const TextStyle(fontSize: 20)),
+                          child: Text(deck.icon, style: TextStyle(fontSize: fs(context, 20, 'words'))),
                         ),
                         title: Text(deck.name),
                         subtitle: Text('${deck.description ?? ''} • $cardCount cards${dueCount > 0 ? ' • $dueCount due' : ''}'),
