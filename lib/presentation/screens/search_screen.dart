@@ -10,6 +10,7 @@ import 'package:lang/presentation/providers/ai_provider.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/presentation/widgets/script_text_field.dart';
 import 'package:lang/presentation/widgets/word_detail_sheet.dart';
+import 'package:lang/utils/font_scale.dart';
 
 enum OcrMode { mlKit, tesseract, easyOcr, ai }
 
@@ -158,7 +159,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 children: [
                   const Icon(Icons.speed, size: 14),
                   const SizedBox(width: 4),
-                  Text('ML Kit', style: TextStyle(fontSize: 12)),
+                  Text('ML Kit', style: TextStyle(fontSize: fs(context, 12))),
                 ],
               ),
             ),
@@ -169,7 +170,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 children: [
                   const Icon(Icons.document_scanner, size: 14),
                   const SizedBox(width: 4),
-                  Text('Tesseract', style: TextStyle(fontSize: 12)),
+                  Text('Tesseract', style: TextStyle(fontSize: fs(context, 12))),
                 ],
               ),
             ),
@@ -180,7 +181,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 children: [
                   const Icon(Icons.auto_fix_high, size: 14),
                   const SizedBox(width: 4),
-                  Text('EasyOCR', style: TextStyle(fontSize: 12)),
+                  Text('EasyOCR', style: TextStyle(fontSize: fs(context, 12))),
                 ],
               ),
             ),
@@ -191,7 +192,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 children: [
                   const Icon(Icons.psychology, size: 14),
                   const SizedBox(width: 4),
-                  Text('AI', style: TextStyle(fontSize: 12)),
+                  Text('AI', style: TextStyle(fontSize: fs(context, 12))),
                 ],
               ),
             ),
@@ -217,7 +218,7 @@ class _SearchScreenState extends State<SearchScreen> {
           isDense: true,
           items: [3, 4, 5, 6, 7, 8, 9, 10].map((n) => DropdownMenuItem(
             value: n,
-            child: Text('$n', style: const TextStyle(fontSize: 12)),
+            child: Text('$n', style: TextStyle(fontSize: fs(context, 12))),
           )).toList(),
           onChanged: (val) {
             if (val != null) setState(() => _columnCount = val);
@@ -414,7 +415,7 @@ class _SearchScreenState extends State<SearchScreen> {
             const SizedBox(height: 16),
             Text('Pick an image or paste from clipboard', style: TextStyle(color: Colors.white.withValues(alpha: 0.5))),
             const SizedBox(height: 8),
-            Text('Supported: PNG, JPG, JPEG, BMP, GIF', style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.3))),
+            Text('Supported: PNG, JPG, JPEG, BMP, GIF', style: TextStyle(fontSize: fs(context, 12), color: Colors.white.withValues(alpha: 0.3))),
           ],
         ),
       );
@@ -454,7 +455,7 @@ class _SearchScreenState extends State<SearchScreen> {
               return Card(
                 margin: const EdgeInsets.only(bottom: 4),
                 child: ListTile(
-                  title: Text(lines[index], style: const TextStyle(fontSize: 14)),
+                  title: Text(lines[index], style: TextStyle(fontSize: fs(context, 14))),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -682,7 +683,7 @@ class _WordGrid extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: Text(
                         word,
-                        style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                        style: TextStyle(fontWeight: FontWeight.w500, fontSize: fs(context, 14)),
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,

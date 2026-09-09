@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lang/domain/entities/dictionary.dart';
 import 'package:lang/data/repositories/dictionary_service.dart';
 import 'package:lang/presentation/screens/search/search_result_cards.dart';
+import 'package:lang/utils/font_scale.dart';
 
 class SearchResultsList extends StatelessWidget {
   final SearchResult result;
@@ -77,10 +78,10 @@ class _ExternalSearchSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'External Search',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: fs(context, 16, 'headers'),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -138,7 +139,7 @@ class _ExternalSearchButton extends StatelessWidget {
       label: Text(label),
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        textStyle: const TextStyle(fontSize: 12),
+        textStyle: TextStyle(fontSize: fs(context, 12)),
       ),
     );
   }
@@ -156,8 +157,8 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Text(
         '$title ($count)',
-        style: const TextStyle(
-          fontSize: 20,
+        style: TextStyle(
+          fontSize: fs(context, 20, 'headers'),
           fontWeight: FontWeight.bold,
         ),
       ),

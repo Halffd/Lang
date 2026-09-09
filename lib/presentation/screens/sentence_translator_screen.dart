@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lang/domain/entities/app_state.dart';
+import 'package:lang/utils/font_scale.dart';
 import 'package:lang/domain/entities/translation_model.dart';
 import 'package:lang/data/repositories/translation_service.dart';
 import 'package:lang/data/datasources/local_translation_service.dart';
@@ -272,7 +273,9 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
                             const SizedBox(height: 8),
                             Text(
                               _sourceController.text,
-                              style: const TextStyle(fontSize: 16),
+                              style: TextStyle(
+                                fontSize: fs(context, 16, 'sentences'),
+                              ),
                             ),
                             const SizedBox(height: 16),
                             // Word-by-word translation for original
@@ -304,15 +307,15 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
                                     children: [
                                       Text(
                                         word.source,
-                                        style: const TextStyle(
-                                          fontSize: 14,
+                                        style: TextStyle(
+                                          fontSize: fs(context, 14, 'words'),
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
                                       Text(
                                         word.translation,
-                                        style: const TextStyle(
-                                          fontSize: 12,
+                                        style: TextStyle(
+                                          fontSize: fs(context, 12, 'translations'),
                                           color: Colors.grey,
                                         ),
                                       ),
@@ -352,7 +355,9 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
                             const SizedBox(height: 8),
                             Text(
                               _translationResult!.fullTranslation,
-                              style: const TextStyle(fontSize: 16),
+                              style: TextStyle(
+                                fontSize: fs(context, 16, 'translations'),
+                              ),
                             ),
                           ],
                         ),
@@ -405,15 +410,15 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
         children: [
           Text(
             word.translation,
-            style: const TextStyle(
-              fontSize: 12,
+            style: TextStyle(
+              fontSize: fs(context, 12, 'translations'),
               color: Colors.grey,
             ),
           ),
           Text(
             word.source,
-            style: const TextStyle(
-              fontSize: 14,
+            style: TextStyle(
+              fontSize: fs(context, 14, 'words'),
               fontWeight: FontWeight.w500,
             ),
           ),

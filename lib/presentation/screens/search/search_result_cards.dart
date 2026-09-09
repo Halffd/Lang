@@ -5,6 +5,7 @@ import 'package:lang/data/repositories/dictionary_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/domain/entities/dictionary.dart';
 import 'package:lang/utils/screen_size.dart';
+import 'package:lang/utils/font_scale.dart';
 
 class SearchKanjiCard extends StatelessWidget {
   final KanjiEntry kanji;
@@ -39,7 +40,7 @@ class SearchKanjiCard extends StatelessWidget {
                   Text(
                     kanji.character,
                     style: TextStyle(
-                      fontSize: ScreenSize.adaptiveFontSize(context, 48),
+                      fontSize: fs(context, 48, 'kanji'),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -48,7 +49,7 @@ class SearchKanjiCard extends StatelessWidget {
                     Chip(
                       label: Text(
                         dict.title,
-                        style: const TextStyle(fontSize: 10),
+                        style: TextStyle(fontSize: 10),
                       ),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
@@ -149,7 +150,7 @@ class SearchEntryCard extends StatelessWidget {
                 Text(
                   entry.term,
                   style: TextStyle(
-                    fontSize: ScreenSize.adaptiveFontSize(context, 24),
+                    fontSize: fs(context, 24, 'words'),
                     fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -157,7 +158,7 @@ class SearchEntryCard extends StatelessWidget {
                             Text(
                               entry.reading,
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: fs(context, 16, 'words'),
                                 color: Colors.grey[600],
                               ),
                             ),
@@ -168,7 +169,7 @@ class SearchEntryCard extends StatelessWidget {
                       Chip(
                         label: Text(
                           dict.title,
-                          style: const TextStyle(fontSize: 10),
+                          style: TextStyle(fontSize: 10),
                         ),
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -199,7 +200,7 @@ class SearchEntryCard extends StatelessWidget {
                       return Chip(
                         label: Text(
                           tag?.notes ?? tagName,
-                          style: const TextStyle(fontSize: 10),
+                          style: TextStyle(fontSize: 10),
                         ),
                         backgroundColor: getTagColor(tag?.category),
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -217,7 +218,7 @@ const SizedBox(width: 4),
             Text(
               'Pitch: ${pitches.map((p) => p.pitches.map((pp) => pp.position).join(", ")).join(" / ")}',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: fs(context, 12, 'translations'),
                 color: Colors.grey[700],
               ),
             ),
@@ -238,7 +239,7 @@ const SizedBox(width: 4),
                               Text(
                                 '${toneInfo.language.toUpperCase()} ${tonePattern.getToneName(toneInfo.language)}',
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: fs(context, 11, 'ui'),
                                   color: Colors.green[700],
                                 ),
                               ),
@@ -256,7 +257,7 @@ const SizedBox(width: 4),
                       Text(
                         'Frequency: ${frequencies.first.displayValue}',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: fs(context, 12, 'translations'),
                           color: Colors.grey[700],
                         ),
                       ),
@@ -274,7 +275,7 @@ const SizedBox(width: 4),
                           child: Text(
                             'Etymology: ${etymologyEntry.originalLanguage}',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: fs(context, 11, 'ui'),
                               color: Colors.orange[700],
                               fontStyle: FontStyle.italic,
                             ),
@@ -294,7 +295,7 @@ const SizedBox(width: 4),
                           child: Text(
                             '${wiktionaryEntry.partOfSpeech.isNotEmpty ? '${wiktionaryEntry.partOfSpeech}: ' : ''}${wiktionaryEntry.definition.length > 60 ? '${wiktionaryEntry.definition.substring(0, 60)}...' : wiktionaryEntry.definition}',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: fs(context, 11, 'ui'),
                               color: Colors.blue[700],
                             ),
                           ),
@@ -321,7 +322,7 @@ const SizedBox(width: 4),
                   Text(
                     '+ ${entry.definitions.length - 2} more definitions',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: fs(context, 12, 'translations'),
                       color: Colors.grey[600],
                       fontStyle: FontStyle.italic,
                     ),
