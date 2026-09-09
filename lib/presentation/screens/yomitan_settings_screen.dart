@@ -6,6 +6,7 @@ import 'package:lang/domain/entities/anki_note_types.dart';
 import 'package:lang/domain/entities/anki_note_data.dart';
 import 'package:lang/data/services/anki_connect_service.dart';
 import 'dart:io';
+import 'package:lang/utils/font_scale.dart';
 
 /// Yomitan-style settings screen covering all export settings:
 /// profiles, general, storage, scanning, popup, appearance, audio,
@@ -77,15 +78,23 @@ class YomitanSettingsScreen extends StatelessWidget {
 // helpers
 // ============================================================
 
-Widget _sectionTitle(String text) => Padding(
+Widget _sectionTitle(BuildContext context, String text) => Padding(
   padding: const EdgeInsets.only(bottom: 8),
   child: Text(
     text,
-    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    style: TextStyle(
+      fontSize: fs(context, 18, 'headers'),
+      fontWeight: FontWeight.bold,
+    ),
   ),
 );
 
-Widget _settingTile(String title, String? subtitle, Widget child) {
+Widget _settingTile(
+  BuildContext context,
+  String title,
+  String? subtitle,
+  Widget child,
+) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 4),
     child: Column(
@@ -95,7 +104,10 @@ Widget _settingTile(String title, String? subtitle, Widget child) {
         if (subtitle != null)
           Text(
             subtitle,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+            style: TextStyle(
+              fontSize: fs(context, 12),
+              color: Colors.grey.shade400,
+            ),
           ),
         const SizedBox(height: 4),
         child,
@@ -105,6 +117,7 @@ Widget _settingTile(String title, String? subtitle, Widget child) {
 }
 
 Widget _switchTile(
+  BuildContext context,
   String title,
   String? subtitle,
   bool value,
@@ -115,7 +128,7 @@ Widget _switchTile(
     contentPadding: EdgeInsets.zero,
     title: Text(title),
     subtitle: subtitle != null
-        ? Text(subtitle, style: const TextStyle(fontSize: 12))
+        ? Text(subtitle, style: TextStyle(fontSize: fs(context, 12)))
         : null,
     value: value,
     onChanged: onChanged,
@@ -165,8 +178,9 @@ class _ProfileSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle('Profile'),
+        _sectionTitle(context, 'Profile'),
         _settingTile(
+          context,
           'Active profile',
           'Switch the active profile that is used for scanning',
           DropdownButtonFormField<String>(
@@ -252,12 +266,13 @@ class _GeneralSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle('General'),
-        _switchTile('Enable Yomitan', null, g.enabled, (v) {
+        _sectionTitle(context, 'General'),
+        _switchTile(context, 'Enable Yomitan', null, g.enabled, (v) {
           g.enabled = v;
           _persist(context);
         }),
         _settingTile(
+          context,
           'Language',
           'Language of the text that is being looked up',
           DropdownButtonFormField<String>(
@@ -278,6 +293,7 @@ class _GeneralSection extends StatelessWidget {
           ),
         ),
         _switchTile(
+          context,
           'Show the welcome guide on browser startup',
           null,
           g.showWelcomeGuide,
@@ -287,6 +303,7 @@ class _GeneralSection extends StatelessWidget {
           },
         ),
         _switchTile(
+          context,
           'Show "Lookup in Yomitan" in right-click menu',
           null,
           g.showLookupInContextMenu,
@@ -296,6 +313,7 @@ class _GeneralSection extends StatelessWidget {
           },
         ),
         _settingTile(
+          context,
           'Maximum number of results',
           'Adjust the maximum number of results shown for lookups',
           DropdownButtonFormField<int>(
@@ -312,6 +330,7 @@ class _GeneralSection extends StatelessWidget {
           ),
         ),
         _switchTile(
+          context,
           'Enable Yomitan API',
           'Enable support for sending local web requests to fetch data from Yomitan',
           g.enableApi,
@@ -339,8 +358,9 @@ class _StorageSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle('Storage'),
+        _sectionTitle(context, 'Storage'),
         _settingTile(
+          context,
           'Frequency sorting dictionary',
           'Sort results using a frequency dictionary',
           TextField(
@@ -359,6 +379,7 @@ class _StorageSection extends StatelessWidget {
           ),
         ),
         _settingTile(
+          context,
           'Frequency sorting mode',
           null,
           DropdownButtonFormField<FrequencySortingMode>(
@@ -375,6 +396,7 @@ class _StorageSection extends StatelessWidget {
           ),
         ),
         _switchTile(
+          context,
           'Persistent storage',
           'Enable to help prevent the browser from unexpectedly clearing the database',
           s.persistentStorage,
@@ -402,8 +424,9 @@ class _ScanningSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle('Scanning'),
+        _sectionTitle(context, 'Scanning'),
         _settingTile(
+          context,
           'Scan modifier key',
           'Hold a key while moving the cursor to scan text',
           DropdownButtonFormField<ScanModifierKey>(
@@ -420,6 +443,7 @@ class _ScanningSection extends StatelessWidget {
           ),
         ),
         _switchTile(
+          context,
           'Scan using middle mouse button',
           'Hold the middle mouse button while moving the cursor to scan text',
           sc.scanUsingMiddleMouseButton,
@@ -429,6 +453,7 @@ class _ScanningSection extends StatelessWidget {
           },
         ),
         _settingTile(
+          context,
           'Scan delay (in milliseconds)',
           'Change the delay before scanning occurs when no modifier key is required',
           Slider(
@@ -444,6 +469,7 @@ class _ScanningSection extends StatelessWidget {
           ),
         ),
         _switchTile(
+          context,
           'Scan without mouse move',
           'Allow scanning words under the pointer without the pointer being in motion',
           sc.scanWithoutMouseMove,
@@ -452,11 +478,18 @@ class _ScanningSection extends StatelessWidget {
             _persist(context);
           },
         ),
-        _switchTile('Select matched text', null, sc.selectMatchedText, (v) {
-          sc.selectMatchedText = v;
-          _persist(context);
-        }),
         _switchTile(
+          context,
+          'Select matched text',
+          null,
+          sc.selectMatchedText,
+          (v) {
+            sc.selectMatchedText = v;
+            _persist(context);
+          },
+        ),
+        _switchTile(
+          context,
           'Search text with non-Japanese, Chinese, or Korean characters',
           'Only applies when language is set to Japanese, Chinese, Cantonese, or Korean',
           sc.searchNonJapaneseText,
@@ -466,6 +499,7 @@ class _ScanningSection extends StatelessWidget {
           },
         ),
         _switchTile(
+          context,
           'Layout-aware scanning',
           'Use webpage styling information to determine where line breaks are likely to be',
           sc.layoutAwareScanning,
@@ -475,6 +509,7 @@ class _ScanningSection extends StatelessWidget {
           },
         ),
         _switchTile(
+          context,
           'Deep content scanning',
           'Enable scanning text that is covered by other layers',
           sc.deepContentScanning,
@@ -484,6 +519,7 @@ class _ScanningSection extends StatelessWidget {
           },
         ),
         _switchTile(
+          context,
           'Normalize CSS zoom',
           'Correct the pointer location on webpages where CSS zoom is used',
           sc.normalizeCssZoom,
@@ -493,6 +529,7 @@ class _ScanningSection extends StatelessWidget {
           },
         ),
         _switchTile(
+          context,
           'Wildcard scanning',
           'Enable suffix wildcard when looking up scanned webpage text',
           sc.wildcardScanning,
@@ -502,6 +539,7 @@ class _ScanningSection extends StatelessWidget {
           },
         ),
         _settingTile(
+          context,
           'Text scan length',
           'Change how many characters are read when scanning for terms.\nSetting this value too high (100+) may impact performance',
           Slider(
@@ -535,8 +573,9 @@ class _PopupBehaviorSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle('Popup Behavior'),
+        _sectionTitle(context, 'Popup Behavior'),
         _switchTile(
+          context,
           'Allow scanning search page content',
           'Text on the search page can be scanned for definitions, which will open a popup',
           pb.allowScanningSearchPage,
@@ -546,6 +585,7 @@ class _PopupBehaviorSection extends StatelessWidget {
           },
         ),
         _switchTile(
+          context,
           'Allow scanning popup content',
           'Text inside of popups can be scanned for definitions, which will open a new popup',
           pb.allowScanningPopupContent,
@@ -555,6 +595,7 @@ class _PopupBehaviorSection extends StatelessWidget {
           },
         ),
         _settingTile(
+          context,
           'Maximum number of child popups',
           'Change the limit on the number of popups that may be generated',
           Slider(
@@ -570,6 +611,7 @@ class _PopupBehaviorSection extends StatelessWidget {
           ),
         ),
         _switchTile(
+          context,
           'Allow scanning popup source terms',
           null,
           pb.allowScanningPopupSourceTerms,
@@ -579,6 +621,7 @@ class _PopupBehaviorSection extends StatelessWidget {
           },
         ),
         _switchTile(
+          context,
           'Auto-hide search popup',
           'When an existing popup is present, upon scanning again, hide the existing popup even if no definitions are found',
           pb.autoHideSearchPopup,
@@ -588,6 +631,7 @@ class _PopupBehaviorSection extends StatelessWidget {
           },
         ),
         _switchTile(
+          context,
           'Hide popup on cursor exit',
           'When the cursor exits the popup, the popup will be hidden',
           pb.hidePopupOnCursorExit,
@@ -597,6 +641,7 @@ class _PopupBehaviorSection extends StatelessWidget {
           },
         ),
         _switchTile(
+          context,
           'Reduced motion scrolling',
           'Scrolls by a configurable height (similar to pagination), reducing animations. Useful on e-readers and e-ink screens',
           pb.reducedMotionScrolling,
@@ -606,6 +651,7 @@ class _PopupBehaviorSection extends StatelessWidget {
           },
         ),
         _switchTile(
+          context,
           'Search terms when clicking text from the results list',
           null,
           pb.searchOnClickFromResultsList,
@@ -633,8 +679,9 @@ class _AppearanceSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle('Appearance'),
+        _sectionTitle(context, 'Appearance'),
         _settingTile(
+          context,
           'Theme',
           'Adjust the style of Yomitan',
           DropdownButtonFormField<ThemePreset>(
@@ -651,6 +698,7 @@ class _AppearanceSection extends StatelessWidget {
           ),
         ),
         _settingTile(
+          context,
           'Font size',
           'Change the font size used in popups, in pixels',
           _sliderTile(
@@ -667,6 +715,7 @@ class _AppearanceSection extends StatelessWidget {
           ),
         ),
         _settingTile(
+          context,
           'Line height',
           'Change the space between lines of text in popups. This will usually be a decimal number between 1 and 2',
           _sliderTile(
@@ -683,6 +732,7 @@ class _AppearanceSection extends StatelessWidget {
           ),
         ),
         _switchTile(
+          context,
           'Compact glossaries',
           'Display term glossaries using a more compact layout',
           a.compactGlossaries,
@@ -692,6 +742,7 @@ class _AppearanceSection extends StatelessWidget {
           },
         ),
         _switchTile(
+          context,
           'Compact tags',
           'Show fewer repeated tags for term glossaries',
           a.compactTags,
@@ -701,6 +752,7 @@ class _AppearanceSection extends StatelessWidget {
           },
         ),
         _switchTile(
+          context,
           'Show tags for expressions and their readings',
           'These tags can be scanned if the options for popup content scanning are enabled',
           a.showTagsForExpressionsAndReadings,
@@ -710,6 +762,7 @@ class _AppearanceSection extends StatelessWidget {
           },
         ),
         _settingTile(
+          context,
           'Reading mode',
           'Change what type of furigana is displayed for parsed text. Japanese only',
           DropdownButtonFormField<ReadingDisplayMode>(
@@ -726,6 +779,7 @@ class _AppearanceSection extends StatelessWidget {
           ),
         ),
         _settingTile(
+          context,
           'Selection indicator style',
           'Change how the selected definition entry is visually indicated',
           DropdownButtonFormField<SelectionIndicatorStyle>(
@@ -742,6 +796,7 @@ class _AppearanceSection extends StatelessWidget {
           ),
         ),
         _switchTile(
+          context,
           'Pitch accent downstep notation',
           null,
           a.pitchAccentDownstep,
@@ -750,14 +805,22 @@ class _AppearanceSection extends StatelessWidget {
             _persist(context);
           },
         ),
-        _switchTile('Pitch accent graph', null, a.pitchAccentGraph, (v) {
+        _switchTile(context, 'Pitch accent graph', null, a.pitchAccentGraph, (
+          v,
+        ) {
           a.pitchAccentGraph = v;
           _persist(context);
         }),
-        _switchTile('Pitch accent position', null, a.pitchAccentPosition, (v) {
-          a.pitchAccentPosition = v;
-          _persist(context);
-        }),
+        _switchTile(
+          context,
+          'Pitch accent position',
+          null,
+          a.pitchAccentPosition,
+          (v) {
+            a.pitchAccentPosition = v;
+            _persist(context);
+          },
+        ),
       ],
     );
   }
@@ -777,8 +840,9 @@ class _PopupPositionSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle('Popup Position & Size'),
+        _sectionTitle(context, 'Popup Position & Size'),
         _settingTile(
+          context,
           'Display mode',
           'Change the layout of the popup',
           DropdownButtonFormField<PopupDisplayMode>(
@@ -795,6 +859,7 @@ class _PopupPositionSection extends StatelessWidget {
           ),
         ),
         _settingTile(
+          context,
           'Scale',
           'Control the scaling factor of the popup',
           _sliderTile(
@@ -810,11 +875,12 @@ class _PopupPositionSection extends StatelessWidget {
             },
           ),
         ),
-        _switchTile('Auto-scale', null, pp.autoScale, (v) {
+        _switchTile(context, 'Auto-scale', null, pp.autoScale, (v) {
           pp.autoScale = v;
           _persist(context);
         }),
         _settingTile(
+          context,
           'Size',
           'Control the size of the popup, in pixels',
           Row(
@@ -868,8 +934,9 @@ class _AudioSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle('Audio'),
+        _sectionTitle(context, 'Audio'),
         _switchTile(
+          context,
           'Enable audio playback for terms',
           'Show a clickable speaker icon next to search results\nThis option may send term, reading, and/or language outside of Yomitan to fetch audio',
           au.enabled,
@@ -879,6 +946,7 @@ class _AudioSection extends StatelessWidget {
           },
         ),
         _switchTile(
+          context,
           'Auto-play search result audio',
           'The audio for the first result will be played automatically',
           au.autoPlaySearchResultAudio,
@@ -888,6 +956,7 @@ class _AudioSection extends StatelessWidget {
           },
         ),
         _settingTile(
+          context,
           'Audio volume',
           'Adjust the volume audio is played at, in percent',
           _sliderTile(
@@ -922,8 +991,9 @@ class _TextParsingSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle('Text Parsing'),
+        _sectionTitle(context, 'Text Parsing'),
         _switchTile(
+          context,
           "Parse sentences using Yomitan's internal parser",
           "Sentence words are parsed using Yomitan's dictionaries",
           tp.parseInternalParser,
@@ -933,6 +1003,7 @@ class _TextParsingSection extends StatelessWidget {
           },
         ),
         _switchTile(
+          context,
           'Parse sentences using MeCab',
           'Sentence words are parsed using a third-party program. Japanese only',
           tp.parseMecab,
@@ -942,6 +1013,7 @@ class _TextParsingSection extends StatelessWidget {
           },
         ),
         _switchTile(
+          context,
           'Show space between parsed words',
           null,
           tp.showSpaceBetweenParsedWords,
@@ -951,6 +1023,7 @@ class _TextParsingSection extends StatelessWidget {
           },
         ),
         _settingTile(
+          context,
           'Sentence scanning extent',
           'Adjust how many characters are bidirectionally scanned to form a sentence',
           Slider(
@@ -984,9 +1057,10 @@ class _TranslationSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle('Translation'),
-        _sectionTitle('Dictionary search resolution'),
+        _sectionTitle(context, 'Translation'),
+        _sectionTitle(context, 'Dictionary search resolution'),
         _settingTile(
+          context,
           'Search resolution',
           '"A dog" → "A dog", "A do", "A d", "A"  (full)\n"A dog" → "A dog", "A"  (prefix-only)',
           SegmentedButton<bool>(
@@ -1021,8 +1095,9 @@ class _AnkiSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle('Anki'),
+        _sectionTitle(context, 'Anki'),
         _switchTile(
+          context,
           'Enable Anki integration',
           'Connection status: ${a.enabled ? "enabled" : "disabled"}',
           a.enabled,
@@ -1032,6 +1107,7 @@ class _AnkiSection extends StatelessWidget {
           },
         ),
         _settingTile(
+          context,
           'AnkiConnect server address',
           'Change the URL of the AnkiConnect server',
           TextField(
@@ -1073,6 +1149,7 @@ class _AnkiSection extends StatelessWidget {
           ],
         ),
         _settingTile(
+          context,
           'Card tags',
           'List of space or comma separated tags to add to the card',
           TextField(
@@ -1088,6 +1165,7 @@ class _AnkiSection extends StatelessWidget {
           ),
         ),
         _settingTile(
+          context,
           'API key',
           'Pass a secret value to AnkiConnect API calls',
           TextField(
@@ -1104,6 +1182,7 @@ class _AnkiSection extends StatelessWidget {
           ),
         ),
         _switchTile(
+          context,
           'Check for card duplicates',
           'Check for duplicates across all models',
           a.checkForCardDuplicates,
@@ -1113,6 +1192,7 @@ class _AnkiSection extends StatelessWidget {
           },
         ),
         _settingTile(
+          context,
           'Duplicate card scope',
           'When a duplicate is detected',
           Row(
@@ -1154,6 +1234,7 @@ class _AnkiSection extends StatelessWidget {
           ),
         ),
         _settingTile(
+          context,
           'Screenshot format',
           'Adjust the format and quality of screenshots created for cards',
           DropdownButtonFormField<ScreenshotFormat>(
@@ -1170,6 +1251,7 @@ class _AnkiSection extends StatelessWidget {
           ),
         ),
         _switchTile(
+          context,
           'Suspend new cards',
           'New cards will be suspended when a note is added',
           a.suspendNewCards,
@@ -1179,6 +1261,7 @@ class _AnkiSection extends StatelessWidget {
           },
         ),
         _switchTile(
+          context,
           'Force Anki sync on adding card',
           'May cause issues when using in conjuction with Ankiconnect Android, and/or slow or metered connections',
           a.forceSyncOnAddingCard,
@@ -1189,28 +1272,34 @@ class _AnkiSection extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         // Note types editor
-        const Text(
+        Text(
           'Anki Cards - Note Types',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: fs(context, 15, 'headers'),
+          ),
         ),
-        const Text(
+        Text(
           'Configure deck, model and field markers per note type',
-          style: TextStyle(fontSize: 12),
+          style: TextStyle(fontSize: fs(context, 12)),
         ),
         const SizedBox(height: 8),
         ...AnkiNoteType.values.map((t) => _noteTypeTile(context, t)),
         const Divider(height: 32),
         // Custom marker templates
-        const Text(
+        Text(
           'Customize handlebars templates',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: fs(context, 15, 'headers'),
+          ),
         ),
-        const Text(
+        Text(
           'Override how each marker renders using Yomitan-compatible '
           'handlebars templates. Context: expression, reading, glossary, '
           'cloze.sentence, definition.definitions (dictionary, glossary), '
           'frequencies (dictionary, frequency), hasMedia/getMedia helpers.',
-          style: TextStyle(fontSize: 12),
+          style: TextStyle(fontSize: fs(context, 12)),
         ),
         const SizedBox(height: 8),
         _MarkerTemplatesEditor(),
@@ -1226,17 +1315,14 @@ class _AnkiSection extends StatelessWidget {
     return ListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
-      leading: Text(
-        type.name,
-        style: const TextStyle(fontWeight: FontWeight.w600),
-      ),
+      leading: Text(type.name, style: TextStyle(fontWeight: FontWeight.w600)),
       title: Text(
         '${config.deck} / ${config.model}',
-        style: const TextStyle(fontSize: 13),
+        style: TextStyle(fontSize: fs(context, 13)),
       ),
       subtitle: Text(
         '${config.fields.length} fields',
-        style: const TextStyle(fontSize: 12),
+        style: TextStyle(fontSize: fs(context, 12)),
       ),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => Navigator.push(
@@ -1293,6 +1379,7 @@ class NoteTypeEditorScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             children: [
               _settingTile(
+                context,
                 'Deck',
                 'Anki deck for this note type',
                 TextField(
@@ -1308,6 +1395,7 @@ class NoteTypeEditorScreen extends StatelessWidget {
                 ),
               ),
               _settingTile(
+                context,
                 'Model',
                 'Anki note model (Basic, jp-mining-note, ...)',
                 TextField(
@@ -1322,19 +1410,22 @@ class NoteTypeEditorScreen extends StatelessWidget {
                   },
                 ),
               ),
-              _switchTile('Enabled', null, cfg.enabled, (v) {
+              _switchTile(context, 'Enabled', null, cfg.enabled, (v) {
                 cfg.enabled = v;
                 appState.setAnkiNoteTypes(noteTypes);
               }),
               const Divider(height: 32),
-              const Text(
+              Text(
                 'Fields',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: fs(context, 16, 'headers'),
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              const Text(
+              Text(
                 'Each field maps an Anki field name to a marker template.\n'
                 'Example: Word -> {expression}, Glossary -> {glossary-first}',
-                style: TextStyle(fontSize: 12),
+                style: TextStyle(fontSize: fs(context, 12)),
               ),
               const SizedBox(height: 8),
               ...cfg.fields.asMap().entries.map((entry) {
@@ -1423,8 +1514,9 @@ class _ClipboardSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle('Clipboard'),
+        _sectionTitle(context, 'Clipboard'),
         _switchTile(
+          context,
           'Enable background clipboard text monitoring',
           'Open the search page in a new window when text is copied to the clipboard',
           cb.enableBackgroundMonitoring,
@@ -1434,6 +1526,7 @@ class _ClipboardSection extends StatelessWidget {
           },
         ),
         _switchTile(
+          context,
           'Enable search page clipboard text monitoring',
           'The query on the search page will be automatically updated with text in the clipboard',
           cb.enableSearchPageMonitoring,
@@ -1443,6 +1536,7 @@ class _ClipboardSection extends StatelessWidget {
           },
         ),
         _settingTile(
+          context,
           'Maximum clipboard text search length',
           'Limit the number of characters used when searching clipboard text',
           Slider(
@@ -1458,6 +1552,7 @@ class _ClipboardSection extends StatelessWidget {
           ),
         ),
         _settingTile(
+          context,
           'Clipboard text search mode',
           'Change how the search page reacts to new text in the clipboard',
           DropdownButtonFormField<ClipboardSearchMode>(
@@ -1492,8 +1587,9 @@ class _AccessibilitySection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle('Accessibility'),
+        _sectionTitle(context, 'Accessibility'),
         _switchTile(
+          context,
           'Enable Google Docs compatibility mode',
           null,
           ac.googleDocsCompatibilityMode,
@@ -1517,8 +1613,9 @@ class _SecuritySection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle('Security'),
+        _sectionTitle(context, 'Security'),
         _switchTile(
+          context,
           'Use a secure container around popups',
           null,
           sec.useSecureContainerAroundPopups,
@@ -1528,6 +1625,7 @@ class _SecuritySection extends StatelessWidget {
           },
         ),
         _switchTile(
+          context,
           'Use secure popup frame URL',
           null,
           sec.useSecurePopupFrameUrl,
@@ -1554,11 +1652,11 @@ class _BackupSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle('Backup'),
-        const Text(
+        _sectionTitle(context, 'Backup'),
+        Text(
           'Settings files contain only settings, not dictionaries. '
           'Dictionaries must be imported separately.',
-          style: TextStyle(fontSize: 12),
+          style: TextStyle(fontSize: fs(context, 12)),
         ),
         const SizedBox(height: 8),
         Row(
@@ -1634,8 +1732,7 @@ class _BackupSection extends StatelessWidget {
 
 class _MarkerTemplatesEditor extends StatefulWidget {
   @override
-  State<_MarkerTemplatesEditor> createState() =>
-      _MarkerTemplatesEditorState();
+  State<_MarkerTemplatesEditor> createState() => _MarkerTemplatesEditorState();
 }
 
 class _MarkerTemplatesEditorState extends State<_MarkerTemplatesEditor> {
@@ -1664,23 +1761,32 @@ class _MarkerTemplatesEditorState extends State<_MarkerTemplatesEditor> {
               child: ExpansionTile(
                 dense: true,
                 tilePadding: EdgeInsets.zero,
-                title: Text('{$marker}',
-                    style: const TextStyle(
-                        fontSize: 13, fontFamily: 'monospace')),
-                subtitle: noteTypes.markerTemplates[marker]?.isNotEmpty ==
-                        true
-                    ? const Text('custom template',
-                        style: TextStyle(fontSize: 11))
+                title: Text(
+                  '{$marker}',
+                  style: TextStyle(
+                    fontSize: fs(context, 13),
+                    fontFamily: 'monospace',
+                  ),
+                ),
+                subtitle: noteTypes.markerTemplates[marker]?.isNotEmpty == true
+                    ? Text(
+                        'custom template',
+                        style: TextStyle(fontSize: fs(context, 11)),
+                      )
                     : null,
                 children: [
                   TextField(
                     controller: _controllers.putIfAbsent(
-                        marker,
-                        () => TextEditingController(
-                            text: noteTypes.markerTemplates[marker] ?? '')),
+                      marker,
+                      () => TextEditingController(
+                        text: noteTypes.markerTemplates[marker] ?? '',
+                      ),
+                    ),
                     maxLines: 6,
-                    style: const TextStyle(
-                        fontFamily: 'monospace', fontSize: 12),
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: fs(context, 12),
+                    ),
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       isDense: true,
@@ -1707,8 +1813,7 @@ class _MarkerTemplatesEditorState extends State<_MarkerTemplatesEditor> {
                       ),
                       const Spacer(),
                       FilledButton.tonal(
-                        onPressed: () =>
-                            appState.setAnkiNoteTypes(noteTypes),
+                        onPressed: () => appState.setAnkiNoteTypes(noteTypes),
                         child: const Text('Save'),
                       ),
                     ],
@@ -1722,14 +1827,25 @@ class _MarkerTemplatesEditorState extends State<_MarkerTemplatesEditor> {
   }
 
   static bool _isCommonMarker(String m) => const [
-        'expression', 'reading', 'glossary', 'glossary-first',
-        'glossary-brief', 'furigana', 'furigana-plain', 'sentence',
-        'sentence-furigana-plain', 'cloze-body', 'frequencies',
-        'frequency-harmonic-rank', 'pitch-accents', 'tags',
-        'clipboard-text', 'screenshot', 'audio',
-      ].contains(m);
+    'expression',
+    'reading',
+    'glossary',
+    'glossary-first',
+    'glossary-brief',
+    'furigana',
+    'furigana-plain',
+    'sentence',
+    'sentence-furigana-plain',
+    'cloze-body',
+    'frequencies',
+    'frequency-harmonic-rank',
+    'pitch-accents',
+    'tags',
+    'clipboard-text',
+    'screenshot',
+    'audio',
+  ].contains(m);
 }
-
 
 // ============================================================
 // Dictionary display toggles (user-level, not per-profile)
@@ -1751,67 +1867,113 @@ class _DictionaryDisplaySection extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _sectionTitle('Dictionary Display'),
-            const Text(
-                'Control which parts of dictionary entries are shown '
-                'when rendering results (incl. structured content)',
-                style: TextStyle(fontSize: 12)),
+            _sectionTitle(context, 'Dictionary Display'),
+            Text(
+              'Control which parts of dictionary entries are shown '
+              'when rendering results (incl. structured content)',
+              style: TextStyle(fontSize: fs(context, 12)),
+            ),
             const SizedBox(height: 8),
-            _switchTile('Example sentences',
-                'Sentence blocks in definitions', o.showSentences, (v) {
-              o.showSentences = v;
-              save();
-            }),
-            _switchTile('Dictionary images',
-                'Images embedded in entries (extracted on import)', o.showImages,
-                (v) {
-              o.showImages = v;
-              save();
-            }),
-            _switchTile('Tags',
-                'Part-of-speech and category tags', o.showTags, (v) {
-              o.showTags = v;
-              save();
-            }),
-            _switchTile('Notes and extra info',
-                'Usage notes, extra-info blocks', o.showNotes, (v) {
-              o.showNotes = v;
-              save();
-            }),
-            _switchTile('Frequencies',
-                'Frequency information in entries', o.showFrequencies, (v) {
-              o.showFrequencies = v;
-              save();
-            }),
-            _switchTile('Pitch accent',
-                'Pronunciation/pitch-accent blocks', o.showPitchAccent, (v) {
-              o.showPitchAccent = v;
-              save();
-            }),
-            _switchTile('Compact glossaries',
-                'Semicolon-joined definitions without list bullets',
-                o.compactGlossaries, (v) {
-              o.compactGlossaries = v;
-              save();
-            }),
-            _switchTile('Structured content',
-                'Render structured-content entries with styling; off shows plain text',
-                o.showStructuredContent, (v) {
-              o.showStructuredContent = v;
-              save();
-            }),
-            _switchTile('Collapse long definitions',
-                'Long entries hide behind an expand control',
-                o.collapseLongDefinitions, (v) {
-              o.collapseLongDefinitions = v;
-              save();
-            }),
-            _switchTile('Dictionary name',
-                'Per-definition source dictionary badge', o.showDictionaryName,
-                (v) {
-              o.showDictionaryName = v;
-              save();
-            }),
+            _switchTile(
+              context,
+              'Example sentences',
+              'Sentence blocks in definitions',
+              o.showSentences,
+              (v) {
+                o.showSentences = v;
+                save();
+              },
+            ),
+            _switchTile(
+              context,
+              'Dictionary images',
+              'Images embedded in entries (extracted on import)',
+              o.showImages,
+              (v) {
+                o.showImages = v;
+                save();
+              },
+            ),
+            _switchTile(
+              context,
+              'Tags',
+              'Part-of-speech and category tags',
+              o.showTags,
+              (v) {
+                o.showTags = v;
+                save();
+              },
+            ),
+            _switchTile(
+              context,
+              'Notes and extra info',
+              'Usage notes, extra-info blocks',
+              o.showNotes,
+              (v) {
+                o.showNotes = v;
+                save();
+              },
+            ),
+            _switchTile(
+              context,
+              'Frequencies',
+              'Frequency information in entries',
+              o.showFrequencies,
+              (v) {
+                o.showFrequencies = v;
+                save();
+              },
+            ),
+            _switchTile(
+              context,
+              'Pitch accent',
+              'Pronunciation/pitch-accent blocks',
+              o.showPitchAccent,
+              (v) {
+                o.showPitchAccent = v;
+                save();
+              },
+            ),
+            _switchTile(
+              context,
+              'Compact glossaries',
+              'Semicolon-joined definitions without list bullets',
+              o.compactGlossaries,
+              (v) {
+                o.compactGlossaries = v;
+                save();
+              },
+            ),
+            _switchTile(
+              context,
+              'Structured content',
+              'Render structured-content entries with styling; off shows plain text',
+              o.showStructuredContent,
+              (v) {
+                o.showStructuredContent = v;
+                save();
+              },
+            ),
+            _switchTile(
+              context,
+              'Collapse long definitions',
+              'Long entries hide behind an expand control',
+              o.collapseLongDefinitions,
+              (v) {
+                o.collapseLongDefinitions = v;
+                save();
+              },
+            ),
+            _switchTile(
+              context,
+              'Dictionary name',
+              'Per-definition source dictionary badge',
+              o.showDictionaryName,
+              (v) {
+                o.showDictionaryName = v;
+                save();
+              },
+            ),
           ],
         );
       },

@@ -10,6 +10,7 @@ import 'package:lang/presentation/screens/dictionary_list_screen.dart';
 import 'package:lang/presentation/screens/yomitan_settings_screen.dart';
 import 'package:lang/presentation/screens/import_screen.dart';
 import 'package:lang/utils/screen_size.dart';
+import 'package:lang/utils/font_scale.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -115,7 +116,7 @@ class SettingsScreen extends StatelessWidget {
           // General settings section
           Text(
             AppLocalizations.of(context)!.generalSettings,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
 
@@ -238,7 +239,7 @@ class SettingsScreen extends StatelessWidget {
           // Search settings section
           Text(
             AppLocalizations.of(context)!.uiAndNavigation,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
 
@@ -462,7 +463,7 @@ class SettingsScreen extends StatelessWidget {
           // Search settings section
           Text(
             AppLocalizations.of(context)!.searchSettings,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
 
@@ -560,7 +561,7 @@ class SettingsScreen extends StatelessWidget {
           // Advanced settings section
           Text(
             AppLocalizations.of(context)!.advancedSettings,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
 
@@ -794,7 +795,7 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   if (appState.ankiConnectEnabled) ...[
                     // Connection URL
-                    const Text('API URL', style: TextStyle(fontSize: 13)),
+                    Text('API URL', style: TextStyle(fontSize: fs(context, 13))),
                     const SizedBox(height: 4),
                     TextField(
                       decoration: const InputDecoration(
@@ -967,13 +968,13 @@ class SettingsScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     // Sync on save toggle
                     SwitchListTile(
-                      title: const Text(
+                      title: Text(
                         'Auto-sync to Anki',
-                        style: TextStyle(fontSize: 14),
+                        style: TextStyle(fontSize: fs(context, 14)),
                       ),
-                      subtitle: const Text(
+                      subtitle: Text(
                         'Send to Anki when saving a word',
-                        style: TextStyle(fontSize: 12),
+                        style: TextStyle(fontSize: fs(context, 12)),
                       ),
                       value: appState.ankiSyncOnSave,
                       onChanged: (v) => appState.setAnkiSyncOnSave(v),
@@ -1169,7 +1170,7 @@ class SettingsScreen extends StatelessWidget {
           // Dictionaries section
           Text(
             AppLocalizations.of(context)!.dictionaries,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Card(
@@ -1234,7 +1235,7 @@ class SettingsScreen extends StatelessWidget {
           // About section
           Text(
             AppLocalizations.of(context)!.about,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
 
@@ -1248,9 +1249,9 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   Text(
                     AppLocalizations.of(context)!.appName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                      fontSize: fs(context, 16, 'headers'),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -1258,7 +1259,7 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(
                     AppLocalizations.of(context)!.multilingualLearningTool,
-                    style: const TextStyle(fontSize: 14),
+                    style: TextStyle(fontSize: fs(context, 14)),
                   ),
                   const SizedBox(height: 16),
                   TextButton(
@@ -1366,7 +1367,7 @@ class _ClipboardSettingsState extends State<_ClipboardSettings> {
                 const SizedBox(height: 2),
                 Text(
                   l10n.autoSearchRegexDesc,
-                  style: const TextStyle(fontSize: 12, color: Colors.white54),
+                  style: TextStyle(fontSize: fs(context, 12), color: Colors.white54),
                 ),
                 const SizedBox(height: 8),
                 TextField(

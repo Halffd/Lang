@@ -49,7 +49,7 @@ class SearchKanjiCard extends StatelessWidget {
                     Chip(
                       label: Text(
                         dict.title,
-                        style: TextStyle(fontSize: 10),
+                        style: TextStyle(fontSize: fs(context, 10)),
                       ),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
@@ -169,7 +169,7 @@ class SearchEntryCard extends StatelessWidget {
                       Chip(
                         label: Text(
                           dict.title,
-                          style: TextStyle(fontSize: 10),
+                          style: TextStyle(fontSize: fs(context, 10)),
                         ),
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -200,7 +200,7 @@ class SearchEntryCard extends StatelessWidget {
                       return Chip(
                         label: Text(
                           tag?.notes ?? tagName,
-                          style: TextStyle(fontSize: 10),
+                          style: TextStyle(fontSize: fs(context, 10)),
                         ),
                         backgroundColor: getTagColor(tag?.category),
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,

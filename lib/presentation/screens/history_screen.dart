@@ -304,8 +304,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     padding: const EdgeInsets.all(8),
                     child: Text(
                       DateFormat.yMMMd().add_Hm().format(item.time),
-                      style: const TextStyle(
-                        fontSize: 12,
+                      style: TextStyle(
+                        fontSize: fs(context, 12),
                         color: Colors.white54,
                       ),
                     ),

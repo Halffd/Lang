@@ -4,6 +4,7 @@ import 'package:lang/domain/entities/dictionary.dart' as model;
 import 'package:lang/data/repositories/dictionary_service.dart';
 import 'package:lang/presentation/screens/import_screen.dart';
 import 'package:lang/domain/entities/app_state.dart';
+import 'package:lang/utils/font_scale.dart';
 
 class DictionaryListScreen extends StatefulWidget {
   const DictionaryListScreen({super.key});
@@ -137,17 +138,17 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
                 keyboardType: TextInputType.number,
               ),
               const Divider(height: 24),
-              const Align(
+              Align(
                 alignment: Alignment.centerLeft,
                 child: Text('Lookup conditions (active profile)',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: fs(context, 13))),
               ),
               SwitchListTile(
                 dense: true,
-                title: const Text('Use conditions', style: TextStyle(fontSize: 13)),
-                subtitle: const Text(
+                title: Text('Use conditions', style: TextStyle(fontSize: fs(context, 13))),
+                subtitle: Text(
                     'Dictionary only matches lookups meeting all conditions',
-                    style: TextStyle(fontSize: 11)),
+                    style: TextStyle(fontSize: fs(context, 11))),
                 value: conditionEnabled,
                 onChanged: (v) => setDialogState(() => conditionEnabled = v),
               ),
@@ -425,7 +426,7 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
             Text(
               'No Dictionaries',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: fs(context, 20, 'headers'),
                 fontWeight: FontWeight.bold,
                 color: Colors.grey[600],
               ),
@@ -435,7 +436,7 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
               'Import a Yomichan dictionary to get started',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: fs(context, 14),
                 color: Colors.grey[500],
               ),
             ),
@@ -497,7 +498,7 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
                       child: Text(
                         '#${dict.priority}',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: fs(context, 10),
                           color: dict.priority > 0 ? Colors.purple[700] : Colors.grey[600],
                         ),
                       ),

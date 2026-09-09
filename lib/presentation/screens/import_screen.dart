@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:lang/data/repositories/import_service.dart';
+import 'package:lang/utils/font_scale.dart';
 
 class ImportScreen extends StatefulWidget {
   const ImportScreen({super.key});
@@ -137,19 +138,19 @@ class _ImportScreenState extends State<ImportScreen> {
             color: Colors.blue,
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Import Yomichan Dictionary',
             style: TextStyle(
-              fontSize: 24,
+              fontSize: fs(context, 24, 'headers'),
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Select a Yomichan dictionary ZIP file to import',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: fs(context, 16),
               color: Colors.grey,
             ),
           ),
@@ -194,8 +195,8 @@ class _ImportScreenState extends State<ImportScreen> {
           Text(
             progress?.message ?? 'Starting import...',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 18,
+            style: TextStyle(
+              fontSize: fs(context, 18, 'headers'),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -208,7 +209,7 @@ class _ImportScreenState extends State<ImportScreen> {
                   ? '${progress.itemsProcessed} / ${progress.totalItems}'
                   : '${progress.itemsProcessed} items',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: fs(context, 14),
                 color: Colors.grey[600],
               ),
             ),
@@ -220,7 +221,7 @@ class _ImportScreenState extends State<ImportScreen> {
             Text(
               '${(progress.progress * 100).toStringAsFixed(1)}%',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: fs(context, 14),
                 color: Colors.grey[600],
                 fontWeight: FontWeight.bold,
               ),

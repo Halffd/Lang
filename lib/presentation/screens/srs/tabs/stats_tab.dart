@@ -130,7 +130,7 @@ class _StatCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(value, style: TextStyle(fontSize: fs(context, 28, 'words'), fontWeight: FontWeight.bold, color: color)),
-            Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+            Text(label, style: TextStyle(color: Colors.grey, fontSize: fs(context, 12))),
           ],
         ),
       ),
@@ -222,7 +222,7 @@ class _EaseDistributionChart extends StatelessWidget {
                         getTitlesWidget: (val, _) {
                           final labels = ['Hard', 'Normal', 'Easy', 'Very Easy'];
                           return Text(val.toInt() < labels.length ? labels[val.toInt()] : '',
-                              style: const TextStyle(fontSize: 9));
+                              style: TextStyle(fontSize: fs(context, 9)));
                         },
                         reservedSize: 32,
                       ),
@@ -341,7 +341,7 @@ class _IntervalDistributionChart extends StatelessWidget {
                         getTitlesWidget: (val, _) {
                           final labels = ['1d', '2-3d', '4-7d', '1-2w', '2-4w', '1-3m', '3m+'];
                           return Text(val.toInt() < labels.length ? labels[val.toInt()] : '',
-                              style: const TextStyle(fontSize: 9));
+                              style: TextStyle(fontSize: fs(context, 9)));
                         },
                         reservedSize: 32,
                       ),

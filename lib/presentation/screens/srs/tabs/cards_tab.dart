@@ -240,7 +240,7 @@ class _CardsTabState extends State<CardsTab> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: [
-                Text('${cards.length} cards', style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                Text('${cards.length} cards', style: TextStyle(color: Colors.grey, fontSize: fs(context, 13))),
                 const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.folder_outlined),
@@ -397,7 +397,7 @@ class _CardsTabState extends State<CardsTab> {
           title: Row(
             children: [
               Expanded(child: Text(card.word, style: TextStyle(fontWeight: FontWeight.bold, decoration: isSuspended ? TextDecoration.lineThrough : null))),
-              if (isSuspended) Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Colors.grey, borderRadius: BorderRadius.circular(4)), child: const Text('Suspended', style: TextStyle(color: Colors.white, fontSize: 10))),
+              if (isSuspended) Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Colors.grey, borderRadius: BorderRadius.circular(4)), child: Text('Suspended', style: TextStyle(color: Colors.white, fontSize: fs(context, 10)))),
             ],
           ),
           subtitle: Column(
@@ -425,12 +425,12 @@ class _CardsTabState extends State<CardsTab> {
                     color: Colors.red[100],
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text('Due', style: TextStyle(color: Colors.red, fontSize: 12)),
+                  child: Text('Due', style: TextStyle(color: Colors.red, fontSize: fs(context, 12))),
                 ),
               const SizedBox(width: 4),
               Text(
                 '${card.interval}d',
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                style: TextStyle(color: Colors.grey, fontSize: fs(context, 12)),
               ),
             ],
           ),

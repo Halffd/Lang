@@ -5,6 +5,7 @@ import 'package:lang/data/datasources/kanji_decomposition_data.dart';
 import 'package:lang/data/repositories/dictionary_service.dart';
 import 'package:lang/data/repositories/radical_search_service.dart';
 import 'package:lang/utils/screen_size.dart';
+import 'package:lang/utils/font_scale.dart';
 
 class RadicalSearchScreen extends StatefulWidget {
   const RadicalSearchScreen({super.key});
@@ -315,7 +316,7 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
           child: Text(
             radical.displayChar,
             style: TextStyle(
-              fontSize: ScreenSize.isCompact(context) ? 18 : 22,
+              fontSize: fs(context, ScreenSize.isCompact(context) ? 18 : 22),
               color: isSelected ? Colors.white : null,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
@@ -364,8 +365,8 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
                   children: [
                     Text(
                       _currentDecomposition!.character,
-                      style: const TextStyle(
-                        fontSize: 32,
+                      style: TextStyle(
+                        fontSize: fs(context, 32, 'kanji'),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -376,7 +377,7 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
                         children: [
                           Text(
                             '= ${_currentDecomposition!.components.join(' + ')}',
-                            style: const TextStyle(fontSize: 18),
+                            style: TextStyle(fontSize: fs(context, 18, 'kanji')),
                           ),
                           if (_currentDecomposition!.description != null)
                             Text(
@@ -400,7 +401,7 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
                   children: _currentDecomposition!.components.map((comp) {
                     final isSelected = _selectedComponents.contains(comp);
                     return FilterChip(
-                      label: Text(comp, style: const TextStyle(fontSize: 18)),
+                      label: Text(comp, style: TextStyle(fontSize: fs(context, 18, 'kanji'))),
                       selected: isSelected,
                       onSelected: (_) => _toggleComponent(comp),
                     );
@@ -469,15 +470,15 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
             children: [
               Text(
                 result.character,
-                style: const TextStyle(
-                  fontSize: 28,
+                style: TextStyle(
+                  fontSize: fs(context, 28, 'kanji'),
                   fontWeight: FontWeight.bold,
                 ),
               ),
               if (meanings.isNotEmpty)
                 Text(
                   meanings.first,
-                  style: const TextStyle(fontSize: 10),
+                  style: TextStyle(fontSize: fs(context, 10)),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),
@@ -485,7 +486,7 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
                 Text(
                   onyomi.join('・'),
                   style: TextStyle(
-                    fontSize: 9,
+                    fontSize: fs(context, 9),
                     color: Theme.of(context).primaryColor,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -495,7 +496,7 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
                 Text(
                   kunyomi.join('・'),
                   style: TextStyle(
-                    fontSize: 9,
+                    fontSize: fs(context, 9),
                     color: Theme.of(context).hintColor,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -505,7 +506,7 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
                 Text(
                   result.decomposition!.components.join('+'),
                   style: TextStyle(
-                    fontSize: 8,
+                    fontSize: fs(context, 8),
                     color: Theme.of(context).disabledColor,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -558,8 +559,8 @@ class _KanjiDetailSheet extends StatelessWidget {
                 children: [
                   Text(
                     result.character,
-                    style: const TextStyle(
-                      fontSize: 64,
+                    style: TextStyle(
+                      fontSize: fs(context, 64, 'kanji'),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -571,7 +572,7 @@ class _KanjiDetailSheet extends StatelessWidget {
                         if (meanings.isNotEmpty)
                           Text(
                             meanings.join(', '),
-                            style: const TextStyle(fontSize: 18),
+                            style: TextStyle(fontSize: fs(context, 18, 'translations')),
                           ),
                         if (onyomi.isNotEmpty) ...[
                           const SizedBox(height: 4),
@@ -588,10 +589,10 @@ class _KanjiDetailSheet extends StatelessWidget {
                                   ).primaryColor.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   '音',
                                   style: TextStyle(
-                                    fontSize: 11,
+                                    fontSize: fs(context, 11),
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -599,7 +600,7 @@ class _KanjiDetailSheet extends StatelessWidget {
                               const SizedBox(width: 6),
                               Text(
                                 onyomi.join('・'),
-                                style: const TextStyle(fontSize: 14),
+                                style: TextStyle(fontSize: fs(context, 14, 'words')),
                               ),
                             ],
                           ),
@@ -619,10 +620,10 @@ class _KanjiDetailSheet extends StatelessWidget {
                                   ).hintColor.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   '訓',
                                   style: TextStyle(
-                                    fontSize: 11,
+                                    fontSize: fs(context, 11),
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -630,7 +631,7 @@ class _KanjiDetailSheet extends StatelessWidget {
                               const SizedBox(width: 6),
                               Text(
                                 kunyomi.join('・'),
-                                style: const TextStyle(fontSize: 14),
+                                style: TextStyle(fontSize: fs(context, 14, 'words')),
                               ),
                             ],
                           ),
@@ -666,12 +667,12 @@ class _KanjiDetailSheet extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          Text(comp, style: const TextStyle(fontSize: 24)),
+                          Text(comp, style: TextStyle(fontSize: fs(context, 24, 'kanji'))),
                           if (result.decomposition!.description != null)
                             Text(
                               comp,
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: fs(context, 10),
                                 color: Theme.of(context).disabledColor,
                               ),
                             ),
@@ -685,7 +686,7 @@ class _KanjiDetailSheet extends StatelessWidget {
                   Text(
                     result.decomposition!.description!,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: fs(context, 13, 'translations'),
                       color: Theme.of(context).hintColor,
                       fontStyle: FontStyle.italic,
                     ),
@@ -705,7 +706,7 @@ class _KanjiDetailSheet extends StatelessWidget {
                     return Chip(
                       label: Text(
                         '${e.key}: ${e.value}',
-                        style: const TextStyle(fontSize: 11),
+                        style: TextStyle(fontSize: fs(context, 11)),
                       ),
                     );
                   }).toList(),

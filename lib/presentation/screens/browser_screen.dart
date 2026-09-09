@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lang/core/services/history_service.dart';
 import 'package:lang/data/services/ocr_service.dart';
+import 'package:lang/utils/font_scale.dart';
 import 'package:lang/data/repositories/dictionary_service.dart';
 
 class BrowserScreen extends StatefulWidget {
@@ -255,7 +256,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
               Text(
                 'Selected: ${_selectedText.length > 20 ? '${_selectedText.substring(0, 20)}...' : _selectedText}',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: fs(context, 11),
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
@@ -302,7 +303,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
             Text(
               label,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: fs(context, 10),
                 color: isActive
                     ? theme.colorScheme.primary
                     : theme.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -442,16 +443,16 @@ class _BrowserScreenState extends State<BrowserScreen> {
                         children: [
                           Text(
                             word,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                              fontSize: fs(context, 16, 'words'),
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'Tap to define',
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: fs(context, 10),
                               color: theme.colorScheme.primary,
                             ),
                           ),
@@ -546,9 +547,9 @@ class _BrowserScreenState extends State<BrowserScreen> {
                                 Expanded(
                                   child: Text(
                                     word,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 16,
+                                      fontSize: fs(context, 16, 'words'),
                                     ),
                                   ),
                                 ),
@@ -581,7 +582,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
                                   child: Text(
                                     reading,
                                     style: TextStyle(
-                                      fontSize: 10,
+                                      fontSize: fs(context, 10),
                                       color: theme.colorScheme.primary,
                                     ),
                                   ),
@@ -619,7 +620,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
             child: Text(
               _lastError!,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: fs(context, 12),
                 color: theme.colorScheme.onErrorContainer,
               ),
             ),
@@ -642,11 +643,11 @@ class _BrowserScreenState extends State<BrowserScreen> {
       child: TextField(
         controller: _urlController,
         focusNode: _urlFocusNode,
-        style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface),
+        style: TextStyle(fontSize: fs(context, 14), color: theme.colorScheme.onSurface),
         decoration: InputDecoration(
           hintText: 'Search or enter URL',
           hintStyle: TextStyle(
-            fontSize: 14,
+            fontSize: fs(context, 14),
             color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
           ),
           prefixIcon: Icon(
@@ -1069,7 +1070,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
                     child: Text(
                       _hoveredUrl ?? '',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: fs(context, 12),
                         fontWeight: FontWeight.w500,
                         color: theme.colorScheme.primary,
                       ),
@@ -1135,7 +1136,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
             const SizedBox(height: 2),
             Text(
               label,
-              style: TextStyle(fontSize: 10, color: theme.colorScheme.primary),
+              style: TextStyle(fontSize: fs(context, 10), color: theme.colorScheme.primary),
             ),
           ],
         ),
@@ -1672,7 +1673,7 @@ img, video, canvas, svg, picture {
                 leading: const Icon(Icons.block, size: 16),
                 title: Text(
                   _blockedUrls.elementAt(index),
-                  style: const TextStyle(fontSize: 11),
+                  style: TextStyle(fontSize: fs(context, 11)),
                 ),
               );
             },
@@ -1773,8 +1774,8 @@ img, video, canvas, svg, picture {
                   return ListTile(
                     title: Text(
                       entry['word'] ?? '',
-                      style: const TextStyle(
-                        fontSize: 18,
+                      style: TextStyle(
+                        fontSize: fs(context, 18, 'words'),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -1882,7 +1883,7 @@ img, video, canvas, svg, picture {
                       ),
                       child: SelectableText(
                         _ocrExtractedText,
-                        style: const TextStyle(fontSize: 14),
+                        style: TextStyle(fontSize: fs(context, 14, 'sentences')),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -2010,7 +2011,7 @@ img, video, canvas, svg, picture {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('URL: $url', style: const TextStyle(fontSize: 12)),
+            Text('URL: $url', style: TextStyle(fontSize: fs(context, 12))),
             const SizedBox(height: 16),
             const Text('Save this link to your app collection?'),
           ],
@@ -2043,7 +2044,7 @@ img, video, canvas, svg, picture {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('URL: $url', style: const TextStyle(fontSize: 12)),
+            Text('URL: $url', style: TextStyle(fontSize: fs(context, 12))),
             const SizedBox(height: 16),
             const Text('Add this to your Anki deck?'),
           ],
@@ -2076,7 +2077,7 @@ img, video, canvas, svg, picture {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Looking up: $text', style: const TextStyle(fontSize: 12)),
+            Text('Looking up: $text', style: TextStyle(fontSize: fs(context, 12))),
             const SizedBox(height: 16),
             const Text('Definition would appear here...'),
           ],

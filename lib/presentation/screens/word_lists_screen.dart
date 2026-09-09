@@ -9,6 +9,7 @@ import 'package:lang/core/services/storage_service.dart';
 import 'package:lang/presentation/widgets/dictionary_entry_card.dart';
 import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/utils/screen_size.dart';
+import 'package:lang/utils/font_scale.dart';
 
 class WordListsScreen extends StatefulWidget {
   const WordListsScreen({super.key});
@@ -180,9 +181,9 @@ class _WordListsScreenState extends State<WordListsScreen>
           ),
           title: Text(
             word,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w600,
-              fontSize: 15,
+              fontSize: fs(context, 15),
               letterSpacing: 0.3,
             ),
           ),
@@ -376,14 +377,14 @@ class _WordListsScreenState extends State<WordListsScreen>
                         children: [
                           Text(
                             entry.word,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: fs(context, 14)),
                             textAlign: TextAlign.center,
                             overflow: TextOverflow.ellipsis,
                           ),
                           if (entry.reading.isNotEmpty)
                             Text(
                               entry.reading,
-                              style: const TextStyle(fontSize: 10, color: Colors.white70),
+                              style: TextStyle(fontSize: fs(context, 10), color: Colors.white70),
                               textAlign: TextAlign.center,
                               overflow: TextOverflow.ellipsis,
                             ),
