@@ -610,6 +610,11 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     final sentences = provider.sentenceList;
     if (sentences.isEmpty) return const SizedBox.shrink();
 
+    // content-aware layout: a single-sentence analysis (e.g. one
+    // word lookup) needs no sentence list — the input is still
+    // visible in the search bar
+    if (sentences.length == 1) return const SizedBox.shrink();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -711,15 +716,26 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                       ),
                     ),
                     Expanded(
-                      child: Text(
-                        sentence,
-                        style: TextStyle(
-                          fontSize: fs(14, 'sentences'),
-                          height: 1.5,
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: isSelected ? 1 : 0.85,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            sentence,
+                            style: TextStyle(
+                              fontSize: fs(14, 'sentences'),
+                              height: 1.5,
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: isSelected ? 1 : 0.85,
+                              ),
+                            ),
                           ),
-                        ),
+                          _buildSentenceTranslation(
+                            context,
+                            theme,
+                            provider,
+                            sentence,
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -730,6 +746,30 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
         }),
         const SizedBox(height: 4),
       ],
+    );
+  }
+
+  /// Translation shown under a sentence once available. Triggers
+  /// translation on demand when the section is visible and
+  /// auto-translate is enabled.
+  Widget _buildSentenceTranslation(
+    BuildContext context,
+    ThemeData theme,
+    AnalyzerProvider provider,
+    String sentence,
+  ) {
+    final translation = provider.getSentenceTranslation(sentence);
+    if (translation.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Text(
+        translation,
+        style: TextStyle(
+          fontSize: fs(12, 'translations'),
+          height: 1.4,
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+        ),
+      ),
     );
   }
 
@@ -1562,180 +1602,6 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     AnalyzerProvider provider,
   ) {
     WordDetailSheet.show(context, provider, word);
-  }
-
-  Widget _buildSentenceTranslations(
-    BuildContext context,
-    ThemeData theme,
-    AnalyzerProvider provider,
-    AppLocalizations l10n,
-  ) {
-    final sentenceList = provider.sentences.values.toList();
-    if (sentenceList.isEmpty) return const SizedBox.shrink();
-
-    return _buildCollapsibleSection(
-      context,
-      theme,
-      l10n,
-      icon: Icons.translate_rounded,
-      title: l10n.sentenceTranslations,
-      color: theme.colorScheme.secondary,
-      isExpanded: _showSentenceTranslations,
-      onToggle: () => setState(
-        () => _showSentenceTranslations = !_showSentenceTranslations,
-      ),
-      provider: provider,
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: sentenceList.length.clamp(0, 15),
-        separatorBuilder: (_, _) => const SizedBox(height: 8),
-        itemBuilder: (context, index) {
-          final sentence = sentenceList[index];
-          final translation = provider.getSentenceTranslation(sentence);
-          return TweenAnimationBuilder<double>(
-            duration: Duration(milliseconds: 200 + index * 50),
-            tween: Tween(begin: 0.0, end: 1.0),
-            curve: Curves.easeOutCubic,
-            builder: (context, value, child) {
-              return Transform.translate(
-                offset: Offset(0, 15 * (1 - value)),
-                child: Opacity(opacity: value, child: child),
-              );
-            },
-            child: Card(
-              elevation: 0,
-              color: theme.colorScheme.surfaceContainerHighest.withValues(
-                alpha: 0.4,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.1),
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(
-                              alpha: 0.12,
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Center(
-                            child: Text(
-                              '${index + 1}',
-                              style: TextStyle(
-                                fontSize: fs(11, 'ui'),
-                                fontWeight: FontWeight.bold,
-                                color: theme.colorScheme.primary,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            sentence,
-                            style: TextStyle(
-                              fontSize: fs(13.5, 'sentences'),
-                              height: 1.5,
-                              color: theme.colorScheme.onSurface,
-                            ),
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (translation.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.08,
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: theme.colorScheme.primary.withValues(
-                              alpha: 0.15,
-                            ),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.translate_rounded,
-                              size: 14,
-                              color: theme.colorScheme.primary,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                translation,
-                                style: TextStyle(
-                                  fontSize: fs(12.5, 'translations'),
-                                  height: 1.4,
-                                  color: theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.85,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ] else ...[
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest
-                              .withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.translate_rounded,
-                              size: 14,
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.4,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              l10n.translationUnavailable,
-                              style: TextStyle(
-                                fontSize: fs(12, 'translations'),
-                                color: theme.colorScheme.onSurface.withValues(
-                                  alpha: 0.5,
-                                ),
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
   }
 
   Widget _buildFullTranslation(
