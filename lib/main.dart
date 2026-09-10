@@ -521,6 +521,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   @override
   void initState() {
     super.initState();
+    // open on the configured default screen
+    final saved = context.read<AppState>().defaultScreenIndex;
+    if (saved >= 0 && saved < _screens.length) _currentIndex = saved;
     _setupDesktopIPC();
   }
 

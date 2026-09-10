@@ -525,8 +525,10 @@ class AppState extends ChangeNotifier {
   }
 
   void setDefaultScreenIndex(int value) {
-    // Ensure value is within valid range (0-6 for the 7 screens)
-    if (value >= 0 && value <= 6) {
+    // Ensure value is within valid range (0-8 for the 9 screens:
+    // analyze, search, reader, dictionary, writer, saved, history,
+    // srs, ai)
+    if (value >= 0 && value <= 8) {
       _defaultScreenIndex = value;
       _storageService.setInt('default_screen_index', value);
       notifyListeners();

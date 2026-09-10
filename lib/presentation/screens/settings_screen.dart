@@ -321,7 +321,7 @@ class SettingsScreen extends StatelessWidget {
                     child: DropdownButtonFormField<int>(
                       initialValue:
                           (appState.defaultScreenIndex >= 0 &&
-                              appState.defaultScreenIndex <= 5)
+                              appState.defaultScreenIndex <= 8)
                           ? appState.defaultScreenIndex
                           : 0, // fallback to 0 if current value is invalid
                       decoration: const InputDecoration(
@@ -334,15 +334,15 @@ class SettingsScreen extends StatelessWidget {
                       items: [
                         DropdownMenuItem(
                           value: 0,
-                          child: Text(AppLocalizations.of(context)!.search),
+                          child: Text(AppLocalizations.of(context)!.analyze),
                         ),
                         DropdownMenuItem(
                           value: 1,
-                          child: Text(AppLocalizations.of(context)!.reader),
+                          child: Text(AppLocalizations.of(context)!.search),
                         ),
                         DropdownMenuItem(
                           value: 2,
-                          child: Text(AppLocalizations.of(context)!.wordLists),
+                          child: Text(AppLocalizations.of(context)!.reader),
                         ),
                         DropdownMenuItem(
                           value: 3,
@@ -352,11 +352,22 @@ class SettingsScreen extends StatelessWidget {
                         ),
                         DropdownMenuItem(
                           value: 4,
-                          child: Text(AppLocalizations.of(context)!.translator),
+                          child: Text(
+                            AppLocalizations.of(context)!.writerTitle,
+                          ),
                         ),
                         DropdownMenuItem(
                           value: 5,
-                          child: Text(AppLocalizations.of(context)!.settings),
+                          child: Text(AppLocalizations.of(context)!.saved),
+                        ),
+                        DropdownMenuItem(
+                          value: 6,
+                          child: Text(AppLocalizations.of(context)!.history),
+                        ),
+                        const DropdownMenuItem(value: 7, child: Text('SRS')),
+                        DropdownMenuItem(
+                          value: 8,
+                          child: Text(AppLocalizations.of(context)!.ai),
                         ),
                       ],
                       onChanged: (value) {
