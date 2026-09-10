@@ -615,5 +615,14 @@
   "clipboardLiveHistory": "Historial del portapapeles",
   "clipboardPasteOcr": "Pegar imagen y OCR",
   "clipboardImageOcr": "OCR de imagen del portapapeles",
-  "clipboardMonitoringOff": "El monitoreo del portapapeles está apagado"
+  "clipboardMonitoringOff": "El monitoreo del portapapeles está apagado",
+  "noResultsFound": "Sin resultados",
+  "dictionaryTabBrowse": "Explorar",
+  "dictionaryTabRadicals": "Radicales",
+  "dictionaryBrowseHint": "Explorar entradas (prefijo)",
+  "noDictionaryEntries": "Sin entradas",
+  "writerTitle": "Escritor",
+  "writerHint": "Escribe en tu idioma objetivo...",
+  "writerEmptyTokens": "Las palabras aparecen aquí al escribir",
+  "writerAutoConvertNote": "Conversión de escritura activada — el romaji se convierte en los campos de analizar/buscar"
 }

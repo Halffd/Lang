@@ -926,4 +926,32 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get clipboardMonitoringOff =>
       'El monitoreo del portapapeles está apagado';
+
+  @override
+  String get noResultsFound => 'Sin resultados';
+
+  @override
+  String get dictionaryTabBrowse => 'Explorar';
+
+  @override
+  String get dictionaryTabRadicals => 'Radicales';
+
+  @override
+  String get dictionaryBrowseHint => 'Explorar entradas (prefijo)';
+
+  @override
+  String get noDictionaryEntries => 'Sin entradas';
+
+  @override
+  String get writerTitle => 'Escritor';
+
+  @override
+  String get writerHint => 'Escribe en tu idioma objetivo...';
+
+  @override
+  String get writerEmptyTokens => 'Las palabras aparecen aquí al escribir';
+
+  @override
+  String get writerAutoConvertNote =>
+      'Conversión de escritura activada — el romaji se convierte en los campos de analizar/buscar';
 }

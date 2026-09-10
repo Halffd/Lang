@@ -615,5 +615,14 @@
   "clipboardLiveHistory": "クリップボード履歴",
   "clipboardPasteOcr": "画像を貼り付けてOCR",
   "clipboardImageOcr": "クリップボード画像をOCR",
-  "clipboardMonitoringOff": "クリップボード監視はオフです"
+  "clipboardMonitoringOff": "クリップボード監視はオフです",
+  "noResultsFound": "結果が見つかりません",
+  "dictionaryTabBrowse": "一覧",
+  "dictionaryTabRadicals": "部首",
+  "dictionaryBrowseHint": "項目を閲覧（前方一致）",
+  "noDictionaryEntries": "項目がありません",
+  "writerTitle": "ライター",
+  "writerHint": "目標言語で書く…",
+  "writerEmptyTokens": "入力すると単語がここに表示されます",
+  "writerAutoConvertNote": "文字変換はオン — ローマ字は解析/検索フィールドで現地文字に変換されます"
 }

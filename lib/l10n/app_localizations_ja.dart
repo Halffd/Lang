@@ -908,4 +908,31 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get clipboardMonitoringOff => 'クリップボード監視はオフです';
+
+  @override
+  String get noResultsFound => '結果が見つかりません';
+
+  @override
+  String get dictionaryTabBrowse => '一覧';
+
+  @override
+  String get dictionaryTabRadicals => '部首';
+
+  @override
+  String get dictionaryBrowseHint => '項目を閲覧（前方一致）';
+
+  @override
+  String get noDictionaryEntries => '項目がありません';
+
+  @override
+  String get writerTitle => 'ライター';
+
+  @override
+  String get writerHint => '目標言語で書く…';
+
+  @override
+  String get writerEmptyTokens => '入力すると単語がここに表示されます';
+
+  @override
+  String get writerAutoConvertNote => '文字変換はオン — ローマ字は解析/検索フィールドで現地文字に変換されます';
 }

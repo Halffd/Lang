@@ -15,6 +15,48 @@ class YomichanService {
     return _database!;
   }
 
+  /// Browse dictionary entries starting with [prefix], ordered by
+  /// term (A-Z browse for the dictionary screen). Limits to
+  /// [limit] entries offset by [offset] for paging.
+  Future<List<YomichanSearchResult>> browseEntries(
+    String prefix, {
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final db = await database;
+    final escaped = prefix.replaceAll('%', '\\%');
+    var rows = await db.query(
+      'entries',
+      where: 'term LIKE ? ESCAPE \'\\\'',
+      whereArgs: ['$escaped%'],
+      orderBy: 'term',
+      limit: limit,
+      offset: offset,
+    );
+    if (rows.isEmpty) {
+      rows = await db.query(
+        'entries',
+        where: 'reading LIKE ? ESCAPE \'\\\'',
+        whereArgs: ['$escaped%'],
+        orderBy: 'reading',
+        limit: limit,
+        offset: offset,
+      );
+    }
+
+    final results = <YomichanSearchResult>[];
+    final seen = <String>{};
+    for (final row in rows) {
+      final entry = DictionaryEntry.fromJson(row);
+      final key = '${entry.dictionaryId}_${entry.id}';
+      if (seen.contains(key)) continue;
+      seen.add(key);
+      final result = await _buildSearchResult(db, entry);
+      if (result != null) results.add(result);
+    }
+    return results;
+  }
+
   /// Search for dictionary entries by term
   Future<List<YomichanSearchResult>> searchEntries(String query) async {
     final db = await database;

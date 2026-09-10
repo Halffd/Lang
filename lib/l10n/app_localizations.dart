@@ -1847,6 +1847,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clipboard monitoring is off'**
   String get clipboardMonitoringOff;
+
+  /// No description provided for @noResultsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No results found'**
+  String get noResultsFound;
+
+  /// No description provided for @dictionaryTabBrowse.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse'**
+  String get dictionaryTabBrowse;
+
+  /// No description provided for @dictionaryTabRadicals.
+  ///
+  /// In en, this message translates to:
+  /// **'Radicals'**
+  String get dictionaryTabRadicals;
+
+  /// No description provided for @dictionaryBrowseHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse entries (prefix)'**
+  String get dictionaryBrowseHint;
+
+  /// No description provided for @noDictionaryEntries.
+  ///
+  /// In en, this message translates to:
+  /// **'No entries'**
+  String get noDictionaryEntries;
+
+  /// No description provided for @writerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Writer'**
+  String get writerTitle;
+
+  /// No description provided for @writerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write in your target language...'**
+  String get writerHint;
+
+  /// No description provided for @writerEmptyTokens.
+  ///
+  /// In en, this message translates to:
+  /// **'Tokens appear here as you type'**
+  String get writerEmptyTokens;
+
+  /// No description provided for @writerAutoConvertNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Script conversion is on — typed romaji converts to native script in analyze/search fields'**
+  String get writerAutoConvertNote;
 }
 
 class _AppLocalizationsDelegate

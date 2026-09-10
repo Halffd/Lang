@@ -296,5 +296,14 @@
   "clipboardLiveHistory": "Clipboard history",
   "clipboardPasteOcr": "Paste image and OCR",
   "clipboardImageOcr": "OCR clipboard image",
-  "clipboardMonitoringOff": "Clipboard monitoring is off"
+  "clipboardMonitoringOff": "Clipboard monitoring is off",
+  "noResultsFound": "No results found",
+  "dictionaryTabBrowse": "Browse",
+  "dictionaryTabRadicals": "Radicals",
+  "dictionaryBrowseHint": "Browse entries (prefix)",
+  "noDictionaryEntries": "No entries",
+  "writerTitle": "Writer",
+  "writerHint": "Write in your target language...",
+  "writerEmptyTokens": "Tokens appear here as you type",
+  "writerAutoConvertNote": "Script conversion is on — typed romaji converts to native script in analyze/search fields"
 }

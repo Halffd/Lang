@@ -923,4 +923,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clipboardMonitoringOff => 'Clipboard monitoring is off';
+
+  @override
+  String get noResultsFound => 'No results found';
+
+  @override
+  String get dictionaryTabBrowse => 'Browse';
+
+  @override
+  String get dictionaryTabRadicals => 'Radicals';
+
+  @override
+  String get dictionaryBrowseHint => 'Browse entries (prefix)';
+
+  @override
+  String get noDictionaryEntries => 'No entries';
+
+  @override
+  String get writerTitle => 'Writer';
+
+  @override
+  String get writerHint => 'Write in your target language...';
+
+  @override
+  String get writerEmptyTokens => 'Tokens appear here as you type';
+
+  @override
+  String get writerAutoConvertNote =>
+      'Script conversion is on — typed romaji converts to native script in analyze/search fields';
 }

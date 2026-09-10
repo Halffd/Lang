@@ -39,6 +39,8 @@ import 'presentation/screens/saved_words_screen.dart';
 import 'presentation/screens/history_screen.dart';
 import 'presentation/screens/ai_screen.dart';
 import 'presentation/screens/reader_screen.dart';
+import 'presentation/screens/dictionary_screen.dart';
+import 'presentation/screens/writer_screen.dart';
 import 'presentation/screens/srs_screen.dart';
 
 void main() async {
@@ -508,6 +510,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     const AnalyzeScreen(),
     const SearchScreen(),
     const ReaderScreen(),
+    const DictionaryScreen(),
+    const WriterScreen(),
     const SavedWordsScreen(),
     const HistoryScreen(),
     const SRSScreen(),
@@ -525,7 +529,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     if (!desktopIPC.isSupported) return;
 
     desktopIPC.onStudyRequested = () {
-      if (mounted) setState(() => _currentIndex = 5);
+      if (mounted) setState(() => _currentIndex = 7);
     };
     desktopIPC.onReaderRequested = () {
       if (mounted) setState(() => _currentIndex = 2);
@@ -537,7 +541,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
     desktopIPC.registerCommonHotkeys(
       onShowStudy: () {
-        if (mounted) setState(() => _currentIndex = 5);
+        if (mounted) setState(() => _currentIndex = 7);
       },
       onShowReader: () {
         if (mounted) setState(() => _currentIndex = 2);
@@ -567,6 +571,14 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           NavigationDestination(
             icon: const Icon(Icons.menu_book),
             label: AppLocalizations.of(context)!.reader,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.sort_by_alpha),
+            label: AppLocalizations.of(context)!.dictionaries,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.edit_note),
+            label: AppLocalizations.of(context)!.writerTitle,
           ),
           NavigationDestination(
             icon: const Icon(Icons.bookmark),

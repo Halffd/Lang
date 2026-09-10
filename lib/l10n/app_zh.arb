@@ -176,5 +176,13 @@
   "clipboardLiveHistory": "剪贴板历史",
   "clipboardPasteOcr": "粘贴图片并OCR",
   "clipboardImageOcr": "OCR剪贴板图片",
-  "clipboardMonitoringOff": "剪贴板监控已关闭"
+  "clipboardMonitoringOff": "剪贴板监控已关闭",
+  "dictionaryTabBrowse": "浏览",
+  "dictionaryTabRadicals": "部首",
+  "dictionaryBrowseHint": "浏览词条（前缀）",
+  "noDictionaryEntries": "无词条",
+  "writerTitle": "写作",
+  "writerHint": "用目标语言书写…",
+  "writerEmptyTokens": "输入后词条会显示在这里",
+  "writerAutoConvertNote": "文字转换已开启——罗马字在分析/搜索输入框自动转换为原文"
 }

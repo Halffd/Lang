@@ -918,4 +918,31 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get clipboardMonitoringOff => '剪贴板监控已关闭';
+
+  @override
+  String get noResultsFound => '未找到结果';
+
+  @override
+  String get dictionaryTabBrowse => '浏览';
+
+  @override
+  String get dictionaryTabRadicals => '部首';
+
+  @override
+  String get dictionaryBrowseHint => '浏览词条（前缀）';
+
+  @override
+  String get noDictionaryEntries => '无词条';
+
+  @override
+  String get writerTitle => '写作';
+
+  @override
+  String get writerHint => '用目标语言书写…';
+
+  @override
+  String get writerEmptyTokens => '输入后词条会显示在这里';
+
+  @override
+  String get writerAutoConvertNote => '文字转换已开启——罗马字在分析/搜索输入框自动转换为原文';
 }
