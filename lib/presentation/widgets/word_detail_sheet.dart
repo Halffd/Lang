@@ -10,6 +10,7 @@ import 'package:lang/presentation/widgets/anki_export_dialog.dart';
 import 'package:lang/presentation/providers/ai_provider.dart';
 import 'package:lang/utils/pinyin_util.dart';
 import 'package:lang/utils/font_scale.dart';
+import 'package:lang/presentation/widgets/structured_definition.dart';
 
 class WordDetailSheet extends StatelessWidget {
   final AnalyzedWord word;
@@ -206,7 +207,7 @@ class WordDetailSheet extends StatelessWidget {
             ...moeDefs.map(
               (def) => Padding(
                 padding: const EdgeInsets.only(bottom: 4.0),
-                child: Text('• $def'),
+                child: StructuredDefinition(definition: def, fontSize: 13),
               ),
             ),
             const SizedBox(height: 20),
@@ -403,13 +404,7 @@ class _NestedWordTile extends StatelessWidget {
             for (final def in word.ichiMoeDefinitions.take(3))
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
-                child: Text(
-                  def,
-                  style: TextStyle(
-                    fontSize: fs(context, 12, 'translations'),
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
-                  ),
-                ),
+                child: StructuredDefinition(definition: def, fontSize: 12),
               ),
             Align(
               alignment: Alignment.centerLeft,

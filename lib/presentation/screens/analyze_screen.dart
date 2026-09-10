@@ -8,6 +8,7 @@ import 'package:lang/utils/font_scale.dart' as font_scale;
 import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/presentation/widgets/word_detail_sheet.dart';
+import 'package:lang/presentation/widgets/structured_definition.dart';
 import 'package:lang/presentation/widgets/script_text_field.dart';
 import 'package:lang/presentation/widgets/anki_export_dialog.dart';
 import 'package:lang/presentation/screens/settings_screen.dart';
@@ -178,6 +179,17 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
   double fs(double base, [String group = 'ui']) =>
       font_scale.fs(context, base, group);
 
+  /// Pinned search bar height: compact for short input, growing
+  /// with the text so long paragraphs still fit. Padding (28) +
+  /// first field line (~52) + ~24 per wrapped line, capped at 200.
+  double get _searchBarHeight {
+    final text = _controller.text;
+    final extraChars = text.length - 60;
+    if (extraChars <= 0) return 96;
+    final extraLines = (extraChars / 55).ceil().clamp(0, 4);
+    return (96 + extraLines * 24.0).clamp(96.0, 200.0);
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<AnalyzerProvider>(context);
@@ -193,93 +205,106 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
         appBar: _buildAppBar(context, theme, provider, l10n),
         body: FadeTransition(
           opacity: _fadeController,
-          child: CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              // 1. SEARCH BAR (pinned)
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _SearchBarDelegate(
-                  child: _buildSearchBar(context, theme, provider, l10n),
-                  theme: theme,
-                ),
-              ),
-
-              if (hasResults) ...[
-                // 2. FULL SENTENCES (above) - one entry per sentence
-                SliverToBoxAdapter(
-                  child: _buildSentenceListSection(
-                    context,
-                    theme,
-                    provider,
-                    l10n,
+          // centered responsive column: min 700, max 1200 wide so
+          // the analysis does not hug the left edge on 1080p+
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 700, maxWidth: 1200),
+              child: CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  // 1. SEARCH BAR (pinned, height follows input size)
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _SearchBarDelegate(
+                      child: _buildSearchBar(context, theme, provider, l10n),
+                      theme: theme,
+                      height: _searchBarHeight,
+                    ),
                   ),
-                ),
 
-                if (_showSentenceTranslations)
-                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-                // 3. WORD DEFINITION CARDS (below, grouped per sentence)
-                SliverToBoxAdapter(
-                  child: _buildWordCardsSection(context, theme, provider, l10n),
-                ),
-
-                // 4. FULL TRANSLATION
-                if (_showFullTranslation)
-                  SliverToBoxAdapter(
-                    child: AnimatedSize(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                      child: _buildFullTranslation(
+                  if (hasResults) ...[
+                    // 2. FULL SENTENCES (above) - one entry per sentence
+                    SliverToBoxAdapter(
+                      child: _buildSentenceListSection(
                         context,
                         theme,
                         provider,
                         l10n,
                       ),
                     ),
-                  ),
 
-                if (_showFullTranslation)
-                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                    if (_showSentenceTranslations)
+                      const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-                // 5. PAGE CONTROLS
-                SliverToBoxAdapter(
-                  child: _buildPageControls(context, theme, provider, l10n),
-                ),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-                // 6. TOGGLE DEFINITIONS
-                SliverToBoxAdapter(
-                  child: _buildToggleDefinitionsButton(
-                    context,
-                    theme,
-                    provider,
-                    l10n,
-                  ),
-                ),
-              ] else ...[
-                // Empty state
-                SliverFillRemaining(
-                  child: _buildEmptyState(context, theme, l10n),
-                ),
-              ],
-
-              // 7. FAVORITES / HISTORY (pinned at bottom)
-              if (_showFavorites)
-                SliverPersistentHeader(
-                  pinned: true,
-                  delegate: _FavoritesDelegate(
-                    child: _buildFavoritesSection(
-                      context,
-                      theme,
-                      provider,
-                      l10n,
+                    // 3. WORD DEFINITION CARDS (below, grouped per sentence)
+                    SliverToBoxAdapter(
+                      child: _buildWordCardsSection(
+                        context,
+                        theme,
+                        provider,
+                        l10n,
+                      ),
                     ),
-                    theme: theme,
-                  ),
-                ),
-            ],
+
+                    // 4. FULL TRANSLATION
+                    if (_showFullTranslation)
+                      SliverToBoxAdapter(
+                        child: AnimatedSize(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                          child: _buildFullTranslation(
+                            context,
+                            theme,
+                            provider,
+                            l10n,
+                          ),
+                        ),
+                      ),
+
+                    if (_showFullTranslation)
+                      const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+                    // 5. PAGE CONTROLS
+                    SliverToBoxAdapter(
+                      child: _buildPageControls(context, theme, provider, l10n),
+                    ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                    // 6. TOGGLE DEFINITIONS
+                    SliverToBoxAdapter(
+                      child: _buildToggleDefinitionsButton(
+                        context,
+                        theme,
+                        provider,
+                        l10n,
+                      ),
+                    ),
+                  ] else ...[
+                    // Empty state
+                    SliverFillRemaining(
+                      child: _buildEmptyState(context, theme, l10n),
+                    ),
+                  ],
+
+                  // 7. FAVORITES / HISTORY (pinned at bottom)
+                  if (_showFavorites)
+                    SliverPersistentHeader(
+                      pinned: true,
+                      delegate: _FavoritesDelegate(
+                        child: _buildFavoritesSection(
+                          context,
+                          theme,
+                          provider,
+                          l10n,
+                        ),
+                        theme: theme,
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -407,7 +432,9 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                   controller: _controller,
                   language: provider.currentLanguage,
                   enabled: context.read<AppState>().autoConvertInput,
-                  maxLines: 4,
+                  // compact for a word, grows with long text
+                  minLines: 1,
+                  maxLines: null,
                   style: TextStyle(fontSize: fs(15, 'sentences'), height: 1.4),
                   decoration: InputDecoration(
                     hintText: l10n.pasteTextHere,
@@ -605,9 +632,25 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '${l10n.sentences} (${sentences.length})',
+                  l10n.sentences,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
+                    fontSize: fs(16, 'headers'),
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.tertiary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${sentences.length}',
+                  style: TextStyle(
+                    fontSize: fs(11, 'ui'),
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.tertiary.withValues(alpha: 0.9),
                   ),
                 ),
               ),
@@ -724,12 +767,29 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '${l10n.wordDefinitions} (${words.length} of ${provider.analyzedWords.length})',
+                  l10n.wordDefinitions,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
+                    fontSize: fs(16, 'headers'),
                   ),
                 ),
               ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${words.length} ${l10n.ofStatic} ${provider.analyzedWords.length}',
+                  style: TextStyle(
+                    fontSize: fs(11, 'ui'),
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.9),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
               _buildColumnSelector(context, theme, provider, l10n),
             ],
           ),
@@ -874,54 +934,57 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     AnalyzerProvider provider,
     AppLocalizations l10n,
   ) {
-    return PopupMenuButton<int>(
-      initialValue: provider.itemsPerRow,
-      onSelected: (val) => provider.updateSetting('itemsPerRow', val),
-      itemBuilder: (context) => List.generate(5, (i) => i + 1)
-          .map(
-            (n) => PopupMenuItem(
-              value: n,
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.grid_view_rounded,
-                    size: 18,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                  const SizedBox(width: 12),
-                  Text('$n ${n == 1 ? l10n.column : l10n.columns}'),
-                ],
+    return Tooltip(
+      message: l10n.columns,
+      child: PopupMenuButton<int>(
+        initialValue: provider.itemsPerRow,
+        onSelected: (val) => provider.updateSetting('itemsPerRow', val),
+        itemBuilder: (context) => List.generate(5, (i) => i + 1)
+            .map(
+              (n) => PopupMenuItem(
+                value: n,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.grid_view_rounded,
+                      size: 18,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                    const SizedBox(width: 12),
+                    Text('$n ${n == 1 ? l10n.column : l10n.columns}'),
+                  ],
+                ),
               ),
+            )
+            .toList(),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: theme.colorScheme.outline.withValues(alpha: 0.15),
             ),
-          )
-          .toList(),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: theme.colorScheme.outline.withValues(alpha: 0.15),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.grid_view_rounded,
-              size: 16,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              '${provider.itemsPerRow} ${l10n.columns}',
-              style: TextStyle(
-                fontSize: fs(12, 'ui'),
-                fontWeight: FontWeight.w500,
-                color: theme.colorScheme.onSurface,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.grid_view_rounded,
+                size: 16,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
-            ),
-          ],
+              const SizedBox(width: 6),
+              Text(
+                '${provider.itemsPerRow} ${l10n.columns}',
+                style: TextStyle(
+                  fontSize: fs(12, 'ui'),
+                  fontWeight: FontWeight.w500,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1341,7 +1404,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                           Text(
                             word.word,
                             style: TextStyle(
-                              fontSize: fs(17, 'kanji'),
+                              fontSize: fs(24, 'kanji'),
                               fontWeight: FontWeight.bold,
                               color: theme.colorScheme.onSurface,
                             ),
@@ -1353,11 +1416,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                             Text(
                               reading.isNotEmpty ? reading : pinyin,
                               style: TextStyle(
-                                fontSize: fs(11, 'ui'),
+                                fontSize: fs(13, 'words'),
                                 color: theme.colorScheme.onSurface.withValues(
                                   alpha: 0.55,
                                 ),
-                                fontStyle: FontStyle.italic,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -1419,22 +1481,13 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                 if (_showDefinitions && hasDefinition) ...[
                   Expanded(
                     child: SingleChildScrollView(
-                      child: Text(
-                        word.ichiMoeDefinitions.isNotEmpty
-                            ? word.ichiMoeDefinitions.take(3).join('; ')
+                      child: StructuredDefinition(
+                        definition: word.ichiMoeDefinitions.isNotEmpty
+                            ? word.ichiMoeDefinitions.first
                             : (word.mdbgData?.definitions.isNotEmpty ?? false
-                                  ? word.mdbgData!.definitions
-                                        .take(3)
-                                        .join('; ')
+                                  ? word.mdbgData!.definitions.first
                                   : (reading.isNotEmpty ? reading : pinyin)),
-                        style: TextStyle(
-                          fontSize: fs(12, 'translations'),
-                          height: 1.4,
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.85,
-                          ),
-                        ),
-                        maxLines: 7,
+                        fontSize: 12,
                       ),
                     ),
                   ),
@@ -1720,13 +1773,47 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: SelectableText(
-              fullTranslation,
-              style: TextStyle(
-                fontSize: fs(13.5, 'translations'),
-                height: 1.6,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  provider.currentLanguage.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: fs(10, 'ui'),
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                SelectableText(
+                  _controller.text,
+                  style: TextStyle(
+                    fontSize: fs(13, 'sentences'),
+                    height: 1.5,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+                const Divider(height: 20),
+                Text(
+                  provider.translationTargetLanguage.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: fs(10, 'ui'),
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                SelectableText(
+                  fullTranslation,
+                  style: TextStyle(
+                    fontSize: fs(13.5, 'translations'),
+                    height: 1.6,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -1745,6 +1832,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     required VoidCallback onToggle,
     required Widget child,
     AnalyzerProvider? provider,
+    int? count,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1767,6 +1855,24 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                 fontSize: fs(16, 'headers'),
               ),
             ),
+            if (count != null) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    fontSize: fs(11, 'ui'),
+                    fontWeight: FontWeight.w600,
+                    color: color.withValues(alpha: 0.9),
+                  ),
+                ),
+              ),
+            ],
             if (provider?.isTranslating == true &&
                 (title == l10n.sentenceTranslations ||
                     title == l10n.fullTranslation)) ...[
@@ -1817,6 +1923,24 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     AnalyzerProvider provider,
     AppLocalizations l10n,
   ) {
+    final totalPages = provider.totalPages;
+    // one page of results: just a subtle "n of n" label, no
+    // navigation or density sliders
+    if (totalPages <= 1) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          '${provider.analyzedWords.length} ${l10n.ofStatic} '
+          '${provider.itemsPerPage}',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: fs(11, 'ui'),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+          ),
+        ),
+      );
+    }
+
     return Card(
       elevation: 0,
       color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
@@ -2690,8 +2814,13 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
 class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
   final ThemeData theme;
+  final double height;
 
-  _SearchBarDelegate({required this.child, required this.theme});
+  _SearchBarDelegate({
+    required this.child,
+    required this.theme,
+    required this.height,
+  });
 
   @override
   Widget build(
@@ -2699,18 +2828,20 @@ class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return child;
+    return SizedBox(height: height, child: child);
   }
 
   @override
-  double get maxExtent => 180;
+  double get maxExtent => height;
 
   @override
-  double get minExtent => 180;
+  double get minExtent => height;
 
   @override
-  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>
-      false;
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {
+    final old = oldDelegate as _SearchBarDelegate;
+    return old.height != height;
+  }
 }
 
 class _FavoritesDelegate extends SliverPersistentHeaderDelegate {

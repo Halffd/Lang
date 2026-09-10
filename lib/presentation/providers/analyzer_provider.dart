@@ -838,6 +838,9 @@ class AnalyzerProvider extends ChangeNotifier {
   /// source. Falls back to 'en' for both.
   String get _targetLanguage => _uiLanguage();
 
+  /// Public translation target (for section headers in the UI).
+  String get translationTargetLanguage => _targetLanguage;
+
   String _uiLanguage() {
     final ui = appState?.language ?? 'en';
     return ui.isEmpty ? 'en' : ui;

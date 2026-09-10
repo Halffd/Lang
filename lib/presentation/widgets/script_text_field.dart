@@ -18,7 +18,8 @@ class ScriptTextField extends StatefulWidget {
   final InputDecoration? decoration;
   final ValueChanged<String>? onSubmitted;
   final ValueChanged<String>? onChanged;
-  final int maxLines;
+  final int? maxLines;
+  final int? minLines;
   final FocusNode? focusNode;
   final bool autofocus;
   final TextStyle? style;
@@ -32,6 +33,7 @@ class ScriptTextField extends StatefulWidget {
     this.onSubmitted,
     this.onChanged,
     this.maxLines = 1,
+    this.minLines,
     this.focusNode,
     this.autofocus = false,
     this.style,
@@ -180,6 +182,7 @@ class _ScriptTextFieldState extends State<ScriptTextField> {
         focusNode: _effectiveFocus,
         autofocus: widget.autofocus,
         maxLines: widget.maxLines,
+        minLines: widget.minLines,
         style: widget.style,
         onSubmitted: widget.onSubmitted,
         onChanged: (text) {
