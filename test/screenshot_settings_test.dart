@@ -37,6 +37,16 @@ void main() {
     expect(reloaded.screenshotAutoIntervalMin, 5);
   });
 
+  test('ocr api key and endpoint persist and reload', () async {
+    final appState = AppState(storage);
+    appState.setOcrApiKey('mykey');
+    appState.setOcrApiEndpoint('http://localhost:8080/parse');
+
+    final reloaded = AppState(storage);
+    expect(reloaded.ocrApiKey, 'mykey');
+    expect(reloaded.ocrApiEndpoint, 'http://localhost:8080/parse');
+  });
+
   test('setters notify listeners', () {
     final appState = AppState(storage);
     var notified = 0;

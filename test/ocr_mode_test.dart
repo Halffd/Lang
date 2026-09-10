@@ -3,12 +3,13 @@ import 'package:lang/presentation/screens/search_screen.dart';
 
 void main() {
   group('OcrMode', () {
-    test('has four OCR modes', () {
-      expect(OcrMode.values.length, 4);
+    test('has five OCR modes', () {
+      expect(OcrMode.values.length, 5);
       expect(OcrMode.values, contains(OcrMode.mlKit));
       expect(OcrMode.values, contains(OcrMode.tesseract));
       expect(OcrMode.values, contains(OcrMode.easyOcr));
       expect(OcrMode.values, contains(OcrMode.ai));
+      expect(OcrMode.values, contains(OcrMode.api));
     });
 
     test('OcrMode can be compared', () {
@@ -16,6 +17,7 @@ void main() {
       expect(OcrMode.mlKit, isNot(equals(OcrMode.tesseract)));
       expect(OcrMode.tesseract, isNot(equals(OcrMode.easyOcr)));
       expect(OcrMode.easyOcr, isNot(equals(OcrMode.ai)));
+      expect(OcrMode.ai, isNot(equals(OcrMode.api)));
     });
 
     test('OcrMode has correct index values', () {
@@ -23,6 +25,7 @@ void main() {
       expect(OcrMode.tesseract.index, 1);
       expect(OcrMode.easyOcr.index, 2);
       expect(OcrMode.ai.index, 3);
+      expect(OcrMode.api.index, 4);
     });
 
     test('OcrMode can be switched with index', () {
@@ -47,17 +50,22 @@ void main() {
     test('ai name is ai', () {
       expect(OcrMode.ai.name, 'ai');
     });
+
+    test('api name is api', () {
+      expect(OcrMode.api.name, 'api');
+    });
   });
 
   group('OcrMode iteration', () {
     test('can iterate through all modes', () {
       final modes = OcrMode.values;
 
-      expect(modes.length, 4);
+      expect(modes.length, 5);
       expect(modes[0], OcrMode.mlKit);
       expect(modes[1], OcrMode.tesseract);
       expect(modes[2], OcrMode.easyOcr);
       expect(modes[3], OcrMode.ai);
+      expect(modes[4], OcrMode.api);
     });
 
     test('forEach iterates all modes', () {
@@ -65,7 +73,7 @@ void main() {
       for (var mode in OcrMode.values) {
         count++;
       }
-      expect(count, 4);
+      expect(count, 5);
     });
   });
 }

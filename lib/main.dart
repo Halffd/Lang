@@ -143,34 +143,39 @@ void main() async {
   // interval, register global hotkeys for each capture kind
   await ScreenshotService.instance.load();
 
-  Future<void> runAutoOcr(ScreenshotItem item) async {
-    if (!appState.screenshotAutoOcr) return;
-    try {
-      final result = await ocrService.recognizeFromFile(
-        item.path,
-        engine: OcrEngine.mlKit,
-      );
-      final text = result.isSuccess ? result.text.trim() : '';
-      if (text.isNotEmpty) {
-        ScreenshotService.instance.setOcrText(item.id, text);
-        if (appState.screenshotCopyOcrText) {
-          await Clipboard.setData(ClipboardData(text: text));
-        }
-      }
-    } catch (_) {
-      // auto OCR is best-effort
-    }
-  }
-
   Future<String?> ocrRunner(String path) async {
     try {
+      // honor the persisted OCR engine choice; ai falls back to
+      // mlKit here since the AI provider isn't wired into hotkeys
+      var engine = OcrService.engineFromName(appState.ocrEngine);
+      if (engine == OcrEngine.ai) engine = OcrEngine.mlKit;
+      if (appState.ocrApiEndpoint.isNotEmpty) {
+        ocrService.apiEndpoint = appState.ocrApiEndpoint;
+      }
       final result = await ocrService.recognizeFromFile(
         path,
-        engine: OcrEngine.mlKit,
+        engine: engine,
+        language: appState.learningLanguage,
+        apiKey: appState.ocrApiKey,
       );
       return result.isSuccess ? result.text : null;
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<void> runAutoOcr(ScreenshotItem item) async {
+    if (!appState.screenshotAutoOcr) return;
+    try {
+      final text = await ocrRunner(item.path);
+      if (text != null && text.trim().isNotEmpty) {
+        ScreenshotService.instance.setOcrText(item.id, text.trim());
+        if (appState.screenshotCopyOcrText) {
+          await Clipboard.setData(ClipboardData(text: text.trim()));
+        }
+      }
+    } catch (_) {
+      // auto OCR is best-effort
     }
   }
 

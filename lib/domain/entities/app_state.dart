@@ -124,6 +124,9 @@ class AppState extends ChangeNotifier {
   String get clipboardAutoSearchRegex => _clipboardAutoSearchRegex;
   bool get forvoAudioEnabled => _forvoAudioEnabled;
   String get forvoApiKey => _forvoApiKey;
+  String get ocrApiKey => _ocrApiKey;
+  String get ocrApiEndpoint => _ocrApiEndpoint;
+  String get ocrEngine => _ocrEngine;
   bool get screenshotAutoOcr => _screenshotAutoOcr;
   bool get screenshotCopyOcrText => _screenshotCopyOcrText;
   bool get screenshotCopyImage => _screenshotCopyImage;
@@ -163,6 +166,12 @@ class AppState extends ChangeNotifier {
   String _clipboardAutoSearchRegex = '';
   bool _forvoAudioEnabled = false;
   String _forvoApiKey = '';
+  // OCR.space-compatible API key for the api OCR engine
+  String _ocrApiKey = '';
+  // endpoint override for the api OCR engine (empty = ocr.space)
+  String _ocrApiEndpoint = '';
+  // preferred OCR engine (ocr engine name; empty = mlKit default)
+  String _ocrEngine = '';
   // screenshot settings (ocr screen screenshot tab)
   bool _screenshotAutoOcr = false;
   bool _screenshotCopyOcrText = false;
@@ -467,6 +476,24 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setOcrApiKey(String value) {
+    _ocrApiKey = value;
+    _storageService.setString('ocr_api_key', value);
+    notifyListeners();
+  }
+
+  void setOcrApiEndpoint(String value) {
+    _ocrApiEndpoint = value;
+    _storageService.setString('ocr_api_endpoint', value);
+    notifyListeners();
+  }
+
+  void setOcrEngine(String value) {
+    _ocrEngine = value;
+    _storageService.setString('ocr_engine', value);
+    notifyListeners();
+  }
+
   void setScreenshotAutoOcr(bool value) {
     _screenshotAutoOcr = value;
     _storageService.setBool('screenshot_auto_ocr', value);
@@ -748,6 +775,9 @@ class AppState extends ChangeNotifier {
       _forvoAudioEnabled =
           _storageService.getBool('forvo_audio_enabled') ?? false;
       _forvoApiKey = _storageService.getStringSync('forvo_api_key') ?? '';
+      _ocrApiKey = _storageService.getStringSync('ocr_api_key') ?? '';
+      _ocrApiEndpoint = _storageService.getStringSync('ocr_api_endpoint') ?? '';
+      _ocrEngine = _storageService.getStringSync('ocr_engine') ?? '';
       _screenshotAutoOcr =
           _storageService.getBool('screenshot_auto_ocr') ?? false;
       _screenshotCopyOcrText =

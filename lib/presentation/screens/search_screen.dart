@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,7 +13,7 @@ import 'package:lang/presentation/screens/screenshot_tab.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/utils/font_scale.dart';
 
-enum OcrMode { mlKit, tesseract, easyOcr, ai }
+enum OcrMode { mlKit, tesseract, easyOcr, ai, api }
 
 enum OcrTab { text, screenshot }
 
@@ -41,6 +40,12 @@ class _SearchScreenState extends State<SearchScreen> {
   void initState() {
     super.initState();
     _focusNode.addListener(_onFocusChange);
+    // restore persisted OCR engine choice
+    final saved = context.read<AppState>().ocrEngine;
+    if (saved.isNotEmpty) {
+      final match = OcrMode.values.where((m) => m.name == saved).firstOrNull;
+      if (match != null) _ocrMode = match;
+    }
   }
 
   @override
@@ -230,9 +235,22 @@ class _SearchScreenState extends State<SearchScreen> {
                 ],
               ),
             ),
+            DropdownMenuItem(
+              value: OcrMode.api,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.cloud, size: 14),
+                  const SizedBox(width: 4),
+                  Text('API', style: TextStyle(fontSize: fs(context, 12))),
+                ],
+              ),
+            ),
           ],
           onChanged: (val) {
-            if (val != null) setState(() => _ocrMode = val);
+            if (val == null) return;
+            setState(() => _ocrMode = val);
+            context.read<AppState>().setOcrEngine(val.name);
           },
         ),
       ),
@@ -379,6 +397,10 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
         const SizedBox(height: 8),
         if (_isProcessingImage) const LinearProgressIndicator(),
+
+        // api engine: key + endpoint configuration
+        if (_ocrMode == OcrMode.api) _buildApiConfigRow(),
+
         ElevatedButton.icon(
           onPressed: _ocrController.text.isNotEmpty && !_isProcessingImage
               ? () => _performOcr(_ocrController.text)
@@ -388,6 +410,85 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
       ],
     );
+  }
+
+  /// Compact row shown when the api engine is selected: opens a
+  /// dialog to set the OCR.space API key and optional endpoint
+  /// override (for self-hosted compatible APIs).
+  Widget _buildApiConfigRow() {
+    final appState = context.read<AppState>();
+    final configured = appState.ocrApiKey.isNotEmpty;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          TextButton.icon(
+            onPressed: _showApiConfigDialog,
+            icon: Icon(
+              configured ? Icons.key : Icons.key_off,
+              size: 16,
+              color: configured ? null : Theme.of(context).colorScheme.error,
+            ),
+            label: Text(
+              configured ? 'API key set' : 'Set API key',
+              style: TextStyle(fontSize: fs(context, 12)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showApiConfigDialog() async {
+    final appState = context.read<AppState>();
+    final keyController = TextEditingController(text: appState.ocrApiKey);
+    final endpointController = TextEditingController(
+      text: appState.ocrApiEndpoint,
+    );
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('OCR API settings'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: keyController,
+              decoration: const InputDecoration(
+                labelText: 'API key',
+                hintText: 'OCR.space key (free tier: helloworld)',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: endpointController,
+              decoration: const InputDecoration(
+                labelText: 'Endpoint (optional)',
+                hintText: 'https://api.ocr.space/parse/image',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              appState.setOcrApiKey(keyController.text.trim());
+              appState.setOcrApiEndpoint(endpointController.text.trim());
+              Navigator.pop(dialogContext);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    keyController.dispose();
+    endpointController.dispose();
   }
 
   Widget _buildSearchResults(ThemeData theme, AnalyzerProvider provider) {
@@ -656,61 +757,57 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<void> _processImage(File imageFile) async {
     setState(() => _isProcessingImage = true);
     final ocrService = OcrService();
+    final appState = context.read<AppState>();
+    final aiProvider = Provider.of<AiProvider>(context, listen: false);
 
     try {
-      if (_ocrMode == OcrMode.ai) {
-        final bytes = await imageFile.readAsBytes();
-        final base64Image = base64Encode(bytes);
-        final aiProvider = Provider.of<AiProvider>(context, listen: false);
-        final text = await aiProvider.extractTextFromImageAi(base64Image);
-        _ocrController.text = text;
-      } else {
-        final OcrEngine engine;
-        switch (_ocrMode) {
-          case OcrMode.mlKit:
-            engine = OcrEngine.mlKit;
-            break;
-          case OcrMode.tesseract:
-            engine = OcrEngine.tesseract;
-            break;
-          case OcrMode.easyOcr:
-            engine = OcrEngine.easyOcr;
-            break;
-          case OcrMode.ai:
-            engine = OcrEngine.mlKit;
-            break;
-        }
+      final engine = switch (_ocrMode) {
+        OcrMode.mlKit => OcrEngine.mlKit,
+        OcrMode.tesseract => OcrEngine.tesseract,
+        OcrMode.easyOcr => OcrEngine.easyOcr,
+        OcrMode.ai => OcrEngine.ai,
+        OcrMode.api => OcrEngine.api,
+      };
 
-        final result = await ocrService.recognizeFromFile(
-          imageFile.path,
-          engine: engine,
+      // endpoint override for self-hosted OCR.space-compatible APIs
+      if (appState.ocrApiEndpoint.isNotEmpty) {
+        ocrService.apiEndpoint = appState.ocrApiEndpoint;
+      }
+
+      final result = await ocrService.recognizeFromFile(
+        imageFile.path,
+        engine: engine,
+        language: Provider.of<AnalyzerProvider>(
+          context,
+          listen: false,
+        ).currentLanguage,
+        apiKey: appState.ocrApiKey,
+        aiFetcher: (base64Image) =>
+            aiProvider.extractTextFromImageAi(base64Image),
+      );
+
+      if (!mounted) return;
+      if (result.isSuccess) {
+        _ocrController.text = result.text;
+      } else if (result.isEasyOcrUnavailable) {
+        _ocrController.text = '';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'EasyOCR requires a Python backend (pip install easyocr). '
+              'Using ML Kit instead...',
+            ),
+            action: SnackBarAction(
+              label: 'Switch',
+              onPressed: () => setState(() => _ocrMode = OcrMode.mlKit),
+            ),
+          ),
         );
-
-        if (result.isSuccess) {
-          _ocrController.text = result.text;
-        } else if (result.isEasyOcrUnavailable) {
-          _ocrController.text = '';
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'EasyOCR requires a Python backend. Using ML Kit instead...',
-                ),
-                action: SnackBarAction(
-                  label: 'Switch',
-                  onPressed: () => setState(() => _ocrMode = OcrMode.mlKit),
-                ),
-              ),
-            );
-          }
-        } else {
-          _ocrController.text = '';
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('OCR Error: ${result.error}')),
-            );
-          }
-        }
+      } else {
+        _ocrController.text = '';
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('OCR Error: ${result.error}')));
       }
     } catch (e) {
       if (mounted) {
@@ -719,7 +816,7 @@ class _SearchScreenState extends State<SearchScreen> {
         ).showSnackBar(SnackBar(content: Text('OCR Error: $e')));
       }
     } finally {
-      setState(() => _isProcessingImage = false);
+      if (mounted) setState(() => _isProcessingImage = false);
       ocrService.dispose();
     }
   }

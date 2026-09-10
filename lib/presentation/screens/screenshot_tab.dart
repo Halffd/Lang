@@ -84,11 +84,21 @@ class _ScreenshotTabState extends State<ScreenshotTab> {
   }
 
   Future<String?> _runOcr(String path) async {
+    final appState = context.read<AppState>();
+    var engine = OcrService.engineFromName(appState.ocrEngine);
+    // ai engine needs the AI provider which lives in the search
+    // screen context; use mlKit for screenshot auto-OCR instead
+    if (engine == OcrEngine.ai) engine = OcrEngine.mlKit;
     final ocrService = OcrService();
     try {
+      if (appState.ocrApiEndpoint.isNotEmpty) {
+        ocrService.apiEndpoint = appState.ocrApiEndpoint;
+      }
       final result = await ocrService.recognizeFromFile(
         path,
-        engine: OcrEngine.mlKit,
+        engine: engine,
+        language: appState.learningLanguage,
+        apiKey: appState.ocrApiKey,
       );
       return result.isSuccess ? result.text : null;
     } catch (_) {
