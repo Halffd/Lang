@@ -166,5 +166,15 @@
     }
   },
   "off": "关闭",
-  "screenshotHotkeys": "快捷键：Ctrl+Shift+PrtSc 全屏 · Ctrl+PrtSc 显示器 · Shift+PrtSc 窗口 · Alt+PrtSc 区域 · Alt+Shift+PrtSc 上次区域 · Ctrl+Alt+PrtSc 自动"
+  "screenshotHotkeys": "快捷键：Ctrl+Shift+PrtSc 全屏 · Ctrl+PrtSc 显示器 · Shift+PrtSc 窗口 · Alt+PrtSc 区域 · Alt+Shift+PrtSc 上次区域 · Ctrl+Alt+PrtSc 自动",
+  "readerTitle": "阅读器",
+  "readerTabDocuments": "文档",
+  "readerTabScreenshots": "截图",
+  "readerTabClipboard": "剪贴板",
+  "openDocument": "打开文档",
+  "noDocument": "未打开文档",
+  "clipboardLiveHistory": "剪贴板历史",
+  "clipboardPasteOcr": "粘贴图片并OCR",
+  "clipboardImageOcr": "OCR剪贴板图片",
+  "clipboardMonitoringOff": "剪贴板监控已关闭"
 }

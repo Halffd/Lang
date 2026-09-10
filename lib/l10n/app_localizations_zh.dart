@@ -888,4 +888,34 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get screenshotHotkeys =>
       '快捷键：Ctrl+Shift+PrtSc 全屏 · Ctrl+PrtSc 显示器 · Shift+PrtSc 窗口 · Alt+PrtSc 区域 · Alt+Shift+PrtSc 上次区域 · Ctrl+Alt+PrtSc 自动';
+
+  @override
+  String get readerTitle => '阅读器';
+
+  @override
+  String get readerTabDocuments => '文档';
+
+  @override
+  String get readerTabScreenshots => '截图';
+
+  @override
+  String get readerTabClipboard => '剪贴板';
+
+  @override
+  String get openDocument => '打开文档';
+
+  @override
+  String get noDocument => '未打开文档';
+
+  @override
+  String get clipboardLiveHistory => '剪贴板历史';
+
+  @override
+  String get clipboardPasteOcr => '粘贴图片并OCR';
+
+  @override
+  String get clipboardImageOcr => 'OCR剪贴板图片';
+
+  @override
+  String get clipboardMonitoringOff => '剪贴板监控已关闭';
 }

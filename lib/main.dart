@@ -38,7 +38,7 @@ import 'presentation/screens/search_screen.dart';
 import 'presentation/screens/saved_words_screen.dart';
 import 'presentation/screens/history_screen.dart';
 import 'presentation/screens/ai_screen.dart';
-import 'presentation/screens/browser_screen.dart';
+import 'presentation/screens/reader_screen.dart';
 import 'presentation/screens/srs_screen.dart';
 
 void main() async {
@@ -507,9 +507,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   final List<Widget> _screens = [
     const AnalyzeScreen(),
     const SearchScreen(),
+    const ReaderScreen(),
     const SavedWordsScreen(),
     const HistoryScreen(),
-    const BrowserScreen(),
     const SRSScreen(),
     const AiScreen(),
   ];
@@ -527,8 +527,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     desktopIPC.onStudyRequested = () {
       if (mounted) setState(() => _currentIndex = 5);
     };
-    desktopIPC.onBrowserRequested = () {
-      if (mounted) setState(() => _currentIndex = 4);
+    desktopIPC.onReaderRequested = () {
+      if (mounted) setState(() => _currentIndex = 2);
     };
     desktopIPC.onQuitRequested = () {
       desktopIPC.dispose();
@@ -539,8 +539,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       onShowStudy: () {
         if (mounted) setState(() => _currentIndex = 5);
       },
-      onShowBrowser: () {
-        if (mounted) setState(() => _currentIndex = 4);
+      onShowReader: () {
+        if (mounted) setState(() => _currentIndex = 2);
       },
       onToggleWindow: () {
         desktopIPC.toggleWindow();
@@ -565,16 +565,16 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             label: AppLocalizations.of(context)!.search,
           ),
           NavigationDestination(
+            icon: const Icon(Icons.menu_book),
+            label: AppLocalizations.of(context)!.reader,
+          ),
+          NavigationDestination(
             icon: const Icon(Icons.bookmark),
             label: AppLocalizations.of(context)!.saved,
           ),
           NavigationDestination(
             icon: const Icon(Icons.history),
             label: AppLocalizations.of(context)!.history,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.language),
-            label: 'Browser',
           ),
           NavigationDestination(icon: const Icon(Icons.school), label: 'SRS'),
           NavigationDestination(

@@ -878,4 +878,34 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get screenshotHotkeys =>
       'ホットキー：Ctrl+Shift+PrtSc 全画面 · Ctrl+PrtSc モニター · Shift+PrtSc ウィンドウ · Alt+PrtSc 領域 · Alt+Shift+PrtSc 前回の領域 · Ctrl+Alt+PrtSc 自動';
+
+  @override
+  String get readerTitle => 'リーダー';
+
+  @override
+  String get readerTabDocuments => 'ドキュメント';
+
+  @override
+  String get readerTabScreenshots => 'スクリーンショット';
+
+  @override
+  String get readerTabClipboard => 'クリップボード';
+
+  @override
+  String get openDocument => 'ドキュメントを開く';
+
+  @override
+  String get noDocument => 'ドキュメントが開かれていません';
+
+  @override
+  String get clipboardLiveHistory => 'クリップボード履歴';
+
+  @override
+  String get clipboardPasteOcr => '画像を貼り付けてOCR';
+
+  @override
+  String get clipboardImageOcr => 'クリップボード画像をOCR';
+
+  @override
+  String get clipboardMonitoringOff => 'クリップボード監視はオフです';
 }

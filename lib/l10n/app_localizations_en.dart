@@ -893,4 +893,34 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get screenshotHotkeys =>
       'Hotkeys: Ctrl+Shift+PrtSc full · Ctrl+PrtSc monitor · Shift+PrtSc window · Alt+PrtSc region · Alt+Shift+PrtSc previous region · Ctrl+Alt+PrtSc auto';
+
+  @override
+  String get readerTitle => 'Reader';
+
+  @override
+  String get readerTabDocuments => 'Documents';
+
+  @override
+  String get readerTabScreenshots => 'Screenshots';
+
+  @override
+  String get readerTabClipboard => 'Clipboard';
+
+  @override
+  String get openDocument => 'Open document';
+
+  @override
+  String get noDocument => 'No document open';
+
+  @override
+  String get clipboardLiveHistory => 'Clipboard history';
+
+  @override
+  String get clipboardPasteOcr => 'Paste image and OCR';
+
+  @override
+  String get clipboardImageOcr => 'OCR clipboard image';
+
+  @override
+  String get clipboardMonitoringOff => 'Clipboard monitoring is off';
 }

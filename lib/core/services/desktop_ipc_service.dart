@@ -26,7 +26,7 @@ class DesktopIPCService with TrayListener, WindowListener {
 
   // Callbacks for menu actions
   VoidCallback? onStudyRequested;
-  VoidCallback? onBrowserRequested;
+  VoidCallback? onReaderRequested;
   VoidCallback? onQuitRequested;
 
   DesktopPlatform get platform => _platform;
@@ -109,7 +109,7 @@ class DesktopIPCService with TrayListener, WindowListener {
         MenuItem(key: 'always_on_top', label: 'Toggle Always on Top'),
         MenuItem.separator(),
         MenuItem(key: 'study', label: 'Start Study Session'),
-        MenuItem(key: 'browser', label: 'Open Browser'),
+        MenuItem(key: 'browser', label: 'Open Reader'),
         MenuItem.separator(),
         MenuItem(key: 'quit', label: 'Quit'),
       ],
@@ -253,7 +253,7 @@ class DesktopIPCService with TrayListener, WindowListener {
   // Register common hotkeys
   Future<void> registerCommonHotkeys({
     required VoidCallback onShowStudy,
-    required VoidCallback onShowBrowser,
+    required VoidCallback onShowReader,
     required VoidCallback onToggleWindow,
   }) async {
     if (!isSupported) return;
@@ -268,14 +268,14 @@ class DesktopIPCService with TrayListener, WindowListener {
       onShowStudy,
     );
 
-    // Ctrl+Shift+B = Show Browser
+    // Ctrl+Shift+B = Show Reader
     await registerHotkey(
       'browser',
       HotKey(
         key: PhysicalKeyboardKey.keyB,
         modifiers: [HotKeyModifier.control, HotKeyModifier.shift],
       ),
-      onShowBrowser,
+      onShowReader,
     );
 
     // Ctrl+Shift+L = Toggle window
@@ -453,7 +453,7 @@ class DesktopIPCService with TrayListener, WindowListener {
         break;
       case 'browser':
         showWindow();
-        onBrowserRequested?.call();
+        onReaderRequested?.call();
         break;
       case 'quit':
         onQuitRequested?.call();

@@ -895,4 +895,35 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get screenshotHotkeys =>
       'Atajos: Ctrl+Shift+PrtSc pantalla · Ctrl+PrtSc monitor · Shift+PrtSc ventana · Alt+PrtSc región · Alt+Shift+PrtSc región anterior · Ctrl+Alt+PrtSc auto';
+
+  @override
+  String get readerTitle => 'Lector';
+
+  @override
+  String get readerTabDocuments => 'Documentos';
+
+  @override
+  String get readerTabScreenshots => 'Capturas';
+
+  @override
+  String get readerTabClipboard => 'Portapapeles';
+
+  @override
+  String get openDocument => 'Abrir documento';
+
+  @override
+  String get noDocument => 'Ningún documento abierto';
+
+  @override
+  String get clipboardLiveHistory => 'Historial del portapapeles';
+
+  @override
+  String get clipboardPasteOcr => 'Pegar imagen y OCR';
+
+  @override
+  String get clipboardImageOcr => 'OCR de imagen del portapapeles';
+
+  @override
+  String get clipboardMonitoringOff =>
+      'El monitoreo del portapapeles está apagado';
 }

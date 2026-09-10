@@ -1787,6 +1787,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hotkeys: Ctrl+Shift+PrtSc full · Ctrl+PrtSc monitor · Shift+PrtSc window · Alt+PrtSc region · Alt+Shift+PrtSc previous region · Ctrl+Alt+PrtSc auto'**
   String get screenshotHotkeys;
+
+  /// No description provided for @readerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reader'**
+  String get readerTitle;
+
+  /// No description provided for @readerTabDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get readerTabDocuments;
+
+  /// No description provided for @readerTabScreenshots.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshots'**
+  String get readerTabScreenshots;
+
+  /// No description provided for @readerTabClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Clipboard'**
+  String get readerTabClipboard;
+
+  /// No description provided for @openDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Open document'**
+  String get openDocument;
+
+  /// No description provided for @noDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'No document open'**
+  String get noDocument;
+
+  /// No description provided for @clipboardLiveHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Clipboard history'**
+  String get clipboardLiveHistory;
+
+  /// No description provided for @clipboardPasteOcr.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste image and OCR'**
+  String get clipboardPasteOcr;
+
+  /// No description provided for @clipboardImageOcr.
+  ///
+  /// In en, this message translates to:
+  /// **'OCR clipboard image'**
+  String get clipboardImageOcr;
+
+  /// No description provided for @clipboardMonitoringOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Clipboard monitoring is off'**
+  String get clipboardMonitoringOff;
 }
 
 class _AppLocalizationsDelegate

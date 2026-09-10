@@ -605,5 +605,15 @@
     }
   },
   "off": "Apagado",
-  "screenshotHotkeys": "Atajos: Ctrl+Shift+PrtSc pantalla · Ctrl+PrtSc monitor · Shift+PrtSc ventana · Alt+PrtSc región · Alt+Shift+PrtSc región anterior · Ctrl+Alt+PrtSc auto"
+  "screenshotHotkeys": "Atajos: Ctrl+Shift+PrtSc pantalla · Ctrl+PrtSc monitor · Shift+PrtSc ventana · Alt+PrtSc región · Alt+Shift+PrtSc región anterior · Ctrl+Alt+PrtSc auto",
+  "readerTitle": "Lector",
+  "readerTabDocuments": "Documentos",
+  "readerTabScreenshots": "Capturas",
+  "readerTabClipboard": "Portapapeles",
+  "openDocument": "Abrir documento",
+  "noDocument": "Ningún documento abierto",
+  "clipboardLiveHistory": "Historial del portapapeles",
+  "clipboardPasteOcr": "Pegar imagen y OCR",
+  "clipboardImageOcr": "OCR de imagen del portapapeles",
+  "clipboardMonitoringOff": "El monitoreo del portapapeles está apagado"
 }

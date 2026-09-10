@@ -605,5 +605,15 @@
     }
   },
   "off": "オフ",
-  "screenshotHotkeys": "ホットキー：Ctrl+Shift+PrtSc 全画面 · Ctrl+PrtSc モニター · Shift+PrtSc ウィンドウ · Alt+PrtSc 領域 · Alt+Shift+PrtSc 前回の領域 · Ctrl+Alt+PrtSc 自動"
+  "screenshotHotkeys": "ホットキー：Ctrl+Shift+PrtSc 全画面 · Ctrl+PrtSc モニター · Shift+PrtSc ウィンドウ · Alt+PrtSc 領域 · Alt+Shift+PrtSc 前回の領域 · Ctrl+Alt+PrtSc 自動",
+  "readerTitle": "リーダー",
+  "readerTabDocuments": "ドキュメント",
+  "readerTabScreenshots": "スクリーンショット",
+  "readerTabClipboard": "クリップボード",
+  "openDocument": "ドキュメントを開く",
+  "noDocument": "ドキュメントが開かれていません",
+  "clipboardLiveHistory": "クリップボード履歴",
+  "clipboardPasteOcr": "画像を貼り付けてOCR",
+  "clipboardImageOcr": "クリップボード画像をOCR",
+  "clipboardMonitoringOff": "クリップボード監視はオフです"
 }

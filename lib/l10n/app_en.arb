@@ -286,5 +286,15 @@
     }
   },
   "off": "Off",
-  "screenshotHotkeys": "Hotkeys: Ctrl+Shift+PrtSc full · Ctrl+PrtSc monitor · Shift+PrtSc window · Alt+PrtSc region · Alt+Shift+PrtSc previous region · Ctrl+Alt+PrtSc auto"
+  "screenshotHotkeys": "Hotkeys: Ctrl+Shift+PrtSc full · Ctrl+PrtSc monitor · Shift+PrtSc window · Alt+PrtSc region · Alt+Shift+PrtSc previous region · Ctrl+Alt+PrtSc auto",
+  "readerTitle": "Reader",
+  "readerTabDocuments": "Documents",
+  "readerTabScreenshots": "Screenshots",
+  "readerTabClipboard": "Clipboard",
+  "openDocument": "Open document",
+  "noDocument": "No document open",
+  "clipboardLiveHistory": "Clipboard history",
+  "clipboardPasteOcr": "Paste image and OCR",
+  "clipboardImageOcr": "OCR clipboard image",
+  "clipboardMonitoringOff": "Clipboard monitoring is off"
 }
