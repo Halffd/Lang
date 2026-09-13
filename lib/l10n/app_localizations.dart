@@ -2015,6 +2015,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Downloading model...'**
   String get speechModelDownloading;
+
+  /// No description provided for @popupDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Popup Dictionary'**
+  String get popupDictionary;
+
+  /// No description provided for @popupDictionarySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Yomichan-style lookup on any screen'**
+  String get popupDictionarySubtitle;
+
+  /// No description provided for @popupTrigger.
+  ///
+  /// In en, this message translates to:
+  /// **'Trigger'**
+  String get popupTrigger;
+
+  /// No description provided for @popupExtraModifier.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra modifier'**
+  String get popupExtraModifier;
+
+  /// No description provided for @popupDelay.
+  ///
+  /// In en, this message translates to:
+  /// **'Open delay'**
+  String get popupDelay;
+
+  /// No description provided for @popupScanLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan length'**
+  String get popupScanLength;
+
+  /// No description provided for @popupScanDepth.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan depth'**
+  String get popupScanDepth;
+
+  /// No description provided for @popupAutoCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy term to clipboard'**
+  String get popupAutoCopy;
+
+  /// No description provided for @popupAutoAnki.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to Anki'**
+  String get popupAutoAnki;
+
+  /// No description provided for @popupAnkiDeck.
+  ///
+  /// In en, this message translates to:
+  /// **'Anki deck'**
+  String get popupAnkiDeck;
+
+  /// No description provided for @popupRequireRegex.
+  ///
+  /// In en, this message translates to:
+  /// **'Require regex'**
+  String get popupRequireRegex;
+
+  /// No description provided for @popupExcludeRegex.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclude regex'**
+  String get popupExcludeRegex;
+
+  /// No description provided for @popupDetectCompounds.
+  ///
+  /// In en, this message translates to:
+  /// **'Detect compounds'**
+  String get popupDetectCompounds;
+
+  /// No description provided for @popupDetectConjugations.
+  ///
+  /// In en, this message translates to:
+  /// **'Detect conjugations'**
+  String get popupDetectConjugations;
+
+  /// No description provided for @popupAllowedScreens.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowed screens'**
+  String get popupAllowedScreens;
+
+  /// No description provided for @popupScreenAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All screens'**
+  String get popupScreenAll;
+
+  /// No description provided for @popupScreenAnalyze.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze'**
+  String get popupScreenAnalyze;
+
+  /// No description provided for @popupScreenReader.
+  ///
+  /// In en, this message translates to:
+  /// **'Reader'**
+  String get popupScreenReader;
+
+  /// No description provided for @popupScreenDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Dictionary'**
+  String get popupScreenDictionary;
+
+  /// No description provided for @popupScreenWriter.
+  ///
+  /// In en, this message translates to:
+  /// **'Writer'**
+  String get popupScreenWriter;
+
+  /// No description provided for @popupScreenHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get popupScreenHistory;
+
+  /// No description provided for @popupScreenAI.
+  ///
+  /// In en, this message translates to:
+  /// **'AI'**
+  String get popupScreenAI;
+
+  /// No description provided for @popupScreenSRS.
+  ///
+  /// In en, this message translates to:
+  /// **'SRS'**
+  String get popupScreenSRS;
+
+  /// No description provided for @popupNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get popupNone;
+
+  /// No description provided for @popupActiveTrigger.
+  ///
+  /// In en, this message translates to:
+  /// **'Active trigger: {trigger}'**
+  String popupActiveTrigger(Object trigger);
 }
 
 class _AppLocalizationsDelegate

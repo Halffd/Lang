@@ -993,4 +993,81 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get speechModelDownloading => 'モデルをダウンロード中…';
+
+  @override
+  String get popupDictionary => 'ポップアップ辞書';
+
+  @override
+  String get popupDictionarySubtitle => '任意の画面で yomichan 風のLookup';
+
+  @override
+  String get popupTrigger => 'トリガー';
+
+  @override
+  String get popupExtraModifier => '追加修飾キー';
+
+  @override
+  String get popupDelay => '表示遅延';
+
+  @override
+  String get popupScanLength => 'スキャン長';
+
+  @override
+  String get popupScanDepth => 'スキャン深度';
+
+  @override
+  String get popupAutoCopy => '用語をクリップボードにコピー';
+
+  @override
+  String get popupAutoAnki => 'Ankiに送る';
+
+  @override
+  String get popupAnkiDeck => 'Ankiデッキ';
+
+  @override
+  String get popupRequireRegex => '必須正規表現';
+
+  @override
+  String get popupExcludeRegex => '除外正規表現';
+
+  @override
+  String get popupDetectCompounds => '複合語を検出';
+
+  @override
+  String get popupDetectConjugations => '活用形を検出';
+
+  @override
+  String get popupAllowedScreens => '許可画面';
+
+  @override
+  String get popupScreenAll => 'すべて';
+
+  @override
+  String get popupScreenAnalyze => '分析';
+
+  @override
+  String get popupScreenReader => 'リーダー';
+
+  @override
+  String get popupScreenDictionary => '辞書';
+
+  @override
+  String get popupScreenWriter => 'ライター';
+
+  @override
+  String get popupScreenHistory => '履歴';
+
+  @override
+  String get popupScreenAI => 'AI';
+
+  @override
+  String get popupScreenSRS => 'SRS';
+
+  @override
+  String get popupNone => 'なし';
+
+  @override
+  String popupActiveTrigger(Object trigger) {
+    return '有効なトリガー: $trigger';
+  }
 }

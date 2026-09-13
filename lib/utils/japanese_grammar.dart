@@ -26,7 +26,9 @@ class KanaKit {
   }
 
   bool isKana(String input) {
-    return input.runes.every((r) => (r >= 0x3040 && r <= 0x309F) || (r >= 0x30A0 && r <= 0x30FF));
+    return input.runes.every(
+      (r) => (r >= 0x3040 && r <= 0x309F) || (r >= 0x30A0 && r <= 0x30FF),
+    );
   }
 }
 
@@ -34,7 +36,8 @@ class JapaneseGrammar {
   static KanaKit? _kanaKit;
   static KanaKit get kanaKit => _kanaKit ??= KanaKit();
 
-  static const String _godanKanaTable = 'あいうえお'
+  static const String _godanKanaTable =
+      'あいうえお'
       'かきくけこ'
       'さしすせそ'
       'たちつてと'
@@ -147,6 +150,44 @@ class JapaneseGrammar {
     'いこう': '行く',
   };
 
+  /// Candidate dictionary forms of [word] including its raw form,
+  /// ordered longest compound-first then deconjugated forms. Used
+  /// by the popup dictionary scan: callers try each candidate in
+  /// the dictionary until one hits.
+  static List<String> popupLookupCandidates(String word) {
+    final out = <String>[];
+    void add(String s) {
+      if (s.isNotEmpty && !out.contains(s)) out.add(s);
+    }
+
+    // longest compound first: full run, then shorter prefixes
+    if (word.length > 2) {
+      add(word);
+      // progressively shorter prefixes (compound + possible okurigana)
+      for (var len = word.length - 1; len >= 2; len--) {
+        final prefix = word.substring(0, len);
+        // only cut at kanji boundaries (compound stems are usually
+        // all-kanji or kanji+kana stems)
+        add(prefix);
+      }
+    } else {
+      add(word);
+    }
+
+    // deconjugated dictionary forms
+    for (final form in deconjugate(word)) {
+      add(form);
+      // compounds of a deconjugated stem
+      if (form.length > 2) {
+        for (var len = form.length - 1; len >= 2; len--) {
+          add(form.substring(0, len));
+        }
+      }
+    }
+
+    return out;
+  }
+
   static List<String> deconjugate(String word) {
     final results = <String>{};
 
@@ -236,7 +277,13 @@ class JapaneseGrammar {
       results.add('$stemする');
     }
 
-    if (word.endsWith('て') && !word.endsWith('って') && !word.endsWith('ないて') && !word.endsWith('んで') && !word.endsWith('いて') && !word.endsWith('いで') && !word.endsWith('して')) {
+    if (word.endsWith('て') &&
+        !word.endsWith('って') &&
+        !word.endsWith('ないて') &&
+        !word.endsWith('んで') &&
+        !word.endsWith('いて') &&
+        !word.endsWith('いで') &&
+        !word.endsWith('して')) {
       final stem = word.substring(0, word.length - 1);
       results.add('$stemる');
     }
@@ -271,7 +318,12 @@ class JapaneseGrammar {
       results.add('$stemする');
     }
 
-    if (word.endsWith('た') && !word.endsWith('った') && !word.endsWith('いた') && !word.endsWith('いだ') && !word.endsWith('んだ') && !word.endsWith('した')) {
+    if (word.endsWith('た') &&
+        !word.endsWith('った') &&
+        !word.endsWith('いた') &&
+        !word.endsWith('いだ') &&
+        !word.endsWith('んだ') &&
+        !word.endsWith('した')) {
       final stem = word.substring(0, word.length - 1);
       results.add('$stemる');
     }
@@ -411,12 +463,18 @@ class JapaneseGrammar {
     final mCol = _kanaAtRowCol(row, 2);
     final uCol = _kanaAtRowCol(row, 2);
 
-    if (bCol.isNotEmpty) results.add('${stem.substring(0, stem.length - 1)}$bColう');
-    if (nCol.isNotEmpty) results.add('${stem.substring(0, stem.length - 1)}${_kanaAtRowCol(row, 2)}う');
-    if (mCol.isNotEmpty) results.add('${stem.substring(0, stem.length - 1)}$mColう');
+    if (bCol.isNotEmpty)
+      results.add('${stem.substring(0, stem.length - 1)}$bColう');
+    if (nCol.isNotEmpty)
+      results.add(
+        '${stem.substring(0, stem.length - 1)}${_kanaAtRowCol(row, 2)}う',
+      );
+    if (mCol.isNotEmpty)
+      results.add('${stem.substring(0, stem.length - 1)}$mColう');
 
     final uKana = _kanaAtRowCol(row, 2);
-    if (uKana.isNotEmpty) results.add('${stem.substring(0, stem.length - 1)}$uKanaう');
+    if (uKana.isNotEmpty)
+      results.add('${stem.substring(0, stem.length - 1)}$uKanaう');
   }
 
   static void _addGodanFromTte(String stem, Set<String> results) {
@@ -455,8 +513,7 @@ class JapaneseGrammar {
         if (hiragana != word) {
           forms.addAll(deconjugate(hiragana));
         }
-      } catch (e) {
-      }
+      } catch (e) {}
     }
 
     return forms.toList();

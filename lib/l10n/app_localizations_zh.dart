@@ -1002,4 +1002,81 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get speechModelDownloading => '正在下载模型…';
+
+  @override
+  String get popupDictionary => '弹窗词典';
+
+  @override
+  String get popupDictionarySubtitle => '任意界面上 yomichan 风格的取词';
+
+  @override
+  String get popupTrigger => '触发方式';
+
+  @override
+  String get popupExtraModifier => '附加修饰键';
+
+  @override
+  String get popupDelay => '弹出延迟';
+
+  @override
+  String get popupScanLength => '扫描长度';
+
+  @override
+  String get popupScanDepth => '扫描深度';
+
+  @override
+  String get popupAutoCopy => '复制词条到剪贴板';
+
+  @override
+  String get popupAutoAnki => '发送到 Anki';
+
+  @override
+  String get popupAnkiDeck => 'Anki 牌组';
+
+  @override
+  String get popupRequireRegex => '要求正则';
+
+  @override
+  String get popupExcludeRegex => '排除正则';
+
+  @override
+  String get popupDetectCompounds => '检测复合词';
+
+  @override
+  String get popupDetectConjugations => '检测变位/活用';
+
+  @override
+  String get popupAllowedScreens => '允许的界面';
+
+  @override
+  String get popupScreenAll => '全部';
+
+  @override
+  String get popupScreenAnalyze => '分析';
+
+  @override
+  String get popupScreenReader => '阅读';
+
+  @override
+  String get popupScreenDictionary => '词典';
+
+  @override
+  String get popupScreenWriter => '写作';
+
+  @override
+  String get popupScreenHistory => '历史';
+
+  @override
+  String get popupScreenAI => 'AI';
+
+  @override
+  String get popupScreenSRS => 'SRS';
+
+  @override
+  String get popupNone => '无';
+
+  @override
+  String popupActiveTrigger(Object trigger) {
+    return '当前触发：$trigger';
+  }
 }

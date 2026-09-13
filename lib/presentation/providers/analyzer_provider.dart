@@ -541,6 +541,44 @@ class AnalyzerProvider extends ChangeNotifier {
 
   // --- Search Methods ---
 
+  /// Direct dictionary lookup for the popup dictionary: returns
+  /// profile-filtered results without touching screen state
+  /// (no history, no isLoading, no searchResults mutation).
+  Future<List<YomichanSearchResult>> lookupWordDirect(String query) async {
+    if (query.trim().isEmpty) return const [];
+    try {
+      final results = await _yomichanService.lookupWord(
+        query,
+        _currentLanguage,
+      );
+      final dictSettings =
+          appState?.yomitanOptions.activeProfile.dictionarySettings;
+      final filtered = <YomichanSearchResult>[];
+      for (final r in results) {
+        final name = r.dictionary?.name ?? '';
+        final s = dictSettings?.forDictionary(name);
+        if (s != null && !s.enabled) continue;
+        if (s != null && !s.hasNoConditions) {
+          final matches = s.matches(
+            term: r.entry.term,
+            reading: r.entry.reading,
+            lookupLanguage: _currentLanguage,
+            tags: [...?r.entry.definitionTags, ...?r.entry.termTags],
+          );
+          if (!matches) continue;
+        }
+        filtered.add(r);
+      }
+      final sorted = dictSettings == null
+          ? filtered
+          : dictSettings.sortResults(filtered, (r) => r.dictionary?.name ?? '');
+      return sorted;
+    } catch (e) {
+      debugPrint('popup lookup error: $e');
+      return const [];
+    }
+  }
+
   Future<void> searchWord(String query) async {
     if (query.trim().isEmpty) return;
     _isSearching = true;

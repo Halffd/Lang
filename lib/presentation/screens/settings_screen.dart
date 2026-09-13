@@ -12,6 +12,7 @@ import 'package:lang/presentation/screens/import_screen.dart';
 import 'package:lang/utils/screen_size.dart';
 import 'package:lang/utils/font_scale.dart';
 import 'package:lang/presentation/widgets/clipboard_settings.dart';
+import 'package:lang/presentation/widgets/popup_dictionary_settings.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -572,6 +573,41 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Popup dictionary settings
+          Card(
+            elevation: 1,
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)!.popupDictionary,
+                    style: TextStyle(
+                      fontSize: fs(context, 15, 'headers'),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    AppLocalizations.of(context)!.popupDictionarySubtitle,
+                    style: TextStyle(
+                      fontSize: fs(context, 11, 'ui'),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const PopupDictionarySettings(),
                 ],
               ),
             ),

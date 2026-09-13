@@ -4,6 +4,7 @@ import 'yomitan_options.dart';
 import 'anki_note_types.dart';
 import 'dictionary_display_options.dart';
 import 'font_settings.dart';
+import 'popup_dictionary_config.dart';
 import '../../data/repositories/translation_service.dart';
 import 'translation_model.dart';
 
@@ -133,6 +134,10 @@ class AppState extends ChangeNotifier {
   bool get speechAutoTranslate => _speechAutoTranslate;
   bool get speechSideBySide => _speechSideBySide;
   String get speechLanguage => _speechLanguage;
+  PopupDictionaryConfig get popupDictionaryConfig =>
+      _popupDictionaryConfig ??= PopupDictionaryConfig.deserialize(
+        _storageService.getStringSync('popup_dictionary_config'),
+      );
   bool get screenshotAutoOcr => _screenshotAutoOcr;
   bool get screenshotCopyOcrText => _screenshotCopyOcrText;
   bool get screenshotCopyImage => _screenshotCopyImage;
@@ -185,6 +190,7 @@ class AppState extends ChangeNotifier {
   bool _speechAutoTranslate = false;
   bool _speechSideBySide = false;
   String _speechLanguage = 'auto'; // whisper language code
+  PopupDictionaryConfig? _popupDictionaryConfig;
   // screenshot settings (ocr screen screenshot tab)
   bool _screenshotAutoOcr = false;
   bool _screenshotCopyOcrText = false;
@@ -538,6 +544,12 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setPopupDictionaryConfig(PopupDictionaryConfig config) {
+    _popupDictionaryConfig = config;
+    _storageService.setString('popup_dictionary_config', config.serialize());
+    notifyListeners();
+  }
+
   void setSpeechLanguage(String value) {
     _speechLanguage = value.isEmpty ? 'auto' : value;
     _storageService.setString('speech_language', _speechLanguage);
@@ -830,12 +842,17 @@ class AppState extends ChangeNotifier {
       _ocrApiKey = _storageService.getStringSync('ocr_api_key') ?? '';
       _ocrApiEndpoint = _storageService.getStringSync('ocr_api_endpoint') ?? '';
       _ocrEngine = _storageService.getStringSync('ocr_engine') ?? '';
-      _speechEngine = _storageService.getStringSync('speech_engine') ?? 'whisper';
-      _speechModelSize = _storageService.getStringSync('speech_model_size') ?? 'base';
+      _speechEngine =
+          _storageService.getStringSync('speech_engine') ?? 'whisper';
+      _speechModelSize =
+          _storageService.getStringSync('speech_model_size') ?? 'base';
       _speechSensitivity = _storageService.getInt('speech_sensitivity') ?? 3;
-      _speechAutoTranslate = _storageService.getBool('speech_auto_translate') ?? false;
-      _speechSideBySide = _storageService.getBool('speech_side_by_side') ?? false;
-      _speechLanguage = _storageService.getStringSync('speech_language') ?? 'auto';
+      _speechAutoTranslate =
+          _storageService.getBool('speech_auto_translate') ?? false;
+      _speechSideBySide =
+          _storageService.getBool('speech_side_by_side') ?? false;
+      _speechLanguage =
+          _storageService.getStringSync('speech_language') ?? 'auto';
       _screenshotAutoOcr =
           _storageService.getBool('screenshot_auto_ocr') ?? false;
       _screenshotCopyOcrText =

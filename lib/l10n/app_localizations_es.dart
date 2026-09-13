@@ -1012,4 +1012,82 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get speechModelDownloading => 'Descargando modelo...';
+
+  @override
+  String get popupDictionary => 'Diccionario emergente';
+
+  @override
+  String get popupDictionarySubtitle =>
+      'Búsqueda estilo yomichan en cualquier pantalla';
+
+  @override
+  String get popupTrigger => 'Disparador';
+
+  @override
+  String get popupExtraModifier => 'Modificador extra';
+
+  @override
+  String get popupDelay => 'Retardo de apertura';
+
+  @override
+  String get popupScanLength => 'Longitud de escaneo';
+
+  @override
+  String get popupScanDepth => 'Profundidad de escaneo';
+
+  @override
+  String get popupAutoCopy => 'Copiar término al portapapeles';
+
+  @override
+  String get popupAutoAnki => 'Enviar a Anki';
+
+  @override
+  String get popupAnkiDeck => 'Mazo de Anki';
+
+  @override
+  String get popupRequireRegex => 'Regex requerido';
+
+  @override
+  String get popupExcludeRegex => 'Regex excluido';
+
+  @override
+  String get popupDetectCompounds => 'Detectar compuestos';
+
+  @override
+  String get popupDetectConjugations => 'Detectar conjugaciones';
+
+  @override
+  String get popupAllowedScreens => 'Pantallas permitidas';
+
+  @override
+  String get popupScreenAll => 'Todas';
+
+  @override
+  String get popupScreenAnalyze => 'Analizar';
+
+  @override
+  String get popupScreenReader => 'Lector';
+
+  @override
+  String get popupScreenDictionary => 'Diccionario';
+
+  @override
+  String get popupScreenWriter => 'Escritor';
+
+  @override
+  String get popupScreenHistory => 'Historial';
+
+  @override
+  String get popupScreenAI => 'IA';
+
+  @override
+  String get popupScreenSRS => 'SRS';
+
+  @override
+  String get popupNone => 'Ninguno';
+
+  @override
+  String popupActiveTrigger(Object trigger) {
+    return 'Disparador activo: $trigger';
+  }
 }

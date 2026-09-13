@@ -6,13 +6,18 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 import 'l10n/app_localizations.dart';
+import 'presentation/widgets/structured_definition.dart';
+import 'utils/font_scale.dart';
+import 'utils/japanese_grammar.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'core/services/audio_service.dart';
 import 'core/services/clipboard_monitor_service.dart';
 import 'core/services/history_service.dart';
+import 'core/services/popup_dictionary_controller.dart';
 import 'core/services/screenshot_service.dart';
 import 'core/services/supabase_service.dart';
 import 'data/services/ocr_service.dart';
+import 'data/services/anki_connect_service.dart';
 import 'core/services/srs_service.dart';
 import 'core/services/realtime_sync_service.dart';
 import 'core/services/storage_service.dart';
@@ -28,7 +33,9 @@ import 'data/datasources/supabase_data_source.dart';
 import 'data/repositories/ai_repository_impl.dart';
 import 'data/repositories/analyzer_repository_impl.dart';
 import 'data/repositories/srs_service.dart';
+import 'domain/entities/dictionary.dart' show YomichanSearchResult;
 import 'domain/entities/app_state.dart';
+import 'domain/entities/popup_dictionary_config.dart';
 import 'presentation/providers/analyzer_provider.dart';
 import 'presentation/providers/ai_provider.dart';
 import 'presentation/providers/supabase_provider.dart';
@@ -135,6 +142,9 @@ void main() async {
       return null;
     }
   };
+  // popup dictionary: global yomichan-style lookup on any screen
+  _setupPopupDictionary(appState, analyzerProvider);
+
   clipboardMonitor.startMonitoring(appState);
   // restart monitor when clipboard settings change
   appState.addListener(() {
@@ -278,6 +288,154 @@ void main() async {
       child: const LangApp(),
     ),
   );
+}
+
+/// Wire the global popup dictionary: config from app state,
+/// lookup through the shared analyzer pipeline (yomichan lookup +
+/// dictionary settings filtering), auto-anki + auto-copy actions.
+void _setupPopupDictionary(AppState appState, AnalyzerProvider analyzer) {
+  final controller = PopupDictionaryController.instance;
+  controller.config = appState.popupDictionaryConfig;
+  controller.currentLearningLanguage = appState.learningLanguage;
+
+  // profile alternation: follow the active SRS profile name
+  appState.addListener(() {
+    controller.updateConfig(appState.popupDictionaryConfig);
+    controller.currentLearningLanguage = appState.learningLanguage;
+  });
+
+  // modifier keys feed the shift/ctrl/alt/meta hover triggers
+  HardwareKeyboard.instance.addHandler((event) {
+    final map = <PhysicalKeyboardKey, PopupExtraModifier>{
+      PhysicalKeyboardKey.shiftLeft: PopupExtraModifier.shift,
+      PhysicalKeyboardKey.shiftRight: PopupExtraModifier.shift,
+      PhysicalKeyboardKey.controlLeft: PopupExtraModifier.ctrl,
+      PhysicalKeyboardKey.controlRight: PopupExtraModifier.ctrl,
+      PhysicalKeyboardKey.altLeft: PopupExtraModifier.alt,
+      PhysicalKeyboardKey.altRight: PopupExtraModifier.alt,
+      PhysicalKeyboardKey.metaLeft: PopupExtraModifier.meta,
+      PhysicalKeyboardKey.metaRight: PopupExtraModifier.meta,
+    };
+    for (final entry in map.entries) {
+      if (event.physicalKey == entry.key) {
+        controller.onModifierKey(event is KeyDownEvent, entry.value);
+        // hover triggers need the current position re-evaluated;
+        // the next hover event handles that
+        break;
+      }
+    }
+    return false;
+  });
+
+  controller.lookupBuilder = (context, lookup) async {
+    final candidates = JapaneseGrammar.popupLookupCandidates(lookup.term);
+    for (final candidate in candidates) {
+      final results = await analyzer.lookupWordDirect(candidate);
+      if (results.isEmpty) continue;
+      if (results.firstOrNull == null) continue;
+
+      final result = results.first;
+      return _PopupDictionaryBody(
+        result: result,
+        sentence: lookup.sentence,
+        onAnki: () async {
+          final config = controller.config;
+          if (!config.autoAnki) return;
+          try {
+            final anki = AnkiConnectService();
+            final deck = config.ankiDeck.isEmpty
+                ? 'Lang Popup'
+                : config.ankiDeck;
+            await anki.addNote(
+              deckName: deck,
+              modelName: 'Lang Popup Note',
+              fields: {
+                'Word': result.entry.term,
+                'Reading': result.entry.reading,
+                'Meaning': result.entry.definitions.take(3).join('; '),
+                'Sentence': lookup.sentence,
+              },
+            );
+          } catch (_) {
+            // anki is best-effort
+          }
+        },
+      );
+    }
+    return null;
+  };
+}
+
+/// Compact popup body for a dictionary result.
+class _PopupDictionaryBody extends StatelessWidget {
+  final YomichanSearchResult result;
+  final String sentence;
+  final VoidCallback onAnki;
+
+  const _PopupDictionaryBody({
+    required this.result,
+    required this.sentence,
+    required this.onAnki,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final entry = result.entry;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                entry.term,
+                style: TextStyle(
+                  fontSize: fs(context, 20, 'kanji'),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            if (entry.reading.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Text(
+                  entry.reading,
+                  style: TextStyle(
+                    fontSize: fs(context, 12, 'words'),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        if (entry.definitions.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Flexible(
+            child: SingleChildScrollView(
+              child: StructuredDefinition(
+                definition: entry.definitions.first,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
+        if (sentence.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Text(
+            sentence,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: fs(context, 10, 'ui'),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 }
 
 class LangApp extends StatelessWidget {
@@ -490,7 +648,7 @@ class LangApp extends StatelessWidget {
             ),
             iconTheme: const IconThemeData(size: 22, color: Colors.white70),
           ),
-          home: const MainNavigationShell(),
+          home: const PopupDictionaryScope(child: MainNavigationShell()),
         );
       },
     );

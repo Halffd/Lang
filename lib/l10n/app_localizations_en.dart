@@ -1009,4 +1009,81 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get speechModelDownloading => 'Downloading model...';
+
+  @override
+  String get popupDictionary => 'Popup Dictionary';
+
+  @override
+  String get popupDictionarySubtitle => 'Yomichan-style lookup on any screen';
+
+  @override
+  String get popupTrigger => 'Trigger';
+
+  @override
+  String get popupExtraModifier => 'Extra modifier';
+
+  @override
+  String get popupDelay => 'Open delay';
+
+  @override
+  String get popupScanLength => 'Scan length';
+
+  @override
+  String get popupScanDepth => 'Scan depth';
+
+  @override
+  String get popupAutoCopy => 'Copy term to clipboard';
+
+  @override
+  String get popupAutoAnki => 'Send to Anki';
+
+  @override
+  String get popupAnkiDeck => 'Anki deck';
+
+  @override
+  String get popupRequireRegex => 'Require regex';
+
+  @override
+  String get popupExcludeRegex => 'Exclude regex';
+
+  @override
+  String get popupDetectCompounds => 'Detect compounds';
+
+  @override
+  String get popupDetectConjugations => 'Detect conjugations';
+
+  @override
+  String get popupAllowedScreens => 'Allowed screens';
+
+  @override
+  String get popupScreenAll => 'All screens';
+
+  @override
+  String get popupScreenAnalyze => 'Analyze';
+
+  @override
+  String get popupScreenReader => 'Reader';
+
+  @override
+  String get popupScreenDictionary => 'Dictionary';
+
+  @override
+  String get popupScreenWriter => 'Writer';
+
+  @override
+  String get popupScreenHistory => 'History';
+
+  @override
+  String get popupScreenAI => 'AI';
+
+  @override
+  String get popupScreenSRS => 'SRS';
+
+  @override
+  String get popupNone => 'None';
+
+  @override
+  String popupActiveTrigger(Object trigger) {
+    return 'Active trigger: $trigger';
+  }
 }
