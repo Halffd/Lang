@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lang/core/services/popup_dictionary_controller.dart';
 import 'package:lang/domain/entities/popup_dictionary_config.dart';
@@ -5,6 +6,7 @@ import 'package:lang/utils/cjk_text_extractor.dart';
 import 'package:lang/utils/japanese_grammar.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('PopupDictionaryConfig', () {
     test('defaults', () {
       final c = PopupDictionaryConfig();
@@ -204,6 +206,21 @@ void main() {
       final controller = PopupDictionaryController.instance;
       controller.onRouteChanged();
       expect(controller.isPopupOpen, isFalse);
+    });
+
+    test('hover trigger fires through onHoverUpdate only', () {
+      // handlePointerEvent must not act on hover events (the scope
+      // dispatches hover to onHoverUpdate); regression guard for
+      // the old double-fire path
+      final controller = PopupDictionaryController.instance;
+      controller.config = PopupDictionaryConfig(trigger: PopupTrigger.hover);
+      controller.onRouteChanged(); // clears any state
+      // no overlay/context in unit tests: _fire is a no-op, this
+      // just asserts the dispatch path does not throw
+      controller.onHoverUpdate(PointerHoverEvent(position: Offset.zero));
+      controller.handlePointerEvent(PointerHoverEvent(position: Offset.zero));
+      expect(controller.isPopupOpen, isFalse);
+      controller.config = PopupDictionaryConfig();
     });
 
     test('updateConfig closes open popup', () {

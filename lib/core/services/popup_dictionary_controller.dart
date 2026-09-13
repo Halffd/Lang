@@ -51,6 +51,10 @@ class PopupDictionaryController with ChangeNotifier {
   int _clickCount = 0;
   bool _popupOpen = false;
 
+  /// Term currently shown in the popup; hover events over the same
+  /// run (mouse micro-movement) must not re-trigger the lookup.
+  String _activeTerm = '';
+
   bool get isPopupOpen => _popupOpen;
 
   void updateConfig(PopupDictionaryConfig newConfig) {
@@ -94,9 +98,8 @@ class PopupDictionaryController with ChangeNotifier {
         // modifier + hover: handled through onModifierKey + onHover
         break;
       case PopupTrigger.hover:
-        if (event is PointerHoverEvent) {
-          _scheduleHover(event.position, immediate: true);
-        }
+        // hover events are dispatched to onHoverUpdate only;
+        // handlePointerEvent ignores them to avoid double firing
         break;
       case PopupTrigger.click:
         if (event is PointerDownEvent && event.buttons & kPrimaryButton != 0) {
@@ -153,7 +156,8 @@ class PopupDictionaryController with ChangeNotifier {
     }
   }
 
-  /// Called for hover triggers after modifiers state changes.
+  /// Called for hover triggers on every hover event (single
+  /// dispatch path: the scope sends hover events here only).
   void onHoverUpdate(PointerHoverEvent event) {
     final trigger = config.effectiveTrigger(_activeProfileName);
     if (trigger.needsModifier || trigger == PopupTrigger.hover) {
@@ -225,7 +229,14 @@ class PopupDictionaryController with ChangeNotifier {
   String? get activeProfileName => _activeProfileName;
 
   Future<void> _fire(Offset position, PointerDeviceKind kind) async {
-    if (_popupOpen) hide();
+    // same-run dedupe: while the popup is open, moving the mouse
+    // within the current term must not re-trigger the lookup
+    if (_popupOpen) {
+      final extractor = CjkTextExtractor();
+      final current = extractor.extractAt(position, config);
+      if (current != null && current.term == _activeTerm) return;
+      hide();
+    }
 
     if (!_currentRouteAllows()) return;
 
@@ -251,6 +262,7 @@ class PopupDictionaryController with ChangeNotifier {
     );
     if (body == null) return;
 
+    _activeTerm = hit.term;
     _showPopup(overlay, position, body, hit.term);
   }
 
@@ -324,6 +336,7 @@ class PopupDictionaryController with ChangeNotifier {
     _entry?.remove();
     _entry = null;
     _popupOpen = false;
+    _activeTerm = '';
     _delayTimer?.cancel();
     notifyListeners();
   }
@@ -405,10 +418,7 @@ class _PopupDictionaryScopeState extends State<PopupDictionaryScope> {
       behavior: HitTestBehavior.translucent,
       onPointerDown: PopupDictionaryController.instance.handlePointerEvent,
       onPointerUp: PopupDictionaryController.instance.handlePointerEvent,
-      onPointerHover: (e) {
-        PopupDictionaryController.instance.handlePointerEvent(e);
-        PopupDictionaryController.instance.onHoverUpdate(e);
-      },
+      onPointerHover: PopupDictionaryController.instance.onHoverUpdate,
       onPointerCancel: PopupDictionaryController.instance.handlePointerEvent,
       child: widget.child,
     );
