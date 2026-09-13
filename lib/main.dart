@@ -297,11 +297,13 @@ void _setupPopupDictionary(AppState appState, AnalyzerProvider analyzer) {
   final controller = PopupDictionaryController.instance;
   controller.config = appState.popupDictionaryConfig;
   controller.currentLearningLanguage = appState.learningLanguage;
+  controller.activeProfileName = appState.currentProfile;
 
   // profile alternation: follow the active SRS profile name
   appState.addListener(() {
     controller.updateConfig(appState.popupDictionaryConfig);
     controller.currentLearningLanguage = appState.learningLanguage;
+    controller.activeProfileName = appState.currentProfile;
   });
 
   // modifier keys feed the shift/ctrl/alt/meta hover triggers
@@ -328,7 +330,12 @@ void _setupPopupDictionary(AppState appState, AnalyzerProvider analyzer) {
   });
 
   controller.lookupBuilder = (context, lookup) async {
-    final candidates = JapaneseGrammar.popupLookupCandidates(lookup.term);
+    final config = controller.config;
+    final candidates = JapaneseGrammar.popupLookupCandidates(
+      lookup.term,
+      detectCompounds: config.detectCompounds,
+      detectConjugations: config.detectConjugations,
+    );
     for (final candidate in candidates) {
       final results = await analyzer.lookupWordDirect(candidate);
       if (results.isEmpty) continue;
@@ -367,7 +374,7 @@ void _setupPopupDictionary(AppState appState, AnalyzerProvider analyzer) {
 }
 
 /// Compact popup body for a dictionary result.
-class _PopupDictionaryBody extends StatelessWidget {
+class _PopupDictionaryBody extends StatefulWidget {
   final YomichanSearchResult result;
   final String sentence;
   final VoidCallback onAnki;
@@ -379,8 +386,21 @@ class _PopupDictionaryBody extends StatelessWidget {
   });
 
   @override
+  State<_PopupDictionaryBody> createState() => _PopupDictionaryBodyState();
+}
+
+class _PopupDictionaryBodyState extends State<_PopupDictionaryBody> {
+  @override
+  void initState() {
+    super.initState();
+    // fire-and-forget: auto-anki runs once when the popup is shown
+    WidgetsBinding.instance.addPostFrameCallback((_) => widget.onAnki());
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final result = widget.result;
     final entry = result.entry;
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -421,10 +441,10 @@ class _PopupDictionaryBody extends StatelessWidget {
             ),
           ),
         ],
-        if (sentence.isNotEmpty) ...[
+        if (widget.sentence.isNotEmpty) ...[
           const SizedBox(height: 6),
           Text(
-            sentence,
+            widget.sentence,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
@@ -676,13 +696,36 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     const AiScreen(),
   ];
 
+  /// Route names for the popup dictionary screen scope filter.
+  static const _routeNames = [
+    'analyze',
+    'search',
+    'reader',
+    'dictionary',
+    'writer',
+    'saved',
+    'history',
+    'srs',
+    'ai',
+  ];
+
   @override
   void initState() {
     super.initState();
     // open on the configured default screen
     final saved = context.read<AppState>().defaultScreenIndex;
     if (saved >= 0 && saved < _screens.length) _currentIndex = saved;
+    _syncPopupRoute(_currentIndex);
     _setupDesktopIPC();
+  }
+
+  void _syncPopupRoute(int index) {
+    final controller = PopupDictionaryController.instance;
+    // hide popups that belong to the previous screen
+    controller.onRouteChanged();
+    controller.currentRouteName = (index >= 0 && index < _routeNames.length)
+        ? _routeNames[index]
+        : '';
   }
 
   void _setupDesktopIPC() {
@@ -691,9 +734,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
     desktopIPC.onStudyRequested = () {
       if (mounted) setState(() => _currentIndex = 7);
+      _syncPopupRoute(7);
     };
     desktopIPC.onReaderRequested = () {
       if (mounted) setState(() => _currentIndex = 2);
+      _syncPopupRoute(2);
     };
     desktopIPC.onQuitRequested = () {
       desktopIPC.dispose();
@@ -703,9 +748,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     desktopIPC.registerCommonHotkeys(
       onShowStudy: () {
         if (mounted) setState(() => _currentIndex = 7);
+        _syncPopupRoute(7);
       },
       onShowReader: () {
         if (mounted) setState(() => _currentIndex = 2);
+        _syncPopupRoute(2);
       },
       onToggleWindow: () {
         desktopIPC.toggleWindow();
@@ -719,7 +766,10 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       body: _screens[_currentIndex],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
-        onDestinationSelected: (index) => setState(() => _currentIndex = index),
+        onDestinationSelected: (index) {
+          setState(() => _currentIndex = index);
+          _syncPopupRoute(index);
+        },
         destinations: [
           NavigationDestination(
             icon: const Icon(Icons.analytics),

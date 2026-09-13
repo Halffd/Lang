@@ -154,33 +154,40 @@ class JapaneseGrammar {
   /// ordered longest compound-first then deconjugated forms. Used
   /// by the popup dictionary scan: callers try each candidate in
   /// the dictionary until one hits.
-  static List<String> popupLookupCandidates(String word) {
+  ///
+  /// [detectCompounds] adds progressively shorter prefixes of the
+  /// run; [detectConjugations] adds deconjugated dictionary forms.
+  static List<String> popupLookupCandidates(
+    String word, {
+    bool detectCompounds = true,
+    bool detectConjugations = true,
+  }) {
     final out = <String>[];
     void add(String s) {
       if (s.isNotEmpty && !out.contains(s)) out.add(s);
     }
 
-    // longest compound first: full run, then shorter prefixes
-    if (word.length > 2) {
-      add(word);
-      // progressively shorter prefixes (compound + possible okurigana)
-      for (var len = word.length - 1; len >= 2; len--) {
-        final prefix = word.substring(0, len);
-        // only cut at kanji boundaries (compound stems are usually
-        // all-kanji or kanji+kana stems)
-        add(prefix);
+    add(word);
+
+    // longest compound first: progressively shorter prefixes
+    // (compound + possible okurigana)
+    if (detectCompounds) {
+      if (word.length > 2) {
+        for (var len = word.length - 1; len >= 2; len--) {
+          add(word.substring(0, len));
+        }
       }
-    } else {
-      add(word);
     }
 
     // deconjugated dictionary forms
-    for (final form in deconjugate(word)) {
-      add(form);
-      // compounds of a deconjugated stem
-      if (form.length > 2) {
-        for (var len = form.length - 1; len >= 2; len--) {
-          add(form.substring(0, len));
+    if (detectConjugations) {
+      for (final form in deconjugate(word)) {
+        add(form);
+        // compounds of a deconjugated stem
+        if (detectCompounds && form.length > 2) {
+          for (var len = form.length - 1; len >= 2; len--) {
+            add(form.substring(0, len));
+          }
         }
       }
     }

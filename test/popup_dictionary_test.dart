@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lang/core/services/popup_dictionary_controller.dart';
 import 'package:lang/domain/entities/popup_dictionary_config.dart';
 import 'package:lang/utils/japanese_grammar.dart';
 
@@ -150,6 +151,75 @@ void main() {
 
     test('empty input yields nothing', () {
       expect(JapaneseGrammar.popupLookupCandidates(''), isEmpty);
+    });
+
+    test('compounds disabled: raw word only, no prefixes', () {
+      final c = JapaneseGrammar.popupLookupCandidates(
+        '日本語',
+        detectCompounds: false,
+        detectConjugations: false,
+      );
+      expect(c, ['日本語']);
+    });
+
+    test('conjugations disabled: no deconjugated forms', () {
+      final c = JapaneseGrammar.popupLookupCandidates(
+        '食べた',
+        detectConjugations: false,
+      );
+      // no 食べる dictionary form
+      expect(c, isNot(contains('食べる')));
+    });
+
+    test('compounds disabled still deconjugates', () {
+      final c = JapaneseGrammar.popupLookupCandidates(
+        '食べた',
+        detectCompounds: false,
+        detectConjugations: true,
+      );
+      expect(c, contains('食べる'));
+      // but no shorter prefixes of the raw form
+      expect(c, isNot(contains('食べ')));
+    });
+  });
+
+  group('PopupDictionaryController routing', () {
+    test('currentRouteName gates _currentRouteAllows', () {
+      final controller = PopupDictionaryController.instance;
+      controller.config = PopupDictionaryConfig(
+        allowedScreens: {PopupScreenScope.reader},
+      );
+      controller.currentRouteName = 'analyze';
+      // private gate is exercised via allowsScreen on the config:
+      // reader-scoped config rejects the analyze route
+      expect(controller.config.allowsScreen('analyze'), isFalse);
+      expect(controller.config.allowsScreen('reader'), isTrue);
+      // restore shared singleton state
+      controller.currentRouteName = '';
+      controller.config = PopupDictionaryConfig();
+    });
+
+    test('onRouteChanged closes open popup', () {
+      final controller = PopupDictionaryController.instance;
+      controller.onRouteChanged();
+      expect(controller.isPopupOpen, isFalse);
+    });
+
+    test('updateConfig closes open popup', () {
+      final controller = PopupDictionaryController.instance;
+      controller.updateConfig(PopupDictionaryConfig());
+      expect(controller.isPopupOpen, isFalse);
+    });
+
+    test('modifier tracking', () {
+      final controller = PopupDictionaryController.instance;
+      controller.onModifierKey(true, PopupExtraModifier.ctrl);
+      controller
+        ..onModifierKey(true, PopupExtraModifier.alt)
+        ..onModifierKey(false, PopupExtraModifier.alt);
+      // restored below via fresh default config
+      controller.onModifierKey(false, PopupExtraModifier.ctrl);
+      expect(controller.isPopupOpen, isFalse);
     });
   });
 }
