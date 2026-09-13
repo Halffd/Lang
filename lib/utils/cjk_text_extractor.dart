@@ -26,7 +26,7 @@ class CjkTextExtractor {
     final textPosition = paragraph.getPositionForOffset(local);
     final fullText = paragraph.text.toPlainText();
 
-    final hit = _extractAtPosition(fullText, textPosition.offset, config);
+    final hit = extractAtPosition(fullText, textPosition.offset, config);
     return hit;
   }
 
@@ -57,8 +57,13 @@ class CjkTextExtractor {
   }
 
   /// Core scan: word at [index] in [text], honoring scan length,
-  /// compound + conjugation candidates.
-  CjkHit? _extractAtPosition(
+  /// depth, compound + conjugation candidates.
+  ///
+  /// Depth 0 returns only the run at the cursor. Depth N also
+  /// tries the run starting at offsets 1..N from the cursor
+  /// (yomichan deep scanning: match text near but not exactly
+  /// under the pointer).
+  CjkHit? extractAtPosition(
     String text,
     int index,
     PopupDictionaryConfig config,
@@ -66,20 +71,32 @@ class CjkTextExtractor {
     if (text.isEmpty || index < 0 || index >= text.length) return null;
 
     final scanLength = config.scanLength.clamp(1, 64);
+    final scanDepth = config.scanDepth.clamp(0, 32);
 
-    // character run around the cursor, capped by the scan limit
-    final (start, end) = _runBounds(text, index, scanLength);
+    // try the run at the cursor first, then runs at increasing
+    // offsets when the depth allows
+    for (var offset = 0; offset <= scanDepth; offset++) {
+      final at = index + offset;
+      if (at >= text.length) break;
+      final hit = _runAt(text, at, scanLength, config);
+      if (hit != null) return hit;
+    }
+    return null;
+  }
+
+  /// Run starting exactly at [at] (cursor inside it), null when
+  /// gates reject it.
+  CjkHit? _runAt(
+    String text,
+    int at,
+    int scanLength,
+    PopupDictionaryConfig config,
+  ) {
+    final (start, end) = _runBounds(text, at, scanLength);
     final candidate = text.substring(start, end);
-
+    if (candidate.isEmpty) return null;
     if (!config.allowsText(candidate)) return null;
-
-    // when compound/conjugation detection is off the candidate is
-    // taken as-is; the lookup callback receives the primary term
-    // with alternatives embedded via JapaneseGrammar
-    final term = candidate;
-
-    final sentence = _sentenceAround(text, start, end);
-    return CjkHit(term: term, sentence: sentence);
+    return CjkHit(term: candidate, sentence: _sentenceAround(text, start, end));
   }
 
   /// Character run around [index]: contiguous CJK chars, or a
@@ -143,7 +160,6 @@ class CjkTextExtractor {
 
   static bool _isBreak(String ch) =>
       ch.contains(RegExp(r'[\s。、！？.,;:!?"()\[\]「」『』・…]'));
-
 
   /// Sentence containing [start,end), bounded by terminators.
   String _sentenceAround(String text, int start, int end) {

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import 'package:lang/core/services/history_service.dart';
@@ -266,17 +265,24 @@ class PopupDictionaryController with ChangeNotifier {
     String term,
   ) {
     _entry = OverlayEntry(
-      builder: (context) => Positioned(
-        left: position.dx,
-        top: position.dy + 18,
-        child: FractionalTranslation(
-          translation: const Offset(-0.4, 0),
-          child: CompositedTransformFollower(
-            link: LayerLink(),
-            child: _PopupCard(body: body, onDismiss: hide),
-          ),
-        ),
-      ),
+      builder: (context) {
+        // clamp so the card stays on screen: measure the view,
+        // keep the 320x380-max card fully visible
+        final view = View.of(context);
+        final screen = Offset(
+          view.physicalSize.width / view.devicePixelRatio,
+          view.physicalSize.height / view.devicePixelRatio,
+        );
+        const cardWidth = 320.0 + 16.0; // width + horizontal margins
+        const cardHeight = 380.0 + 16.0; // max height + margins
+        final left = position.dx.clamp(0.0, screen.dx - cardWidth);
+        final top = (position.dy + 18).clamp(0.0, screen.dy - cardHeight);
+        return Positioned(
+          left: left,
+          top: top,
+          child: _PopupCard(body: body, onDismiss: hide),
+        );
+      },
     );
     overlay.insert(_entry!);
     _popupOpen = true;
@@ -407,10 +413,4 @@ class _PopupDictionaryScopeState extends State<PopupDictionaryScope> {
       child: widget.child,
     );
   }
-}
-
-/// Hook for tests: pump frames after popup actions.
-@visibleForTesting
-void pumpPopupFrame() {
-  SchedulerBinding.instance.scheduleFrame();
 }

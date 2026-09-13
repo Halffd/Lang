@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lang/core/services/popup_dictionary_controller.dart';
 import 'package:lang/domain/entities/popup_dictionary_config.dart';
+import 'package:lang/utils/cjk_text_extractor.dart';
 import 'package:lang/utils/japanese_grammar.dart';
 
 void main() {
@@ -220,6 +221,58 @@ void main() {
       // restored below via fresh default config
       controller.onModifierKey(false, PopupExtraModifier.ctrl);
       expect(controller.isPopupOpen, isFalse);
+    });
+  });
+
+  group('CjkTextExtractor deep scan', () {
+    final extractor = CjkTextExtractor();
+
+    test('depth 0: run at the cursor only', () {
+      final config = PopupDictionaryConfig(
+        scanLength: 16,
+        scanDepth: 0,
+        requireRegex: '[\\u3040-\\u30ff]', // kana only gate
+      );
+      // pure kanji run: rejected by the kana gate at depth 0
+      final text = '読解漢字問題終了';
+      final hit = extractor.extractAtPosition(text, 2, config);
+      expect(hit, isNull);
+    });
+
+    test('depth N walks forward until a run passes the gates', () {
+      final config = PopupDictionaryConfig(
+        scanLength: 16,
+        scanDepth: 8,
+        requireRegex: '[\\u3040-\\u30ff]',
+      );
+      final text = 'これは漢字テストです';
+      // cursor on 漢; depth 8 reaches テスト which contains kana
+      final hit = extractor.extractAtPosition(text, 3, config);
+      expect(hit, isNotNull);
+      expect(hit!.term, contains('テスト'));
+    });
+
+    test('scan length caps the run', () {
+      final config = PopupDictionaryConfig(scanLength: 2, scanDepth: 0);
+      final text = '日本語のテスト';
+      final hit = extractor.extractAtPosition(text, 0, config);
+      expect(hit, isNotNull);
+      expect(hit!.term.length, lessThanOrEqualTo(2));
+    });
+
+    test('sentence extraction spans the term', () {
+      final config = PopupDictionaryConfig(scanLength: 16, scanDepth: 0);
+      final text = '前置き。日本語のテスト。後続';
+      final hit = extractor.extractAtPosition(text, 4, config);
+      expect(hit, isNotNull);
+      expect(hit!.sentence, contains('日本語のテスト'));
+    });
+
+    test('out of range index returns null', () {
+      final config = PopupDictionaryConfig();
+      expect(extractor.extractAtPosition('abc', -1, config), isNull);
+      expect(extractor.extractAtPosition('abc', 3, config), isNull);
+      expect(extractor.extractAtPosition('', 0, config), isNull);
     });
   });
 }
