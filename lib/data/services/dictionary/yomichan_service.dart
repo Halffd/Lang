@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:sqflite/sqflite.dart';
+import 'package:lang/core/services/audio_service.dart';
+import 'package:lang/data/datasources/note_local_data_source.dart';
 import 'package:lang/domain/entities/dictionary.dart';
 import 'package:lang/domain/entities/analyzed_word.dart';
 import 'package:lang/database/database_manager.dart';
@@ -297,29 +301,31 @@ class YomichanService {
     );
   }
 
+  final NoteLocalDataSource _notes = NoteLocalDataSource();
+
   /// Save a word to favorites
   Future<void> saveWord(String word, {String? sentence}) async {
-    // TODO: Implement saving to user dictionary
+    await _notes.addWord(word, sentence: sentence);
   }
 
   /// Remove a saved word
   Future<void> removeSavedWord(String word) async {
-    // TODO: Implement removing from user dictionary
+    await _notes.removeWord(word);
   }
 
   /// Add word to history
   Future<void> addToHistory(String word) async {
-    // TODO: Implement history tracking
+    await _notes.addToHistory(word);
   }
 
   /// Get saved words
   Future<List<Map<String, dynamic>>> getSavedWords() async {
-    return [];
+    return _notes.getSavedEntries();
   }
 
   /// Get history
   Future<List<String>> getHistory() async {
-    return [];
+    return _notes.getHistory();
   }
 
   /// Initialize service
@@ -332,8 +338,10 @@ class YomichanService {
     }
   }
 
-  /// Play audio for text
+  /// Play audio for text via the app audio service
   Future<void> playAudio(String text, String language) async {
-    // TODO: Implement audio playback
+    final audio = AudioService();
+    await audio.init();
+    await audio.play(text, language);
   }
 }
