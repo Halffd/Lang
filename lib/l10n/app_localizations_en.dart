@@ -951,4 +951,62 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get writerAutoConvertNote =>
       'Script conversion is on — typed romaji converts to native script in analyze/search fields';
+
+  @override
+  String get categorySpeech => 'Speech';
+
+  @override
+  String get activitySpeech => 'Speech transcription';
+
+  @override
+  String get speechTab => 'Speech';
+
+  @override
+  String get speechRecord => 'Record';
+
+  @override
+  String get speechStop => 'Stop';
+
+  @override
+  String get speechTranscribing => 'Transcribing...';
+
+  @override
+  String get speechLanguage => 'Language';
+
+  @override
+  String get speechAuto => 'Auto detect';
+
+  @override
+  String get speechEngine => 'Engine';
+
+  @override
+  String get speechModel => 'Model';
+
+  @override
+  String get speechSensitivity => 'Sensitivity';
+
+  @override
+  String get speechAutoTranslate => 'Auto translate';
+
+  @override
+  String get speechSideBySide => 'Side by side';
+
+  @override
+  String get speechCopyAll => 'Copy all';
+
+  @override
+  String get speechClear => 'Clear session';
+
+  @override
+  String get speechPickFile => 'Transcribe file';
+
+  @override
+  String get speechEmpty => 'Nothing transcribed yet';
+
+  @override
+  String get speechNoEngine =>
+      'No speech engine found (install whisper-cli or parakeet-cli)';
+
+  @override
+  String get speechModelDownloading => 'Downloading model...';
 }

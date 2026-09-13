@@ -127,6 +127,12 @@ class AppState extends ChangeNotifier {
   String get ocrApiKey => _ocrApiKey;
   String get ocrApiEndpoint => _ocrApiEndpoint;
   String get ocrEngine => _ocrEngine;
+  String get speechEngine => _speechEngine;
+  String get speechModelSize => _speechModelSize;
+  int get speechSensitivity => _speechSensitivity;
+  bool get speechAutoTranslate => _speechAutoTranslate;
+  bool get speechSideBySide => _speechSideBySide;
+  String get speechLanguage => _speechLanguage;
   bool get screenshotAutoOcr => _screenshotAutoOcr;
   bool get screenshotCopyOcrText => _screenshotCopyOcrText;
   bool get screenshotCopyImage => _screenshotCopyImage;
@@ -172,6 +178,13 @@ class AppState extends ChangeNotifier {
   String _ocrApiEndpoint = '';
   // preferred OCR engine (ocr engine name; empty = mlKit default)
   String _ocrEngine = '';
+  // speech-to-text settings
+  String _speechEngine = 'whisper'; // whisper | parakeet
+  String _speechModelSize = 'base'; // tiny/base/small/...
+  int _speechSensitivity = 3; // 1-5 beam size
+  bool _speechAutoTranslate = false;
+  bool _speechSideBySide = false;
+  String _speechLanguage = 'auto'; // whisper language code
   // screenshot settings (ocr screen screenshot tab)
   bool _screenshotAutoOcr = false;
   bool _screenshotCopyOcrText = false;
@@ -494,6 +507,43 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setSpeechEngine(String value) {
+    if (value != 'whisper' && value != 'parakeet') return;
+    _speechEngine = value;
+    _storageService.setString('speech_engine', value);
+    notifyListeners();
+  }
+
+  void setSpeechModelSize(String value) {
+    _speechModelSize = value;
+    _storageService.setString('speech_model_size', value);
+    notifyListeners();
+  }
+
+  void setSpeechSensitivity(int value) {
+    _speechSensitivity = value.clamp(1, 5);
+    _storageService.setInt('speech_sensitivity', _speechSensitivity);
+    notifyListeners();
+  }
+
+  void setSpeechAutoTranslate(bool value) {
+    _speechAutoTranslate = value;
+    _storageService.setBool('speech_auto_translate', value);
+    notifyListeners();
+  }
+
+  void setSpeechSideBySide(bool value) {
+    _speechSideBySide = value;
+    _storageService.setBool('speech_side_by_side', value);
+    notifyListeners();
+  }
+
+  void setSpeechLanguage(String value) {
+    _speechLanguage = value.isEmpty ? 'auto' : value;
+    _storageService.setString('speech_language', _speechLanguage);
+    notifyListeners();
+  }
+
   void setScreenshotAutoOcr(bool value) {
     _screenshotAutoOcr = value;
     _storageService.setBool('screenshot_auto_ocr', value);
@@ -780,6 +830,12 @@ class AppState extends ChangeNotifier {
       _ocrApiKey = _storageService.getStringSync('ocr_api_key') ?? '';
       _ocrApiEndpoint = _storageService.getStringSync('ocr_api_endpoint') ?? '';
       _ocrEngine = _storageService.getStringSync('ocr_engine') ?? '';
+      _speechEngine = _storageService.getStringSync('speech_engine') ?? 'whisper';
+      _speechModelSize = _storageService.getStringSync('speech_model_size') ?? 'base';
+      _speechSensitivity = _storageService.getInt('speech_sensitivity') ?? 3;
+      _speechAutoTranslate = _storageService.getBool('speech_auto_translate') ?? false;
+      _speechSideBySide = _storageService.getBool('speech_side_by_side') ?? false;
+      _speechLanguage = _storageService.getStringSync('speech_language') ?? 'auto';
       _screenshotAutoOcr =
           _storageService.getBool('screenshot_auto_ocr') ?? false;
       _screenshotCopyOcrText =

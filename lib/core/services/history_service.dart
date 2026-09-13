@@ -14,6 +14,7 @@ enum HistoryCategory {
   action,
   analysis,
   clipboard,
+  speech,
 }
 
 /// One recorded history item.

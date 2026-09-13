@@ -1901,6 +1901,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Script conversion is on — typed romaji converts to native script in analyze/search fields'**
   String get writerAutoConvertNote;
+
+  /// No description provided for @categorySpeech.
+  ///
+  /// In en, this message translates to:
+  /// **'Speech'**
+  String get categorySpeech;
+
+  /// No description provided for @activitySpeech.
+  ///
+  /// In en, this message translates to:
+  /// **'Speech transcription'**
+  String get activitySpeech;
+
+  /// No description provided for @speechTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Speech'**
+  String get speechTab;
+
+  /// No description provided for @speechRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Record'**
+  String get speechRecord;
+
+  /// No description provided for @speechStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get speechStop;
+
+  /// No description provided for @speechTranscribing.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcribing...'**
+  String get speechTranscribing;
+
+  /// No description provided for @speechLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get speechLanguage;
+
+  /// No description provided for @speechAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto detect'**
+  String get speechAuto;
+
+  /// No description provided for @speechEngine.
+  ///
+  /// In en, this message translates to:
+  /// **'Engine'**
+  String get speechEngine;
+
+  /// No description provided for @speechModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Model'**
+  String get speechModel;
+
+  /// No description provided for @speechSensitivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Sensitivity'**
+  String get speechSensitivity;
+
+  /// No description provided for @speechAutoTranslate.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto translate'**
+  String get speechAutoTranslate;
+
+  /// No description provided for @speechSideBySide.
+  ///
+  /// In en, this message translates to:
+  /// **'Side by side'**
+  String get speechSideBySide;
+
+  /// No description provided for @speechCopyAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy all'**
+  String get speechCopyAll;
+
+  /// No description provided for @speechClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear session'**
+  String get speechClear;
+
+  /// No description provided for @speechPickFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcribe file'**
+  String get speechPickFile;
+
+  /// No description provided for @speechEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing transcribed yet'**
+  String get speechEmpty;
+
+  /// No description provided for @speechNoEngine.
+  ///
+  /// In en, this message translates to:
+  /// **'No speech engine found (install whisper-cli or parakeet-cli)'**
+  String get speechNoEngine;
+
+  /// No description provided for @speechModelDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading model...'**
+  String get speechModelDownloading;
 }
 
 class _AppLocalizationsDelegate

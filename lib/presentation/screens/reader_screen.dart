@@ -6,6 +6,7 @@ import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/presentation/screens/document_reader_screen.dart';
 import 'package:lang/presentation/screens/screenshot_tab.dart';
+import 'package:lang/presentation/screens/speech_tab.dart';
 import 'package:lang/presentation/widgets/clipboard_settings.dart';
 import 'package:lang/utils/font_scale.dart';
 
@@ -26,7 +27,7 @@ class _ReaderScreenState extends State<ReaderScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     HistoryService.instance.load();
   }
 
@@ -58,6 +59,10 @@ class _ReaderScreenState extends State<ReaderScreen>
               icon: const Icon(Icons.content_paste, size: 18),
               text: l10n.readerTabClipboard,
             ),
+            Tab(
+              icon: const Icon(Icons.mic, size: 18),
+              text: l10n.speechTab,
+            ),
           ],
         ),
       ),
@@ -67,6 +72,7 @@ class _ReaderScreenState extends State<ReaderScreen>
           DocumentReaderScreen(),
           ScreenshotTab(),
           _ClipboardTab(),
+          SpeechTab(),
         ],
       ),
     );

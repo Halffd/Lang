@@ -935,4 +935,62 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get writerAutoConvertNote => '文字変換はオン — ローマ字は解析/検索フィールドで現地文字に変換されます';
+
+  @override
+  String get categorySpeech => '音声';
+
+  @override
+  String get activitySpeech => '音声書き起こし';
+
+  @override
+  String get speechTab => '音声';
+
+  @override
+  String get speechRecord => '録音';
+
+  @override
+  String get speechStop => '停止';
+
+  @override
+  String get speechTranscribing => '書き起こし中…';
+
+  @override
+  String get speechLanguage => '言語';
+
+  @override
+  String get speechAuto => '自動検出';
+
+  @override
+  String get speechEngine => 'エンジン';
+
+  @override
+  String get speechModel => 'モデル';
+
+  @override
+  String get speechSensitivity => '感度';
+
+  @override
+  String get speechAutoTranslate => '自動翻訳';
+
+  @override
+  String get speechSideBySide => '並べて表示';
+
+  @override
+  String get speechCopyAll => 'すべてコピー';
+
+  @override
+  String get speechClear => 'セッションを消去';
+
+  @override
+  String get speechPickFile => 'ファイルを書き起こす';
+
+  @override
+  String get speechEmpty => 'まだ書き起こしがありません';
+
+  @override
+  String get speechNoEngine =>
+      '音声エンジンが見つかりません（whisper-cli か parakeet-cli をインストール）';
+
+  @override
+  String get speechModelDownloading => 'モデルをダウンロード中…';
 }

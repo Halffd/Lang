@@ -98,6 +98,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   l10n.categoryClipboard,
                   Icons.content_copy,
                 ),
+                _chip(
+                  HistoryCategory.speech,
+                  l10n.categorySpeech,
+                  Icons.mic,
+                ),
               ],
             ),
           ),
@@ -193,6 +198,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
         Colors.lightGreen,
         l10n.activityClipboard,
       ),
+      HistoryCategory.speech => (
+        Icons.mic,
+        Colors.purple,
+        l10n.activitySpeech,
+      ),
     };
 
     final time = DateFormat.MMMd().add_Hm().format(item.time);
@@ -281,6 +291,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         }
         break;
       case HistoryCategory.analysis:
+      case HistoryCategory.speech:
         // re-run analysis: full text is stored in subtitle
         if (item.subtitle != null && item.subtitle!.isNotEmpty) {
           final provider = context.read<AnalyzerProvider>();
@@ -356,6 +367,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       HistoryCategory.action => l10n.categoryActions,
       HistoryCategory.analysis => l10n.categoryAnalysis,
       HistoryCategory.clipboard => l10n.categoryClipboard,
+      HistoryCategory.speech => l10n.categorySpeech,
     };
     final confirmed = await showDialog<bool>(
       context: context,

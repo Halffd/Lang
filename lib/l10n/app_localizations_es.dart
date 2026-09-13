@@ -954,4 +954,62 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get writerAutoConvertNote =>
       'Conversión de escritura activada — el romaji se convierte en los campos de analizar/buscar';
+
+  @override
+  String get categorySpeech => 'Voz';
+
+  @override
+  String get activitySpeech => 'Transcripción de voz';
+
+  @override
+  String get speechTab => 'Voz';
+
+  @override
+  String get speechRecord => 'Grabar';
+
+  @override
+  String get speechStop => 'Detener';
+
+  @override
+  String get speechTranscribing => 'Transcribiendo...';
+
+  @override
+  String get speechLanguage => 'Idioma';
+
+  @override
+  String get speechAuto => 'Detección automática';
+
+  @override
+  String get speechEngine => 'Motor';
+
+  @override
+  String get speechModel => 'Modelo';
+
+  @override
+  String get speechSensitivity => 'Sensibilidad';
+
+  @override
+  String get speechAutoTranslate => 'Traducción automática';
+
+  @override
+  String get speechSideBySide => 'Lado a lado';
+
+  @override
+  String get speechCopyAll => 'Copiar todo';
+
+  @override
+  String get speechClear => 'Limpiar sesión';
+
+  @override
+  String get speechPickFile => 'Transcribir archivo';
+
+  @override
+  String get speechEmpty => 'Nada transcrito aún';
+
+  @override
+  String get speechNoEngine =>
+      'No se encontró motor de voz (instala whisper-cli o parakeet-cli)';
+
+  @override
+  String get speechModelDownloading => 'Descargando modelo...';
 }

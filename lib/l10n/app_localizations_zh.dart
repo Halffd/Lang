@@ -945,4 +945,61 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get writerAutoConvertNote => '文字转换已开启——罗马字在分析/搜索输入框自动转换为原文';
+
+  @override
+  String get categorySpeech => '语音';
+
+  @override
+  String get activitySpeech => '语音转写';
+
+  @override
+  String get speechTab => '语音';
+
+  @override
+  String get speechRecord => '录音';
+
+  @override
+  String get speechStop => '停止';
+
+  @override
+  String get speechTranscribing => '转写中…';
+
+  @override
+  String get speechLanguage => '语言';
+
+  @override
+  String get speechAuto => '自动检测';
+
+  @override
+  String get speechEngine => '引擎';
+
+  @override
+  String get speechModel => '模型';
+
+  @override
+  String get speechSensitivity => '灵敏度';
+
+  @override
+  String get speechAutoTranslate => '自动翻译';
+
+  @override
+  String get speechSideBySide => '并排显示';
+
+  @override
+  String get speechCopyAll => '复制全部';
+
+  @override
+  String get speechClear => '清除会话';
+
+  @override
+  String get speechPickFile => '转写文件';
+
+  @override
+  String get speechEmpty => '还没有转写内容';
+
+  @override
+  String get speechNoEngine => '未找到语音引擎（请安装 whisper-cli 或 parakeet-cli）';
+
+  @override
+  String get speechModelDownloading => '正在下载模型…';
 }
