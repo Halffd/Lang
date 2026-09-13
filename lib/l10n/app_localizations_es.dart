@@ -12,10 +12,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get about => 'Acerca de';
 
   @override
-  String get add => 'Add';
+  String get add => 'Añadir';
 
   @override
-  String get addToFavorites => 'Add to favorites';
+  String get addToFavorites => 'Añadir a favoritos';
 
   @override
   String get advancedSettings => 'Configuración Avanzada';
@@ -24,31 +24,31 @@ class AppLocalizationsEs extends AppLocalizations {
   String get afrikaans => 'Afrikáans';
 
   @override
-  String get ai => 'AI';
+  String get ai => 'IA';
 
   @override
-  String get aiAssistant => 'AI Assistant';
+  String get aiAssistant => 'Asistente de IA';
 
   @override
-  String get aiBreakdown => 'AI Breakdown';
+  String get aiBreakdown => 'Análisis con IA';
 
   @override
-  String get aiChatTitle => 'AI Chat';
+  String get aiChatTitle => 'Chat de IA';
 
   @override
-  String get aiInsights => 'AI Insights';
+  String get aiInsights => 'Perspectivas de IA';
 
   @override
-  String get analyze => 'Analyze';
+  String get analyze => 'Analizar';
 
   @override
-  String get analyzeIndividualCharacters => 'Analyze Individual Characters';
+  String get analyzeIndividualCharacters => 'Analizar caracteres individuales';
 
   @override
-  String get analyzeScreenTitle => 'Analyze Screen';
+  String get analyzeScreenTitle => 'Pantalla de análisis';
 
   @override
-  String get analyzeText => 'Analyze Text';
+  String get analyzeText => 'Analizar texto';
 
   @override
   String get ankiProfiles => 'Anki y Perfiles';
@@ -67,11 +67,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String areYouSureYouWantToDelete(Object title) {
-    return 'Are you sure you want to delete?';
+    return '¿Seguro que quieres eliminar?';
   }
 
   @override
-  String get askAnything => 'Ask anything';
+  String get askAnything => 'Pregunta lo que quieras';
 
   @override
   String get autoDetectProcessText =>
@@ -102,13 +102,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get autoTranslation => 'Traducción Automática';
 
   @override
-  String get breakdown => 'Breakdown';
+  String get breakdown => 'Desglose';
 
   @override
   String get bulgarian => 'Búlgaro';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'Cancelar';
 
   @override
   String get catalan => 'Catalán';
@@ -117,16 +117,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get chatGptMock => 'ChatGPT';
 
   @override
-  String get chatWithAI => 'Chat with AI';
+  String get chatWithAI => 'Chatea con la IA';
 
   @override
   String get chinese => 'Chino';
 
   @override
-  String get clearFilters => 'Clear Filters';
+  String get clearFilters => 'Limpiar filtros';
 
   @override
-  String get clearHistory => 'Clear History';
+  String get clearHistory => 'Limpiar historial';
 
   @override
   String get clipboardAutoDetect => 'Detección Automática del Portapapeles';
@@ -135,13 +135,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get clipboardMonitor => 'Monitor del Portapapeles';
 
   @override
-  String get column => 'Column';
+  String get column => 'Columna';
 
   @override
-  String get columns => 'Columns';
+  String get columns => 'Columnas';
 
   @override
-  String get context => 'Context';
+  String get context => 'Contexto';
 
   @override
   String get convertRomajiToKana => 'Convertir romaji a kana mientras escribes';
@@ -196,10 +196,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Seleccionar qué pantalla mostrar al iniciar la aplicación';
 
   @override
-  String get definitionsHidden => 'Definitions hidden';
+  String get definitionsHidden => 'Definiciones ocultas';
 
   @override
-  String get delete => 'Delete';
+  String get delete => 'Eliminar';
 
   @override
   String get dictionaries => 'Diccionarios';
@@ -227,13 +227,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get enhancedFeatures => 'Características Mejoradas';
 
   @override
-  String get enterTextToAnalyze => 'Enter text to analyze';
+  String get enterTextToAnalyze => 'Introduce texto para analizar';
 
   @override
   String get estonian => 'Estonio';
 
   @override
-  String get favorites => 'Favorites';
+  String get favorites => 'Favoritos';
 
   @override
   String get filipino => 'Filipino';
@@ -260,23 +260,23 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String frequency(Object freq) {
-    return 'Frequency: $freq';
+    return 'Frecuencia: $freq';
   }
 
   @override
-  String get frequencyHighToLow => 'Frequency High to Low';
+  String get frequencyHighToLow => 'Frecuencia de alta a baja';
 
   @override
-  String get frequencyLowToHigh => 'Frequency Low to High';
+  String get frequencyLowToHigh => 'Frecuencia de baja a alta';
 
   @override
-  String get fullTranslation => 'Full Translation';
+  String get fullTranslation => 'Traducción completa';
 
   @override
   String get generalSettings => 'Configuración General';
 
   @override
-  String get generateImage => 'Generate Image';
+  String get generateImage => 'Generar imagen';
 
   @override
   String get german => 'Alemán';
@@ -285,38 +285,38 @@ class AppLocalizationsEs extends AppLocalizations {
   String get greek => 'Griego';
 
   @override
-  String get group => 'Group';
+  String get group => 'Agrupar';
 
   @override
-  String get groupByFirstChar => 'Group by First Character';
+  String get groupByFirstChar => 'Agrupar por primer carácter';
 
   @override
-  String get groupByFrequency => 'Group by Frequency';
+  String get groupByFrequency => 'Agrupar por frecuencia';
 
   @override
-  String get groupByKanji => 'Group by Kanji';
+  String get groupByKanji => 'Agrupar por kanji';
 
   @override
-  String get hasDefinition => 'Has Definition';
+  String get hasDefinition => 'Con definición';
 
   @override
-  String get hasKanji => 'Has Kanji';
+  String get hasKanji => 'Con kanji';
 
   @override
-  String get hasReading => 'Has Reading';
+  String get hasReading => 'Con lectura';
 
   @override
   String get hebrew => 'Hebreo';
 
   @override
-  String get hideDefinitions => 'Hide Definitions';
+  String get hideDefinitions => 'Ocultar definiciones';
 
   @override
   String get hideNavigationBottom =>
       'Ocultar barra de navegación cuando el mouse no está cerca del fondo';
 
   @override
-  String get highFrequency => 'High Frequency (1-1K)';
+  String get highFrequency => 'Frecuencia alta (1-1K)';
 
   @override
   String get highlightParticles => 'Resaltar partículas japonesas en el texto';
@@ -325,10 +325,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get hindi => 'Hindi';
 
   @override
-  String get history => 'History';
+  String get history => 'Historial';
 
   @override
-  String get historyTitle => 'History';
+  String get historyTitle => 'Historial';
 
   @override
   String get hungarian => 'Húngaro';
@@ -346,10 +346,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get japanese => 'Japonés';
 
   @override
-  String get japaneseKanjiOriginAndUsage => 'Japanese kanji origin and usage';
+  String get japaneseKanjiOriginAndUsage => 'Origen y uso de kanji japoneses';
 
   @override
-  String get kanjiBreakdown => 'Kanji Breakdown';
+  String get kanjiBreakdown => 'Desglose de kanji';
 
   @override
   String get keyboardShortcuts => 'Atajos de Teclado';
@@ -376,13 +376,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get lithuanian => 'Lituano';
 
   @override
-  String get localDictionary => 'Local Dictionary';
+  String get localDictionary => 'Diccionario local';
 
   @override
-  String get lowFrequency => 'Low Frequency';
+  String get lowFrequency => 'Frecuencia baja';
 
   @override
-  String get mediumFrequency => 'Medium Frequency (1K-5K)';
+  String get mediumFrequency => 'Frecuencia media (1K-5K)';
 
   @override
   String get minFrequency => 'Frecuencia Mínima';
@@ -392,83 +392,83 @@ class AppLocalizationsEs extends AppLocalizations {
       'Una herramienta de aprendizaje de idiomas multilingüe con funciones de diccionario y guardado de palabras.';
 
   @override
-  String get collapse => 'Collapse';
+  String get collapse => 'Colapsar';
 
   @override
-  String get expand => 'Expand';
+  String get expand => 'Expandir';
 
   @override
-  String get filter => 'Filter';
+  String get filter => 'Filtrar';
 
   @override
-  String get first => 'First';
+  String get first => 'Primero';
 
   @override
-  String get last => 'Last';
+  String get last => 'Último';
 
   @override
-  String get navFirstLast => 'First / Last';
+  String get navFirstLast => 'Primero / Último';
 
   @override
-  String get navPrevNext => 'Prev / Next';
+  String get navPrevNext => 'Ant. / Sig.';
 
   @override
-  String get next => 'Next';
+  String get next => 'Siguiente';
 
   @override
-  String get noFavoritesYet => 'No favorites yet';
+  String get noFavoritesYet => 'Aún no hay favoritos';
 
   @override
-  String get noGroup => 'No Group';
+  String get noGroup => 'Sin grupo';
 
   @override
-  String get previous => 'Previous';
+  String get previous => 'Anterior';
 
   @override
-  String get noHistory => 'No history yet';
+  String get noHistory => 'Aún no hay historial';
 
   @override
-  String get noHistoryYet => 'No history yet';
+  String get noHistoryYet => 'Aún no hay historial';
 
   @override
-  String get noResultsYet => 'No results yet';
+  String get noResultsYet => 'Aún no hay resultados';
 
   @override
-  String get noSavedWords => 'No saved words yet';
+  String get noSavedWords => 'Aún no hay palabras guardadas';
 
   @override
   String get norwegian => 'Noruego';
 
   @override
-  String get ofStatic => 'of';
+  String get ofStatic => 'de';
 
   @override
-  String get origin => 'Origin';
+  String get origin => 'Origen';
 
   @override
   String page(Object current, Object total) {
-    return 'Page $current of $total';
+    return 'Página $current de $total';
   }
 
   @override
   String pageOf(Object current, Object total) {
-    return '$current of $total';
+    return '$current de $total';
   }
 
   @override
-  String get pasteTextHere => 'Paste text here...';
+  String get pasteTextHere => 'Pega texto aquí...';
 
   @override
-  String get pasteYourText => 'Paste your text here to analyze';
+  String get pasteYourText => 'Pega tu texto aquí para analizar';
 
   @override
   String perPagePage(Object count) {
-    return '$count per page';
+    return '$count por página';
   }
 
   @override
   String perPageRow(Object count) {
-    return '$count per row';
+    return '$count por fila';
   }
 
   @override
@@ -481,58 +481,58 @@ class AppLocalizationsEs extends AppLocalizations {
   String get privacyPolicy => 'Política de Privacidad';
 
   @override
-  String get processing => 'Processing...';
+  String get processing => 'Procesando...';
 
   @override
   String get reader => 'Lector';
 
   @override
   String reading(Object reading) {
-    return 'Reading: $reading';
+    return 'Lectura: $reading';
   }
 
   @override
-  String get readingAtoZ => 'Reading A-Z';
+  String get readingAtoZ => 'Lectura A-Z';
 
   @override
-  String get readingZtoA => 'Reading Z-A';
+  String get readingZtoA => 'Lectura Z-A';
 
   @override
   String readings(Object readings) {
-    return 'Readings: $readings';
+    return 'Lecturas: $readings';
   }
 
   @override
-  String get removeFromFavorites => 'Remove from favorites';
+  String get removeFromFavorites => 'Quitar de favoritos';
 
   @override
   String get romanian => 'Rumano';
 
   @override
-  String get runAiBreakdown => 'Run AI Breakdown';
+  String get runAiBreakdown => 'Ejecutar análisis con IA';
 
   @override
   String get russian => 'Ruso';
 
   @override
-  String get saveWordsToSeeThemHere => 'Save words to see them here';
+  String get saveWordsToSeeThemHere => 'Guarda palabras para verlas aquí';
 
   @override
-  String get saved => 'Saved';
+  String get saved => 'Guardado';
 
   @override
   String savedWord(Object word) {
-    return 'Saved word';
+    return 'Palabra guardada';
   }
 
   @override
-  String get savedWords => 'Saved Words';
+  String get savedWords => 'Palabras guardadas';
 
   @override
   String get search => 'Buscar';
 
   @override
-  String get searchHint => 'Search...';
+  String get searchHint => 'Buscar...';
 
   @override
   String get searchOptions => 'Opciones de Búsqueda';
@@ -541,17 +541,17 @@ class AppLocalizationsEs extends AppLocalizations {
   String get searchSettings => 'Configuración de Búsqueda';
 
   @override
-  String get sendMessage => 'Send message';
+  String get sendMessage => 'Enviar mensaje';
 
   @override
-  String get sentenceTranslations => 'Sentence Translations';
+  String get sentenceTranslations => 'Traducciones de oraciones';
 
   @override
-  String get sentences => 'Sentences';
+  String get sentences => 'Oraciones';
 
   @override
   String sentencesFound(Object count) {
-    return '$count sentences found';
+    return '$count oraciones encontradas';
   }
 
   @override
@@ -561,10 +561,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settings => 'Configuración';
 
   @override
-  String get settingsTitle => 'Settings';
+  String get settingsTitle => 'Ajustes';
 
   @override
-  String get showDefinitions => 'Show Definitions';
+  String get showDefinitions => 'Mostrar definiciones';
 
   @override
   String get showKanji => 'Mostrar Kanji';
@@ -579,13 +579,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get slovenian => 'Esloveno';
 
   @override
-  String get sort => 'Sort';
+  String get sort => 'Ordenar';
 
   @override
   String get spanish => 'Español';
 
   @override
-  String get summarize => 'Summarize';
+  String get summarize => 'Resumir';
 
   @override
   String get swedish => 'Sueco';
@@ -607,22 +607,22 @@ class AppLocalizationsEs extends AppLocalizations {
       'Seleccionar cómo se debe determinar el tema de la aplicación';
 
   @override
-  String get translate => 'Translate';
+  String get translate => 'Traducir';
 
   @override
   String get translator => 'Traductor';
 
   @override
-  String get translationUnavailable => 'Translation unavailable';
+  String get translationUnavailable => 'Traducción no disponible';
 
   @override
   String get turkish => 'Turco';
 
   @override
-  String get type => 'String';
+  String get type => 'Cadena';
 
   @override
-  String get typeMessage => 'Type a message...';
+  String get typeMessage => 'Escribe un mensaje...';
 
   @override
   String get uiAndNavigation => 'UI y Navegación';
@@ -631,7 +631,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get ukrainian => 'Ucraniano';
 
   @override
-  String get usage => 'Usage';
+  String get usage => 'Uso';
 
   @override
   String get useDarkTheme => 'Usar tema oscuro';
@@ -652,20 +652,20 @@ class AppLocalizationsEs extends AppLocalizations {
   String get wiktionary => 'Wiktionary';
 
   @override
-  String get wordAtoZ => 'Word A-Z';
+  String get wordAtoZ => 'Palabra A-Z';
 
   @override
-  String get wordDefinitions => 'Word Definitions';
+  String get wordDefinitions => 'Definiciones de palabras';
 
   @override
   String get wordLists => 'Listas de Palabras';
 
   @override
-  String get wordZtoA => 'Word Z-A';
+  String get wordZtoA => 'Palabra Z-A';
 
   @override
   String wordsAnalyzed(Object count) {
-    return '$count words analyzed';
+    return '$count palabras analizadas';
   }
 
   @override

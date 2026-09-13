@@ -12,10 +12,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get about => 'アプリについて';
 
   @override
-  String get add => 'Add';
+  String get add => '追加';
 
   @override
-  String get addToFavorites => 'Add to favorites';
+  String get addToFavorites => 'お気に入りに追加';
 
   @override
   String get advancedSettings => '詳細設定';
@@ -27,28 +27,28 @@ class AppLocalizationsJa extends AppLocalizations {
   String get ai => 'AI';
 
   @override
-  String get aiAssistant => 'AI Assistant';
+  String get aiAssistant => 'AIアシスタント';
 
   @override
-  String get aiBreakdown => 'AI Breakdown';
+  String get aiBreakdown => 'AI分解';
 
   @override
-  String get aiChatTitle => 'AI Chat';
+  String get aiChatTitle => 'AIチャット';
 
   @override
-  String get aiInsights => 'AI Insights';
+  String get aiInsights => 'AIインサイト';
 
   @override
-  String get analyze => 'Analyze';
+  String get analyze => '分析';
 
   @override
-  String get analyzeIndividualCharacters => 'Analyze Individual Characters';
+  String get analyzeIndividualCharacters => '文字ごとに分析';
 
   @override
-  String get analyzeScreenTitle => 'Analyze Screen';
+  String get analyzeScreenTitle => '分析画面';
 
   @override
-  String get analyzeText => 'Analyze Text';
+  String get analyzeText => 'テキストを分析';
 
   @override
   String get ankiProfiles => 'Ankiとプロファイル';
@@ -67,11 +67,11 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String areYouSureYouWantToDelete(Object title) {
-    return 'Are you sure you want to delete?';
+    return '本当に削除しますか？';
   }
 
   @override
-  String get askAnything => 'Ask anything';
+  String get askAnything => '何でも聞いてください';
 
   @override
   String get autoDetectProcessText => 'クリップボードからテキストを自動検出・処理';
@@ -98,13 +98,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get autoTranslation => '自動翻訳';
 
   @override
-  String get breakdown => 'Breakdown';
+  String get breakdown => '分解';
 
   @override
   String get bulgarian => 'ブルガリア語';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'キャンセル';
 
   @override
   String get catalan => 'カタロニア語';
@@ -113,16 +113,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get chatGptMock => 'ChatGPT';
 
   @override
-  String get chatWithAI => 'Chat with AI';
+  String get chatWithAI => 'AIとチャット';
 
   @override
   String get chinese => '中国語';
 
   @override
-  String get clearFilters => 'Clear Filters';
+  String get clearFilters => 'フィルターを解除';
 
   @override
-  String get clearHistory => 'Clear History';
+  String get clearHistory => '履歴を消去';
 
   @override
   String get clipboardAutoDetect => 'クリップボード自動検出';
@@ -131,13 +131,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get clipboardMonitor => 'クリップボードモニター';
 
   @override
-  String get column => 'Column';
+  String get column => '列';
 
   @override
-  String get columns => 'Columns';
+  String get columns => '列';
 
   @override
-  String get context => 'Context';
+  String get context => '文脈';
 
   @override
   String get convertRomajiToKana => '入力中にローマ字をかなに変換';
@@ -191,10 +191,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get defaultScreenSubtitle => 'アプリ起動時に表示する画面を選択';
 
   @override
-  String get definitionsHidden => 'Definitions hidden';
+  String get definitionsHidden => '定義非表示';
 
   @override
-  String get delete => 'Delete';
+  String get delete => '削除';
 
   @override
   String get dictionaries => '辞書';
@@ -221,13 +221,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get enhancedFeatures => '拡張機能';
 
   @override
-  String get enterTextToAnalyze => 'Enter text to analyze';
+  String get enterTextToAnalyze => '分析するテキストを入力';
 
   @override
   String get estonian => 'エストニア語';
 
   @override
-  String get favorites => 'Favorites';
+  String get favorites => 'お気に入り';
 
   @override
   String get filipino => 'フィリピノ語';
@@ -252,23 +252,23 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String frequency(Object freq) {
-    return 'Frequency: $freq';
+    return '頻度: $freq';
   }
 
   @override
-  String get frequencyHighToLow => 'Frequency High to Low';
+  String get frequencyHighToLow => '頻度 高い順';
 
   @override
-  String get frequencyLowToHigh => 'Frequency Low to High';
+  String get frequencyLowToHigh => '頻度 低い順';
 
   @override
-  String get fullTranslation => 'Full Translation';
+  String get fullTranslation => '全体訳';
 
   @override
   String get generalSettings => '一般設定';
 
   @override
-  String get generateImage => 'Generate Image';
+  String get generateImage => '画像を生成';
 
   @override
   String get german => 'ドイツ語';
@@ -277,37 +277,37 @@ class AppLocalizationsJa extends AppLocalizations {
   String get greek => 'ギリシャ語';
 
   @override
-  String get group => 'Group';
+  String get group => 'グループ化';
 
   @override
-  String get groupByFirstChar => 'Group by First Character';
+  String get groupByFirstChar => '頭文字でグループ化';
 
   @override
-  String get groupByFrequency => 'Group by Frequency';
+  String get groupByFrequency => '頻度でグループ化';
 
   @override
-  String get groupByKanji => 'Group by Kanji';
+  String get groupByKanji => '漢字でグループ化';
 
   @override
-  String get hasDefinition => 'Has Definition';
+  String get hasDefinition => '定義あり';
 
   @override
-  String get hasKanji => 'Has Kanji';
+  String get hasKanji => '漢字あり';
 
   @override
-  String get hasReading => 'Has Reading';
+  String get hasReading => '読みあり';
 
   @override
   String get hebrew => 'ヘブライ語';
 
   @override
-  String get hideDefinitions => 'Hide Definitions';
+  String get hideDefinitions => '定義を隠す';
 
   @override
   String get hideNavigationBottom => 'マウスが下部にないときにナビゲーションバーを非表示';
 
   @override
-  String get highFrequency => 'High Frequency (1-1K)';
+  String get highFrequency => '高頻度 (1-1K)';
 
   @override
   String get highlightParticles => 'テキスト内の日本語の助詞をハイライト表示';
@@ -316,10 +316,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get hindi => 'ヒンディー語';
 
   @override
-  String get history => 'History';
+  String get history => '履歴';
 
   @override
-  String get historyTitle => 'History';
+  String get historyTitle => '履歴';
 
   @override
   String get hungarian => 'ハンガリー語';
@@ -337,10 +337,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get japanese => '日本語';
 
   @override
-  String get japaneseKanjiOriginAndUsage => 'Japanese kanji origin and usage';
+  String get japaneseKanjiOriginAndUsage => '漢字の起源と用法';
 
   @override
-  String get kanjiBreakdown => 'Kanji Breakdown';
+  String get kanjiBreakdown => '漢字分解';
 
   @override
   String get keyboardShortcuts => 'キーボードショートカット';
@@ -367,13 +367,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get lithuanian => 'リトアニア語';
 
   @override
-  String get localDictionary => 'Local Dictionary';
+  String get localDictionary => 'ローカル辞書';
 
   @override
-  String get lowFrequency => 'Low Frequency';
+  String get lowFrequency => '低頻度';
 
   @override
-  String get mediumFrequency => 'Medium Frequency (1K-5K)';
+  String get mediumFrequency => '中頻度 (1K-5K)';
 
   @override
   String get minFrequency => '最小頻度';
@@ -382,83 +382,83 @@ class AppLocalizationsJa extends AppLocalizations {
   String get multilingualLearningTool => '辞書機能と単語保存機能を備えた多言語対応の言語学習ツール。';
 
   @override
-  String get collapse => 'Collapse';
+  String get collapse => '折りたたむ';
 
   @override
-  String get expand => 'Expand';
+  String get expand => '展開';
 
   @override
-  String get filter => 'Filter';
+  String get filter => 'フィルター';
 
   @override
-  String get first => 'First';
+  String get first => '最初';
 
   @override
-  String get last => 'Last';
+  String get last => '最後';
 
   @override
-  String get navFirstLast => 'First / Last';
+  String get navFirstLast => '最初 / 最後';
 
   @override
-  String get navPrevNext => 'Prev / Next';
+  String get navPrevNext => '前へ / 次へ';
 
   @override
-  String get next => 'Next';
+  String get next => '次';
 
   @override
-  String get noFavoritesYet => 'No favorites yet';
+  String get noFavoritesYet => 'お気に入りはまだありません';
 
   @override
-  String get noGroup => 'No Group';
+  String get noGroup => 'グループなし';
 
   @override
-  String get previous => 'Previous';
+  String get previous => '前へ';
 
   @override
-  String get noHistory => 'No history yet';
+  String get noHistory => 'まだ履歴がありません';
 
   @override
-  String get noHistoryYet => 'No history yet';
+  String get noHistoryYet => 'まだ履歴がありません';
 
   @override
-  String get noResultsYet => 'No results yet';
+  String get noResultsYet => 'まだ結果がありません';
 
   @override
-  String get noSavedWords => 'No saved words yet';
+  String get noSavedWords => '保存された単語はまだありません';
 
   @override
   String get norwegian => 'ノルウェー語';
 
   @override
-  String get ofStatic => 'of';
+  String get ofStatic => '/';
 
   @override
-  String get origin => 'Origin';
+  String get origin => '語源';
 
   @override
   String page(Object current, Object total) {
-    return 'Page $current of $total';
+    return '$current / $total ページ';
   }
 
   @override
   String pageOf(Object current, Object total) {
-    return '$current of $total';
+    return '$current / $total';
   }
 
   @override
-  String get pasteTextHere => 'Paste text here...';
+  String get pasteTextHere => 'ここにテキストを貼り付け...';
 
   @override
-  String get pasteYourText => 'Paste your text here to analyze';
+  String get pasteYourText => '分析するテキストをここに貼り付け';
 
   @override
   String perPagePage(Object count) {
-    return '$count per page';
+    return '1ページ $count 件';
   }
 
   @override
   String perPageRow(Object count) {
-    return '$count per row';
+    return '1行 $count 件';
   }
 
   @override
@@ -471,58 +471,58 @@ class AppLocalizationsJa extends AppLocalizations {
   String get privacyPolicy => 'プライバシーポリシー';
 
   @override
-  String get processing => 'Processing...';
+  String get processing => '処理中...';
 
   @override
   String get reader => 'リーダー';
 
   @override
   String reading(Object reading) {
-    return 'Reading: $reading';
+    return '読み: $reading';
   }
 
   @override
-  String get readingAtoZ => 'Reading A-Z';
+  String get readingAtoZ => '読み A-Z';
 
   @override
-  String get readingZtoA => 'Reading Z-A';
+  String get readingZtoA => '読み Z-A';
 
   @override
   String readings(Object readings) {
-    return 'Readings: $readings';
+    return '読み: $readings';
   }
 
   @override
-  String get removeFromFavorites => 'Remove from favorites';
+  String get removeFromFavorites => 'お気に入りから削除';
 
   @override
   String get romanian => 'ルーマニア語';
 
   @override
-  String get runAiBreakdown => 'Run AI Breakdown';
+  String get runAiBreakdown => 'AI分解を実行';
 
   @override
   String get russian => 'ロシア語';
 
   @override
-  String get saveWordsToSeeThemHere => 'Save words to see them here';
+  String get saveWordsToSeeThemHere => '単語を保存するとここに表示されます';
 
   @override
-  String get saved => 'Saved';
+  String get saved => '保存済み';
 
   @override
   String savedWord(Object word) {
-    return 'Saved word';
+    return '保存した単語';
   }
 
   @override
-  String get savedWords => 'Saved Words';
+  String get savedWords => '保存した単語';
 
   @override
   String get search => '検索';
 
   @override
-  String get searchHint => 'Search...';
+  String get searchHint => '検索...';
 
   @override
   String get searchOptions => '検索オプション';
@@ -531,17 +531,17 @@ class AppLocalizationsJa extends AppLocalizations {
   String get searchSettings => '検索設定';
 
   @override
-  String get sendMessage => 'Send message';
+  String get sendMessage => 'メッセージを送信';
 
   @override
-  String get sentenceTranslations => 'Sentence Translations';
+  String get sentenceTranslations => '文ごとの翻訳';
 
   @override
-  String get sentences => 'Sentences';
+  String get sentences => '文';
 
   @override
   String sentencesFound(Object count) {
-    return '$count sentences found';
+    return '$count 文が見つかりました';
   }
 
   @override
@@ -551,10 +551,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settings => '設定';
 
   @override
-  String get settingsTitle => 'Settings';
+  String get settingsTitle => '設定';
 
   @override
-  String get showDefinitions => 'Show Definitions';
+  String get showDefinitions => '定義を表示';
 
   @override
   String get showKanji => '漢字を表示';
@@ -569,13 +569,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get slovenian => 'スロベニア語';
 
   @override
-  String get sort => 'Sort';
+  String get sort => '並べ替え';
 
   @override
   String get spanish => 'スペイン語';
 
   @override
-  String get summarize => 'Summarize';
+  String get summarize => '要約';
 
   @override
   String get swedish => 'スウェーデン語';
@@ -596,22 +596,22 @@ class AppLocalizationsJa extends AppLocalizations {
   String get themeModeSubtitle => 'アプリテーマの決定方法を選択してください';
 
   @override
-  String get translate => 'Translate';
+  String get translate => '翻訳';
 
   @override
   String get translator => '翻訳';
 
   @override
-  String get translationUnavailable => 'Translation unavailable';
+  String get translationUnavailable => '翻訳できません';
 
   @override
   String get turkish => 'トルコ語';
 
   @override
-  String get type => 'String';
+  String get type => '文字列';
 
   @override
-  String get typeMessage => 'Type a message...';
+  String get typeMessage => 'メッセージを入力...';
 
   @override
   String get uiAndNavigation => 'UIとナビゲーション';
@@ -620,7 +620,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get ukrainian => 'ウクライナ語';
 
   @override
-  String get usage => 'Usage';
+  String get usage => '用法';
 
   @override
   String get useDarkTheme => 'ダークテーマを使用する';
@@ -640,20 +640,20 @@ class AppLocalizationsJa extends AppLocalizations {
   String get wiktionary => 'Wiktionary';
 
   @override
-  String get wordAtoZ => 'Word A-Z';
+  String get wordAtoZ => '単語 A-Z';
 
   @override
-  String get wordDefinitions => 'Word Definitions';
+  String get wordDefinitions => '単語の定義';
 
   @override
   String get wordLists => '単語リスト';
 
   @override
-  String get wordZtoA => 'Word Z-A';
+  String get wordZtoA => '単語 Z-A';
 
   @override
   String wordsAnalyzed(Object count) {
-    return '$count words analyzed';
+    return '$count 語を分析しました';
   }
 
   @override

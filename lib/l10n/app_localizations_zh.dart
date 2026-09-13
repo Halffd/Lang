@@ -9,19 +9,19 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get about => 'About';
+  String get about => '关于';
 
   @override
   String get add => '添加';
 
   @override
-  String get addToFavorites => 'Add to favorites';
+  String get addToFavorites => '添加到收藏';
 
   @override
-  String get advancedSettings => 'Advanced Settings';
+  String get advancedSettings => '高级设置';
 
   @override
-  String get afrikaans => 'Afrikaans';
+  String get afrikaans => '南非荷兰语';
 
   @override
   String get ai => 'AI';
@@ -33,7 +33,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiBreakdown => 'AI 拆解';
 
   @override
-  String get aiChatTitle => 'AI Chat';
+  String get aiChatTitle => 'AI 对话';
 
   @override
   String get aiInsights => 'AI 洞察';
@@ -45,13 +45,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get analyzeIndividualCharacters => '分析单个字符';
 
   @override
-  String get analyzeScreenTitle => 'Analyze Screen';
+  String get analyzeScreenTitle => '分析界面';
 
   @override
   String get analyzeText => '分析文本';
 
   @override
-  String get ankiProfiles => 'Anki & Profiles';
+  String get ankiProfiles => 'Anki 与配置文件';
 
   @override
   String get appName => 'Lang';
@@ -60,10 +60,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appTitle => 'Lang';
 
   @override
-  String get appearance => 'Appearance';
+  String get appearance => '外观';
 
   @override
-  String get arabic => 'Arabic';
+  String get arabic => '阿拉伯语';
 
   @override
   String areYouSureYouWantToDelete(Object title) {
@@ -74,185 +74,178 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAnything => '随便问...';
 
   @override
-  String get autoDetectProcessText =>
-      'Automatically detect and process text from clipboard';
+  String get autoDetectProcessText => '自动检测并处理剪贴板文本';
 
   @override
-  String get autoHideNavigation => 'Auto-hide Navigation';
+  String get autoHideNavigation => '自动隐藏导航栏';
 
   @override
-  String get autoKanaConversion => 'Automatic Kana Conversion';
+  String get autoKanaConversion => '自动假名转换';
 
   @override
-  String get autoPasteReader => 'Auto-paste in Reader Mode';
+  String get autoPasteReader => '阅读模式自动粘贴';
 
   @override
-  String get autoPasteReaderSubtitle =>
-      'Automatically paste text from clipboard into reader mode';
+  String get autoPasteReaderSubtitle => '自动将剪贴板文本粘贴到阅读模式';
 
   @override
-  String get autoSearchClipboard =>
-      'Automatically search for clipboard content';
+  String get autoSearchClipboard => '自动搜索剪贴板内容';
 
   @override
-  String get autoTranslateWords =>
-      'Automatically translate words in reader mode';
+  String get autoTranslateWords => '阅读模式自动翻译单词';
 
   @override
-  String get autoTranslation => 'Auto Translation';
+  String get autoTranslation => '自动翻译';
 
   @override
   String get breakdown => '拆解';
 
   @override
-  String get bulgarian => 'Bulgarian';
+  String get bulgarian => '保加利亚语';
 
   @override
   String get cancel => '取消';
 
   @override
-  String get catalan => 'Catalan';
+  String get catalan => '加泰罗尼亚语';
 
   @override
   String get chatGptMock => 'ChatGPT（模拟）';
 
   @override
-  String get chatWithAI => 'Chat with AI';
+  String get chatWithAI => '与 AI 对话';
 
   @override
   String get chinese => '中文';
 
   @override
-  String get clearFilters => 'Clear Filters';
+  String get clearFilters => '清除筛选';
 
   @override
-  String get clearHistory => 'Clear History';
+  String get clearHistory => '清除历史';
 
   @override
-  String get clipboardAutoDetect => 'Clipboard Auto-Detect';
+  String get clipboardAutoDetect => '剪贴板自动检测';
 
   @override
-  String get clipboardMonitor => 'Clipboard Monitor';
+  String get clipboardMonitor => '剪贴板监控';
 
   @override
-  String get column => 'Column';
+  String get column => '列';
 
   @override
-  String get columns => 'Columns';
+  String get columns => '列';
 
   @override
   String get context => '上下文';
 
   @override
-  String get convertRomajiToKana => 'Convert romaji to kana while typing';
+  String get convertRomajiToKana => '输入时将罗马字转换为假名';
 
   @override
-  String get croatian => 'Croatian';
+  String get croatian => '克罗地亚语';
 
   @override
-  String get ctrl1Search => 'Ctrl + 1: Search';
+  String get ctrl1Search => 'Ctrl + 1：搜索';
 
   @override
-  String get ctrl2Reader => 'Ctrl + 2: Reader';
+  String get ctrl2Reader => 'Ctrl + 2：阅读';
 
   @override
-  String get ctrl3Lists => 'Ctrl + 3: Lists';
+  String get ctrl3Lists => 'Ctrl + 3：列表';
 
   @override
-  String get ctrl4Dictionaries => 'Ctrl + 4: Dictionaries';
+  String get ctrl4Dictionaries => 'Ctrl + 4：词典';
 
   @override
-  String get ctrl5Translator => 'Ctrl + 5: Translator';
+  String get ctrl5Translator => 'Ctrl + 5：翻译器';
 
   @override
-  String get ctrl6Settings => 'Ctrl + 6: Settings';
+  String get ctrl6Settings => 'Ctrl + 6：设置';
 
   @override
-  String get currentAnkiDeck => 'Current Anki Deck';
+  String get currentAnkiDeck => '当前 Anki 牌组';
 
   @override
-  String get currentProfile => 'Current Profile';
+  String get currentProfile => '当前配置文件';
 
   @override
-  String get czech => 'Czech';
+  String get czech => '捷克语';
 
   @override
-  String get danish => 'Danish';
+  String get danish => '丹麦语';
 
   @override
-  String get darkMode => 'Dark Mode';
+  String get darkMode => '深色模式';
 
   @override
-  String get darkTheme => 'Dark Theme';
+  String get darkTheme => '深色主题';
 
   @override
-  String get defaultFlexMode => 'Default Flex Mode';
+  String get defaultFlexMode => '默认弹性模式';
 
   @override
-  String get defaultScreen => 'Default Screen';
+  String get defaultScreen => '默认界面';
 
   @override
-  String get defaultScreenSubtitle =>
-      'Select which screen to show when app starts';
+  String get defaultScreenSubtitle => '选择应用启动时显示的界面';
 
   @override
-  String get definitionsHidden => 'Definitions hidden';
+  String get definitionsHidden => '释义已隐藏';
 
   @override
   String get delete => '删除';
 
   @override
-  String get dictionaries => 'Dictionaries';
+  String get dictionaries => '词典';
 
   @override
-  String get dictionaryLanguage => 'Dictionary Language';
+  String get dictionaryLanguage => '词典语言';
 
   @override
-  String get displayKanjiInfo => 'Display kanji information';
+  String get displayKanjiInfo => '显示汉字信息';
 
   @override
-  String get displayOptions => 'Display Options';
+  String get displayOptions => '显示选项';
 
   @override
-  String get dutch => 'Dutch';
+  String get dutch => '荷兰语';
 
   @override
-  String get enableForvoPronunciations =>
-      'Enable audio pronunciations from Forvo';
+  String get enableForvoPronunciations => '启用 Forvo 发音音频';
 
   @override
   String get english => '英语';
 
   @override
-  String get enhancedFeatures => 'Enhanced Features';
+  String get enhancedFeatures => '增强功能';
 
   @override
-  String get enterTextToAnalyze => 'Enter text to analyze';
+  String get enterTextToAnalyze => '输入要分析的文本';
 
   @override
-  String get estonian => 'Estonian';
+  String get estonian => '爱沙尼亚语';
 
   @override
-  String get favorites => 'Favorites';
+  String get favorites => '收藏';
 
   @override
-  String get filipino => 'Filipino';
+  String get filipino => '菲律宾语';
 
   @override
-  String get filterByFrequency =>
-      'Filter words by frequency (lower = more common)';
+  String get filterByFrequency => '按词频筛选（数值越小越常用）';
 
   @override
-  String get finnish => 'Finnish';
+  String get finnish => '芬兰语';
 
   @override
-  String get fontSize => 'Font Size';
+  String get fontSize => '字体大小';
 
   @override
-  String get fontSizeSubtitle => 'Adjust the font size multiplier for text';
+  String get fontSizeSubtitle => '调整文本字体大小倍率';
 
   @override
-  String get forvoAudio => 'Forvo Audio';
+  String get forvoAudio => 'Forvo 音频';
 
   @override
   String get french => '法语';
@@ -263,13 +256,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get frequencyHighToLow => 'Frequency High to Low';
+  String get frequencyHighToLow => '词频从高到低';
 
   @override
-  String get frequencyLowToHigh => 'Frequency Low to High';
+  String get frequencyLowToHigh => '词频从低到高';
 
   @override
-  String get fullTranslation => 'Full Translation';
+  String get fullTranslation => '全文翻译';
 
   @override
   String get generalSettings => '通用设置';
@@ -281,47 +274,46 @@ class AppLocalizationsZh extends AppLocalizations {
   String get german => '德语';
 
   @override
-  String get greek => 'Greek';
+  String get greek => '希腊语';
 
   @override
-  String get group => 'Group';
+  String get group => '分组';
 
   @override
-  String get groupByFirstChar => 'Group by First Character';
+  String get groupByFirstChar => '按首字分组';
 
   @override
-  String get groupByFrequency => 'Group by Frequency';
+  String get groupByFrequency => '按词频分组';
 
   @override
-  String get groupByKanji => 'Group by Kanji';
+  String get groupByKanji => '按汉字分组';
 
   @override
-  String get hasDefinition => 'Has Definition';
+  String get hasDefinition => '有释义';
 
   @override
-  String get hasKanji => 'Has Kanji';
+  String get hasKanji => '有汉字';
 
   @override
-  String get hasReading => 'Has Reading';
+  String get hasReading => '有读音';
 
   @override
-  String get hebrew => 'Hebrew';
+  String get hebrew => '希伯来语';
 
   @override
-  String get hideDefinitions => 'Hide Definitions';
+  String get hideDefinitions => '隐藏释义';
 
   @override
-  String get hideNavigationBottom =>
-      'Hide navigation bar when mouse is not near bottom';
+  String get hideNavigationBottom => '鼠标不在底部时隐藏导航栏';
 
   @override
-  String get highFrequency => 'High Frequency (1-1K)';
+  String get highFrequency => '高频（1-1K）';
 
   @override
-  String get highlightParticles => 'Highlight Japanese particles in text';
+  String get highlightParticles => '高亮文本中的日语助词';
 
   @override
-  String get hindi => 'Hindi';
+  String get hindi => '印地语';
 
   @override
   String get history => '历史';
@@ -330,7 +322,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get historyTitle => '历史记录';
 
   @override
-  String get hungarian => 'Hungarian';
+  String get hungarian => '匈牙利语';
 
   @override
   String get ichiMoe => 'ichi.moe';
@@ -351,7 +343,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get kanjiBreakdown => '汉字拆解';
 
   @override
-  String get keyboardShortcuts => 'Keyboard Shortcuts';
+  String get keyboardShortcuts => '键盘快捷键';
 
   @override
   String get korean => '韩语';
@@ -360,71 +352,70 @@ class AppLocalizationsZh extends AppLocalizations {
   String get langAnalyze => 'Lang 分析';
 
   @override
-  String get language => 'Language';
+  String get language => '语言';
 
   @override
-  String get latvian => 'Latvian';
+  String get latvian => '拉脱维亚语';
 
   @override
-  String get lightTheme => 'Light Theme';
+  String get lightTheme => '浅色主题';
 
   @override
-  String get lists => 'Lists';
+  String get lists => '列表';
 
   @override
-  String get lithuanian => 'Lithuanian';
+  String get lithuanian => '立陶宛语';
 
   @override
   String get localDictionary => '本地词典';
 
   @override
-  String get lowFrequency => 'Low Frequency';
+  String get lowFrequency => '低频';
 
   @override
-  String get mediumFrequency => 'Medium Frequency (1K-5K)';
+  String get mediumFrequency => '中频（1K-5K）';
 
   @override
-  String get minFrequency => 'Minimum Frequency';
+  String get minFrequency => '最低词频';
 
   @override
-  String get multilingualLearningTool =>
-      'A multilingual language learning tool with dictionary and word saving features.';
+  String get multilingualLearningTool => '多语言学习工具，支持词典与单词收藏功能。';
 
   @override
-  String get collapse => 'Collapse';
+  String get collapse => '折叠';
 
   @override
-  String get expand => 'Expand';
+  String get expand => '展开';
 
   @override
-  String get filter => 'Filter';
+  String get filter => '筛选';
 
   @override
-  String get first => 'First';
+  String get first => '首页';
 
   @override
-  String get last => 'Last';
+  String get last => '末页';
 
   @override
-  String get navFirstLast => 'First / Last';
+  String get navFirstLast => '首页 / 末页';
 
   @override
-  String get navPrevNext => 'Prev / Next';
+  String get navPrevNext => '上一页 / 下一页';
 
   @override
-  String get next => 'Next';
+  String get next => '下一页';
 
   @override
-  String get noFavoritesYet => 'No favorites yet';
+  String get noFavoritesYet => '还没有收藏';
 
   @override
-  String get noGroup => 'No Group';
+  String get noGroup => '不分组';
 
   @override
-  String get previous => 'Previous';
+  String get previous => '上一页';
 
   @override
-  String get noHistory => 'No history yet';
+  String get noHistory => '还没有历史记录';
 
   @override
   String get noHistoryYet => '暂无历史记录';
@@ -433,20 +424,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noResultsYet => '暂无结果';
 
   @override
-  String get noSavedWords => 'No saved words yet';
+  String get noSavedWords => '还没有保存的单词';
 
   @override
-  String get norwegian => 'Norwegian';
+  String get norwegian => '挪威语';
 
   @override
-  String get ofStatic => 'of';
+  String get ofStatic => '共';
 
   @override
   String get origin => '词源';
 
   @override
   String page(Object current, Object total) {
-    return 'Page $current of $total';
+    return '第 $current 页，共 $total 页';
   }
 
   @override
@@ -458,7 +449,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pasteTextHere => '在此粘贴文本进行分析...';
 
   @override
-  String get pasteYourText => 'Paste your text here to analyze';
+  String get pasteYourText => '在此粘贴要分析的文本';
 
   @override
   String perPagePage(Object count) {
@@ -471,19 +462,19 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get polish => 'Polish';
+  String get polish => '波兰语';
 
   @override
   String get portuguese => '葡萄牙语';
 
   @override
-  String get privacyPolicy => 'Privacy Policy';
+  String get privacyPolicy => '隐私政策';
 
   @override
   String get processing => '处理中...';
 
   @override
-  String get reader => 'Reader';
+  String get reader => '阅读';
 
   @override
   String reading(Object reading) {
@@ -491,10 +482,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get readingAtoZ => 'Reading A-Z';
+  String get readingAtoZ => '读音 A-Z';
 
   @override
-  String get readingZtoA => 'Reading Z-A';
+  String get readingZtoA => '读音 Z-A';
 
   @override
   String readings(Object readings) {
@@ -502,10 +493,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get removeFromFavorites => 'Remove from favorites';
+  String get removeFromFavorites => '从收藏移除';
 
   @override
-  String get romanian => 'Romanian';
+  String get romanian => '罗马尼亚语';
 
   @override
   String get runAiBreakdown => '运行 AI 拆解';
@@ -514,7 +505,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get russian => '俄语';
 
   @override
-  String get saveWordsToSeeThemHere => 'Save words to see them here';
+  String get saveWordsToSeeThemHere => '保存单词后在这里查看';
 
   @override
   String get saved => '已保存';
@@ -531,54 +522,54 @@ class AppLocalizationsZh extends AppLocalizations {
   String get search => '搜索';
 
   @override
-  String get searchHint => 'Search...';
+  String get searchHint => '搜索…';
 
   @override
-  String get searchOptions => 'Search Options';
+  String get searchOptions => '搜索选项';
 
   @override
-  String get searchSettings => 'Search Settings';
+  String get searchSettings => '搜索设置';
 
   @override
-  String get sendMessage => 'Send message';
+  String get sendMessage => '发送消息';
 
   @override
-  String get sentenceTranslations => 'Sentence Translations';
+  String get sentenceTranslations => '逐句翻译';
 
   @override
-  String get sentences => 'Sentences';
+  String get sentences => '句子';
 
   @override
   String sentencesFound(Object count) {
-    return '$count sentences found';
+    return '找到 $count 个句子';
   }
 
   @override
-  String get serbian => 'Serbian';
+  String get serbian => '塞尔维亚语';
 
   @override
-  String get settings => 'Settings';
+  String get settings => '设置';
 
   @override
-  String get settingsTitle => 'Settings';
+  String get settingsTitle => '设置';
 
   @override
-  String get showDefinitions => 'Show Definitions';
+  String get showDefinitions => '显示释义';
 
   @override
-  String get showKanji => 'Show Kanji';
+  String get showKanji => '显示汉字';
 
   @override
-  String get showParticles => 'Show Particles';
+  String get showParticles => '显示助词';
 
   @override
-  String get slovak => 'Slovak';
+  String get slovak => '斯洛伐克语';
 
   @override
-  String get slovenian => 'Slovenian';
+  String get slovenian => '斯洛文尼亚语';
 
   @override
-  String get sort => 'Sort';
+  String get sort => '排序';
 
   @override
   String get spanish => '西班牙语';
@@ -587,57 +578,55 @@ class AppLocalizationsZh extends AppLocalizations {
   String get summarize => '摘要';
 
   @override
-  String get swedish => 'Swedish';
+  String get swedish => '瑞典语';
 
   @override
-  String get systemTheme => 'System Theme';
+  String get systemTheme => '跟随系统主题';
 
   @override
-  String get termsOfService => 'Terms of Service';
+  String get termsOfService => '服务条款';
 
   @override
-  String get thai => 'Thai';
+  String get thai => '泰语';
 
   @override
-  String get themeMode => 'Theme Mode';
+  String get themeMode => '主题模式';
 
   @override
-  String get themeModeSubtitle =>
-      'Select how the app theme should be determined';
+  String get themeModeSubtitle => '选择应用主题的确定方式';
 
   @override
   String get translate => '翻译';
 
   @override
-  String get translator => 'Translator';
+  String get translator => '翻译器';
 
   @override
-  String get translationUnavailable => 'Translation unavailable';
+  String get translationUnavailable => '翻译不可用';
 
   @override
-  String get turkish => 'Turkish';
+  String get turkish => '土耳其语';
 
   @override
-  String get type => 'String';
+  String get type => '字符串';
 
   @override
-  String get typeMessage => 'Type a message...';
+  String get typeMessage => '输入消息…';
 
   @override
-  String get uiAndNavigation => 'UI & Navigation';
+  String get uiAndNavigation => '界面与导航';
 
   @override
-  String get ukrainian => 'Ukrainian';
+  String get ukrainian => '乌克兰语';
 
   @override
   String get usage => '用法';
 
   @override
-  String get useDarkTheme => 'Use dark theme';
+  String get useDarkTheme => '使用深色主题';
 
   @override
-  String get useFlexibleGrid =>
-      'Use flexible grid layout for word lists by default';
+  String get useFlexibleGrid => '单词列表默认使用弹性网格布局';
 
   @override
   String version(Object version) {
@@ -645,33 +634,33 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get vietnamese => 'Vietnamese';
+  String get vietnamese => '越南语';
 
   @override
   String get wiktionary => '维基词典';
 
   @override
-  String get wordAtoZ => 'Word A-Z';
+  String get wordAtoZ => '单词 A-Z';
 
   @override
-  String get wordDefinitions => 'Word Definitions';
+  String get wordDefinitions => '单词释义';
 
   @override
-  String get wordLists => 'Word Lists';
+  String get wordLists => '单词列表';
 
   @override
-  String get wordZtoA => 'Word Z-A';
+  String get wordZtoA => '单词 Z-A';
 
   @override
   String wordsAnalyzed(Object count) {
-    return '$count words analyzed';
+    return '已分析 $count 个单词';
   }
 
   @override
-  String get zoomLevel => 'Zoom Level';
+  String get zoomLevel => '缩放级别';
 
   @override
-  String get zoomLevelSubtitle => 'Adjust the zoom level for the entire app';
+  String get zoomLevelSubtitle => '调整整个应用的缩放级别';
 
   @override
   String get activityTitle => '活动';
