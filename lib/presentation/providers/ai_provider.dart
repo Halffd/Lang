@@ -18,10 +18,10 @@ class AiProvider with ChangeNotifier {
   // AI Settings
   bool _isAiEnabled = true;
   bool get isAiEnabled => _isAiEnabled;
-  
+
   String _geminiApiKey = '';
   String get geminiApiKey => _geminiApiKey;
-  
+
   String _hfApiKey = '';
   String get hfApiKey => _hfApiKey;
 
@@ -67,8 +67,12 @@ class AiProvider with ChangeNotifier {
     ..._customPrompts,
   ];
 
-
-  Future<void> updateSettings({bool? isEnabled, String? geminiKey, String? hfKey, String? provider}) async {
+  Future<void> updateSettings({
+    bool? isEnabled,
+    String? geminiKey,
+    String? hfKey,
+    String? provider,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     if (isEnabled != null) {
       _isAiEnabled = isEnabled;
@@ -102,15 +106,15 @@ class AiProvider with ChangeNotifier {
     final userMessage = AiMessage(text: text, sender: AiSender.user);
     _messages.add(userMessage);
     await _repository.saveMessage(userMessage);
-    
+
     _isLoading = true;
     notifyListeners();
 
     try {
       final responseText = await _repository.generateText(
-        text, 
-        _selectedProvider, 
-        apiKey: _activeGeminiKey
+        text,
+        _selectedProvider,
+        apiKey: _activeGeminiKey,
       );
       final aiMessage = AiMessage(text: responseText, sender: AiSender.ai);
       _messages.add(aiMessage);
@@ -127,23 +131,33 @@ class AiProvider with ChangeNotifier {
   Future<void> generateImage(String prompt, {String? negativePrompt}) async {
     if (prompt.trim().isEmpty || !_isAiEnabled) return;
 
-    final userMessage = AiMessage(text: 'Generate image: $prompt', sender: AiSender.user);
+    final userMessage = AiMessage(
+      text: 'Generate image: $prompt',
+      sender: AiSender.user,
+    );
     _messages.add(userMessage);
-    
+
     _isLoading = true;
     notifyListeners();
 
     try {
       final base64Image = await _repository.generateImage(
-        prompt, 
+        prompt,
         negativePrompt: negativePrompt,
-        apiKey: _activeHfKey
+        apiKey: _activeHfKey,
       );
-      final aiMessage = AiMessage(text: 'Image generated', sender: AiSender.ai, imageUrl: base64Image);
+      final aiMessage = AiMessage(
+        text: 'Image generated',
+        sender: AiSender.ai,
+        imageUrl: base64Image,
+      );
       _messages.add(aiMessage);
       await _repository.saveMessage(aiMessage);
     } catch (e) {
-      final errorMessage = AiMessage(text: 'Image error: $e', sender: AiSender.ai);
+      final errorMessage = AiMessage(
+        text: 'Image error: $e',
+        sender: AiSender.ai,
+      );
       _messages.add(errorMessage);
     } finally {
       _isLoading = false;
@@ -158,12 +172,15 @@ class AiProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _lastBreakdown = await _repository.breakdown(text, apiKey: _activeGeminiKey);
-      
+      _lastBreakdown = await _repository.breakdown(
+        text,
+        apiKey: _activeGeminiKey,
+      );
+
       final displayText = text.length > 30 ? text.substring(0, 30) : text;
       final aiMessage = AiMessage(
-        text: 'Breakdown for: $displayText...', 
-        sender: AiSender.ai
+        text: 'Breakdown for: $displayText...',
+        sender: AiSender.ai,
       );
       _messages.add(aiMessage);
       await _repository.saveMessage(aiMessage);
@@ -181,8 +198,15 @@ class AiProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _repository.translate(text, targetLang, apiKey: _activeGeminiKey);
-      final aiMessage = AiMessage(text: 'Translation: $result', sender: AiSender.ai);
+      final result = await _repository.translate(
+        text,
+        targetLang,
+        apiKey: _activeGeminiKey,
+      );
+      final aiMessage = AiMessage(
+        text: 'Translation: $result',
+        sender: AiSender.ai,
+      );
       _messages.add(aiMessage);
       await _repository.saveMessage(aiMessage);
     } catch (e) {
@@ -199,8 +223,14 @@ class AiProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _repository.summarize(text, apiKey: _activeGeminiKey);
-      final aiMessage = AiMessage(text: 'Summary: $result', sender: AiSender.ai);
+      final result = await _repository.summarize(
+        text,
+        apiKey: _activeGeminiKey,
+      );
+      final aiMessage = AiMessage(
+        text: 'Summary: $result',
+        sender: AiSender.ai,
+      );
       _messages.add(aiMessage);
       await _repository.saveMessage(aiMessage);
     } catch (e) {
@@ -211,28 +241,72 @@ class AiProvider with ChangeNotifier {
     }
   }
 
-  Future<String> extractTextFromImageAi(String imageBase64, {String? prompt}) async {
+  Future<String> extractTextFromImageAi(
+    String imageBase64, {
+    String? prompt,
+  }) async {
     if (!_isAiEnabled) throw Exception('AI is disabled');
-    return _repository.extractTextFromImage(imageBase64, prompt: prompt, apiKey: _activeGeminiKey);
+    return _repository.extractTextFromImage(
+      imageBase64,
+      prompt: prompt,
+      apiKey: _activeGeminiKey,
+    );
   }
 
-  void clearHistory() {
+  Future<void> clearHistory() async {
     _messages = [];
-    // TODO: Implement persistent clear in repository
+    await _repository.clearHistory();
     notifyListeners();
   }
 
   // Templates
   List<Map<String, String>> get promptTemplates => [
-    {'name': 'Analyze Grammar', 'prompt': 'Analyze the grammar and etymology of the following sentence: '},
-    {'name': 'Breakdown Vocabulary', 'prompt': 'Break down each word in the following text with meanings and readings: '},
-    {'name': 'Translate to English', 'prompt': 'Translate the following text to natural English: '},
-    {'name': 'Explain Like 5', 'prompt': 'Explain the following concept like I am a 5-year-old: '},
-    {'name': 'Usage Examples', 'prompt': 'Give me 3 different example sentences showing how to use the following word in context: '},
-    {'name': 'Politeness Level', 'prompt': 'Explain the politeness level (keigo/informal) of the following text and suggest alternatives: '},
-    {'name': 'Summarize', 'prompt': 'Provide a concise bullet-point summary of the following text: '},
-    {'name': 'Identify Slang', 'prompt': 'Identify any slang, idioms, or cultural references in the following text: '},
-    {'name': 'Pitch Accent', 'prompt': 'Explain the pitch accent and pronunciation nuances for the following words: '},
-    {'name': 'Karakoke Lyrics', 'prompt': 'Break down the meaning and poetic nuances of these song lyrics: '},
+    {
+      'name': 'Analyze Grammar',
+      'prompt': 'Analyze the grammar and etymology of the following sentence: ',
+    },
+    {
+      'name': 'Breakdown Vocabulary',
+      'prompt':
+          'Break down each word in the following text with meanings and readings: ',
+    },
+    {
+      'name': 'Translate to English',
+      'prompt': 'Translate the following text to natural English: ',
+    },
+    {
+      'name': 'Explain Like 5',
+      'prompt': 'Explain the following concept like I am a 5-year-old: ',
+    },
+    {
+      'name': 'Usage Examples',
+      'prompt':
+          'Give me 3 different example sentences showing how to use the following word in context: ',
+    },
+    {
+      'name': 'Politeness Level',
+      'prompt':
+          'Explain the politeness level (keigo/informal) of the following text and suggest alternatives: ',
+    },
+    {
+      'name': 'Summarize',
+      'prompt':
+          'Provide a concise bullet-point summary of the following text: ',
+    },
+    {
+      'name': 'Identify Slang',
+      'prompt':
+          'Identify any slang, idioms, or cultural references in the following text: ',
+    },
+    {
+      'name': 'Pitch Accent',
+      'prompt':
+          'Explain the pitch accent and pronunciation nuances for the following words: ',
+    },
+    {
+      'name': 'Karakoke Lyrics',
+      'prompt':
+          'Break down the meaning and poetic nuances of these song lyrics: ',
+    },
   ];
 }

@@ -8,16 +8,20 @@ class AiRepositoryImpl implements AiRepository {
   final AiRemoteDataSource _remoteDataSource;
   final AiLocalDataSource _localDataSource;
 
-  static const String _defaultGeminiKey =
-      String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
-  static const String _defaultHfKey =
-      String.fromEnvironment('HF_API_KEY', defaultValue: '');
+  static const String _defaultGeminiKey = String.fromEnvironment(
+    'GEMINI_API_KEY',
+    defaultValue: '',
+  );
+  static const String _defaultHfKey = String.fromEnvironment(
+    'HF_API_KEY',
+    defaultValue: '',
+  );
 
   AiRepositoryImpl({
     required AiRemoteDataSource remoteDataSource,
     required AiLocalDataSource localDataSource,
-  })  : _remoteDataSource = remoteDataSource,
-        _localDataSource = localDataSource;
+  }) : _remoteDataSource = remoteDataSource,
+       _localDataSource = localDataSource;
 
   String _resolveGeminiKey(String? apiKey) =>
       apiKey?.isNotEmpty == true ? apiKey! : _defaultGeminiKey;
@@ -26,7 +30,11 @@ class AiRepositoryImpl implements AiRepository {
       apiKey?.isNotEmpty == true ? apiKey! : _defaultHfKey;
 
   @override
-  Future<String> generateText(String prompt, String provider, {String? apiKey}) async {
+  Future<String> generateText(
+    String prompt,
+    String provider, {
+    String? apiKey,
+  }) async {
     if (provider == 'Gemini') {
       final key = _resolveGeminiKey(apiKey);
       if (key.isEmpty) {
@@ -38,17 +46,30 @@ class AiRepositoryImpl implements AiRepository {
   }
 
   @override
-  Future<String> generateImage(String prompt, {String? negativePrompt, String? apiKey}) async {
+  Future<String> generateImage(
+    String prompt, {
+    String? negativePrompt,
+    String? apiKey,
+  }) async {
     final key = _resolveHfKey(apiKey);
     if (key.isEmpty) {
       throw AiRepositoryException('HuggingFace API key not configured');
     }
-    return _remoteDataSource.generateImage(prompt, key, negativePrompt: negativePrompt);
+    return _remoteDataSource.generateImage(
+      prompt,
+      key,
+      negativePrompt: negativePrompt,
+    );
   }
 
   @override
-  Future<String> translate(String text, String targetLang, {String? apiKey}) async {
-    final prompt = 'Translate the following text to $targetLang. Output ONLY the translation: $text';
+  Future<String> translate(
+    String text,
+    String targetLang, {
+    String? apiKey,
+  }) async {
+    final prompt =
+        'Translate the following text to $targetLang. Output ONLY the translation: $text';
     return generateText(prompt, 'Gemini', apiKey: apiKey);
   }
 
@@ -59,17 +80,29 @@ class AiRepositoryImpl implements AiRepository {
   }
 
   @override
-  Future<String> extractTextFromImage(String imageBase64, {String? prompt, String? apiKey}) async {
+  Future<String> extractTextFromImage(
+    String imageBase64, {
+    String? prompt,
+    String? apiKey,
+  }) async {
     final key = _resolveGeminiKey(apiKey);
     if (key.isEmpty) {
       throw AiRepositoryException('Gemini API key not configured');
     }
-    return _remoteDataSource.extractTextFromImage(imageBase64, prompt ?? '', key);
+    return _remoteDataSource.extractTextFromImage(
+      imageBase64,
+      prompt ?? '',
+      key,
+    );
   }
 
   @override
-  Future<List<Map<String, String>>> breakdown(String text, {String? apiKey}) async {
-    final prompt = '''
+  Future<List<Map<String, String>>> breakdown(
+    String text, {
+    String? apiKey,
+  }) async {
+    final prompt =
+        '''
 Break down each word in the following text.
 Output ONLY a JSON array of objects with keys 'term' and 'meaning'.
 Example: [{"term": "こんにちは", "meaning": "hello"}]
@@ -81,10 +114,14 @@ Text: $text
       final extracted = _extractJsonArray(response);
       if (extracted == null) return [];
       final List decoded = extracted;
-      return decoded.map((item) => {
-        'term': item['term']?.toString() ?? '',
-        'meaning': item['meaning']?.toString() ?? '',
-      }).toList();
+      return decoded
+          .map(
+            (item) => {
+              'term': item['term']?.toString() ?? '',
+              'meaning': item['meaning']?.toString() ?? '',
+            },
+          )
+          .toList();
     } catch (e) {
       return [];
     }
@@ -129,8 +166,10 @@ Text: $text
       _localDataSource.saveMessage(message);
 
   @override
-  Future<List<AiMessage>> getHistory() =>
-      _localDataSource.getHistory();
+  Future<List<AiMessage>> getHistory() => _localDataSource.getHistory();
+
+  @override
+  Future<void> clearHistory() => _localDataSource.clearHistory();
 }
 
 class AiRepositoryException implements Exception {
