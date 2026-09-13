@@ -76,7 +76,11 @@ include(flutter/generated_plugins.cmake)
 
 # Disable deprecated literal operator warnings for flutter_secure_storage_linux
 # due to deprecated literal operator declarations in json.hpp
-target_compile_options(flutter_secure_storage_linux_plugin PRIVATE -Wno-deprecated-literal-operator)
+# Guarded: only apply when the plugin target exists (the plugin list
+# regenerates on pub get; an empty list must not break configure).
+if(TARGET flutter_secure_storage_linux_plugin)
+  target_compile_options(flutter_secure_storage_linux_plugin PRIVATE -Wno-deprecated-literal-operator)
+endif()
 
 
 # === Installation ===
