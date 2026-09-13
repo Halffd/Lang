@@ -55,6 +55,10 @@ class PopupDictionaryController with ChangeNotifier {
   /// run (mouse micro-movement) must not re-trigger the lookup.
   String _activeTerm = '';
 
+  /// Lookup epoch: incremented on every _fire; stale async
+  /// lookups abandon themselves instead of stacking popups.
+  int _lookupEpoch = 0;
+
   bool get isPopupOpen => _popupOpen;
 
   void updateConfig(PopupDictionaryConfig newConfig) {
@@ -256,10 +260,15 @@ class PopupDictionaryController with ChangeNotifier {
 
     final ctx = _rootContext;
     if (ctx == null) return;
+
+    // epoch guard: only the latest fire may complete; a newer
+    // lookup supersedes this one while it is in flight
+    final epoch = ++_lookupEpoch;
     final body = await builder(
       ctx,
       PopupLookup(term: hit.term, sentence: hit.sentence, position: position),
     );
+    if (epoch != _lookupEpoch) return;
     if (body == null) return;
 
     _activeTerm = hit.term;
@@ -333,6 +342,9 @@ class PopupDictionaryController with ChangeNotifier {
   }
 
   void hide() {
+    // invalidate any in-flight lookup so it cannot resurrect the
+    // popup after dismissal
+    _lookupEpoch++;
     _entry?.remove();
     _entry = null;
     _popupOpen = false;

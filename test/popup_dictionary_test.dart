@@ -1,7 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lang/core/services/popup_dictionary_controller.dart';
 import 'package:lang/domain/entities/popup_dictionary_config.dart';
+import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/utils/cjk_text_extractor.dart';
 import 'package:lang/utils/japanese_grammar.dart';
 
@@ -290,6 +292,27 @@ void main() {
       expect(extractor.extractAtPosition('abc', -1, config), isNull);
       expect(extractor.extractAtPosition('abc', 3, config), isNull);
       expect(extractor.extractAtPosition('', 0, config), isNull);
+    });
+  });
+
+  group('AnalyzerProvider.lookupWordDirect', () {
+    late AnalyzerProvider provider;
+
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+      provider = AnalyzerProvider();
+    });
+
+    test('empty query returns empty without touching services', () async {
+      final results = await provider.lookupWordDirect('   ');
+      expect(results, isEmpty);
+    });
+
+    test('whitespace-padded query is not empty', () async {
+      // real lookup: no dictionaries loaded in tests, so this
+      // exercises the full pipeline and returns empty gracefully
+      final results = await provider.lookupWordDirect('  読む  ');
+      expect(results, isNotNull);
     });
   });
 }
