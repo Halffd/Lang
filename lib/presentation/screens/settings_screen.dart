@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:lang/core/services/clipboard_monitor_service.dart';
 import 'package:lang/data/services/anki_connect_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/domain/entities/translation_model.dart';

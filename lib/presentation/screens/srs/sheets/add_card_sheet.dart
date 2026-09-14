@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:screenshot/screenshot.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:lang/domain/entities/srs_card.dart';
 import 'package:lang/data/repositories/srs_service.dart';
 import 'package:lang/utils/font_scale.dart';
@@ -44,7 +43,6 @@ class _AddCardSheetState extends State<AddCardSheet> {
   final AudioPlayer _audioPlayer = AudioPlayer();
   final bool _isRecording = false;
   bool _isPlayingAudio = false;
-  String? _recordedAudioPath;
   final screenshotController = ScreenshotController();
 
   @override
@@ -142,62 +140,54 @@ class _AddCardSheetState extends State<AddCardSheet> {
     setState(() => _videoBase64 = base64);
   }
 
-  Future<void> _recordVideo() async {
-    try {
-      final status = await Permission.camera.request();
-      if (!status.isGranted) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Camera permission required')),
-          );
-        }
-        return;
-      }
-
-      final picker = ImagePicker();
-      final video = await picker.pickVideo(
-        source: ImageSource.camera,
-        maxDuration: const Duration(minutes: 2),
-      );
-      if (video != null) {
-        final file = File(video.path);
-        final bytes = await file.readAsBytes();
-        final base64 = 'data:video/mp4;base64,${base64Encode(bytes)}';
-        setState(() => _videoBase64 = base64);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Video recording failed: $e')));
-      }
-    }
-  }
-
   Future<File?> _showMediaPickerDialog({bool allowVideo = false}) async {
-    return showDialog<File>(
+    final choice = await showDialog<String>(
       context: context,
       builder: (ctx) => SimpleDialog(
         title: Text(allowVideo ? 'Select Media' : 'Select Image'),
         children: [
           SimpleDialogOption(
-            onPressed: () async {
-              final picker = await _createImagePicker();
-              if (picker != null) Navigator.pop(ctx, picker);
-            },
+            onPressed: () => Navigator.pop(ctx, 'gallery'),
             child: const ListTile(
               leading: Icon(Icons.photo_library),
               title: Text('Gallery'),
             ),
           ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, 'camera'),
+            child: const ListTile(
+              leading: Icon(Icons.camera_alt),
+              title: Text('Camera'),
+            ),
+          ),
         ],
       ),
     );
-  }
+    if (choice == null) return null;
 
-  Future<File?> _createImagePicker() async {
-    // Implementation would use ImagePicker
-    return null;
+    final picker = ImagePicker();
+    try {
+      if (allowVideo) {
+        final video = await picker.pickVideo(
+          source: choice == 'camera' ? ImageSource.camera : ImageSource.gallery,
+          maxDuration: const Duration(minutes: 2),
+        );
+        return video == null ? null : File(video.path);
+      }
+      final image = await picker.pickImage(
+        source: choice == 'camera' ? ImageSource.camera : ImageSource.gallery,
+        maxWidth: 1024,
+        imageQuality: 85,
+      );
+      return image == null ? null : File(image.path);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Media pick failed: $e')));
+      }
+      return null;
+    }
   }
 
   @override
@@ -331,7 +321,10 @@ class _AddCardSheetState extends State<AddCardSheet> {
               const SizedBox(height: 24),
               Text(
                 'Media',
-                style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: fs(context, 18, 'headers'),
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 12),
               if (_imageBase64 != null)

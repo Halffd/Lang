@@ -468,7 +468,6 @@ class JapaneseGrammar {
     final bCol = _kanaAtRowCol(row, 4);
     final nCol = _kanaAtRowCol(row, 0);
     final mCol = _kanaAtRowCol(row, 2);
-    final uCol = _kanaAtRowCol(row, 2);
 
     if (bCol.isNotEmpty)
       results.add('${stem.substring(0, stem.length - 1)}$bColう');

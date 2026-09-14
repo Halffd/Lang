@@ -32,7 +32,6 @@ class DocumentReaderState extends State<DocumentReader> {
   int _currentPage = 1;
   int _totalPages = 0;
   PdfViewerController? _pdfViewerController;
-  EpubController? _epubController;
 
   List<Uint8List> _mangaPages = [];
   bool _mangaLoading = true;

@@ -34,12 +34,6 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
     _card = widget.card;
   }
 
-  void _refreshCard() {
-    final updated = widget.srsService.getCardById(_card.id);
-    if (updated != null) {
-      setState(() => _card = updated);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

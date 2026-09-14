@@ -222,7 +222,7 @@ void main() {
         expect(srsService.upcomingCards.first.id, 'future');
       });
 
-      test('dueCount returns correct count', () {
+      test('dueCount returns correct count', () async {
         final dueCard = SRSCard(
           id: 'due_1',
           word: 'due',
@@ -236,7 +236,13 @@ void main() {
           nextReview: DateTime.now().add(const Duration(days: 1)),
         );
 
-        // These won't be persisted since we're not using proper async storage
+        await srsService.addCard(dueCard);
+        await srsService.addCard(futureCard);
+
+        expect(srsService.dueCount, 1);
+        expect(srsService.upcomingCards.length, 1);
+        expect(srsService.upcomingCards.first.id, 'future_1');
+        expect(srsService.totalCount, 2);
       });
     });
 
@@ -384,5 +390,4 @@ class MockStorageService extends StorageService {
 
   @override
   Future<Set<String>> getAnkiWords() async => <String>{};
-
 }

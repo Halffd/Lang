@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lang/core/services/clipboard_monitor_service.dart';
 import 'package:lang/core/services/history_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
-import 'package:lang/domain/entities/translation_model.dart';
 import 'package:lang/core/services/storage_service.dart';
 
 void main() {

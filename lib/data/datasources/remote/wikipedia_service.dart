@@ -10,16 +10,21 @@ class WikipediaService {
   /// Parameters:
   /// - term: The term to search for
   /// - languageCode: Language code (ja, en, zh, etc.)
-  Future<WikipediaArticle?> fetchArticle(String term, {String languageCode = 'ja'}) async {
+  Future<WikipediaArticle?> fetchArticle(
+    String term, {
+    String languageCode = 'ja',
+  }) async {
     final languageSubdomain = languageCode;
-    final url = 'https://$languageSubdomain.wikipedia.org/wiki/${Uri.encodeComponent(term)}';
+    final url =
+        'https://$languageSubdomain.wikipedia.org/wiki/${Uri.encodeComponent(term)}';
 
     try {
       final response = await http.get(
         Uri.parse(Uri.encodeFull(url)),
         headers: {
           'Content-Type': 'text/html; charset=UTF-8',
-          'User-Agent': 'LangApp/1.0 (https://github.com/lang-app; lang-app@example.com)',
+          'User-Agent':
+              'LangApp/1.0 (https://github.com/lang-app; lang-app@example.com)',
         },
       );
 
@@ -28,7 +33,9 @@ class WikipediaService {
       }
 
       if (response.statusCode != 200) {
-        throw Exception('Failed to load Wikipedia article: ${response.statusCode}');
+        throw Exception(
+          'Failed to load Wikipedia article: ${response.statusCode}',
+        );
       }
 
       return _parseWikipediaContent(response.body, term);
@@ -38,9 +45,13 @@ class WikipediaService {
   }
 
   /// Fetch summary/extract for a term (shorter, for quick preview)
-  Future<String?> fetchSummary(String term, {String languageCode = 'ja'}) async {
+  Future<String?> fetchSummary(
+    String term, {
+    String languageCode = 'ja',
+  }) async {
     final languageSubdomain = languageCode;
-    final url = 'https://$languageSubdomain.wikipedia.org/api/rest_v1/page/summary/${Uri.encodeComponent(term)}';
+    final url =
+        'https://$languageSubdomain.wikipedia.org/api/rest_v1/page/summary/${Uri.encodeComponent(term)}';
 
     try {
       final response = await http.get(
@@ -67,9 +78,14 @@ class WikipediaService {
   }
 
   /// Search Wikipedia for terms
-  Future<List<WikipediaSearchResult>> search(String query, {String languageCode = 'ja', int limit = 10}) async {
+  Future<List<WikipediaSearchResult>> search(
+    String query, {
+    String languageCode = 'ja',
+    int limit = 10,
+  }) async {
     final languageSubdomain = languageCode;
-    final url = 'https://$languageSubdomain.wikipedia.org/w/api.php?action=query&list=search&srsearch=${Uri.encodeComponent(query)}&format=json&srlimit=$limit';
+    final url =
+        'https://$languageSubdomain.wikipedia.org/w/api.php?action=query&list=search&srsearch=${Uri.encodeComponent(query)}&format=json&srlimit=$limit';
 
     try {
       final response = await http.get(
@@ -87,7 +103,12 @@ class WikipediaService {
       final data = jsonDecode(response.body);
       final searchResults = data['query']['search'] as List? ?? [];
 
-      return searchResults.map((item) => WikipediaSearchResult.fromMap(item as Map<String, dynamic>)).toList();
+      return searchResults
+          .map(
+            (item) =>
+                WikipediaSearchResult.fromMap(item as Map<String, dynamic>),
+          )
+          .toList();
     } catch (e) {
       return [];
     }
@@ -96,7 +117,9 @@ class WikipediaService {
   WikipediaArticle? _parseWikipediaContent(String html, String term) {
     try {
       final document = parse(html);
-      final contentDiv = document.querySelector('#mw-content-text .mw-parser-output');
+      final contentDiv = document.querySelector(
+        '#mw-content-text .mw-parser-output',
+      );
 
       if (contentDiv == null) return null;
 
@@ -116,17 +139,17 @@ class WikipediaService {
           }
 
           final headingText = element.text.trim();
-          if (headingText.isNotEmpty && !headingText.contains('Contents') && !headingText.contains('See also')) {
-            sections.add(WikipediaSection(
-              title: headingText,
-              level: level,
-              content: '',
-            ));
+          if (headingText.isNotEmpty &&
+              !headingText.contains('Contents') &&
+              !headingText.contains('See also')) {
+            sections.add(
+              WikipediaSection(title: headingText, level: level, content: ''),
+            );
           }
           continue;
         }
 
-        final sanitizedHtml = HtmlSanitizer.sanitize(element.outerHtml ?? '');
+        final sanitizedHtml = HtmlSanitizer.sanitize(element.outerHtml);
 
         if (inLead && sanitizedHtml.isNotEmpty) {
           leadContent.add(sanitizedHtml);

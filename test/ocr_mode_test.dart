@@ -70,7 +70,7 @@ void main() {
 
     test('forEach iterates all modes', () {
       int count = 0;
-      for (var mode in OcrMode.values) {
+      for (var _ in OcrMode.values) {
         count++;
       }
       expect(count, 5);

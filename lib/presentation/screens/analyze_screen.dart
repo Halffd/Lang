@@ -96,12 +96,6 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
   // 2 = clipboard history
   int _bottomTab = 0;
 
-  // Filter state - using analyzer_provider types
-  final WordFilter _wordFilter = WordFilter();
-  final WordSortBy _sortBy = WordSortBy.frequency;
-  final bool _sortAscending = false;
-  final WordGroupBy _groupBy = WordGroupBy.none;
-
   late AnimationController _expandController;
   late AnimationController _fadeController;
 

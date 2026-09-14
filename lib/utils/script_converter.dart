@@ -624,13 +624,11 @@ class ScriptConverter {
       // vowel-initial syllable: use ㅇ placeholder
       if (cho == null) {
         String? vowelFirst;
-        int vLen = 0;
         for (final len in [3, 2, 1]) {
           if (i + len > lower.length) continue;
           final sub = lower.substring(i, i + len);
           if (_hangulVowels.containsKey(sub)) {
             vowelFirst = _hangulVowels[sub]!;
-            vLen = len;
             break;
           }
         }

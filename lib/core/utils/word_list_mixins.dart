@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import '../../domain/entities/dictionary_entry.dart';
 import '../services/storage_service.dart';
 
 /// Mixin for managing saved words
@@ -7,7 +6,6 @@ mixin SavedWordsMixin {
   late StorageService _savedWordsStorage;
   bool _savedWordsStorageInitialized = false;
   final Set<String> _savedWords = {};
-  bool _savedWordsLoading = false;
 
   void setStorageService(StorageService storageService) {
     _savedWordsStorage = storageService;
@@ -21,14 +19,12 @@ mixin SavedWordsMixin {
       debugPrint('Warning: Storage service not initialized for saved words');
       return;
     }
-    _savedWordsLoading = true;
     try {
       final words = await _savedWordsStorage.getSavedWords();
       _savedWords.addAll(words);
     } catch (e) {
       debugPrint('Error loading saved words: $e');
     } finally {
-      _savedWordsLoading = false;
     }
   }
 
@@ -58,7 +54,6 @@ mixin DeletedWordsMixin {
   late StorageService _deletedWordsStorage;
   bool _deletedWordsStorageInitialized = false;
   final Set<String> _deletedWords = {};
-  bool _deletedWordsLoading = false;
 
   void setStorageService(StorageService storageService) {
     _deletedWordsStorage = storageService;
@@ -72,14 +67,12 @@ mixin DeletedWordsMixin {
       debugPrint('Warning: Storage service not initialized for deleted words');
       return;
     }
-    _deletedWordsLoading = true;
     try {
       final words = await _deletedWordsStorage.getDeletedWords();
       _deletedWords.addAll(words);
     } catch (e) {
       debugPrint('Error loading deleted words: $e');
     } finally {
-      _deletedWordsLoading = false;
     }
   }
 
@@ -117,7 +110,6 @@ mixin AnkiWordsMixin {
   late StorageService _ankiWordsStorage;
   bool _ankiWordsStorageInitialized = false;
   final Set<String> _ankiWords = {};
-  bool _ankiWordsLoading = false;
 
   void setStorageService(StorageService storageService) {
     _ankiWordsStorage = storageService;
@@ -131,14 +123,12 @@ mixin AnkiWordsMixin {
       debugPrint('Warning: Storage service not initialized for Anki words');
       return;
     }
-    _ankiWordsLoading = true;
     try {
       final words = await _ankiWordsStorage.getAnkiWords();
       _ankiWords.addAll(words);
     } catch (e) {
       debugPrint('Error loading Anki words: $e');
     } finally {
-      _ankiWordsLoading = false;
     }
   }
 
@@ -168,7 +158,6 @@ mixin FavoriteWordsMixin {
   late StorageService _favoriteWordsStorage;
   bool _favoriteWordsStorageInitialized = false;
   final Set<String> _favoriteWords = {};
-  bool _favoriteWordsLoading = false;
 
   void setStorageService(StorageService storageService) {
     _favoriteWordsStorage = storageService;
@@ -182,14 +171,12 @@ mixin FavoriteWordsMixin {
       debugPrint('Warning: Storage service not initialized for favorite words');
       return;
     }
-    _favoriteWordsLoading = true;
     try {
       final words = await _favoriteWordsStorage.getFavoriteWords();
       _favoriteWords.addAll(words);
     } catch (e) {
       debugPrint('Error loading favorite words: $e');
     } finally {
-      _favoriteWordsLoading = false;
     }
   }
 
@@ -219,7 +206,6 @@ mixin SRSWordsMixin {
   late StorageService _srsWordsStorage;
   bool _srsWordsStorageInitialized = false;
   final Set<String> _srsWords = {};
-  bool _srsWordsLoading = false;
 
   void setStorageService(StorageService storageService) {
     _srsWordsStorage = storageService;
@@ -233,14 +219,12 @@ mixin SRSWordsMixin {
       debugPrint('Warning: Storage service not initialized for SRS words');
       return;
     }
-    _srsWordsLoading = true;
     try {
       final words = await _srsWordsStorage.getSRSWords();
       _srsWords.addAll(words);
     } catch (e) {
       debugPrint('Error loading SRS words: $e');
     } finally {
-      _srsWordsLoading = false;
     }
   }
 

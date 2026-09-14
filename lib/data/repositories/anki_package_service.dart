@@ -23,9 +23,11 @@ class AnkiPackageService {
       throw Exception('No cards to export');
     }
 
-    final targetDeckName = deckName ?? (deckId != null
-        ? srsService.getDeckById(deckId)?.name ?? 'LangDeck'
-        : 'LangDeck');
+    final targetDeckName =
+        deckName ??
+        (deckId != null
+            ? srsService.getDeckById(deckId)?.name ?? 'LangDeck'
+            : 'LangDeck');
 
     final archive = Archive();
 
@@ -35,12 +37,14 @@ class AnkiPackageService {
     archive.addFile(ArchiveFile('media', 0, <int>[]));
 
     final zipData = ZipEncoder().encode(archive);
-    return Uint8List.fromList(zipData ?? []);
+    return Uint8List.fromList(zipData);
   }
 
   Uint8List _createAnkiDb(List<SRSCard> cards, String deckName) {
     final tempDir = Directory.systemTemp;
-    final tempFile = File('${tempDir.path}/anki_export_${DateTime.now().millisecondsSinceEpoch}.anki2');
+    final tempFile = File(
+      '${tempDir.path}/anki_export_${DateTime.now().millisecondsSinceEpoch}.anki2',
+    );
     final db = sqlite3.open(tempFile.path);
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
@@ -124,10 +128,9 @@ class AnkiPackageService {
 
     const modelId = 1730000000000;
     final modelJson = _generateModelJson(modelId);
-    db.execute(
-      "UPDATE col SET models = ? WHERE id = 1",
-      ['{"$modelId":$modelJson}'],
-    );
+    db.execute("UPDATE col SET models = ? WHERE id = 1", [
+      '{"$modelId":$modelJson}',
+    ]);
 
     const deckId = 1;
 
@@ -157,23 +160,45 @@ class AnkiPackageService {
       final due = card.nextReview.millisecondsSinceEpoch ~/ 1000;
       final ivl = card.interval;
       final factor = (card.easeFactor * 1000).round();
-      final type = card.type == CardType.newCard ? 0 : card.type == CardType.learning ? 1 : 2;
-      final queue = card.type == CardType.suspended ? -1 : (card.type == CardType.newCard ? 0 : 2);
+      final type = card.type == CardType.newCard
+          ? 0
+          : card.type == CardType.learning
+          ? 1
+          : 2;
+      final queue = card.type == CardType.suspended
+          ? -1
+          : (card.type == CardType.newCard ? 0 : 2);
 
       db.execute(
         "INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid) "
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [cardId, noteId, deckId, 0, mod, usn, type, queue, due, ivl, factor, card.reviewCount, 0, 0, 0, 0],
+        [
+          cardId,
+          noteId,
+          deckId,
+          0,
+          mod,
+          usn,
+          type,
+          queue,
+          due,
+          ivl,
+          factor,
+          card.reviewCount,
+          0,
+          0,
+          0,
+          0,
+        ],
       );
 
       noteId++;
       cardId++;
     }
 
-    db.execute(
-      "UPDATE col SET decks = ? WHERE id = 1",
-      ['{"1":{"name":"$deckName","extendRev":10,"browserCollapsed":false,"collapsed":false,"daysSinceAck":0,"type":1,"mod":$now,"id":1}}'],
-    );
+    db.execute("UPDATE col SET decks = ? WHERE id = 1", [
+      '{"1":{"name":"$deckName","extendRev":10,"browserCollapsed":false,"collapsed":false,"daysSinceAck":0,"type":1,"mod":$now,"id":1}}',
+    ]);
 
     db.dispose();
     final dbBytes = tempFile.readAsBytesSync();
@@ -240,7 +265,9 @@ class AnkiPackageService {
 
     try {
       final tempDir = Directory.systemTemp;
-      final tempFile = File('${tempDir.path}/anki_import_${DateTime.now().millisecondsSinceEpoch}.anki2');
+      final tempFile = File(
+        '${tempDir.path}/anki_import_${DateTime.now().millisecondsSinceEpoch}.anki2',
+      );
       await tempFile.writeAsBytes(dbData);
       final db = sqlite3.open(tempFile.path);
       tempFile.deleteSync();
@@ -254,16 +281,20 @@ class AnkiPackageService {
         final fields = flds.split('\x1f');
 
         final word = fields.isNotEmpty ? fields[0] : '';
-        final reading = fields.length > 1 && fields[1].isNotEmpty ? fields[1] : null;
+        final reading = fields.length > 1 && fields[1].isNotEmpty
+            ? fields[1]
+            : null;
         final meaning = fields.length > 2 ? fields[2] : '';
 
         if (word.isNotEmpty) {
-          cards.add(SRSCard.newCard(
-            id: 'anki_$noteId',
-            word: word,
-            reading: reading,
-            meaning: meaning.isNotEmpty ? meaning : ' ',
-          ));
+          cards.add(
+            SRSCard.newCard(
+              id: 'anki_$noteId',
+              word: word,
+              reading: reading,
+              meaning: meaning.isNotEmpty ? meaning : ' ',
+            ),
+          );
         }
       }
 

@@ -10,7 +10,6 @@ import 'presentation/widgets/structured_definition.dart';
 import 'utils/font_scale.dart';
 import 'utils/japanese_grammar.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'core/services/audio_service.dart';
 import 'core/services/clipboard_monitor_service.dart';
 import 'core/services/history_service.dart';
 import 'core/services/popup_dictionary_controller.dart';
@@ -24,14 +23,8 @@ import 'core/services/storage_service.dart';
 import 'core/services/desktop_ipc_service.dart';
 import 'data/datasources/ai_local_data_source.dart';
 import 'data/datasources/ai_remote_data_source.dart';
-import 'data/datasources/analysis_remote_data_source.dart';
-import 'data/datasources/dictionary_local_data_source.dart';
-import 'data/datasources/dictionary_remote_data_source.dart';
-import 'data/datasources/kanji_remote_data_source.dart';
-import 'data/datasources/note_local_data_source.dart';
 import 'data/datasources/supabase_data_source.dart';
 import 'data/repositories/ai_repository_impl.dart';
-import 'data/repositories/analyzer_repository_impl.dart';
 import 'data/repositories/srs_service.dart';
 import 'domain/entities/dictionary.dart' show YomichanSearchResult;
 import 'domain/entities/app_state.dart';
@@ -89,23 +82,8 @@ void main() async {
     }
   }
 
-  final analysisRemoteDataSource = AnalysisRemoteDataSource();
-  final dictionaryLocalDataSource = DictionaryLocalDataSource();
-  final dictionaryRemoteDataSource = DictionaryRemoteDataSource();
-  final kanjiRemoteDataSource = KanjiRemoteDataSource();
-  final noteLocalDataSource = NoteLocalDataSource();
-  final audioService = AudioService();
   final aiRemoteDataSource = AiRemoteDataSource();
   final aiLocalDataSource = AiLocalDataSource();
-
-  final repository = AnalyzerRepositoryImpl(
-    analysisRemoteDataSource: analysisRemoteDataSource,
-    dictionaryLocalDataSource: dictionaryLocalDataSource,
-    dictionaryRemoteDataSource: dictionaryRemoteDataSource,
-    kanjiRemoteDataSource: kanjiRemoteDataSource,
-    noteLocalDataSource: noteLocalDataSource,
-    audioService: audioService,
-  );
 
   final aiRepository = AiRepositoryImpl(
     remoteDataSource: aiRemoteDataSource,
@@ -263,7 +241,6 @@ void main() async {
     supabaseProvider = SupabaseProvider(
       supabaseService: supabaseService,
       syncService: syncService,
-      dataSource: supabaseDataSource,
     );
     srsProvider = SrsProvider(
       srsService: srsServiceCore,

@@ -392,40 +392,6 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
     );
   }
 
-  Widget _buildWordCard(WordTranslation word) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? Colors.grey[700]
-            : Colors.grey[200],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: Theme.of(context).primaryColor,
-          width: 1,
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            word.translation,
-            style: TextStyle(
-              fontSize: fs(context, 12, 'translations'),
-              color: Colors.grey,
-            ),
-          ),
-          Text(
-            word.source,
-            style: TextStyle(
-              fontSize: fs(context, 14, 'words'),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   String _getLanguageName(String languageCode) {
     return LanguageOption.all.firstWhere(

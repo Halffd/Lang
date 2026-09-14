@@ -4,31 +4,44 @@ import 'package:lang/domain/entities/dictionary.dart';
 /// Utility functions for converting between different data types and SRS cards
 class SRSConversionUtils {
   /// Convert a dictionary entry to an SRS card
-  static SRSCard dictionaryEntryToSRSCard(DictionaryEntry entry, {int priority = 3, int difficulty = 3}) {
-    String meaning = entry.definitions.isNotEmpty ? entry.definitions.first : 'No definition available';
-    
+  static SRSCard dictionaryEntryToSRSCard(
+    DictionaryEntry entry, {
+    int priority = 3,
+    int difficulty = 3,
+  }) {
+    String meaning = entry.definitions.isNotEmpty
+        ? entry.definitions.first
+        : 'No definition available';
+
     if (entry.definitions.length > 1) {
       meaning = entry.definitions.take(2).join('; ');
       if (entry.definitions.length > 2) {
         meaning += '...';
       }
     }
-    
+
     return SRSCard.newCard(
-      id: entry.term + (entry.reading ?? ''),
+      id: entry.term + entry.reading,
       word: entry.term,
-      reading: entry.reading ?? '',
+      reading: entry.reading,
       meaning: meaning,
     );
   }
 
   /// Convert a map of word details to an SRS card
-  static SRSCard wordDetailsToSRSCard(String word, Map<String, dynamic> details, {int priority = 3, int difficulty = 3}) {
-    String reading = details['reading'] ?? '';
-    String meaning = details['definitions'] != null && details['definitions'] is List
-        ? (details['definitions'] as List).take(2).join('; ') + ((details['definitions'] as List).length > 2 ? '...' : '')
+  static SRSCard wordDetailsToSRSCard(
+    String word,
+    Map<String, dynamic> details, {
+    int priority = 3,
+    int difficulty = 3,
+  }) {
+    final String reading = details['reading']?.toString() ?? '';
+    String meaning =
+        details['definitions'] != null && details['definitions'] is List
+        ? (details['definitions'] as List).take(2).join('; ') +
+              ((details['definitions'] as List).length > 2 ? '...' : '')
         : 'No definition available';
-    
+
     return SRSCard.newCard(
       id: word + reading,
       word: word,

@@ -49,11 +49,17 @@ class _CardsTabState extends State<CardsTab> {
     }
 
     if (_searchQuery.isNotEmpty) {
-      cards = cards.where((c) =>
-        c.word.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-        c.meaning.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-        (c.reading?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false)
-      ).toList();
+      cards = cards
+          .where(
+            (c) =>
+                c.word.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                c.meaning.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                (c.reading?.toLowerCase().contains(
+                      _searchQuery.toLowerCase(),
+                    ) ??
+                    false),
+          )
+          .toList();
     }
 
     switch (_sortBy) {
@@ -70,7 +76,11 @@ class _CardsTabState extends State<CardsTab> {
         cards.sort((a, b) => b.reviewCount.compareTo(a.reviewCount));
         break;
       case 'created':
-        cards.sort((a, b) => (b.lastReviewDate ?? b.nextReview).compareTo(a.lastReviewDate ?? a.nextReview));
+        cards.sort(
+          (a, b) => (b.lastReviewDate ?? b.nextReview).compareTo(
+            a.lastReviewDate ?? a.nextReview,
+          ),
+        );
         break;
       default:
         cards.sort((a, b) => a.nextReview.compareTo(b.nextReview));
@@ -81,12 +91,18 @@ class _CardsTabState extends State<CardsTab> {
 
   String _getSortLabel() {
     switch (_sortBy) {
-      case 'alpha': return 'A-Z';
-      case 'priority': return 'Priority';
-      case 'ease': return 'Ease';
-      case 'reviews': return 'Reviews';
-      case 'created': return 'Recent';
-      default: return 'Due Date';
+      case 'alpha':
+        return 'A-Z';
+      case 'priority':
+        return 'Priority';
+      case 'ease':
+        return 'Ease';
+      case 'reviews':
+        return 'Reviews';
+      case 'created':
+        return 'Recent';
+      default:
+        return 'Due Date';
     }
   }
 
@@ -139,7 +155,10 @@ class _CardsTabState extends State<CardsTab> {
         title: const Text('Delete Card?'),
         content: Text('Remove "${card.word}" from your SRS deck?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -170,9 +189,14 @@ class _CardsTabState extends State<CardsTab> {
                     decoration: InputDecoration(
                       hintText: 'Search cards...',
                       prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Icons.clear),
@@ -193,15 +217,32 @@ class _CardsTabState extends State<CardsTab> {
                   itemBuilder: (context) => [
                     const PopupMenuItem(value: 'due', child: Text('Due Date')),
                     const PopupMenuItem(value: 'alpha', child: Text('A-Z')),
-                    const PopupMenuItem(value: 'priority', child: Text('Priority')),
-                    const PopupMenuItem(value: 'ease', child: Text('Ease Factor')),
-                    const PopupMenuItem(value: 'reviews', child: Text('Reviews')),
-                    const PopupMenuItem(value: 'created', child: Text('Created')),
+                    const PopupMenuItem(
+                      value: 'priority',
+                      child: Text('Priority'),
+                    ),
+                    const PopupMenuItem(
+                      value: 'ease',
+                      child: Text('Ease Factor'),
+                    ),
+                    const PopupMenuItem(
+                      value: 'reviews',
+                      child: Text('Reviews'),
+                    ),
+                    const PopupMenuItem(
+                      value: 'created',
+                      child: Text('Created'),
+                    ),
                   ],
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -215,6 +256,11 @@ class _CardsTabState extends State<CardsTab> {
                   ),
                 ),
                 const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.download),
+                  tooltip: 'Import cards',
+                  onPressed: _showImportOptions,
+                ),
                 IconButton(
                   icon: Icon(_showGrid ? Icons.view_list : Icons.grid_view),
                   onPressed: () => setState(() => _showGrid = !_showGrid),
@@ -240,7 +286,13 @@ class _CardsTabState extends State<CardsTab> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: [
-                Text('${cards.length} cards', style: TextStyle(color: Colors.grey, fontSize: fs(context, 13))),
+                Text(
+                  '${cards.length} cards',
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: fs(context, 13),
+                  ),
+                ),
                 const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.folder_outlined),
@@ -262,7 +314,11 @@ class _CardsTabState extends State<CardsTab> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.inbox_outlined, size: 48, color: Colors.grey),
+                        const Icon(
+                          Icons.inbox_outlined,
+                          size: 48,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(height: 8),
                         const Text('No cards found'),
                         const SizedBox(height: 16),
@@ -286,22 +342,25 @@ class _CardsTabState extends State<CardsTab> {
                     ),
                   )
                 : _showGrid
-                    ? GridView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                ? GridView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 3,
                           childAspectRatio: 1.0,
                           crossAxisSpacing: 8,
                           mainAxisSpacing: 8,
                         ),
-                        itemCount: cards.length,
-                        itemBuilder: (context, index) => _buildGridCard(cards[index]),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        itemCount: cards.length,
-                        itemBuilder: (context, index) => _buildListCard(cards[index]),
-                      ),
+                    itemCount: cards.length,
+                    itemBuilder: (context, index) =>
+                        _buildGridCard(cards[index]),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    itemCount: cards.length,
+                    itemBuilder: (context, index) =>
+                        _buildListCard(cards[index]),
+                  ),
           ),
         ],
       ),
@@ -331,20 +390,30 @@ class _CardsTabState extends State<CardsTab> {
                   Expanded(
                     child: Text(
                       card.word,
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: fs(context, 14, 'words'), decoration: isSuspended ? TextDecoration.lineThrough : null),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: fs(context, 14, 'words'),
+                        decoration: isSuspended
+                            ? TextDecoration.lineThrough
+                            : null,
+                      ),
                       textAlign: TextAlign.center,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (isSuspended) const Icon(Icons.pause, size: 14, color: Colors.grey),
+                  if (isSuspended)
+                    const Icon(Icons.pause, size: 14, color: Colors.grey),
                 ],
               ),
               if (card.reading != null && card.reading!.isNotEmpty) ...[
                 const SizedBox(height: 2),
                 Text(
                   card.reading!,
-                  style: TextStyle(fontSize: fs(context, 11, 'ui'), color: Colors.grey[600]),
+                  style: TextStyle(
+                    fontSize: fs(context, 11, 'ui'),
+                    color: Colors.grey[600],
+                  ),
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -353,7 +422,10 @@ class _CardsTabState extends State<CardsTab> {
               const SizedBox(height: 4),
               Text(
                 card.meaning,
-                style: TextStyle(fontSize: fs(context, 11, 'ui'), color: Colors.grey),
+                style: TextStyle(
+                  fontSize: fs(context, 11, 'ui'),
+                  color: Colors.grey,
+                ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -362,7 +434,10 @@ class _CardsTabState extends State<CardsTab> {
                 const Spacer(),
                 Text(
                   card.tags.take(2).join(', '),
-                  style: TextStyle(fontSize: fs(context, 9, 'ui'), color: Colors.grey),
+                  style: TextStyle(
+                    fontSize: fs(context, 9, 'ui'),
+                    color: Colors.grey,
+                  ),
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -396,23 +471,66 @@ class _CardsTabState extends State<CardsTab> {
         child: ListTile(
           title: Row(
             children: [
-              Expanded(child: Text(card.word, style: TextStyle(fontWeight: FontWeight.bold, decoration: isSuspended ? TextDecoration.lineThrough : null))),
-              if (isSuspended) Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Colors.grey, borderRadius: BorderRadius.circular(4)), child: Text('Suspended', style: TextStyle(color: Colors.white, fontSize: fs(context, 10)))),
+              Expanded(
+                child: Text(
+                  card.word,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    decoration: isSuspended ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+              ),
+              if (isSuspended)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.grey,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'Suspended',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: fs(context, 10),
+                    ),
+                  ),
+                ),
             ],
           ),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                card.meaning.isNotEmpty == true ? card.meaning : card.reading ?? '',
+                card.meaning.isNotEmpty == true
+                    ? card.meaning
+                    : card.reading ?? '',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: card.isDue && !isSuspended ? Colors.orange : Colors.grey),
+                style: TextStyle(
+                  color: card.isDue && !isSuspended
+                      ? Colors.orange
+                      : Colors.grey,
+                ),
               ),
-              if (card.tags.isNotEmpty) Wrap(
-                spacing: 4,
-                children: card.tags.take(3).map((t) => Text(t, style: TextStyle(fontSize: fs(context, 10, 'ui'), color: Colors.grey))).toList(),
-              ),
+              if (card.tags.isNotEmpty)
+                Wrap(
+                  spacing: 4,
+                  children: card.tags
+                      .take(3)
+                      .map(
+                        (t) => Text(
+                          t,
+                          style: TextStyle(
+                            fontSize: fs(context, 10, 'ui'),
+                            color: Colors.grey,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
             ],
           ),
           trailing: Row(
@@ -420,12 +538,21 @@ class _CardsTabState extends State<CardsTab> {
             children: [
               if (card.isDue && !isSuspended)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.red[100],
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text('Due', style: TextStyle(color: Colors.red, fontSize: fs(context, 12))),
+                  child: Text(
+                    'Due',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: fs(context, 12),
+                    ),
+                  ),
                 ),
               const SizedBox(width: 4),
               Text(
@@ -522,9 +649,9 @@ class _CardsTabState extends State<CardsTab> {
   Future<void> _exportCards() async {
     final cards = _filterCards();
     if (cards.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No cards to export')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No cards to export')));
       return;
     }
 
@@ -540,18 +667,24 @@ class _CardsTabState extends State<CardsTab> {
     try {
       final jsonData = cards.map((c) => c.toJson()).toList();
       final file = File(result);
-      await file.writeAsString(const JsonEncoder.withIndent('  ').convert(jsonData));
+      await file.writeAsString(
+        const JsonEncoder.withIndent('  ').convert(jsonData),
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Exported ${cards.length} cards to ${path.basename(result)}')),
+          SnackBar(
+            content: Text(
+              'Exported ${cards.length} cards to ${path.basename(result)}',
+            ),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Export failed: $e')));
       }
     }
   }
@@ -560,9 +693,9 @@ class _CardsTabState extends State<CardsTab> {
     final srsService = context.read<SRSService>();
     final cards = _filterCards();
     if (cards.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No cards to export')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No cards to export')));
       return;
     }
 
@@ -584,14 +717,18 @@ class _CardsTabState extends State<CardsTab> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Exported ${cards.length} cards to ${path.basename(result)}')),
+          SnackBar(
+            content: Text(
+              'Exported ${cards.length} cards to ${path.basename(result)}',
+            ),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Export failed: $e')));
       }
     }
   }
@@ -634,14 +771,18 @@ class _CardsTabState extends State<CardsTab> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Imported $cardsImported cards${cardsSkipped > 0 ? ', skipped $cardsSkipped duplicates' : ''}')),
+          SnackBar(
+            content: Text(
+              'Imported $cardsImported cards${cardsSkipped > 0 ? ', skipped $cardsSkipped duplicates' : ''}',
+            ),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Import failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Import failed: $e')));
       }
     }
   }
@@ -684,15 +825,22 @@ class _CardsTabState extends State<CardsTab> {
           }
         }
       } else if (ext == '.csv') {
-        final lines = content.split('\n').where((l) => l.trim().isNotEmpty).toList();
+        final lines = content
+            .split('\n')
+            .where((l) => l.trim().isNotEmpty)
+            .toList();
         if (lines.isEmpty) return;
 
         for (int i = lines.length > 1 ? 1 : 0; i < lines.length; i++) {
           final parts = lines[i].split(',');
           if (parts.length >= 2) {
             final word = parts[0].trim().replaceAll('"', '');
-            final reading = parts.length > 1 ? parts[1].trim().replaceAll('"', '') : null;
-            final meaning = parts.length > 2 ? parts[2].trim().replaceAll('"', '') : '';
+            final reading = parts.length > 1
+                ? parts[1].trim().replaceAll('"', '')
+                : null;
+            final meaning = parts.length > 2
+                ? parts[2].trim().replaceAll('"', '')
+                : '';
 
             if (word.isNotEmpty) {
               final card = SRSCard.newCard(
@@ -715,14 +863,18 @@ class _CardsTabState extends State<CardsTab> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Imported $imported cards${skipped > 0 ? ', skipped $skipped duplicates' : ''}')),
+          SnackBar(
+            content: Text(
+              'Imported $imported cards${skipped > 0 ? ', skipped $skipped duplicates' : ''}',
+            ),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Import failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Import failed: $e')));
       }
     }
   }
@@ -750,6 +902,15 @@ class _CardsTabState extends State<CardsTab> {
               onTap: () {
                 Navigator.pop(ctx);
                 _importCards();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.school),
+              title: const Text('Import Anki Deck'),
+              subtitle: const Text('.apkg package'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _importApkg();
               },
             ),
           ],

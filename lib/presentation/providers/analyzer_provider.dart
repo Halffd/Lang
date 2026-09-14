@@ -3,11 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lang/core/services/history_service.dart';
 import 'package:lang/data/datasources/local_translation_service.dart';
 import 'package:lang/data/repositories/translation_service.dart';
-import 'package:lang/data/services/dictionary/local_dictionary_service.dart';
 import 'package:lang/data/services/dictionary/yomichan_service.dart';
-import 'package:lang/data/services/dictionary/remote_dictionary_service.dart';
-import 'package:lang/data/services/dictionary/language_detector.dart';
-import 'package:lang/data/services/dictionary/search_service.dart';
 import 'package:lang/data/services/dictionary/tokenizer_service.dart';
 import 'package:lang/domain/entities/analyzed_word.dart';
 import 'package:lang/domain/entities/dictionary.dart';
@@ -21,12 +17,8 @@ class AnalyzerProvider extends ChangeNotifier {
   /// (priority/conditions) can gate and order search results.
   AppState? appState;
 
-  final LocalDictionaryService _localService = LocalDictionaryService();
   final YomichanService _yomichanService = YomichanService();
-  final RemoteDictionaryService _remoteService = RemoteDictionaryService();
-  final LanguageDetector _languageDetector = LanguageDetector();
   final TokenizerService _tokenizerService = TokenizerService();
-  final SearchService _searchService = SearchService();
 
   // Translations (sentence-level and full-text)
   TranslationService? _translationService;

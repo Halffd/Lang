@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lang/domain/entities/srs_card.dart';
 import 'package:lang/data/repositories/srs_service.dart';
-import 'package:lang/utils/screen_size.dart';
 import 'package:lang/utils/font_scale.dart';
 
 class StudyTab extends StatefulWidget {

@@ -24,14 +24,15 @@ class RadicalSearchService {
   Future<List<String>> _getAllKanjiCharacters() async {
     if (_allKanjiCharacters != null) return _allKanjiCharacters!;
 
-    final results = await _dictionaryService.searchKanji('一');
     final db = await _dictionaryService.yomichanDatabase;
     final rows = await db.query('kanji', columns: ['character']);
     _allKanjiCharacters = rows.map((r) => r['character'] as String).toList();
     return _allKanjiCharacters!;
   }
 
-  Future<List<RadicalSearchResult>> searchByRadicals(List<KangxiRadical> selectedRadicals) async {
+  Future<List<RadicalSearchResult>> searchByRadicals(
+    List<KangxiRadical> selectedRadicals,
+  ) async {
     if (selectedRadicals.isEmpty) return [];
 
     final allKanji = await _getAllKanjiCharacters();
@@ -52,9 +53,11 @@ class RadicalSearchService {
 
       bool allMatch = true;
       for (final rc in radicalChars) {
-        if (!kanji.contains(rc) && !radicalVariants.any((v) => kanji.contains(v))) {
+        if (!kanji.contains(rc) &&
+            !radicalVariants.any((v) => kanji.contains(v))) {
           final decomp = KanjiDecompositionData.getComponents(kanji);
-          if (!decomp.contains(rc) && !decomp.any((c) => radicalVariants.contains(c))) {
+          if (!decomp.contains(rc) &&
+              !decomp.any((c) => radicalVariants.contains(c))) {
             allMatch = false;
             break;
           }
@@ -67,16 +70,20 @@ class RadicalSearchService {
     for (final char in matching.take(100)) {
       final kanjiEntry = await _getKanjiEntry(char);
       final decomp = KanjiDecompositionData.getDecomposition(char);
-      results.add(RadicalSearchResult(
-        character: char,
-        kanjiEntry: kanjiEntry,
-        decomposition: decomp,
-      ));
+      results.add(
+        RadicalSearchResult(
+          character: char,
+          kanjiEntry: kanjiEntry,
+          decomposition: decomp,
+        ),
+      );
     }
     return results;
   }
 
-  Future<List<RadicalSearchResult>> searchByComponents(List<String> components) async {
+  Future<List<RadicalSearchResult>> searchByComponents(
+    List<String> components,
+  ) async {
     if (components.isEmpty) return [];
 
     final fromDecomp = KanjiDecompositionData.findKanjiByComponents(components);
@@ -101,11 +108,13 @@ class RadicalSearchService {
     for (final char in combined.take(100)) {
       final kanjiEntry = await _getKanjiEntry(char);
       final decomp = KanjiDecompositionData.getDecomposition(char);
-      results.add(RadicalSearchResult(
-        character: char,
-        kanjiEntry: kanjiEntry,
-        decomposition: decomp,
-      ));
+      results.add(
+        RadicalSearchResult(
+          character: char,
+          kanjiEntry: kanjiEntry,
+          decomposition: decomp,
+        ),
+      );
     }
     return results;
   }
@@ -122,7 +131,8 @@ class RadicalSearchService {
       for (final k in allKanji) {
         if (k.length != 1 || k == targetChar) continue;
         for (final rc in RadicalData.all) {
-          if (targetChar.contains(rc.displayChar) && k.contains(rc.displayChar)) {
+          if (targetChar.contains(rc.displayChar) &&
+              k.contains(rc.displayChar)) {
             similar.add(k);
             break;
           }
@@ -131,23 +141,27 @@ class RadicalSearchService {
       return _buildResults(similar);
     }
 
-    final similar = KanjiDecompositionData.findKanjiByAnyComponent(components)
-        .where((k) => k != targetChar)
-        .toList();
+    final similar = KanjiDecompositionData.findKanjiByAnyComponent(
+      components,
+    ).where((k) => k != targetChar).toList();
 
     return _buildResults(similar);
   }
 
-  Future<List<RadicalSearchResult>> _buildResults(List<String> characters) async {
+  Future<List<RadicalSearchResult>> _buildResults(
+    List<String> characters,
+  ) async {
     final results = <RadicalSearchResult>[];
     for (final char in characters.take(100)) {
       final kanjiEntry = await _getKanjiEntry(char);
       final decomp = KanjiDecompositionData.getDecomposition(char);
-      results.add(RadicalSearchResult(
-        character: char,
-        kanjiEntry: kanjiEntry,
-        decomposition: decomp,
-      ));
+      results.add(
+        RadicalSearchResult(
+          character: char,
+          kanjiEntry: kanjiEntry,
+          decomposition: decomp,
+        ),
+      );
     }
     return results;
   }

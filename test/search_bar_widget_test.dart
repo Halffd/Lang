@@ -4,7 +4,9 @@ import 'package:lang/presentation/widgets/search/search_bar_widget.dart';
 
 void main() {
   group('SearchBarWidget', () {
-    testWidgets('should display search bar with correct properties', (WidgetTester tester) async {
+    testWidgets('should display search bar with correct properties', (
+      WidgetTester tester,
+    ) async {
       // Arrange
       final controller = TextEditingController();
       bool submitted = false;
@@ -28,9 +30,13 @@ void main() {
       expect(find.byType(TextField), findsOneWidget);
       expect(find.text('Test Hint'), findsOneWidget);
       expect(find.byIcon(Icons.search), findsOneWidget);
+      expect(submitted, false); // no interaction: callbacks stay idle
+      expect(cleared, false);
     });
 
-    testWidgets('should call onSubmitted when text is submitted', (WidgetTester tester) async {
+    testWidgets('should call onSubmitted when text is submitted', (
+      WidgetTester tester,
+    ) async {
       // Arrange
       final controller = TextEditingController(text: 'test input');
       bool submitted = false;
@@ -56,7 +62,9 @@ void main() {
       expect(submitted, true);
     });
 
-    testWidgets('should show clear button when text is present', (WidgetTester tester) async {
+    testWidgets('should show clear button when text is present', (
+      WidgetTester tester,
+    ) async {
       // Arrange
       final controller = TextEditingController(text: 'test input');
 
@@ -77,7 +85,9 @@ void main() {
       expect(find.byIcon(Icons.clear), findsOneWidget);
     });
 
-    testWidgets('should call onClear when clear button is pressed', (WidgetTester tester) async {
+    testWidgets('should call onClear when clear button is pressed', (
+      WidgetTester tester,
+    ) async {
       // Arrange
       final controller = TextEditingController(text: 'test input');
       bool cleared = false;
@@ -104,7 +114,9 @@ void main() {
       expect(cleared, true);
     });
 
-    testWidgets('should hide clear button when text is empty', (WidgetTester tester) async {
+    testWidgets('should hide clear button when text is empty', (
+      WidgetTester tester,
+    ) async {
       // Arrange
       final controller = TextEditingController();
 

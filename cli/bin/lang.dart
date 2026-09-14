@@ -74,6 +74,11 @@ Future<void> handleTranslate(List<String> args) async {
     exit(1);
   }
 
+  if (provider != null && provider != 'google') {
+    print('Error: Unsupported provider "$provider". Only google is available.');
+    exit(1);
+  }
+
   final text = textArgs.join(' ');
 
   print('Translating: $text');
@@ -122,8 +127,13 @@ Future<void> handleSearch(List<String> args) async {
   }
 }
 
-Future<String> googleTranslate(String text, String sourceLang, String targetLang) async {
-  final url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=$sourceLang&tl=$targetLang&dt=t&q=${Uri.encodeComponent(text)}';
+Future<String> googleTranslate(
+  String text,
+  String sourceLang,
+  String targetLang,
+) async {
+  final url =
+      'https://translate.googleapis.com/translate_a/single?client=gtx&sl=$sourceLang&tl=$targetLang&dt=t&q=${Uri.encodeComponent(text)}';
 
   final client = HttpClient();
   final request = await client.getUrl(Uri.parse(url));

@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lang/core/services/supabase_service.dart';
 import 'package:lang/core/services/realtime_sync_service.dart';
-import 'package:lang/data/datasources/supabase_data_source.dart';
 
 class SupabaseProvider with ChangeNotifier {
   final SupabaseService _supabaseService;
   final RealtimeSyncService _syncService;
-  final SupabaseDataSource _dataSource;
 
   bool _isInitialized = false;
   bool get isInitialized => _isInitialized;
@@ -18,14 +16,13 @@ class SupabaseProvider with ChangeNotifier {
   String? get userId => _userId;
 
   String? _error;
+  String? get error => _error;
 
   SupabaseProvider({
     required SupabaseService supabaseService,
     required RealtimeSyncService syncService,
-    required SupabaseDataSource dataSource,
-  })  : _supabaseService = supabaseService,
-        _syncService = syncService,
-        _dataSource = dataSource;
+  }) : _supabaseService = supabaseService,
+       _syncService = syncService;
 
   Future<void> initialize({
     required String url,
@@ -53,11 +50,11 @@ class SupabaseProvider with ChangeNotifier {
       await _supabaseService.signInAnonymously();
       _userId = _supabaseService.currentUserId;
       _isAuthenticated = _userId != null;
-      
+
       if (_isAuthenticated) {
         _syncService.connect();
       }
-      
+
       notifyListeners();
     } catch (e) {
       _error = e.toString();
@@ -78,13 +75,13 @@ class SupabaseProvider with ChangeNotifier {
     _supabaseService.authStateChanges.listen((state) {
       _userId = _supabaseService.currentUserId;
       _isAuthenticated = _userId != null;
-      
+
       if (_isAuthenticated) {
         _syncService.connect();
       } else {
         _syncService.disconnect();
       }
-      
+
       notifyListeners();
     });
   }
