@@ -276,7 +276,7 @@ class PopupDictionaryController with ChangeNotifier {
     final hit = extractor.extractAt(position, config);
     if (hit == null) return;
 
-    if (!config.languages.isEmpty &&
+    if (config.languages.isNotEmpty &&
         !config.languages.contains(currentLearningLanguage)) {
       return;
     }

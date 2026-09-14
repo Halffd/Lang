@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -136,7 +137,7 @@ class WiktionaryEtymologyService {
       // Parse the wikitext for different sections
       return _parseWiktionaryContent(wikitext, word, language);
     } catch (e) {
-      print('Error fetching Wiktionary details for $word: $e');
+      debugPrint('Error fetching Wiktionary details for $word: $e');
       return [];
     }
   }
@@ -327,7 +328,7 @@ class WiktionaryEtymologyService {
         sections: sections,
       );
     } catch (e) {
-      print('Error fetching etymology for $word: $e');
+      debugPrint('Error fetching etymology for $word: $e');
       return EtymologyResult(word: word, language: language, sections: []);
     }
   }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:lang/domain/entities/translation_model.dart';
 import 'dictionary_service.dart';
 import '../repositories/translation_service.dart';
@@ -61,7 +62,7 @@ class ReaderTranslationService {
     try {
       return await _dictionaryService.fetchWordDetailsMultiLanguage(text, language);
     } catch (e) {
-      print('Error fetching Wiktionary details: $e');
+      debugPrint('Error fetching Wiktionary details: $e');
       return [];
     }
   }

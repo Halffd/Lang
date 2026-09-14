@@ -264,8 +264,7 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
   }
 
   Future<void> _reorderDictionaries(int oldIndex, int newIndex) async {
-    if (newIndex > oldIndex) newIndex--;
-
+    // onReorderItem already adjusts newIndex for the removed item
     setState(() {
       final dict = _dictionaries.removeAt(oldIndex);
       _dictionaries.insert(newIndex, dict);
@@ -463,7 +462,7 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
   Widget _buildDictionaryList() {
     return ReorderableListView.builder(
       itemCount: _dictionaries.length,
-      onReorder: _reorderDictionaries,
+      onReorderItem: _reorderDictionaries,
       itemBuilder: (context, index) {
         final dict = _dictionaries[index];
         final stats = _stats[dict.id!];

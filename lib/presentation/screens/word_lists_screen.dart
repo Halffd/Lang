@@ -97,7 +97,6 @@ class _WordListsScreenState extends State<WordListsScreen>
   Widget _buildWordList(
     Set<String> words, {
     required String emptyMessage,
-    bool showMoveButtons = false,
   }) {
     if (words.isEmpty) {
       return Center(
@@ -132,7 +131,7 @@ class _WordListsScreenState extends State<WordListsScreen>
 
     return ReorderableListView.builder(
       itemCount: recentWords.length,
-      onReorder: (oldIndex, newIndex) {
+      onReorderItem: (oldIndex, newIndex) {
         _onReorderWordList(recentWords, oldIndex, newIndex);
       },
       itemBuilder: (context, index) {
@@ -141,13 +140,12 @@ class _WordListsScreenState extends State<WordListsScreen>
           word,
           index,
           recentWords.length,
-          showMoveButtons: showMoveButtons,
         );
       },
     );
   }
 
-  Widget _ActionButton({
+  Widget _actionButton({
     required IconData icon,
     required Color color,
     required String tooltip,
@@ -172,9 +170,8 @@ class _WordListsScreenState extends State<WordListsScreen>
   Widget _buildWordTile(
     String word,
     int index,
-    int totalCount, {
-    bool showMoveButtons = false,
-  }) {
+    int totalCount,
+  ) {
     final isFav = isWordFavorite(word);
     final isSaved = isWordSaved(word);
 
@@ -233,57 +230,25 @@ class _WordListsScreenState extends State<WordListsScreen>
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _ActionButton(
+              _actionButton(
                 icon: isSaved ? Icons.bookmark : Icons.bookmark_border,
                 color: Colors.blue[300]!,
                 tooltip: isSaved ? 'Saved' : 'Save',
                 onPressed: () => toggleSavedWord(word, isSaved: !isSaved),
               ),
-              _ActionButton(
+              _actionButton(
                 icon: isFav ? Icons.favorite : Icons.favorite_border,
                 color: Colors.red[400]!,
                 tooltip: isFav ? 'Favorited' : 'Favorite',
                 onPressed: () => toggleFavoriteWord(word, isFavorite: !isFav),
               ),
-              _ActionButton(
+              _actionButton(
                 icon: Icons.content_copy,
                 color: Colors.grey[400]!,
                 tooltip: 'Copy',
                 onPressed: () => _copyWord(word),
               ),
-              if (showMoveButtons) ...[
-                _ActionButton(
-                  icon: Icons.first_page,
-                  color: Colors.grey[400]!,
-                  tooltip: 'First',
-                  onPressed: index > 0
-                      ? () => _moveWordToPosition(word, 0)
-                      : null,
-                ),
-                _ActionButton(
-                  icon: Icons.arrow_upward,
-                  color: Colors.grey[400]!,
-                  tooltip: 'Up',
-                  onPressed: index > 0 ? () => _moveWordUp(word) : null,
-                ),
-                _ActionButton(
-                  icon: Icons.arrow_downward,
-                  color: Colors.grey[400]!,
-                  tooltip: 'Down',
-                  onPressed: index < totalCount - 1
-                      ? () => _moveWordDown(word)
-                      : null,
-                ),
-                _ActionButton(
-                  icon: Icons.last_page,
-                  color: Colors.grey[400]!,
-                  tooltip: 'Last',
-                  onPressed: index < totalCount - 1
-                      ? () => _moveWordToPosition(word, totalCount - 1)
-                      : null,
-                ),
-              ],
-              _ActionButton(
+              _actionButton(
                 icon: Icons.delete_outline,
                 color: Colors.red[300]!,
                 tooltip: 'Delete',
@@ -308,28 +273,15 @@ class _WordListsScreenState extends State<WordListsScreen>
   }
 
   void _onReorderWordList(List<String> words, int oldIndex, int newIndex) {
-    // Handle reordering - implement persistence if needed
+    // onReorderItem already adjusts newIndex for the removed item
     setState(() {
-      if (newIndex > oldIndex) newIndex -= 1;
       final item = words.removeAt(oldIndex);
       words.insert(newIndex, item);
     });
   }
 
-  void _moveWordUp(String word) {
-    // Implement move up logic
-    setState(() {});
-  }
 
-  void _moveWordDown(String word) {
-    // Implement move down logic
-    setState(() {});
-  }
 
-  void _moveWordToPosition(String word, int position) {
-    // Implement move to position logic
-    setState(() {});
-  }
 
   Widget _buildHistoryList() {
     final history = context.read<AnalyzerProvider>().history;

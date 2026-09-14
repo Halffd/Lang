@@ -318,8 +318,9 @@ class ImportService {
           }
         }
 
-        if (definitions.isEmpty)
+        if (definitions.isEmpty) {
           continue; // Skip entries with no valid definitions
+        }
 
         final entry = DictionaryEntry(
           dictionaryId: dictionaryId,

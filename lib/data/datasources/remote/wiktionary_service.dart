@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:lang/utils/html_sanitizer.dart';
@@ -28,7 +29,7 @@ class WiktionaryService {
     String url = 'https://$languageSubdomain.wiktionary.org/wiki/$wordToSearch';
 
     try {
-      print('Wiktionary URL: $url'); // Keep for debugging during development
+      debugPrint('Wiktionary URL: $url'); // Keep for debugging during development
       final response = await http.get(
         Uri.parse(Uri.encodeFull(url)),
         headers: {'Content-Type': 'text/html; charset=UTF-8'},
@@ -36,7 +37,7 @@ class WiktionaryService {
 
       // Only print status in debug mode
       if (const bool.fromEnvironment("dart.vm.product") != true) {
-        print('Response status: ${response.statusCode}');
+        debugPrint('Response status: ${response.statusCode}');
       }
       if (response.statusCode == 200) {
         return response.body;
@@ -44,7 +45,7 @@ class WiktionaryService {
         throw Exception('Failed to load Wiktionary data: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching Wiktionary data: $e'); // Keep for debugging
+      debugPrint('Error fetching Wiktionary data: $e'); // Keep for debugging
       throw Exception('Error fetching Wiktionary data: $e');
     }
   }
@@ -65,14 +66,14 @@ class WiktionaryService {
       } else {
         // Only print in debug mode
         if (const bool.fromEnvironment("dart.vm.product") != true) {
-          print('Kanjipedia request failed with status: ${response.statusCode}');
+          debugPrint('Kanjipedia request failed with status: ${response.statusCode}');
         }
         return '';
       }
     } catch (e) {
       // Only print in debug mode
       if (const bool.fromEnvironment("dart.vm.product") != true) {
-        print('Error fetching Kanjipedia data: $e');
+        debugPrint('Error fetching Kanjipedia data: $e');
       }
       return '';
     }
@@ -184,7 +185,7 @@ class WiktionaryService {
     } catch (e) {
       // Only print in debug mode
       if (const bool.fromEnvironment("dart.vm.product") != true) {
-        print('Error parsing Wiktionary content: $e');
+        debugPrint('Error parsing Wiktionary content: $e');
       }
     }
   }
@@ -216,7 +217,7 @@ class WiktionaryService {
     } catch (e) {
       // Only print in debug mode
       if (const bool.fromEnvironment("dart.vm.product") != true) {
-        print('Error extracting Kanjipedia info: $e');
+        debugPrint('Error extracting Kanjipedia info: $e');
       }
       return '';
     }
@@ -240,7 +241,7 @@ class WiktionaryService {
 
       return combinedContent;
     } catch (e) {
-      print('Error fetching detailed word info: $e');
+      debugPrint('Error fetching detailed word info: $e');
       return [];
     }
   }

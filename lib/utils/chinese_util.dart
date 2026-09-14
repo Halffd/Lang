@@ -1,10 +1,10 @@
-enum PinyinFormat { WITH_TONE_MARK, WITHOUT_TONE, WITH_TONE_NUMBER }
+enum PinyinFormat { withToneMark, withoutTone, withToneNumber }
 
 class PinyinHelper {
   static String getPinyin(
     String text, {
     String separator = '',
-    PinyinFormat format = PinyinFormat.WITH_TONE_MARK,
+    PinyinFormat format = PinyinFormat.withToneMark,
   }) {
     return text;
   }
@@ -167,7 +167,7 @@ class ChineseUtil {
     return RegExp(r'[\u4E00-\u9FFF\u3400-\u4DBF\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7AF]').hasMatch(text);
   }
 
-  static String toPinyin(String text, {PinyinFormat format = PinyinFormat.WITH_TONE_MARK}) {
+  static String toPinyin(String text, {PinyinFormat format = PinyinFormat.withToneMark}) {
     if (text.isEmpty) return '';
     final buffer = StringBuffer();
     for (int i = 0; i < text.length; i++) {
@@ -175,13 +175,13 @@ class ChineseUtil {
       final pinyin = _getPinyin(char);
       if (buffer.isNotEmpty) buffer.write(' ');
       switch (format) {
-        case PinyinFormat.WITHOUT_TONE:
+        case PinyinFormat.withoutTone:
           buffer.write(_removeTone(pinyin));
           break;
-        case PinyinFormat.WITH_TONE_NUMBER:
+        case PinyinFormat.withToneNumber:
           buffer.write(_toToneNumber(pinyin));
           break;
-        case PinyinFormat.WITH_TONE_MARK:
+        case PinyinFormat.withToneMark:
         default:
           buffer.write(pinyin);
           break;
@@ -191,15 +191,15 @@ class ChineseUtil {
   }
 
   static String toPinyinWithoutTone(String text) {
-    return toPinyin(text, format: PinyinFormat.WITHOUT_TONE);
+    return toPinyin(text, format: PinyinFormat.withoutTone);
   }
 
-  static String toSpacedPinyin(String text, {PinyinFormat format = PinyinFormat.WITH_TONE_MARK}) {
+  static String toSpacedPinyin(String text, {PinyinFormat format = PinyinFormat.withToneMark}) {
     return toPinyin(text, format: format);
   }
 
   static String toPinyinWithToneNumber(String text) {
-    return toPinyin(text, format: PinyinFormat.WITH_TONE_NUMBER);
+    return toPinyin(text, format: PinyinFormat.withToneNumber);
   }
 
   static String getPinyinInitials(String text) {
@@ -216,7 +216,7 @@ class ChineseUtil {
   }
 
   static String toPinyinWithTone(String text) {
-    return toPinyin(text, format: PinyinFormat.WITH_TONE_MARK);
+    return toPinyin(text, format: PinyinFormat.withToneMark);
   }
 
   static bool looksLikeChinesePinyin(String text) {

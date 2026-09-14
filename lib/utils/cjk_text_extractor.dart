@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 
 import 'package:lang/domain/entities/popup_dictionary_config.dart';

@@ -229,34 +229,35 @@ class ScriptConverter {
     for (final rune in text.runes) {
       if (rune >= 0x3040 && rune <= 0x309F) {
         hasHiragana = true;
-      } else if (rune >= 0x30A0 && rune <= 0x30FF)
+      } else if (rune >= 0x30A0 && rune <= 0x30FF) {
         hasKatakana = true;
-      else if (rune >= 0x3400 && rune <= 0x4DBF)
+      } else if (rune >= 0x3400 && rune <= 0x4DBF) {
         hasKanji = true;
-      else if (rune >= 0x4E00 && rune <= 0x9FFF)
+      } else if (rune >= 0x4E00 && rune <= 0x9FFF) {
         hasKanji = hasHanzi = true;
-      else if (rune >= 0x3105 && rune <= 0x312F)
+      } else if (rune >= 0x3105 && rune <= 0x312F) {
         hasBopomofo = true;
-      else if (rune >= 0xAC00 && rune <= 0xD7AF)
+      } else if (rune >= 0xAC00 && rune <= 0xD7AF) {
         hasHangul = true;
-      else if (rune >= 0x0400 && rune <= 0x04FF)
+      } else if (rune >= 0x0400 && rune <= 0x04FF) {
         hasCyrillic = true;
-      else if (rune >= 0x0370 && rune <= 0x03FF)
+      } else if (rune >= 0x0370 && rune <= 0x03FF) {
         hasGreek = true;
-      else if (rune >= 0x10A0 && rune <= 0x10FF)
+      } else if (rune >= 0x10A0 && rune <= 0x10FF) {
         hasGeorgian = true;
-      else if (rune >= 0x0530 && rune <= 0x058F)
+      } else if (rune >= 0x0530 && rune <= 0x058F) {
         hasArmenian = true;
-      else if (rune >= 0x0590 && rune <= 0x05FF)
+      } else if (rune >= 0x0590 && rune <= 0x05FF) {
         hasHebrew = true;
-      else if (rune >= 0x0600 && rune <= 0x06FF)
+      } else if (rune >= 0x0600 && rune <= 0x06FF) {
         hasArabic = true;
-      else if (rune >= 0x0900 && rune <= 0x097F)
+      } else if (rune >= 0x0900 && rune <= 0x097F) {
         hasDevanagari = true;
-      else if (rune >= 0x0E00 && rune <= 0x0E7F)
+      } else if (rune >= 0x0E00 && rune <= 0x0E7F) {
         hasThai = true;
-      else if (rune >= 0x41 && rune <= 0x5A || rune >= 0x61 && rune <= 0x7A)
+      } else if (rune >= 0x41 && rune <= 0x5A || rune >= 0x61 && rune <= 0x7A) {
         hasLatin = true;
+      }
     }
 
     final unique = [

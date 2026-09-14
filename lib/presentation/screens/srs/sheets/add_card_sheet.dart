@@ -134,8 +134,9 @@ class _AddCardSheetState extends State<AddCardSheet> {
     String mimeType = 'video/mp4';
     if (ext == 'mov') {
       mimeType = 'video/quicktime';
-    } else if (ext == 'webm')
+    } else if (ext == 'webm') {
       mimeType = 'video/webm';
+    }
     final base64 = 'data:$mimeType;base64,${base64Encode(bytes)}';
     setState(() => _videoBase64 = base64);
   }

@@ -469,18 +469,22 @@ class JapaneseGrammar {
     final nCol = _kanaAtRowCol(row, 0);
     final mCol = _kanaAtRowCol(row, 2);
 
-    if (bCol.isNotEmpty)
+    if (bCol.isNotEmpty) {
       results.add('${stem.substring(0, stem.length - 1)}$bColう');
-    if (nCol.isNotEmpty)
+    }
+    if (nCol.isNotEmpty) {
       results.add(
         '${stem.substring(0, stem.length - 1)}${_kanaAtRowCol(row, 2)}う',
       );
-    if (mCol.isNotEmpty)
+    }
+    if (mCol.isNotEmpty) {
       results.add('${stem.substring(0, stem.length - 1)}$mColう');
+    }
 
     final uKana = _kanaAtRowCol(row, 2);
-    if (uKana.isNotEmpty)
+    if (uKana.isNotEmpty) {
       results.add('${stem.substring(0, stem.length - 1)}$uKanaう');
+    }
   }
 
   static void _addGodanFromTte(String stem, Set<String> results) {

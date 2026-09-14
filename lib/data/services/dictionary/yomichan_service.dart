@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 
 import 'package:sqflite/sqflite.dart';
@@ -333,7 +334,7 @@ class YomichanService {
     try {
       await database; // Ensure database is initialized
     } catch (e) {
-      print('YomichanService init error: $e');
+      debugPrint('YomichanService init error: $e');
       rethrow;
     }
   }

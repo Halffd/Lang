@@ -23,7 +23,7 @@ void main() {
   });
 
   group('browseEntries query', () {
-    late final db;
+    late final Database db;
     setUpAll(() async {
       db = await databaseFactory.openDatabase(inMemoryDatabasePath);
       await DatabaseSchema.onCreate(db, DatabaseSchema.currentVersion);

@@ -176,12 +176,15 @@ class AnalyzerProvider extends ChangeNotifier {
         int band;
         if (freq <= 1000) {
           band = 0;
-        } else if (freq <= 5000)
+        } else if (freq <= 5000) {
           band = 1;
-        else if (freq <= 15000)
+        }
+        else if (freq <= 15000) {
           band = 2;
-        else
+        }
+        else {
           band = 3;
+        }
         return _filter.frequencyBands!.contains(band);
       }).toList();
     }
@@ -418,12 +421,15 @@ class AnalyzerProvider extends ChangeNotifier {
           final freq = word.frequency ?? 999999;
           if (freq <= 1000) {
             key = 'Top 1K (Very Common)';
-          } else if (freq <= 5000)
+          } else if (freq <= 5000) {
             key = '1K-5K (Common)';
-          else if (freq <= 15000)
+          }
+          else if (freq <= 15000) {
             key = '5K-15K (Uncommon)';
-          else
+          }
+          else {
             key = '15K+ (Rare)';
+          }
           break;
         case WordGroupBy.firstChar:
           key = word.word.isNotEmpty ? word.word[0].toUpperCase() : '?';

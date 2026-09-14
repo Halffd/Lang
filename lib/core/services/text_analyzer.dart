@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import 'database.dart';
 import '../../data/repositories/dictionary_service.dart';
@@ -54,7 +55,7 @@ class TextAnalyzer {
       final results = await driftDb.getWordFrequenciesWithDefinitions();
       return results;
     } catch (e) {
-      print('Error during Japanese analysis: $e');
+      debugPrint('Error during Japanese analysis: $e');
       rethrow;
     }
   }
@@ -95,7 +96,7 @@ class TextAnalyzer {
       final results = await driftDb.getWordFrequenciesWithDefinitions();
       return results;
     } catch (e) {
-      print('Error during Chinese FTS5 analysis: $e');
+      debugPrint('Error during Chinese FTS5 analysis: $e');
       rethrow;
     }
   }
@@ -142,7 +143,7 @@ class TextAnalyzer {
       final results = await driftDb.getWordFrequenciesWithDefinitions();
       return results;
     } catch (e) {
-      print('Error during dictionary analysis: $e');
+      debugPrint('Error during dictionary analysis: $e');
       rethrow;
     }
   }

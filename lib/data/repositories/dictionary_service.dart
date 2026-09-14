@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:lang/domain/entities/dictionary.dart' as model;
 import 'package:lang/domain/entities/tone_model.dart';
 import 'package:lang/domain/entities/etymology_model.dart';
@@ -171,7 +172,7 @@ class DictionaryService {
         hasMore: results.length >= 50,
       );
     } catch (e) {
-      print('Search error: $e');
+      debugPrint('Search error: $e');
       return model.DictionarySearchResult(
         entries: [],
         query: query,
@@ -233,7 +234,7 @@ class DictionaryService {
         );
       }
     } catch (e) {
-      print('European language search error: $e');
+      debugPrint('European language search error: $e');
       return model.DictionarySearchResult(
         entries: [],
         query: query,
@@ -845,7 +846,7 @@ class DictionaryService {
         content: section.content,
       )).toList();
     } catch (e) {
-      print('Error fetching etymology for $word: $e');
+      debugPrint('Error fetching etymology for $word: $e');
       return [];
     }
   }
@@ -856,7 +857,7 @@ class DictionaryService {
       final service = WiktionaryEtymologyService();
       return await service.fetchWordDetails(word, language);
     } catch (e) {
-      print('Error fetching Wiktionary details for $word: $e');
+      debugPrint('Error fetching Wiktionary details for $word: $e');
       return [];
     }
   }
@@ -1169,7 +1170,7 @@ class DictionaryService {
 
       return [];
     } catch (e) {
-      print('Error fetching detailed Wiktionary data: $e');
+      debugPrint('Error fetching detailed Wiktionary data: $e');
       return [];
     }
   }
@@ -1181,7 +1182,7 @@ class DictionaryService {
       final service = WiktionaryService();
       return await service.fetchWordDetailsForAnyLanguage(word, detectedLanguage);
     } catch (e) {
-      print('Error fetching multi-language word details: $e');
+      debugPrint('Error fetching multi-language word details: $e');
       return [];
     }
   }
@@ -1193,7 +1194,7 @@ class DictionaryService {
       final service = IchiMoeService();
       return await service.searchWithDetails(term, useRomaji: useRomaji);
     } catch (e) {
-      print('Error fetching ichi.moe data: $e');
+      debugPrint('Error fetching ichi.moe data: $e');
       return [];
     }
   }

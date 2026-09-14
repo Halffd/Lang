@@ -51,71 +51,69 @@ class _ClipboardSettingsState extends State<ClipboardSettings> {
           l10n.clipboardMonitorMode,
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        RadioListTile<ClipboardAutoSearchMode>(
-          title: Text(l10n.clipboardModeHistoryOnly),
-          subtitle: Text(l10n.clipboardModeHistoryOnlyDesc),
-          value: ClipboardAutoSearchMode.historyOnly,
+        RadioGroup<ClipboardAutoSearchMode>(
           groupValue: appState.clipboardAutoSearchMode,
           onChanged: (value) {
             if (value != null) _setMode(appState, value);
           },
-        ),
-        RadioListTile<ClipboardAutoSearchMode>(
-          title: Text(l10n.clipboardModeAutoSearch),
-          subtitle: Text(l10n.clipboardModeAutoSearchDesc),
-          value: ClipboardAutoSearchMode.autoSearch,
-          groupValue: appState.clipboardAutoSearchMode,
-          onChanged: (value) {
-            if (value != null) _setMode(appState, value);
-          },
-        ),
-        if (appState.clipboardAutoSearchMode ==
-            ClipboardAutoSearchMode.autoSearch) ...[
-          SwitchListTile(
-            title: Text(l10n.autoSearchOnlyWhenFocused),
-            subtitle: Text(l10n.autoSearchOnlyWhenFocusedDesc),
-            value: appState.clipboardAutoSearchFocusedOnly,
-            onChanged: appState.setClipboardAutoSearchFocusedOnly,
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.autoSearchRegex,
-                  style: const TextStyle(fontWeight: FontWeight.w500),
+          child: Column(
+            children: [
+              RadioListTile<ClipboardAutoSearchMode>(
+                title: Text(l10n.clipboardModeHistoryOnly),
+                subtitle: Text(l10n.clipboardModeHistoryOnlyDesc),
+                value: ClipboardAutoSearchMode.historyOnly,
+              ),
+              RadioListTile<ClipboardAutoSearchMode>(
+                title: Text(l10n.clipboardModeAutoSearch),
+                subtitle: Text(l10n.clipboardModeAutoSearchDesc),
+                value: ClipboardAutoSearchMode.autoSearch,
+              ),
+              if (appState.clipboardAutoSearchMode ==
+                  ClipboardAutoSearchMode.autoSearch) ...[
+                SwitchListTile(
+                  title: Text(l10n.autoSearchOnlyWhenFocused),
+                  subtitle: Text(l10n.autoSearchOnlyWhenFocusedDesc),
+                  value: appState.clipboardAutoSearchFocusedOnly,
+                  onChanged: appState.setClipboardAutoSearchFocusedOnly,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  l10n.autoSearchRegexDesc,
-                  style: TextStyle(
-                    fontSize: fs(context, 12),
-                    color: Colors.white54,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.autoSearchRegex,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.autoSearchRegexDesc,
+                        style: TextStyle(
+                          fontSize: fs(context, 12),
+                          color: Colors.white54,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _regexController,
+                        decoration: InputDecoration(
+                          hintText: l10n.autoSearchRegexHint,
+                          isDense: true,
+                          border: const OutlineInputBorder(),
+                        ),
+                        onSubmitted: appState.setClipboardAutoSearchRegex,
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _regexController,
-                  decoration: InputDecoration(
-                    hintText: l10n.autoSearchRegexHint,
-                    isDense: true,
-                    border: const OutlineInputBorder(),
-                  ),
-                  onSubmitted: appState.setClipboardAutoSearchRegex,
                 ),
               ],
-            ),
+              RadioListTile<ClipboardAutoSearchMode>(
+                title: Text(l10n.clipboardModeOff),
+                subtitle: Text(l10n.clipboardModeOffDesc),
+                value: ClipboardAutoSearchMode.off,
+              ),
+            ],
           ),
-        ],
-        RadioListTile<ClipboardAutoSearchMode>(
-          title: Text(l10n.clipboardModeOff),
-          subtitle: Text(l10n.clipboardModeOffDesc),
-          value: ClipboardAutoSearchMode.off,
-          groupValue: appState.clipboardAutoSearchMode,
-          onChanged: (value) {
-            if (value != null) _setMode(appState, value);
-          },
         ),
       ],
     );

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:lang/data/repositories/dictionary_service.dart';
 import 'wiktionary_etymology_service.dart';
 
@@ -48,7 +49,7 @@ class WiktionaryIntegrationService {
         wiktionaryDetails: updatedWiktionaryMap,
       );
     } catch (e) {
-      print('Wiktionary enrichment failed (non-critical): $e');
+      debugPrint('Wiktionary enrichment failed (non-critical): $e');
       return baseResult;
     }
   }

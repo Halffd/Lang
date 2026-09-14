@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:html/dom.dart';
@@ -16,7 +17,7 @@ class IchiMoeService {
       final rmj = useRomaji ? 'hb' : 'kana';
       final url = 'https://ichi.moe/cl/qr/?r=$rmj&q=${Uri.encodeComponent(term)}';
       
-      print('Ichi.moe URL: $url'); // Debugging
+      debugPrint('Ichi.moe URL: $url'); // Debugging
       
       final response = await http.get(
         Uri.parse(url),
@@ -101,14 +102,14 @@ class IchiMoeService {
 
           entries.add(entry);
         } catch (e) {
-          print('Error parsing entry $i: $e');
+          debugPrint('Error parsing entry $i: $e');
           continue;
         }
       }
 
       return entries;
     } catch (e) {
-      print('Error fetching ichi.moe data: $e');
+      debugPrint('Error fetching ichi.moe data: $e');
       return [];
     }
   }
@@ -244,14 +245,14 @@ class IchiMoeService {
 
           entries.add(entry);
         } catch (e) {
-          print('Error parsing entry $i with details: $e');
+          debugPrint('Error parsing entry $i with details: $e');
           continue;
         }
       }
 
       return entries;
     } catch (e) {
-      print('Error fetching ichi.moe data with details: $e');
+      debugPrint('Error fetching ichi.moe data with details: $e');
       return [];
     }
   }

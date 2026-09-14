@@ -88,7 +88,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
   final _scrollController = ScrollController();
 
   bool _showDefinitions = true;
-  bool _showSentenceTranslations = true;
+  final bool _showSentenceTranslations = true;
   bool _showFullTranslation = true;
   bool _showFavorites = true;
 
@@ -1386,12 +1386,15 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     Color freqColor;
     if (freq <= 1000) {
       freqColor = Colors.green;
-    } else if (freq <= 5000)
+    } else if (freq <= 5000) {
       freqColor = Colors.lightGreen;
-    else if (freq <= 15000)
+    }
+    else if (freq <= 15000) {
       freqColor = Colors.amber;
-    else
+    }
+    else {
       freqColor = Colors.orange;
+    }
 
     return TweenAnimationBuilder<double>(
       duration: Duration(milliseconds: 300 + index * 30),

@@ -11,7 +11,7 @@ class DictionaryMediaRegistry {
   static bool _scanned = false;
 
   /// Root directory where media for all dictionaries lives:
-  /// <app docs>/dictionary_media/<dictionary name>/
+  /// `<app docs>/dictionary_media/<dictionary name>/`
   static Future<Directory> _mediaRoot() async {
     final appDir = await getApplicationDocumentsDirectory();
     return Directory('${appDir.path}/dictionary_media');

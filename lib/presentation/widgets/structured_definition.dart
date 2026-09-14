@@ -31,7 +31,7 @@ class StructuredDefinition extends StatelessWidget {
     final theme = Theme.of(context);
     // listen: false is fine — options rarely change and the host
     // screens rebuild on AppState notifications anyway
-    final AppState? appState = Provider.of<AppState>(context, listen: false);
+    final AppState appState = Provider.of<AppState>(context, listen: false);
     final options =
         appState?.dictionaryDisplayOptions ?? DictionaryDisplayOptions();
 

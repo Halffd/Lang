@@ -9,12 +9,9 @@ class AnkiConnectException implements Exception {
 }
 
 class AnkiConnectService {
-  String _url;
+  String url;
 
-  AnkiConnectService([this._url = 'http://127.0.0.1:8765']);
-
-  String get url => _url;
-  set url(String value) => _url = value;
+  AnkiConnectService([this.url = 'http://127.0.0.1:8765']);
 
   Duration timeout = const Duration(seconds: 5);
 
@@ -22,7 +19,7 @@ class AnkiConnectService {
     try {
       final response = await http
           .post(
-            Uri.parse(_url),
+            Uri.parse(url),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({
               'action': action,

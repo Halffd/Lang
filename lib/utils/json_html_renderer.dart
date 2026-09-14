@@ -36,8 +36,9 @@ class JsonHtmlRenderer {
     if (jsonStructure is String) {
       // may be a JSON-encoded structure or plain text
       final decoded = _tryDecode(jsonStructure);
-      if (decoded != null)
+      if (decoded != null) {
         return render(decoded, options: options, mediaIndex: mediaIndex);
+      }
       return _styledText(jsonStructure, null);
     }
 
@@ -190,8 +191,9 @@ class JsonHtmlRenderer {
     } else if (style is String) {
       // legacy CSS-ish string: "font-weight:bold;color:#123456"
       if (style.contains('bold')) ts = ts.copyWith(fontWeight: FontWeight.bold);
-      if (style.contains('italic'))
+      if (style.contains('italic')) {
         ts = ts.copyWith(fontStyle: FontStyle.italic);
+      }
       if (style.contains('line-through')) {
         ts = ts.copyWith(decoration: TextDecoration.lineThrough);
       }
@@ -685,7 +687,7 @@ class JsonHtmlRenderer {
       height: height,
       fit: width != null && height != null ? BoxFit.contain : null,
       filterQuality: pixelated ? FilterQuality.none : FilterQuality.medium,
-      errorBuilder: (_, __, ___) =>
+      errorBuilder: (_, e, s) =>
           Icon(Icons.broken_image, size: 24, color: Colors.grey.shade400),
     );
 

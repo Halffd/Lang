@@ -44,9 +44,16 @@ class RecursiveLookup {
   /// entries. [tokenizer] splits a definition into candidate terms.
   static Future<RecursiveEntry?> lookup(
     String term,
-    Future<List<DictionaryEntry>> Function(String) searchFn, {
+    Future<List<DictionaryEntry>> Function(String) searchFn,
+  ) {
+    return _lookupImpl(term, searchFn, _Visited.empty());
+  }
+
+  static Future<RecursiveEntry?> _lookupImpl(
+    String term,
+    Future<List<DictionaryEntry>> Function(String) searchFn,
+    _Visited visited, {
     int depth = 0,
-    _Visited visited = const _Visited.empty(),
   }) async {
     if (depth >= maxDepth) return null;
     if (visited.contains(term)) return null;
@@ -66,11 +73,11 @@ class RecursiveLookup {
     final unresolved = <String>[];
 
     for (final candidate in candidates.take(maxChildrenPerEntry)) {
-      final child = await lookup(
+      final child = await _lookupImpl(
         candidate,
         searchFn,
+        nextVisited,
         depth: depth + 1,
-        visited: nextVisited,
       );
       if (child != null) {
         children.add(child);
@@ -99,7 +106,7 @@ class RecursiveLookup {
         r'[\u3040-\u30FF\u3400-\u9FFF]+',
       ).allMatches(text)) {
         final t = match.group(0)!;
-        if (t != entry.term && t.length >= 1) terms.add(t);
+        if (t != entry.term && t.isNotEmpty) terms.add(t);
       }
       for (final match in RegExp(r'[A-Za-z]{3,}').allMatches(text)) {
         final t = match.group(0)!;
