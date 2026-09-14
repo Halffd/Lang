@@ -8,7 +8,8 @@ class BackupService {
   static const String _backupsFolder = 'backups';
   static const String _logsFolder = 'logs';
 
-  Future<Directory> get _appDir async => await getApplicationDocumentsDirectory();
+  Future<Directory> get _appDir async =>
+      await getApplicationDocumentsDirectory();
   Future<Directory> get _backupsDir async {
     final dir = Directory('${(await _appDir).path}/$_backupsFolder');
     if (!await dir.exists()) await dir.create(recursive: true);
@@ -27,10 +28,17 @@ class BackupService {
     return File('${dir.path}/app_$date.log');
   }
 
-  Future<void> log(String level, String message, [Object? error, StackTrace? stackTrace]) async {
+  Future<void> log(
+    String level,
+    String message, [
+    Object? error,
+    StackTrace? stackTrace,
+  ]) async {
     try {
       final file = await _getLogFile();
-      final timestamp = DateFormat('yyyy-MM-dd HH:mm:ss.SSS').format(DateTime.now());
+      final timestamp = DateFormat(
+        'yyyy-MM-dd HH:mm:ss.SSS',
+      ).format(DateTime.now());
       final buffer = StringBuffer('$timestamp [$level] $message');
       if (error != null) buffer.write('\nError: $error');
       if (stackTrace != null) buffer.write('\nStackTrace: $stackTrace');
@@ -65,74 +73,92 @@ class BackupService {
       'app': 'LangApp',
     };
 
-    archive.addFile(ArchiveFile(
-      'manifest.json',
-      manifest.toString().length,
-      utf8.encode(json.encode(manifest)),
-    ));
+    archive.addFile(
+      ArchiveFile(
+        'manifest.json',
+        manifest.toString().length,
+        utf8.encode(json.encode(manifest)),
+      ),
+    );
 
     if (appState.isNotEmpty) {
-      archive.addFile(ArchiveFile(
-        'app_state.json',
-        appState.toString().length,
-        utf8.encode(json.encode(appState)),
-      ));
+      archive.addFile(
+        ArchiveFile(
+          'app_state.json',
+          appState.toString().length,
+          utf8.encode(json.encode(appState)),
+        ),
+      );
     }
 
     if (srsData.isNotEmpty) {
-      archive.addFile(ArchiveFile(
-        'srs_data.json',
-        srsData.toString().length,
-        utf8.encode(json.encode(srsData)),
-      ));
+      archive.addFile(
+        ArchiveFile(
+          'srs_data.json',
+          srsData.toString().length,
+          utf8.encode(json.encode(srsData)),
+        ),
+      );
     }
 
     if (savedWords != null && savedWords.isNotEmpty) {
-      archive.addFile(ArchiveFile(
-        'saved_words.txt',
-        savedWords.join('\n').length,
-        utf8.encode(savedWords.join('\n')),
-      ));
+      archive.addFile(
+        ArchiveFile(
+          'saved_words.txt',
+          savedWords.join('\n').length,
+          utf8.encode(savedWords.join('\n')),
+        ),
+      );
     }
 
     if (favoriteWords != null && favoriteWords.isNotEmpty) {
-      archive.addFile(ArchiveFile(
-        'favorite_words.txt',
-        favoriteWords.join('\n').length,
-        utf8.encode(favoriteWords.join('\n')),
-      ));
+      archive.addFile(
+        ArchiveFile(
+          'favorite_words.txt',
+          favoriteWords.join('\n').length,
+          utf8.encode(favoriteWords.join('\n')),
+        ),
+      );
     }
 
     if (srsWords != null && srsWords.isNotEmpty) {
-      archive.addFile(ArchiveFile(
-        'srs_words.txt',
-        srsWords.join('\n').length,
-        utf8.encode(srsWords.join('\n')),
-      ));
+      archive.addFile(
+        ArchiveFile(
+          'srs_words.txt',
+          srsWords.join('\n').length,
+          utf8.encode(srsWords.join('\n')),
+        ),
+      );
     }
 
     if (ankiWords != null && ankiWords.isNotEmpty) {
-      archive.addFile(ArchiveFile(
-        'anki_words.txt',
-        ankiWords.join('\n').length,
-        utf8.encode(ankiWords.join('\n')),
-      ));
+      archive.addFile(
+        ArchiveFile(
+          'anki_words.txt',
+          ankiWords.join('\n').length,
+          utf8.encode(ankiWords.join('\n')),
+        ),
+      );
     }
 
     if (searchHistory != null && searchHistory.isNotEmpty) {
-      archive.addFile(ArchiveFile(
-        'search_history.txt',
-        searchHistory.join('\n').length,
-        utf8.encode(searchHistory.join('\n')),
-      ));
+      archive.addFile(
+        ArchiveFile(
+          'search_history.txt',
+          searchHistory.join('\n').length,
+          utf8.encode(searchHistory.join('\n')),
+        ),
+      );
     }
 
     if (settings != null && settings.isNotEmpty) {
-      archive.addFile(ArchiveFile(
-        'settings.json',
-        settings.toString().length,
-        utf8.encode(json.encode(settings)),
-      ));
+      archive.addFile(
+        ArchiveFile(
+          'settings.json',
+          settings.toString().length,
+          utf8.encode(json.encode(settings)),
+        ),
+      );
     }
 
     final zipData = ZipEncoder().encode(archive);
@@ -163,10 +189,16 @@ class BackupService {
       }
     }
 
-    backups.sort((a, b) => (b['modified'] as DateTime).compareTo(a['modified'] as DateTime));
+    backups.sort(
+      (a, b) =>
+          (b['modified'] as DateTime).compareTo(a['modified'] as DateTime),
+    );
     return backups;
   }
 
+  /// Restores the full backup payload: app state, srs data, word
+  /// lists, search history and settings, keyed by their backup
+  /// file names. Unknown files are ignored.
   Future<Map<String, dynamic>?> restoreBackup(String backupPath) async {
     try {
       final file = File(backupPath);
@@ -175,20 +207,40 @@ class BackupService {
       final bytes = await file.readAsBytes();
       final archive = ZipDecoder().decodeBytes(bytes);
 
-      Map<String, dynamic>? extractedData;
+      final extracted = <String, dynamic>{};
+      final wordFiles = {
+        'saved_words.txt': 'saved_words',
+        'favorite_words.txt': 'favorite_words',
+        'srs_words.txt': 'srs_words',
+        'anki_words.txt': 'anki_words',
+        'search_history.txt': 'search_history',
+      };
+      final jsonFiles = {
+        'app_state.json': 'app_state',
+        'srs_data.json': 'srs_data',
+        'settings.json': 'settings',
+      };
 
-      for (final file in archive) {
-        if (file.isFile) {
-          final content = utf8.decode(file.content as List<int>);
-          if (file.name == 'manifest.json') continue;
-          if (file.name == 'app_state.json') {
-            extractedData = json.decode(content) as Map<String, dynamic>;
-          }
+      for (final entry in archive) {
+        if (!entry.isFile) continue;
+        if (entry.name == 'manifest.json') continue;
+
+        if (jsonFiles.containsKey(entry.name)) {
+          final content = utf8.decode(entry.content as List<int>);
+          if (content.trim().isEmpty) continue;
+          extracted[jsonFiles[entry.name]!] = json.decode(content);
+        } else if (wordFiles.containsKey(entry.name)) {
+          final content = utf8.decode(entry.content as List<int>);
+          extracted[wordFiles[entry.name]!] = content
+              .split('\n')
+              .where((l) => l.isNotEmpty)
+              .toList();
         }
       }
 
+      if (extracted.isEmpty) return null;
       info('Restored backup from: $backupPath');
-      return extractedData;
+      return extracted;
     } catch (e, st) {
       error('Failed to restore backup', e, st);
       return null;
@@ -225,7 +277,9 @@ class BackupService {
     if (!await file.exists()) return [];
     final content = await file.readAsString();
     final allLines = content.split('\n');
-    return allLines.length <= lines ? allLines : allLines.sublist(allLines.length - lines);
+    return allLines.length <= lines
+        ? allLines
+        : allLines.sublist(allLines.length - lines);
   }
 
   Future<void> clearOldLogs({int daysToKeep = 7}) async {
