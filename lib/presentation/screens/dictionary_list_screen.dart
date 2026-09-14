@@ -94,7 +94,9 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
   Future<void> _editDictionary(model.YomichanDictionary dict) async {
     final nameController = TextEditingController(text: dict.title);
     final descController = TextEditingController(text: dict.description ?? '');
-    final priorityController = TextEditingController(text: dict.priority.toString());
+    final priorityController = TextEditingController(
+      text: dict.priority.toString(),
+    );
 
     // per-profile conditions for this dictionary
     final appState = context.read<AppState>();
@@ -106,7 +108,9 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
     final readingsController = TextEditingController(
       text: settings.readingPatterns.join(', '),
     );
-    final regexController = TextEditingController(text: settings.termRegex ?? '');
+    final regexController = TextEditingController(
+      text: settings.termRegex ?? '',
+    );
     final posController = TextEditingController(
       text: settings.partOfSpeechTags.join(', '),
     );
@@ -116,120 +120,136 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-        title: const Text('Edit Dictionary'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Title'),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: descController,
-                decoration: const InputDecoration(labelText: 'Description'),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: priorityController,
-                decoration: const InputDecoration(labelText: 'Priority (higher = first)'),
-                keyboardType: TextInputType.number,
-              ),
-              const Divider(height: 24),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text('Lookup conditions (active profile)',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: fs(context, 13))),
-              ),
-              SwitchListTile(
-                dense: true,
-                title: Text('Use conditions', style: TextStyle(fontSize: fs(context, 13))),
-                subtitle: Text(
+          title: const Text('Edit Dictionary'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Title'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: descController,
+                  decoration: const InputDecoration(labelText: 'Description'),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: priorityController,
+                  decoration: const InputDecoration(
+                    labelText: 'Priority (higher = first)',
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+                const Divider(height: 24),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Lookup conditions (active profile)',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: fs(context, 13),
+                    ),
+                  ),
+                ),
+                SwitchListTile(
+                  dense: true,
+                  title: Text(
+                    'Use conditions',
+                    style: TextStyle(fontSize: fs(context, 13)),
+                  ),
+                  subtitle: Text(
                     'Dictionary only matches lookups meeting all conditions',
-                    style: TextStyle(fontSize: fs(context, 11))),
-                value: conditionEnabled,
-                onChanged: (v) => setDialogState(() => conditionEnabled = v),
-              ),
-              if (conditionEnabled) ...[
-                TextField(
-                  controller: languagesController,
-                  decoration: const InputDecoration(
-                    labelText: 'Languages (comma separated)',
-                    hintText: 'ja, zh',
-                    isDense: true,
+                    style: TextStyle(fontSize: fs(context, 11)),
                   ),
+                  value: conditionEnabled,
+                  onChanged: (v) => setDialogState(() => conditionEnabled = v),
                 ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: readingsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Reading patterns (exact or *)',
-                    hintText: 'よ*, た*',
-                    isDense: true,
+                if (conditionEnabled) ...[
+                  TextField(
+                    controller: languagesController,
+                    decoration: const InputDecoration(
+                      labelText: 'Languages (comma separated)',
+                      hintText: 'ja, zh',
+                      isDense: true,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: regexController,
-                  decoration: const InputDecoration(
-                    labelText: 'Term regex',
-                    hintText: '^\u3041-\u3096 pattern or empty',
-                    isDense: true,
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: readingsController,
+                    decoration: const InputDecoration(
+                      labelText: 'Reading patterns (exact or *)',
+                      hintText: 'よ*, た*',
+                      isDense: true,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: posController,
-                  decoration: const InputDecoration(
-                    labelText: 'Part-of-speech tags (comma separated)',
-                    hintText: 'noun, verb',
-                    isDense: true,
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: regexController,
+                    decoration: const InputDecoration(
+                      labelText: 'Term regex',
+                      hintText: '^\u3041-\u3096 pattern or empty',
+                      isDense: true,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: posController,
+                    decoration: const InputDecoration(
+                      labelText: 'Part-of-speech tags (comma separated)',
+                      hintText: 'noun, verb',
+                      isDense: true,
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final priority = int.tryParse(priorityController.text) ?? dict.priority;
-              await _dictionaryService.updateDictionary(
-                dict.copyWith(
-                  title: nameController.text.trim(),
-                  description: descController.text.trim().isEmpty ? null : descController.text.trim(),
-                  priority: priority,
-                ),
-              );
-              // save per-profile conditions
-              if (conditionEnabled) {
-                settings.languages = _splitList(languagesController.text);
-                settings.readingPatterns = _splitList(readingsController.text);
-                settings.termRegex = regexController.text.trim().isEmpty
-                    ? null
-                    : regexController.text.trim();
-                settings.partOfSpeechTags = _splitList(posController.text);
-              } else {
-                settings.languages = [];
-                settings.readingPatterns = [];
-                settings.termRegex = null;
-                settings.partOfSpeechTags = [];
-              }
-              appState.setYomitanOptions(appState.yomitanOptions);
-              if (mounted) {
-                Navigator.pop(ctx);
-                _loadDictionaries();
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final priority =
+                    int.tryParse(priorityController.text) ?? dict.priority;
+                await _dictionaryService.updateDictionary(
+                  dict.copyWith(
+                    title: nameController.text.trim(),
+                    description: descController.text.trim().isEmpty
+                        ? null
+                        : descController.text.trim(),
+                    priority: priority,
+                  ),
+                );
+                // save per-profile conditions
+                if (conditionEnabled) {
+                  settings.languages = _splitList(languagesController.text);
+                  settings.readingPatterns = _splitList(
+                    readingsController.text,
+                  );
+                  settings.termRegex = regexController.text.trim().isEmpty
+                      ? null
+                      : regexController.text.trim();
+                  settings.partOfSpeechTags = _splitList(posController.text);
+                } else {
+                  settings.languages = [];
+                  settings.readingPatterns = [];
+                  settings.termRegex = null;
+                  settings.partOfSpeechTags = [];
+                }
+                appState.setYomitanOptions(appState.yomitanOptions);
+                if (ctx.mounted) {
+                  Navigator.pop(ctx);
+                  _loadDictionaries();
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
         ),
       ),
     );
@@ -269,7 +289,9 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Dictionary'),
-        content: Text('Are you sure you want to delete "${dict.title}"?\n\nThis action cannot be undone.'),
+        content: Text(
+          'Are you sure you want to delete "${dict.title}"?\n\nThis action cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -291,9 +313,9 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
       await _loadDictionaries();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Deleted "${dict.title}"')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Deleted "${dict.title}"')));
       }
     } catch (e) {
       if (mounted) {
@@ -319,8 +341,7 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
               _buildInfoRow('Name', dict.name),
               if (dict.revision != null)
                 _buildInfoRow('Revision', dict.revision!),
-              if (dict.author != null)
-                _buildInfoRow('Author', dict.author!),
+              if (dict.author != null) _buildInfoRow('Author', dict.author!),
               if (dict.description != null) ...[
                 const SizedBox(height: 12),
                 const Text(
@@ -345,10 +366,7 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
               const SizedBox(height: 12),
               _buildInfoRow('Priority', dict.priority.toString()),
               const SizedBox(height: 12),
-              _buildInfoRow(
-                'Imported',
-                _formatDate(dict.importedAt),
-              ),
+              _buildInfoRow('Imported', _formatDate(dict.importedAt)),
             ],
           ),
         ),
@@ -400,8 +418,8 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _dictionaries.isEmpty
-              ? _buildEmptyState()
-              : _buildDictionaryList(),
+          ? _buildEmptyState()
+          : _buildDictionaryList(),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _navigateToImport,
         icon: const Icon(Icons.add),
@@ -417,11 +435,7 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.book_outlined,
-              size: 80,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.book_outlined, size: 80, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               'No Dictionaries',
@@ -474,7 +488,11 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
                       Positioned(
                         right: -2,
                         top: -2,
-                        child: Icon(Icons.star, size: 16, color: Colors.amber[700]),
+                        child: Icon(
+                          Icons.star,
+                          size: 16,
+                          color: Colors.amber[700],
+                        ),
                       ),
                   ],
                 ),
@@ -490,16 +508,23 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
-                        color: dict.priority > 0 ? Colors.purple[100] : Colors.grey[200],
+                        color: dict.priority > 0
+                            ? Colors.purple[100]
+                            : Colors.grey[200],
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         '#${dict.priority}',
                         style: TextStyle(
                           fontSize: fs(context, 10),
-                          color: dict.priority > 0 ? Colors.purple[700] : Colors.grey[600],
+                          color: dict.priority > 0
+                              ? Colors.purple[700]
+                              : Colors.grey[600],
                         ),
                       ),
                     ),
@@ -526,7 +551,9 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
                     IconButton(
                       icon: const Icon(Icons.arrow_downward, size: 18),
                       tooltip: 'Decrease priority',
-                      onPressed: dict.priority > 0 ? () => _setPriority(dict, -1) : null,
+                      onPressed: dict.priority > 0
+                          ? () => _setPriority(dict, -1)
+                          : null,
                     ),
                     Switch(
                       value: dict.enabled,
@@ -549,8 +576,10 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
                           value: 'favorite',
                           child: Row(
                             children: [
-                              Icon(isFavorite ? Icons.star : Icons.star_border,
-                                   color: isFavorite ? Colors.amber[700] : null),
+                              Icon(
+                                isFavorite ? Icons.star : Icons.star_border,
+                                color: isFavorite ? Colors.amber[700] : null,
+                              ),
                               const SizedBox(width: 12),
                               Text(isFavorite ? 'Unfavorite' : 'Favorite'),
                             ],
@@ -582,7 +611,10 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
                             children: [
                               Icon(Icons.delete_outline, color: Colors.red),
                               SizedBox(width: 12),
-                              Text('Delete', style: TextStyle(color: Colors.red)),
+                              Text(
+                                'Delete',
+                                style: TextStyle(color: Colors.red),
+                              ),
                             ],
                           ),
                         ),
@@ -608,10 +640,6 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
     );
   }
 
-
-  static List<String> _splitList(String raw) => raw
-      .split(',')
-      .map((s) => s.trim())
-      .where((s) => s.isNotEmpty)
-      .toList();
+  static List<String> _splitList(String raw) =>
+      raw.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
 }

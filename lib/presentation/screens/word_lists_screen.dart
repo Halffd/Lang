@@ -18,8 +18,18 @@ class WordListsScreen extends StatefulWidget {
 }
 
 class _WordListsScreenState extends State<WordListsScreen>
-    with SavedWordsMixin, DeletedWordsMixin, AnkiWordsMixin, FavoriteWordsMixin, SRSWordsMixin
-    implements SavedWordsMixin, DeletedWordsMixin, AnkiWordsMixin, FavoriteWordsMixin, SRSWordsMixin {
+    with
+        SavedWordsMixin,
+        DeletedWordsMixin,
+        AnkiWordsMixin,
+        FavoriteWordsMixin,
+        SRSWordsMixin
+    implements
+        SavedWordsMixin,
+        DeletedWordsMixin,
+        AnkiWordsMixin,
+        FavoriteWordsMixin,
+        SRSWordsMixin {
   final TextEditingController _searchController = TextEditingController();
   final DictionaryService _dictionaryService = DictionaryService();
   List<DictionaryEntry> _searchResults = [];
@@ -84,13 +94,14 @@ class _WordListsScreenState extends State<WordListsScreen>
     }
   }
 
-  Widget _buildWordList(Set<String> words, {required String emptyMessage, bool showMoveButtons = false}) {
+  Widget _buildWordList(
+    Set<String> words, {
+    required String emptyMessage,
+    bool showMoveButtons = false,
+  }) {
     if (words.isEmpty) {
       return Center(
-        child: Text(
-          emptyMessage,
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
+        child: Text(emptyMessage, style: Theme.of(context).textTheme.bodyLarge),
       );
     }
 
@@ -106,10 +117,12 @@ class _WordListsScreenState extends State<WordListsScreen>
             final isFav = isWordFavorite(word);
             return ActionChip(
               label: Text(word),
-              avatar: isFav ? Icon(Icons.favorite, size: 16, color: Colors.red) : null,
+              avatar: isFav
+                  ? Icon(Icons.favorite, size: 16, color: Colors.red)
+                  : null,
               onPressed: () {
-                 // Show details or actions
-                 _showWordActions(word);
+                // Show details or actions
+                _showWordActions(word);
               },
             );
           }).toList(),
@@ -124,7 +137,12 @@ class _WordListsScreenState extends State<WordListsScreen>
       },
       itemBuilder: (context, index) {
         final word = recentWords[index];
-        return _buildWordTile(word, index, recentWords.length, showMoveButtons: showMoveButtons);
+        return _buildWordTile(
+          word,
+          index,
+          recentWords.length,
+          showMoveButtons: showMoveButtons,
+        );
       },
     );
   }
@@ -138,7 +156,11 @@ class _WordListsScreenState extends State<WordListsScreen>
     return Tooltip(
       message: tooltip,
       child: IconButton(
-        icon: Icon(icon, size: 20, color: onPressed != null ? color : Colors.grey[600]),
+        icon: Icon(
+          icon,
+          size: 20,
+          color: onPressed != null ? color : Colors.grey[600],
+        ),
         onPressed: onPressed,
         constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
         padding: const EdgeInsets.all(6),
@@ -147,7 +169,12 @@ class _WordListsScreenState extends State<WordListsScreen>
     );
   }
 
-  Widget _buildWordTile(String word, int index, int totalCount, {bool showMoveButtons = false}) {
+  Widget _buildWordTile(
+    String word,
+    int index,
+    int totalCount, {
+    bool showMoveButtons = false,
+  }) {
     final isFav = isWordFavorite(word);
     final isSaved = isWordSaved(word);
 
@@ -169,12 +196,19 @@ class _WordListsScreenState extends State<WordListsScreen>
           ),
         ),
         child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 0,
+          ),
           leading: ReorderableDragStartListener(
             index: index,
             child: Container(
               padding: const EdgeInsets.all(8),
-              child: Icon(Icons.drag_indicator, color: Colors.grey[500], size: 22),
+              child: Icon(
+                Icons.drag_indicator,
+                color: Colors.grey[500],
+                size: 22,
+              ),
             ),
           ),
           title: Text(
@@ -222,7 +256,9 @@ class _WordListsScreenState extends State<WordListsScreen>
                   icon: Icons.first_page,
                   color: Colors.grey[400]!,
                   tooltip: 'First',
-                  onPressed: index > 0 ? () => _moveWordToPosition(word, 0) : null,
+                  onPressed: index > 0
+                      ? () => _moveWordToPosition(word, 0)
+                      : null,
                 ),
                 _ActionButton(
                   icon: Icons.arrow_upward,
@@ -234,13 +270,17 @@ class _WordListsScreenState extends State<WordListsScreen>
                   icon: Icons.arrow_downward,
                   color: Colors.grey[400]!,
                   tooltip: 'Down',
-                  onPressed: index < totalCount - 1 ? () => _moveWordDown(word) : null,
+                  onPressed: index < totalCount - 1
+                      ? () => _moveWordDown(word)
+                      : null,
                 ),
                 _ActionButton(
                   icon: Icons.last_page,
                   color: Colors.grey[400]!,
                   tooltip: 'Last',
-                  onPressed: index < totalCount - 1 ? () => _moveWordToPosition(word, totalCount - 1) : null,
+                  onPressed: index < totalCount - 1
+                      ? () => _moveWordToPosition(word, totalCount - 1)
+                      : null,
                 ),
               ],
               _ActionButton(
@@ -260,7 +300,10 @@ class _WordListsScreenState extends State<WordListsScreen>
   void _copyWord(String word) {
     Clipboard.setData(ClipboardData(text: word));
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Copied "$word"'), duration: const Duration(seconds: 1)),
+      SnackBar(
+        content: Text('Copied "$word"'),
+        duration: const Duration(seconds: 1),
+      ),
     );
   }
 
@@ -312,7 +355,9 @@ class _WordListsScreenState extends State<WordListsScreen>
             final isFav = isWordFavorite(word);
             return ActionChip(
               label: Text(word),
-              avatar: isFav ? Icon(Icons.favorite, size: 16, color: Colors.red) : null,
+              avatar: isFav
+                  ? Icon(Icons.favorite, size: 16, color: Colors.red)
+                  : null,
               onPressed: () {
                 _showWordActions(word);
               },
@@ -337,7 +382,8 @@ class _WordListsScreenState extends State<WordListsScreen>
                   isWordFavorite(word) ? Icons.favorite : Icons.favorite_border,
                   color: Colors.red,
                 ),
-                onPressed: () => toggleFavoriteWord(word, isFavorite: !isWordFavorite(word)),
+                onPressed: () =>
+                    toggleFavoriteWord(word, isFavorite: !isWordFavorite(word)),
               ),
               IconButton(
                 icon: const Icon(Icons.delete),
@@ -354,7 +400,10 @@ class _WordListsScreenState extends State<WordListsScreen>
   Widget _buildSentenceWordGrid() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = ScreenSize.adaptiveGridColumns(context, max: _sentenceColumns);
+        final columns = ScreenSize.adaptiveGridColumns(
+          context,
+          max: _sentenceColumns,
+        );
         final itemWidth = (constraints.maxWidth / columns) - 8;
         return SingleChildScrollView(
           padding: const EdgeInsets.all(8),
@@ -375,14 +424,20 @@ class _WordListsScreenState extends State<WordListsScreen>
                         children: [
                           Text(
                             entry.word,
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: fs(context, 14)),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: fs(context, 14),
+                            ),
                             textAlign: TextAlign.center,
                             overflow: TextOverflow.ellipsis,
                           ),
                           if (entry.reading.isNotEmpty)
                             Text(
                               entry.reading,
-                              style: TextStyle(fontSize: fs(context, 10), color: Colors.white70),
+                              style: TextStyle(
+                                fontSize: fs(context, 10),
+                                color: Colors.white70,
+                              ),
                               textAlign: TextAlign.center,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -412,21 +467,36 @@ class _WordListsScreenState extends State<WordListsScreen>
               onTap: () {
                 Navigator.pop(context);
                 _searchWord(word);
-                DefaultTabController.of(context).animateTo(0); // Switch to Search tab
+                DefaultTabController.of(
+                  context,
+                ).animateTo(0); // Switch to Search tab
                 _searchController.text = word;
               },
             ),
-             ListTile(
-              leading: Icon(isWordInAnki(word) ? Icons.remove_circle_outline : Icons.add_circle_outline),
-              title: Text(isWordInAnki(word) ? 'Remove from Anki' : 'Add to Anki'),
+            ListTile(
+              leading: Icon(
+                isWordInAnki(word)
+                    ? Icons.remove_circle_outline
+                    : Icons.add_circle_outline,
+              ),
+              title: Text(
+                isWordInAnki(word) ? 'Remove from Anki' : 'Add to Anki',
+              ),
               onTap: () {
                 Navigator.pop(context);
                 toggleAnkiWord(word, isAnki: !isWordInAnki(word));
               },
             ),
-             ListTile(
-              leading: Icon(isWordFavorite(word) ? Icons.favorite : Icons.favorite_border, color: Colors.red),
-              title: Text(isWordFavorite(word) ? 'Remove from Favorites' : 'Add to Favorites'),
+            ListTile(
+              leading: Icon(
+                isWordFavorite(word) ? Icons.favorite : Icons.favorite_border,
+                color: Colors.red,
+              ),
+              title: Text(
+                isWordFavorite(word)
+                    ? 'Remove from Favorites'
+                    : 'Add to Favorites',
+              ),
               onTap: () {
                 Navigator.pop(context);
                 toggleFavoriteWord(word, isFavorite: !isWordFavorite(word));
@@ -460,12 +530,11 @@ class _WordListsScreenState extends State<WordListsScreen>
           TextButton(
             onPressed: () async {
               await deleteWord(word);
-              if (mounted) {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('"$word" has been deleted')),
-                );
-              }
+              if (!mounted) return;
+              Navigator.of(this.context).pop();
+              ScaffoldMessenger.of(this.context).showSnackBar(
+                SnackBar(content: Text('"$word" has been deleted')),
+              );
             },
             child: Text('Delete'),
           ),
@@ -484,7 +553,9 @@ class _WordListsScreenState extends State<WordListsScreen>
           actions: [
             IconButton(
               icon: Icon((_isFlexMode ?? false) ? Icons.list : Icons.grid_view),
-              tooltip: (_isFlexMode ?? false) ? 'Switch to List View' : 'Switch to Grid View',
+              tooltip: (_isFlexMode ?? false)
+                  ? 'Switch to List View'
+                  : 'Switch to Grid View',
               onPressed: () {
                 setState(() {
                   _isFlexMode = !(_isFlexMode ?? false);
@@ -519,7 +590,8 @@ class _WordListsScreenState extends State<WordListsScreen>
                             hintText: 'Search for a word...',
                             suffixIcon: IconButton(
                               icon: Icon(Icons.search),
-                              onPressed: () => _searchWord(_searchController.text),
+                              onPressed: () =>
+                                  _searchWord(_searchController.text),
                             ),
                             border: const OutlineInputBorder(),
                           ),
@@ -535,7 +607,9 @@ class _WordListsScreenState extends State<WordListsScreen>
                               _isSentenceMode ? Icons.view_week : Icons.notes,
                               color: _isSentenceMode ? Colors.blue : null,
                             ),
-                            tooltip: _isSentenceMode ? 'Word Mode' : 'Sentence Mode',
+                            tooltip: _isSentenceMode
+                                ? 'Word Mode'
+                                : 'Sentence Mode',
                             onPressed: () {
                               setState(() {
                                 _isSentenceMode = !_isSentenceMode;
@@ -545,10 +619,14 @@ class _WordListsScreenState extends State<WordListsScreen>
                           if (_isSentenceMode)
                             DropdownButton<int>(
                               value: _sentenceColumns,
-                              items: [3, 4, 5, 6, 7, 8].map((n) => DropdownMenuItem(
-                                value: n,
-                                child: Text('$n'),
-                              )).toList(),
+                              items: [3, 4, 5, 6, 7, 8]
+                                  .map(
+                                    (n) => DropdownMenuItem(
+                                      value: n,
+                                      child: Text('$n'),
+                                    ),
+                                  )
+                                  .toList(),
                               onChanged: (val) {
                                 if (val != null) {
                                   setState(() {
@@ -564,12 +642,11 @@ class _WordListsScreenState extends State<WordListsScreen>
                 ),
                 if (_isSearching)
                   const Center(child: CircularProgressIndicator())
-                else if (_searchResults.isEmpty && _searchController.text.isNotEmpty)
+                else if (_searchResults.isEmpty &&
+                    _searchController.text.isNotEmpty)
                   const Center(child: Text('No results found'))
                 else if (_searchResults.isNotEmpty && _isSentenceMode)
-                  Expanded(
-                    child: _buildSentenceWordGrid(),
-                  )
+                  Expanded(child: _buildSentenceWordGrid())
                 else
                   Expanded(
                     child: ListView.builder(
@@ -582,10 +659,22 @@ class _WordListsScreenState extends State<WordListsScreen>
                           isFavorite: isWordFavorite(entry.word),
                           isInAnki: isWordInAnki(entry.word),
                           isInSRS: isWordInSRS(entry.word),
-                          onSaveToggle: () => toggleSavedWord(entry.word, isSaved: !isWordSaved(entry.word)),
-                          onFavoriteToggle: () => toggleFavoriteWord(entry.word, isFavorite: !isWordFavorite(entry.word)),
-                          onAnkiToggle: () => toggleAnkiWord(entry.word, isAnki: !isWordInAnki(entry.word)),
-                          onSRSToggle: () => toggleSRSWord(entry.word, isInSRS: !isWordInSRS(entry.word)),
+                          onSaveToggle: () => toggleSavedWord(
+                            entry.word,
+                            isSaved: !isWordSaved(entry.word),
+                          ),
+                          onFavoriteToggle: () => toggleFavoriteWord(
+                            entry.word,
+                            isFavorite: !isWordFavorite(entry.word),
+                          ),
+                          onAnkiToggle: () => toggleAnkiWord(
+                            entry.word,
+                            isAnki: !isWordInAnki(entry.word),
+                          ),
+                          onSRSToggle: () => toggleSRSWord(
+                            entry.word,
+                            isInSRS: !isWordInSRS(entry.word),
+                          ),
                         );
                       },
                     ),
@@ -596,13 +685,15 @@ class _WordListsScreenState extends State<WordListsScreen>
             // Saved Words Tab
             _buildWordList(
               savedWords,
-              emptyMessage: 'No saved words yet. Search and save words to see them here!',
+              emptyMessage:
+                  'No saved words yet. Search and save words to see them here!',
             ),
 
             // Favorites Tab
             _buildWordList(
               favoriteWords,
-              emptyMessage: 'No favorite words yet. Mark words as favorite to see them here!',
+              emptyMessage:
+                  'No favorite words yet. Mark words as favorite to see them here!',
             ),
 
             // History Tab
@@ -611,7 +702,8 @@ class _WordListsScreenState extends State<WordListsScreen>
             // Anki Words Tab
             _buildWordList(
               ankiWords,
-              emptyMessage: 'No Anki words yet. Add words to Anki to see them here!',
+              emptyMessage:
+                  'No Anki words yet. Add words to Anki to see them here!',
             ),
           ],
         ),

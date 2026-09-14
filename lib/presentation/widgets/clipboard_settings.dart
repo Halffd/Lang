@@ -9,7 +9,7 @@ import 'package:lang/utils/font_scale.dart';
 /// Clipboard monitor settings: mode selector (history only /
 /// auto search / off) plus auto-search gates (focus, regex).
 class ClipboardSettings extends StatefulWidget {
-  const ClipboardSettings();
+  const ClipboardSettings({super.key});
 
   @override
   State<ClipboardSettings> createState() => _ClipboardSettingsState();

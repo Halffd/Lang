@@ -42,6 +42,7 @@ class DictionaryEntryCard extends StatelessWidget {
         throw Exception('Could not launch $url');
       }
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Could not launch url: $e')));

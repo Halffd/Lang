@@ -203,10 +203,10 @@ class _ProfileSection extends StatelessWidget {
             OutlinedButton(
               onPressed: () async {
                 final name = await _promptText(context, 'Profile name');
-                if (name != null && name.isNotEmpty) {
-                  options.addProfile(name);
-                  _persist(context);
-                }
+                if (name == null || name.isEmpty) return;
+                if (!context.mounted) return;
+                options.addProfile(name);
+                _persist(context);
               },
               child: const Text('Add profile'),
             ),
@@ -1703,6 +1703,7 @@ class _BackupSection extends StatelessWidget {
                       ..clear()
                       ..addAll(imported.profiles);
                     options.activeProfileIndex = imported.activeProfileIndex;
+                    if (!context.mounted) return;
                     _persist(context);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(

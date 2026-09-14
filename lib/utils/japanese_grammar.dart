@@ -519,7 +519,9 @@ class JapaneseGrammar {
         if (hiragana != word) {
           forms.addAll(deconjugate(hiragana));
         }
-      } catch (e) {}
+      } catch (_) {
+        // kana conversion can fail on unusual input; keep forms so far
+      }
     }
 
     return forms.toList();

@@ -357,6 +357,7 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
 
     if (cardsToAdd.isNotEmpty) {
       await srsService.bulkAddCards(cardsToAdd);
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${cardsToAdd.length} words added to SRS'),

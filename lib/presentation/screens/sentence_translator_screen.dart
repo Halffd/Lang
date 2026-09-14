@@ -11,16 +11,18 @@ class SentenceTranslatorScreen extends StatefulWidget {
   const SentenceTranslatorScreen({super.key});
 
   @override
-  State<SentenceTranslatorScreen> createState() => _SentenceTranslatorScreenState();
+  State<SentenceTranslatorScreen> createState() =>
+      _SentenceTranslatorScreenState();
 }
 
 class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
-  final LocalTranslationService _localTranslationService = LocalTranslationService();
+  final LocalTranslationService _localTranslationService =
+      LocalTranslationService();
   late TranslationService _translationService;
   final TextEditingController _sourceController = TextEditingController();
-  
-  String _sourceLanguage = 'de';  // German by default
-  String _targetLanguage = 'en';  // English by default
+
+  String _sourceLanguage = 'de'; // German by default
+  String _targetLanguage = 'en'; // English by default
   TranslationResult? _translationResult;
   bool _isLoading = false;
   String? _errorMessage;
@@ -34,6 +36,7 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
   Future<void> _initTranslationService() async {
     final prefs = await SharedPreferences.getInstance();
     final geminiKey = prefs.getString('geminiApiKey') ?? '';
+    if (!mounted) return;
     final appState = Provider.of<AppState>(context, listen: false);
     setState(() {
       _translationService = TranslationService(
@@ -71,7 +74,7 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
       );
 
       final result = await _translationService.translate(request);
-      
+
       setState(() {
         _translationResult = result;
         _isLoading = false;
@@ -159,9 +162,9 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Input text field
             TextField(
               controller: _sourceController,
@@ -173,9 +176,9 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
               ),
               textInputAction: TextInputAction.newline,
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Action buttons
             Row(
               children: [
@@ -186,7 +189,7 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
                       backgroundColor: Theme.of(context).primaryColor,
                       foregroundColor: Colors.white,
                     ),
-                    child: _isLoading 
+                    child: _isLoading
                         ? const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -195,7 +198,9 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
                                 height: 16,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
                                 ),
                               ),
                               SizedBox(width: 8),
@@ -212,9 +217,9 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Error message
             if (_errorMessage != null)
               Container(
@@ -233,15 +238,17 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
                     Expanded(
                       child: Text(
                         _errorMessage!,
-                        style: TextStyle(color: Theme.of(context).colorScheme.onError),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onError,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Results
             if (_translationResult != null) ...[
               Expanded(
@@ -266,9 +273,10 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
                           children: [
                             Text(
                               'Original (${_getLanguageName(_sourceLanguage)})',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: Theme.of(context).primaryColor,
-                              ),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context).primaryColor,
+                                  ),
                             ),
                             const SizedBox(height: 8),
                             Text(
@@ -281,48 +289,66 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
                             // Word-by-word translation for original
                             Text(
                               'Word-by-Word',
-                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                color: Theme.of(context).primaryColor,
-                              ),
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(
+                                    color: Theme.of(context).primaryColor,
+                                  ),
                             ),
                             const SizedBox(height: 8),
                             Wrap(
                               spacing: 8,
                               runSpacing: 8,
-                              children: _translationResult!.wordTranslations.map((word) {
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).brightness == Brightness.dark
-                                        ? Colors.grey[700]
-                                        : Colors.grey[200],
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        word.source,
-                                        style: TextStyle(
-                                          fontSize: fs(context, 14, 'words'),
-                                          fontWeight: FontWeight.w500,
+                              children: _translationResult!.wordTranslations
+                                  .map((word) {
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.grey[700]
+                                            : Colors.grey[200],
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: Theme.of(
+                                            context,
+                                          ).primaryColor.withValues(alpha: 0.5),
+                                          width: 1,
                                         ),
                                       ),
-                                      Text(
-                                        word.translation,
-                                        style: TextStyle(
-                                          fontSize: fs(context, 12, 'translations'),
-                                          color: Colors.grey,
-                                        ),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            word.source,
+                                            style: TextStyle(
+                                              fontSize: fs(
+                                                context,
+                                                14,
+                                                'words',
+                                              ),
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          Text(
+                                            word.translation,
+                                            style: TextStyle(
+                                              fontSize: fs(
+                                                context,
+                                                12,
+                                                'translations',
+                                              ),
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
+                                    );
+                                  })
+                                  .toList(),
                             ),
                           ],
                         ),
@@ -348,9 +374,10 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
                           children: [
                             Text(
                               'Translation (${_getLanguageName(_targetLanguage)})',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: Theme.of(context).primaryColor,
-                              ),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context).primaryColor,
+                                  ),
                             ),
                             const SizedBox(height: 8),
                             Text(
@@ -379,24 +406,20 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
   }) {
     return DropdownButtonFormField<String>(
       initialValue: value,
-      decoration: const InputDecoration(
-        border: OutlineInputBorder(),
-      ),
+      decoration: const InputDecoration(border: OutlineInputBorder()),
       items: LanguageOption.all.map((option) {
-        return DropdownMenuItem(
-          value: option.code,
-          child: Text(option.name),
-        );
+        return DropdownMenuItem(value: option.code, child: Text(option.name));
       }).toList(),
       onChanged: onChanged,
     );
   }
 
-
   String _getLanguageName(String languageCode) {
-    return LanguageOption.all.firstWhere(
-      (option) => option.code == languageCode,
-      orElse: () => LanguageOption('unknown', 'Unknown'),
-    ).name;
+    return LanguageOption.all
+        .firstWhere(
+          (option) => option.code == languageCode,
+          orElse: () => LanguageOption('unknown', 'Unknown'),
+        )
+        .name;
   }
 }

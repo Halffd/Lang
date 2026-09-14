@@ -119,8 +119,9 @@ class _CardsTabState extends State<CardsTab> {
           } else {
             await widget.srsService.addCard(card);
           }
+          if (!mounted) return;
           setState(() {});
-          if (mounted) Navigator.pop(ctx);
+          if (ctx.mounted) Navigator.pop(ctx);
         },
       ),
     );

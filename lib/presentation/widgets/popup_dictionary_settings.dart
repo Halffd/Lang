@@ -9,7 +9,7 @@ import 'package:lang/utils/font_scale.dart';
 /// Popup dictionary settings: trigger, modifier, delay, scan
 /// options, regex gates, auto actions and screen scope.
 class PopupDictionarySettings extends StatefulWidget {
-  const PopupDictionarySettings();
+  const PopupDictionarySettings({super.key});
 
   @override
   State<PopupDictionarySettings> createState() =>

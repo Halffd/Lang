@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:archive/archive.dart';
@@ -116,14 +117,14 @@ class AnkiPackageService {
       CREATE INDEX idx_revlog_cid ON revlog(cid);
     ''');
 
+    final decksJson =
+        '{"1":{"name":${jsonEncode(deckName)},"extendRev":10,"browserCollapsed":false,"collapsed":false,"daysSinceAck":0,"type":1,"mod":$now}}';
+    final confJson = '{"curDeck":1,"lsrp":1,"timeLim":0}';
+    final dconfJson =
+        '{"1":{"name":"Default","revs":5,"lapse":8,"leeches":1,"stop":0,"mult":0,"minIvl":1,"maxIvl":36500,"hardfactor":1300}}';
     db.execute(
-      "INSERT INTO col VALUES (?, ?, ?, ?, ?, ?, "
-      "'{\"curDeck\":1,\"lsrp\":1,\"timeLim\":0}', "
-      "'{}', "
-      "'{\"1\":{\"name\":?,\"extendRev\":10,\"browserCollapsed\":false,\"collapsed\":false,\"daysSinceAck\":0,\"type\":1,\"mod\":?}}', "
-      "'{\"1\":{\"name\":\"Default\",\"revs\":5,\"lapse\":8,\"leeches\":1,\"stop\":0,\"mult\":0,\"minIvl\":1,\"maxIvl\":36500,\"hardfactor\":1300}}', "
-      "'[]')",
-      [1, now, now, now, 11, 0, deckName, now],
+      "INSERT INTO col VALUES (?, ?, ?, ?, ?, ?, ?, '{}', ?, ?, '[]')",
+      [1, now, now, now, 11, 0, confJson, decksJson, dconfJson],
     );
 
     const modelId = 1730000000000;
@@ -276,8 +277,8 @@ class AnkiPackageService {
       final result = stmt.select();
 
       for (final row in result) {
-        final noteId = row[0] as int;
-        final flds = row[1] as String;
+        final noteId = row['id'] as int;
+        final flds = row['flds'] as String;
         final fields = flds.split('\x1f');
 
         final word = fields.isNotEmpty ? fields[0] : '';
