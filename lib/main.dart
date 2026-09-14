@@ -379,6 +379,8 @@ class _PopupDictionaryBodyState extends State<_PopupDictionaryBody> {
     final theme = Theme.of(context);
     final result = widget.result;
     final entry = result.entry;
+    final popupConfig = PopupDictionaryController.instance.config;
+    final fontScale = popupConfig.fontScale.clamp(0.5, 2.0);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -389,18 +391,18 @@ class _PopupDictionaryBodyState extends State<_PopupDictionaryBody> {
               child: Text(
                 entry.term,
                 style: TextStyle(
-                  fontSize: fs(context, 20, 'kanji'),
+                  fontSize: fs(context, 20, 'kanji') * fontScale,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            if (entry.reading.isNotEmpty)
+            if (popupConfig.showReading && entry.reading.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(left: 8),
                 child: Text(
                   entry.reading,
                   style: TextStyle(
-                    fontSize: fs(context, 12, 'words'),
+                    fontSize: fs(context, 12, 'words') * fontScale,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
@@ -413,19 +415,19 @@ class _PopupDictionaryBodyState extends State<_PopupDictionaryBody> {
             child: SingleChildScrollView(
               child: StructuredDefinition(
                 definition: entry.definitions.first,
-                fontSize: 12,
+                fontSize: (12 * fontScale).roundToDouble(),
               ),
             ),
           ),
         ],
-        if (widget.sentence.isNotEmpty) ...[
+        if (popupConfig.showSentence && widget.sentence.isNotEmpty) ...[
           const SizedBox(height: 6),
           Text(
             widget.sentence,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: fs(context, 10, 'ui'),
+              fontSize: fs(context, 10, 'ui') * fontScale,
               color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),

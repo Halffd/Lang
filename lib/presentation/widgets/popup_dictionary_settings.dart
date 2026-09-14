@@ -257,6 +257,135 @@ class _PopupDictionarySettingsState extends State<PopupDictionarySettings> {
                 ),
           ],
         ),
+
+        const SizedBox(height: 16),
+
+        // profile alternation
+        Text(
+          l10n.popupProfileAlternation,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        Text(
+          l10n.popupProfileAlternationSubtitle,
+          style: TextStyle(
+            fontSize: fs(context, 11, 'ui'),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.6),
+          ),
+        ),
+        const SizedBox(height: 8),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(l10n.popupProfileAlternation),
+          value: config.altTrigger != null,
+          onChanged: (v) => _update(appState, (c) {
+            c.altTrigger = v ? PopupTrigger.click : null;
+            return c;
+          }),
+        ),
+        if (config.altTrigger != null) ...[
+          Text(l10n.popupAltTrigger),
+          DropdownButton<PopupTrigger>(
+            isExpanded: true,
+            value: config.altTrigger,
+            items: [
+              for (final t in PopupTrigger.values)
+                DropdownMenuItem(value: t, child: Text(_triggerLabel(l10n, t))),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                _update(appState, (c) => c..altTrigger = value);
+              }
+            },
+          ),
+          TextField(
+            decoration: InputDecoration(
+              labelText: l10n.popupAltProfileName,
+              hintText: appState.currentProfile,
+              isDense: true,
+            ),
+            onChanged: (v) => _update(appState, (c) => c..altCondition = v),
+          ),
+          if (config.altTrigger == PopupTrigger.shake)
+            Text(
+              l10n.popupShakeArmed,
+              style: TextStyle(
+                fontSize: fs(context, 11, 'ui'),
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+        ],
+
+        const SizedBox(height: 16),
+
+        // style
+        Text(
+          l10n.popupStyle,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        DropdownButton<PopupStyle>(
+          isExpanded: true,
+          value: config.style,
+          items: [
+            DropdownMenuItem(
+              value: PopupStyle.card,
+              child: Text(l10n.popupStyleCard),
+            ),
+            DropdownMenuItem(
+              value: PopupStyle.minimal,
+              child: Text(l10n.popupStyleMinimal),
+            ),
+            DropdownMenuItem(
+              value: PopupStyle.compact,
+              child: Text(l10n.popupStyleCompact),
+            ),
+          ],
+          onChanged: (value) {
+            if (value != null) {
+              _update(appState, (c) => c..style = value);
+            }
+          },
+        ),
+        Text('${l10n.popupWidth}: ${config.width.round()}'),
+        Slider(
+          value: config.width.clamp(120, 480),
+          min: 120,
+          max: 480,
+          divisions: 72,
+          label: '${config.width.round()}',
+          onChanged: (v) => _update(appState, (c) => c..width = v),
+        ),
+        Text('${l10n.popupMaxHeight}: ${config.maxHeight.round()}'),
+        Slider(
+          value: config.maxHeight.clamp(120, 600),
+          min: 120,
+          max: 600,
+          divisions: 96,
+          label: '${config.maxHeight.round()}',
+          onChanged: (v) => _update(appState, (c) => c..maxHeight = v),
+        ),
+        Text('${l10n.popupFontScale}: ${config.fontScale.toStringAsFixed(2)}x'),
+        Slider(
+          value: config.fontScale.clamp(0.5, 2.0),
+          min: 0.5,
+          max: 2.0,
+          divisions: 30,
+          label: '${config.fontScale.toStringAsFixed(2)}x',
+          onChanged: (v) => _update(appState, (c) => c..fontScale = v),
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(l10n.popupShowReading),
+          value: config.showReading,
+          onChanged: (v) => _update(appState, (c) => c..showReading = v),
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(l10n.popupShowSentence),
+          value: config.showSentence,
+          onChanged: (v) => _update(appState, (c) => c..showSentence = v),
+        ),
       ],
     );
   }

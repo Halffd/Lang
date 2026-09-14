@@ -1086,4 +1086,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String popupActiveTrigger(Object trigger) {
     return 'Active trigger: $trigger';
   }
+
+  @override
+  String get popupStyle => 'Popup style';
+
+  @override
+  String get popupStyleCard => 'Card';
+
+  @override
+  String get popupStyleMinimal => 'Minimal';
+
+  @override
+  String get popupStyleCompact => 'Compact';
+
+  @override
+  String get popupWidth => 'Popup width';
+
+  @override
+  String get popupMaxHeight => 'Popup max height';
+
+  @override
+  String get popupFontScale => 'Popup font scale';
+
+  @override
+  String get popupShowReading => 'Show reading';
+
+  @override
+  String get popupShowSentence => 'Show sentence';
+
+  @override
+  String get popupProfileAlternation => 'Profile alternation';
+
+  @override
+  String get popupProfileAlternationSubtitle =>
+      'Use a different trigger when a profile is active';
+
+  @override
+  String get popupAltTrigger => 'Alternate trigger';
+
+  @override
+  String get popupAltProfileName => 'Profile name condition';
+
+  @override
+  String get popupShakeArmed => 'Shake detection armed';
 }

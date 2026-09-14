@@ -1068,4 +1068,46 @@ class AppLocalizationsZh extends AppLocalizations {
   String popupActiveTrigger(Object trigger) {
     return '当前触发：$trigger';
   }
+
+  @override
+  String get popupStyle => '弹窗样式';
+
+  @override
+  String get popupStyleCard => '卡片';
+
+  @override
+  String get popupStyleMinimal => '极简';
+
+  @override
+  String get popupStyleCompact => '紧凑';
+
+  @override
+  String get popupWidth => '弹窗宽度';
+
+  @override
+  String get popupMaxHeight => '弹窗最大高度';
+
+  @override
+  String get popupFontScale => '弹窗字体倍率';
+
+  @override
+  String get popupShowReading => '显示读音';
+
+  @override
+  String get popupShowSentence => '显示句子';
+
+  @override
+  String get popupProfileAlternation => '配置文件切换';
+
+  @override
+  String get popupProfileAlternationSubtitle => '配置文件激活时使用其他触发方式';
+
+  @override
+  String get popupAltTrigger => '备用触发方式';
+
+  @override
+  String get popupAltProfileName => '配置文件名称条件';
+
+  @override
+  String get popupShakeArmed => '摇晃检测已启用';
 }

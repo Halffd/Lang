@@ -2165,6 +2165,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Active trigger: {trigger}'**
   String popupActiveTrigger(Object trigger);
+
+  /// No description provided for @popupStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Popup style'**
+  String get popupStyle;
+
+  /// No description provided for @popupStyleCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Card'**
+  String get popupStyleCard;
+
+  /// No description provided for @popupStyleMinimal.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimal'**
+  String get popupStyleMinimal;
+
+  /// No description provided for @popupStyleCompact.
+  ///
+  /// In en, this message translates to:
+  /// **'Compact'**
+  String get popupStyleCompact;
+
+  /// No description provided for @popupWidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Popup width'**
+  String get popupWidth;
+
+  /// No description provided for @popupMaxHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Popup max height'**
+  String get popupMaxHeight;
+
+  /// No description provided for @popupFontScale.
+  ///
+  /// In en, this message translates to:
+  /// **'Popup font scale'**
+  String get popupFontScale;
+
+  /// No description provided for @popupShowReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Show reading'**
+  String get popupShowReading;
+
+  /// No description provided for @popupShowSentence.
+  ///
+  /// In en, this message translates to:
+  /// **'Show sentence'**
+  String get popupShowSentence;
+
+  /// No description provided for @popupProfileAlternation.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile alternation'**
+  String get popupProfileAlternation;
+
+  /// No description provided for @popupProfileAlternationSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a different trigger when a profile is active'**
+  String get popupProfileAlternationSubtitle;
+
+  /// No description provided for @popupAltTrigger.
+  ///
+  /// In en, this message translates to:
+  /// **'Alternate trigger'**
+  String get popupAltTrigger;
+
+  /// No description provided for @popupAltProfileName.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile name condition'**
+  String get popupAltProfileName;
+
+  /// No description provided for @popupShakeArmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Shake detection armed'**
+  String get popupShakeArmed;
 }
 
 class _AppLocalizationsDelegate

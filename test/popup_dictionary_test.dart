@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lang/core/services/popup_dictionary_controller.dart';
+import 'package:lang/core/services/shake_detector.dart';
 import 'package:lang/domain/entities/popup_dictionary_config.dart';
 import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/utils/cjk_text_extractor.dart';
@@ -127,6 +128,96 @@ void main() {
       // no alt configured: primary everywhere
       final plain = PopupDictionaryConfig();
       expect(plain.effectiveTrigger('reader profile'), PopupTrigger.shift);
+    });
+
+    test('style config round trip', () {
+      final c = PopupDictionaryConfig(
+        style: PopupStyle.compact,
+        width: 420,
+        maxHeight: 500,
+        fontScale: 1.5,
+        showReading: false,
+        showSentence: false,
+      );
+      final back = PopupDictionaryConfig.deserialize(c.serialize());
+      expect(back.style, PopupStyle.compact);
+      expect(back.width, 420);
+      expect(back.maxHeight, 500);
+      expect(back.fontScale, 1.5);
+      expect(back.showReading, isFalse);
+      expect(back.showSentence, isFalse);
+    });
+
+    test('style defaults', () {
+      final c = PopupDictionaryConfig();
+      expect(c.style, PopupStyle.card);
+      expect(c.width, 320);
+      expect(c.maxHeight, 380);
+      expect(c.fontScale, 1.0);
+      expect(c.showReading, isTrue);
+      expect(c.showSentence, isTrue);
+    });
+  });
+
+  group('ShakeDetector', () {
+    test('spike burst fires shake, single spikes do not', () {
+      var shakes = 0;
+      final d = ShakeDetector(
+        onShake: () => shakes++,
+        spikeCount: 3,
+        debounce: const Duration(milliseconds: 50),
+      );
+
+      // single spike: no shake (|30| - 9.8 = 20.2 net > threshold)
+      d.debugSample(30, 0, 0);
+      expect(shakes, 0);
+
+      // burst of three quick spikes: shake
+      d.debugSample(30, 0, 0);
+      d.debugSample(0, 30, 0);
+      d.debugSample(0, 0, 30);
+      expect(shakes, 1);
+
+      // debounce window: another burst immediately is swallowed
+      d.debugSample(30, 0, 0);
+      d.debugSample(0, 30, 0);
+      d.debugSample(0, 0, 30);
+      expect(shakes, 1);
+    });
+
+    test('resting gravity never fires', () {
+      var shakes = 0;
+      final d = ShakeDetector(onShake: () => shakes++);
+      for (var i = 0; i < 100; i++) {
+        d.debugSample(0, 0, 9.8);
+      }
+      expect(shakes, 0);
+    });
+
+    test('controller arms shake detector only for shake trigger', () {
+      final controller = PopupDictionaryController.instance;
+      controller.updateConfig(
+        PopupDictionaryConfig(trigger: PopupTrigger.click),
+      );
+      expect(controller.shakeDetectorForTest, isNull);
+
+      controller.updateConfig(
+        PopupDictionaryConfig(trigger: PopupTrigger.shake),
+      );
+      expect(controller.shakeDetectorForTest, isNotNull);
+
+      // profile alternation arming too
+      controller.updateConfig(
+        PopupDictionaryConfig(
+          trigger: PopupTrigger.click,
+          altTrigger: PopupTrigger.shake,
+          altCondition: 'mobile',
+        ),
+      );
+      expect(controller.shakeDetectorForTest, isNotNull);
+
+      controller.updateConfig(PopupDictionaryConfig());
+      expect(controller.shakeDetectorForTest, isNull);
     });
   });
 

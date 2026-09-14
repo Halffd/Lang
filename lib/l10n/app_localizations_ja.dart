@@ -1070,4 +1070,46 @@ class AppLocalizationsJa extends AppLocalizations {
   String popupActiveTrigger(Object trigger) {
     return '有効なトリガー: $trigger';
   }
+
+  @override
+  String get popupStyle => 'ポップアップスタイル';
+
+  @override
+  String get popupStyleCard => 'カード';
+
+  @override
+  String get popupStyleMinimal => 'ミニマル';
+
+  @override
+  String get popupStyleCompact => 'コンパクト';
+
+  @override
+  String get popupWidth => 'ポップアップ幅';
+
+  @override
+  String get popupMaxHeight => 'ポップアップ最大高さ';
+
+  @override
+  String get popupFontScale => 'フォント倍率';
+
+  @override
+  String get popupShowReading => '読みを表示';
+
+  @override
+  String get popupShowSentence => '文を表示';
+
+  @override
+  String get popupProfileAlternation => 'プロファイル切替';
+
+  @override
+  String get popupProfileAlternationSubtitle => 'プロファイル有効時に別のトリガーを使う';
+
+  @override
+  String get popupAltTrigger => '代替トリガー';
+
+  @override
+  String get popupAltProfileName => 'プロファイル名条件';
+
+  @override
+  String get popupShakeArmed => 'シェイク検出有効';
 }

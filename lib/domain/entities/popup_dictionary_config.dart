@@ -60,6 +60,9 @@ enum PopupScreenScope {
   custom,
 }
 
+/// Popup visual style options.
+enum PopupStyle { card, minimal, compact }
+
 /// Full configuration for the popup dictionary.
 class PopupDictionaryConfig {
   /// Primary summon trigger.
@@ -118,6 +121,26 @@ class PopupDictionaryConfig {
   /// codes. Empty = any.
   Set<String> languages;
 
+  // --- style ---
+
+  /// Visual variant of the popup card.
+  PopupStyle style;
+
+  /// Card width in logical pixels (120-480).
+  double width;
+
+  /// Max card height in logical pixels (120-600).
+  double maxHeight;
+
+  /// Font scale multiplier for the popup body (0.5-2.0).
+  double fontScale;
+
+  /// Show the reading in the popup header.
+  bool showReading;
+
+  /// Show the source sentence under the definition.
+  bool showSentence;
+
   PopupDictionaryConfig({
     this.trigger = PopupTrigger.shift,
     this.extraModifier = PopupExtraModifier.none,
@@ -135,6 +158,12 @@ class PopupDictionaryConfig {
     this.altTrigger,
     this.altCondition = '',
     this.languages = const {},
+    this.style = PopupStyle.card,
+    this.width = 320,
+    this.maxHeight = 380,
+    this.fontScale = 1.0,
+    this.showReading = true,
+    this.showSentence = true,
   });
 
   /// Effective trigger for the current SRS/profile name.
@@ -191,6 +220,12 @@ class PopupDictionaryConfig {
     'altTrigger': altTrigger?.name,
     'altCondition': altCondition,
     'languages': languages.toList(),
+    'style': style.name,
+    'width': width,
+    'maxHeight': maxHeight,
+    'fontScale': fontScale,
+    'showReading': showReading,
+    'showSentence': showSentence,
   };
 
   static PopupDictionaryConfig fromJson(Map<String, dynamic> json) =>
@@ -222,6 +257,12 @@ class PopupDictionaryConfig {
         languages:
             (json['languages'] as List?)?.map((e) => e.toString()).toSet() ??
             {},
+        style: _enumByName(PopupStyle.values, json['style']),
+        width: (json['width'] as num?)?.toDouble() ?? 320,
+        maxHeight: (json['maxHeight'] as num?)?.toDouble() ?? 380,
+        fontScale: (json['fontScale'] as num?)?.toDouble() ?? 1.0,
+        showReading: json['showReading'] as bool? ?? true,
+        showSentence: json['showSentence'] as bool? ?? true,
       );
 
   String serialize() => jsonEncode(toJson());

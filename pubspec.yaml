@@ -85,6 +85,7 @@ dependencies:
 
   meta: any
   super_clipboard: ^0.1.7+6
+  sensors_plus: ^7.1.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

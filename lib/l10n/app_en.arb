@@ -349,5 +349,19 @@
   "popupScreenAI": "AI",
   "popupScreenSRS": "SRS",
   "popupNone": "None",
-  "popupActiveTrigger": "Active trigger: {trigger}"
+  "popupActiveTrigger": "Active trigger: {trigger}",
+  "popupStyle": "Popup style",
+  "popupStyleCard": "Card",
+  "popupStyleMinimal": "Minimal",
+  "popupStyleCompact": "Compact",
+  "popupWidth": "Popup width",
+  "popupMaxHeight": "Popup max height",
+  "popupFontScale": "Popup font scale",
+  "popupShowReading": "Show reading",
+  "popupShowSentence": "Show sentence",
+  "popupProfileAlternation": "Profile alternation",
+  "popupProfileAlternationSubtitle": "Use a different trigger when a profile is active",
+  "popupAltTrigger": "Alternate trigger",
+  "popupAltProfileName": "Profile name condition",
+  "popupShakeArmed": "Shake detection armed"
 }

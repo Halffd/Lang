@@ -771,5 +771,19 @@
   "wordAtoZ": "単語 A-Z",
   "wordDefinitions": "単語の定義",
   "wordZtoA": "単語 Z-A",
-  "wordsAnalyzed": "{count} 語を分析しました"
+  "wordsAnalyzed": "{count} 語を分析しました",
+  "popupStyle": "ポップアップスタイル",
+  "popupStyleCard": "カード",
+  "popupStyleMinimal": "ミニマル",
+  "popupStyleCompact": "コンパクト",
+  "popupWidth": "ポップアップ幅",
+  "popupMaxHeight": "ポップアップ最大高さ",
+  "popupFontScale": "フォント倍率",
+  "popupShowReading": "読みを表示",
+  "popupShowSentence": "文を表示",
+  "popupProfileAlternation": "プロファイル切替",
+  "popupProfileAlternationSubtitle": "プロファイル有効時に別のトリガーを使う",
+  "popupAltTrigger": "代替トリガー",
+  "popupAltProfileName": "プロファイル名条件",
+  "popupShakeArmed": "シェイク検出有効"
 }

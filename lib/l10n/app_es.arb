@@ -771,5 +771,19 @@
   "wordAtoZ": "Palabra A-Z",
   "wordDefinitions": "Definiciones de palabras",
   "wordZtoA": "Palabra Z-A",
-  "wordsAnalyzed": "{count} palabras analizadas"
+  "wordsAnalyzed": "{count} palabras analizadas",
+  "popupStyle": "Estilo del popup",
+  "popupStyleCard": "Tarjeta",
+  "popupStyleMinimal": "Minimalista",
+  "popupStyleCompact": "Compacto",
+  "popupWidth": "Ancho del popup",
+  "popupMaxHeight": "Altura máxima",
+  "popupFontScale": "Escala de fuente",
+  "popupShowReading": "Mostrar lectura",
+  "popupShowSentence": "Mostrar oración",
+  "popupProfileAlternation": "Alternancia de perfil",
+  "popupProfileAlternationSubtitle": "Usar otro disparador cuando un perfil está activo",
+  "popupAltTrigger": "Disparador alternativo",
+  "popupAltProfileName": "Condición de nombre de perfil",
+  "popupShakeArmed": "Detección de sacudida activa"
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:lang/core/services/history_service.dart';
+import 'package:lang/core/services/shake_detector.dart';
 import 'package:lang/domain/entities/popup_dictionary_config.dart';
 import 'package:lang/utils/cjk_text_extractor.dart';
 
@@ -59,12 +60,37 @@ class PopupDictionaryController with ChangeNotifier {
   /// lookups abandon themselves instead of stacking popups.
   int _lookupEpoch = 0;
 
+  /// Shake detection (mobile); only active while the effective
+  /// trigger (including profile alternation) is shake.
+  ShakeDetector? _shakeDetector;
+
+  /// Test hook: current shake detector state.
+  @visibleForTesting
+  ShakeDetector? get shakeDetectorForTest => _shakeDetector;
+
   bool get isPopupOpen => _popupOpen;
 
   void updateConfig(PopupDictionaryConfig newConfig) {
     config = newConfig;
     if (_popupOpen) hide();
+    _syncShakeDetector();
     notifyListeners();
+  }
+
+  /// Starts/stops accelerometer listening so it only runs while
+  /// the shake trigger is armed. Battery-friendly: no polling
+  /// when other triggers are used.
+  void _syncShakeDetector() {
+    final wantsShake =
+        config.effectiveTrigger(_activeProfileName) == PopupTrigger.shake ||
+        config.altTrigger == PopupTrigger.shake;
+    if (wantsShake && _shakeDetector == null) {
+      _shakeDetector = ShakeDetector(onShake: onShake);
+      _shakeDetector!.start();
+    } else if (!wantsShake && _shakeDetector != null) {
+      _shakeDetector!.stop();
+      _shakeDetector = null;
+    }
   }
 
   // ----------------------------------------------------------
@@ -227,6 +253,8 @@ class PopupDictionaryController with ChangeNotifier {
   /// (profile alternation support).
   set activeProfileName(String? name) {
     _activeProfileName = name;
+    // trigger alternation may arm/disarm the shake detector
+    _syncShakeDetector();
     notifyListeners();
   }
 
@@ -285,23 +313,32 @@ class PopupDictionaryController with ChangeNotifier {
     Widget body,
     String term,
   ) {
+    final width = config.width.clamp(120.0, 480.0);
+    final maxHeight = config.maxHeight.clamp(120.0, 600.0);
     _entry = OverlayEntry(
       builder: (context) {
         // clamp so the card stays on screen: measure the view,
-        // keep the 320x380-max card fully visible
+        // keep the card fully visible
         final view = View.of(context);
         final screen = Offset(
           view.physicalSize.width / view.devicePixelRatio,
           view.physicalSize.height / view.devicePixelRatio,
         );
-        const cardWidth = 320.0 + 16.0; // width + horizontal margins
-        const cardHeight = 380.0 + 16.0; // max height + margins
+        final cardWidth = width + 16.0; // width + horizontal margins
+        final cardHeight = maxHeight + 16.0; // max height + margins
         final left = position.dx.clamp(0.0, screen.dx - cardWidth);
         final top = (position.dy + 18).clamp(0.0, screen.dy - cardHeight);
         return Positioned(
           left: left,
           top: top,
-          child: _PopupCard(body: body, onDismiss: hide),
+          child: _PopupCard(
+            body: body,
+            onDismiss: hide,
+            width: width,
+            maxHeight: maxHeight,
+            compact: config.style == PopupStyle.compact,
+            minimal: config.style == PopupStyle.minimal,
+          ),
         );
       },
     );
@@ -338,7 +375,16 @@ class PopupDictionaryController with ChangeNotifier {
   bool _currentRouteAllows() => config.allowsScreen(_currentRouteName ?? '');
 
   void showAtCenter() {
-    // shake: no pointer position available; skip for now
+    // shake: no pointer position available; look up at the center
+    // of the screen through the shared pipeline. The lookup builder
+    // still receives the position so the popup is placed centrally.
+    final view = _rootContext != null ? View.of(_rootContext!) : null;
+    if (view == null) return;
+    final center = Offset(
+      view.physicalSize.width / view.devicePixelRatio / 2,
+      view.physicalSize.height / view.devicePixelRatio / 2,
+    );
+    _fire(center, PointerDeviceKind.unknown);
   }
 
   void hide() {
@@ -360,12 +406,25 @@ class PopupDictionaryController with ChangeNotifier {
   }
 }
 
-/// The popup card chrome around the lookup body.
+/// The popup card chrome around the lookup body. [compact] drops
+/// the margins/padding, [minimal] removes shadow + border for a
+/// flat look.
 class _PopupCard extends StatelessWidget {
   final Widget body;
   final VoidCallback onDismiss;
+  final double width;
+  final double maxHeight;
+  final bool compact;
+  final bool minimal;
 
-  const _PopupCard({required this.body, required this.onDismiss});
+  const _PopupCard({
+    required this.body,
+    required this.onDismiss,
+    required this.width,
+    required this.maxHeight,
+    this.compact = false,
+    this.minimal = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -381,23 +440,27 @@ class _PopupCard extends StatelessWidget {
           ),
         ),
         Container(
-          width: 320,
-          constraints: const BoxConstraints(maxHeight: 380),
-          margin: const EdgeInsets.all(8),
-          padding: const EdgeInsets.all(12),
+          width: width,
+          constraints: BoxConstraints(maxHeight: maxHeight),
+          margin: EdgeInsets.all(compact ? 4 : 8),
+          padding: EdgeInsets.all(compact ? 8 : 12),
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: theme.colorScheme.outline.withValues(alpha: 0.3),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.shadow.withValues(alpha: 0.4),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(compact ? 8 : 12),
+            border: minimal
+                ? null
+                : Border.all(
+                    color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                  ),
+            boxShadow: minimal
+                ? null
+                : [
+                    BoxShadow(
+                      color: theme.colorScheme.shadow.withValues(alpha: 0.4),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
           ),
           child: body,
         ),

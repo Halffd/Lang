@@ -1090,4 +1090,47 @@ class AppLocalizationsEs extends AppLocalizations {
   String popupActiveTrigger(Object trigger) {
     return 'Disparador activo: $trigger';
   }
+
+  @override
+  String get popupStyle => 'Estilo del popup';
+
+  @override
+  String get popupStyleCard => 'Tarjeta';
+
+  @override
+  String get popupStyleMinimal => 'Minimalista';
+
+  @override
+  String get popupStyleCompact => 'Compacto';
+
+  @override
+  String get popupWidth => 'Ancho del popup';
+
+  @override
+  String get popupMaxHeight => 'Altura máxima';
+
+  @override
+  String get popupFontScale => 'Escala de fuente';
+
+  @override
+  String get popupShowReading => 'Mostrar lectura';
+
+  @override
+  String get popupShowSentence => 'Mostrar oración';
+
+  @override
+  String get popupProfileAlternation => 'Alternancia de perfil';
+
+  @override
+  String get popupProfileAlternationSubtitle =>
+      'Usar otro disparador cuando un perfil está activo';
+
+  @override
+  String get popupAltTrigger => 'Disparador alternativo';
+
+  @override
+  String get popupAltProfileName => 'Condición de nombre de perfil';
+
+  @override
+  String get popupShakeArmed => 'Detección de sacudida activa';
 }

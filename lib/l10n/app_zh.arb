@@ -381,5 +381,19 @@
   "expand": "展开",
   "last": "末页",
   "noHistory": "还没有历史记录",
-  "type": "字符串"
+  "type": "字符串",
+  "popupStyle": "弹窗样式",
+  "popupStyleCard": "卡片",
+  "popupStyleMinimal": "极简",
+  "popupStyleCompact": "紧凑",
+  "popupWidth": "弹窗宽度",
+  "popupMaxHeight": "弹窗最大高度",
+  "popupFontScale": "弹窗字体倍率",
+  "popupShowReading": "显示读音",
+  "popupShowSentence": "显示句子",
+  "popupProfileAlternation": "配置文件切换",
+  "popupProfileAlternationSubtitle": "配置文件激活时使用其他触发方式",
+  "popupAltTrigger": "备用触发方式",
+  "popupAltProfileName": "配置文件名称条件",
+  "popupShakeArmed": "摇晃检测已启用"
 }
