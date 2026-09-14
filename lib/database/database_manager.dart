@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -16,6 +17,19 @@ class DatabaseManager {
     return _instance!;
   }
 
+  /// Test hook: run against an externally created database (e.g.
+  /// sqflite_common_ffi in-memory) instead of the app database.
+  @visibleForTesting
+  static void setTestDatabase(Database db) {
+    _database = db;
+  }
+
+  /// Test hook: clear the injected test database.
+  @visibleForTesting
+  static void clearTestDatabase() {
+    _database = null;
+  }
+
   Future<Database> get database async {
     if (_database != null) return _database!;
     _database = await _initDatabase();
@@ -24,27 +38,27 @@ class DatabaseManager {
 
   Future<Database> _initDatabase() async {
     Directory appDocDir;
-    
+
     // Try multiple fallback paths in order
     final pathsToTry = <Directory>[];
-    
+
     try {
       pathsToTry.add(await getApplicationDocumentsDirectory());
     } catch (_) {}
-    
+
     // Linux XDG data directory
     final homeDir = Platform.environment['HOME'] ?? '';
     if (homeDir.isNotEmpty) {
       pathsToTry.add(Directory(path.join(homeDir, '.local', 'share', 'lang')));
       pathsToTry.add(Directory(path.join(homeDir, '.lang_db')));
     }
-    
+
     // System temp directory as last resort
     pathsToTry.add(Directory.systemTemp.createTempSync('lang_db_').parent);
 
     appDocDir = pathsToTry.first;
     bool success = false;
-    
+
     for (final dir in pathsToTry) {
       try {
         if (!await dir.exists()) {
@@ -61,16 +75,13 @@ class DatabaseManager {
         continue;
       }
     }
-    
+
     if (!success) {
       // Ultimate fallback - use system temp directly
       appDocDir = Directory.systemTemp.createTempSync('lang_db_').parent;
     }
 
-    final String dbPath = path.join(
-      appDocDir.path,
-      'yomichan.db',
-    );
+    final String dbPath = path.join(appDocDir.path, 'yomichan.db');
 
     return await openDatabase(
       dbPath,

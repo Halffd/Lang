@@ -12,6 +12,9 @@ const String createEntriesTable = '''
     definitions TEXT NOT NULL,
     sequence INTEGER,
     term_tags TEXT,
+    audio_url TEXT,
+    image_url TEXT,
+    image_caption TEXT,
     FOREIGN KEY (dictionary_id) REFERENCES dictionaries(id) ON DELETE CASCADE
   )
 ''';
@@ -157,7 +160,7 @@ const String createMetadataTable = '''
 ''';
 
 class DatabaseSchema {
-  static const int currentVersion = 5;
+  static const int currentVersion = 6;
 
   static Future<void> onCreate(Database db, int version) async {
     await db.execute(createDictionariesTable);
@@ -237,7 +240,15 @@ class DatabaseSchema {
       await db.execute(createEntriesFtsTable);
       await _createFtsTriggers(db);
       // Populate the FTS table with existing data
-      await db.execute('INSERT INTO entries_fts(rowid, definitions) SELECT id, definitions FROM entries;');
+      await db.execute(
+        'INSERT INTO entries_fts(rowid, definitions) SELECT id, definitions FROM entries;',
+      );
+    }
+    if (oldVersion < 6) {
+      // Entry media columns used by DictionaryEntry.toMap
+      await db.execute('ALTER TABLE entries ADD COLUMN audio_url TEXT');
+      await db.execute('ALTER TABLE entries ADD COLUMN image_url TEXT');
+      await db.execute('ALTER TABLE entries ADD COLUMN image_caption TEXT');
     }
   }
 }
