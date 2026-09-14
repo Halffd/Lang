@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -11,13 +12,17 @@ class AnkiConnectException implements Exception {
 class AnkiConnectService {
   String url;
 
-  AnkiConnectService([this.url = 'http://127.0.0.1:8765']);
+  AnkiConnectService([this.url = 'http://127.0.0.1:8765', http.Client? client])
+    : _client = client ?? http.Client();
+
+  /// Injectable http client; tests pass a mocking client.
+  final http.Client _client;
 
   Duration timeout = const Duration(seconds: 5);
 
   Future<dynamic> _call(String action, Map<String, dynamic> params) async {
     try {
-      final response = await http
+      final response = await _client
           .post(
             Uri.parse(url),
             headers: {'Content-Type': 'application/json'},
@@ -42,6 +47,11 @@ class AnkiConnectService {
       throw AnkiConnectException('Connection failed: ${e.message}');
     } on FormatException {
       throw AnkiConnectException('Invalid response from AnkiConnect');
+    } on TimeoutException {
+      throw AnkiConnectException(
+        'AnkiConnect timed out after ${timeout.inSeconds}s '
+        '- is Anki running?',
+      );
     }
   }
 
