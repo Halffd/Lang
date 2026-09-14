@@ -45,4 +45,5 @@ app.*.map.json
 /android/app/release
 .opencode
 .codex
-.claudel10n_untranslated.txt
+.claude
+l10n_untranslated.txt
