@@ -68,23 +68,55 @@ class HtmlSanitizer {
     'mailto:',
   ];
 
-  /// Sanitize HTML content from untrusted sources
+  /// Sanitize HTML content from untrusted sources. Fragments
+  /// (no <html> wrapper) are parsed as fragments so inline
+  /// markup is not moved into a synthetic head as plain text.
   static String sanitize(String html) {
     if (html.isEmpty) return '';
 
     try {
-      final document = parser.parse(html);
-      _sanitizeNode(document.body ?? document);
-      return document.body?.outerHtml ?? document.outerHtml;
+      final looksLikeDocument =
+          html.contains('<html') || html.contains('<body');
+      if (looksLikeDocument) {
+        final document = parser.parse(html);
+        _sanitizeNode(document.body ?? document);
+        return document.body?.outerHtml ?? document.outerHtml;
+      }
+      final fragment = parser.parseFragment(html);
+      _sanitizeNode(fragment);
+      return fragment.outerHtml;
     } catch (e) {
       // If parsing fails, return escaped text
       return _escapeHtml(html);
     }
   }
 
+  static const List<String> _droppedTags = [
+    'script',
+    'style',
+    'iframe',
+    'svg',
+    'object',
+    'embed',
+    'form',
+    'input',
+    'button',
+    'link',
+    'meta',
+  ];
+
+  /// Tags whose entire subtree is removed (content is unsafe).
+  static bool _isDropped(String tag) => _droppedTags.contains(tag);
+
   static void _sanitizeNode(dom.Node node) {
     if (node is dom.Element) {
       final tagName = node.localName?.toLowerCase() ?? '';
+
+      // Dangerous tags: drop the whole subtree, not just the wrapper
+      if (_isDropped(tagName)) {
+        node.remove();
+        return;
+      }
 
       // Remove disallowed tags entirely
       if (!_allowedTags.contains(tagName)) {
@@ -95,14 +127,14 @@ class HtmlSanitizer {
       }
 
       // Sanitize attributes
-      final attrsToRemove = <String>[];
+      final attrsToRemove = <Object>[];
       for (final entry in node.attributes.entries) {
-        final attr = entry as MapEntry<String, String>;
-        final attrName = attr.key.toLowerCase();
-        final attrValue = attr.value;
+        // fragment-parsed elements key attributes as Object
+        final attrName = entry.key.toString().toLowerCase();
+        final attrValue = entry.value;
 
         if (!_allowedAttributes.contains(attrName)) {
-          attrsToRemove.add(attr.key);
+          attrsToRemove.add(entry.key);
           continue;
         }
 
@@ -111,7 +143,7 @@ class HtmlSanitizer {
           final lowerValue = attrValue.toLowerCase();
           for (final proto in _blockedProtocols) {
             if (lowerValue.startsWith(proto)) {
-              attrsToRemove.add(attr.key);
+              attrsToRemove.add(entry.key);
               break;
             }
           }
@@ -121,7 +153,7 @@ class HtmlSanitizer {
               !lowerValue.startsWith('https://') &&
               !lowerValue.startsWith('/') &&
               !lowerValue.startsWith('#')) {
-            attrsToRemove.add(attr.key);
+            attrsToRemove.add(entry.key);
           }
         }
 
@@ -129,9 +161,9 @@ class HtmlSanitizer {
         if (attrName == 'style') {
           final sanitized = _sanitizeStyle(attrValue);
           if (sanitized.isEmpty) {
-            attrsToRemove.add(attr.key);
+            attrsToRemove.add(entry.key);
           } else {
-            node.attributes[attr.key] = sanitized;
+            node.attributes[entry.key] = sanitized;
           }
         }
       }
@@ -205,10 +237,13 @@ class HtmlSanitizer {
       final value = parts[1].trim();
 
       if (allowedProperties.contains(prop)) {
-        // Basic value sanitization
-        if (!value.contains('expression') &&
-            !value.contains('javascript') &&
-            !value.contains('url(')) {
+        // Basic value sanitization; normalize whitespace so
+        // 'url (' cannot smuggle a payload past the url( check
+        final normalized = value.replaceAll(' ', '').toLowerCase();
+        if (!normalized.contains('expression') &&
+            !normalized.contains('javascript') &&
+            !normalized.contains('url(') &&
+            !normalized.contains('<')) {
           sanitized.add('$prop: $value');
         }
       }
@@ -219,10 +254,10 @@ class HtmlSanitizer {
 
   static String _escapeHtml(String text) {
     return text
-        .replaceAll('&', '&')
-        .replaceAll('<', '<')
-        .replaceAll('>', '>')
-        .replaceAll('"', '"')
-        .replaceAll("'", '&apos;');
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
   }
 }
