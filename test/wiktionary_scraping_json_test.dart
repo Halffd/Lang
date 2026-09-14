@@ -2,8 +2,11 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lang/data/datasources/remote/wiktionary_service.dart';
 
+// Live-network scraping checks: pass --dart-define=WIKTIONARY_LIVE=true
+// to run them; the default suite stays hermetic.
 void main() {
-  group('Wiktionary Scraping Test - JSON Output', () {
+  const live = bool.fromEnvironment('WIKTIONARY_LIVE');
+  group('Wiktionary Scraping Test - JSON Output', skip: !live ? 'live network tests: set --dart-define=WIKTIONARY_LIVE=true' : null, () {
     late WiktionaryService service;
 
     setUp(() {

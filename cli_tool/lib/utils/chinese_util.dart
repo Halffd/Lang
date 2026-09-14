@@ -1,15 +1,5 @@
 enum PinyinFormat { withToneMark, withoutTone, withToneNumber }
 
-class PinyinHelper {
-  static String getPinyin(
-    String text, {
-    String separator = '',
-    PinyinFormat format = PinyinFormat.withToneMark,
-  }) {
-    return text;
-  }
-}
-
 class ChineseUtil {
   static const Map<String, String> _pinyinMap = {
     '中': 'zhōng',
