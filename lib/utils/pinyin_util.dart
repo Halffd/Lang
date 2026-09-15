@@ -16,6 +16,8 @@ class PinyinUtil {
   /// second vowel; ü only when alone).
   static String _toneVowel(String syllable) {
     if (syllable.contains('a')) return 'a';
+    // 'you' is the standalone spelling of 'iou': mark on o
+    if (syllable.contains('you')) return 'o';
     if (syllable.contains('o') && !syllable.contains('ou')) return 'o';
     if (syllable.contains('e')) return 'e';
     if (syllable.contains('ü')) return 'ü';
