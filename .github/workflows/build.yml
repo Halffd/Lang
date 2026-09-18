@@ -1,0 +1,103 @@
+name: Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build apk --release --split-per-abi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build/app/outputs/flutter-apk/*-release.apk
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev appstream
+      - run: flutter config --enable-linux-desktop
+      - run: flutter pub get
+      - run: flutter build linux --release
+      - name: Build AppImage
+        run: |
+          mkdir -p appimage/lang.AppDir
+          cp -r build/linux/x64/release/bundle/* appimage/lang.AppDir/
+          cat > appimage/lang.AppDir/lang.desktop <<'EOF'
+          [Desktop Entry]
+          Name=Lang
+          Exec=lang
+          Icon=lang
+          Type=Application
+          Categories=Education;
+          EOF
+          sed -i 's/^  //' appimage/lang.AppDir/lang.desktop
+          cp linux/runner/my_application_name.png appimage/lang.AppDir/lang.png 2>/dev/null || true
+          ln -sf "$(basename $(ls appimage/lang.AppDir/lang 2>/dev/null || echo lang))" appimage/lang.AppDir/AppRun || cat > appimage/lang.AppDir/AppRun <<'EOF'
+          #!/bin/sh
+          cd "$(dirname "$0")"
+          exec ./lang "$@"
+          EOF
+          chmod +x appimage/lang.AppDir/AppRun
+          wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
+          chmod +x appimagetool
+          ARCH=x86_64 ./appimagetool appimage/lang.AppDir Lang-x86_64.AppImage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: appimage
+          path: Lang-x86_64.AppImage
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter config --enable-windows-desktop
+      - run: flutter pub get
+      - run: flutter build windows --release
+      - name: Zip package
+        shell: pwsh
+        run: Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath lang-windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-package
+          path: lang-windows.zip
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [apk, linux, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            android-apk/*.apk
+            appimage/*.AppImage
+            windows-package/lang-windows.zip
