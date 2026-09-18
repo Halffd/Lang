@@ -27,16 +27,21 @@ import 'domain/entities/dictionary.dart' show YomichanSearchResult;
 import 'domain/entities/app_state.dart';
 import 'domain/entities/popup_dictionary_config.dart';
 import 'presentation/providers/analyzer_provider.dart';
-import 'presentation/providers/ai_provider.dart';
 import 'presentation/screens/analyze_screen.dart';
 import 'presentation/screens/search_screen.dart';
 import 'presentation/screens/saved_words_screen.dart';
 import 'presentation/screens/history_screen.dart';
 import 'presentation/screens/ai_screen.dart';
 import 'presentation/screens/reader_screen.dart';
+import 'presentation/screens/srs_screen.dart';
 import 'presentation/screens/dictionary_screen.dart';
 import 'presentation/screens/writer_screen.dart';
-import 'presentation/screens/srs_screen.dart';
+import 'presentation/providers/ai_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide User;
+import 'data/datasources/supabase_data_source.dart';
+import 'core/services/srs_service.dart' as srs_core;
+import 'presentation/providers/srs_provider.dart';
+import 'presentation/providers/supabase_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -62,11 +67,15 @@ void main() async {
   final storageService = StorageService();
   await storageService.init();
   SRSService? srsServiceLegacy;
+  SupabaseDataSource? supabaseDataSource;
+  srs_core.SrsService? srsServiceCore;
 
   if (supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty) {
     try {
       await supabaseService.init(url: supabaseUrl, anonKey: supabaseAnonKey);
       await supabaseService.signInAnonymously();
+      supabaseDataSource = SupabaseDataSource(Supabase.instance.client);
+      srsServiceCore = srs_core.SrsService();
       syncService.connect();
     } catch (e) {
       debugPrint('Supabase initialization failed: $e');
@@ -225,6 +234,21 @@ void main() async {
   srsServiceLegacy = SRSService(storageService);
   await srsServiceLegacy.initialize();
 
+  SupabaseProvider? supabaseProvider;
+  SrsProvider? srsProvider;
+  if (supabaseDataSource != null && srsServiceCore != null) {
+    supabaseProvider = SupabaseProvider(
+      supabaseService: supabaseService,
+      syncService: syncService,
+    );
+    srsProvider = SrsProvider(
+      srsService: srsServiceCore,
+      supabaseDataSource: supabaseDataSource,
+      syncService: syncService,
+    );
+    await srsProvider.init();
+  }
+
   runApp(
     MultiProvider(
       providers: [
@@ -232,6 +256,10 @@ void main() async {
         ChangeNotifierProvider.value(value: analyzerProvider),
         ChangeNotifierProvider.value(value: aiProvider),
         ChangeNotifierProvider.value(value: srsServiceLegacy),
+        if (supabaseProvider != null)
+          ChangeNotifierProvider.value(value: supabaseProvider),
+        if (srsProvider != null)
+          ChangeNotifierProvider.value(value: srsProvider),
       ],
       child: const LangApp(),
     ),
