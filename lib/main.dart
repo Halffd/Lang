@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -250,6 +251,36 @@ void main() async {
     );
     await srsProvider.init();
     userDataProvider = UserDataProvider(dataSource: supabaseDataSource);
+
+    // Auto-sync saved words on startup and on local changes (debounced).
+    void pushPulledWords(List<Map<String, dynamic>> rows) {
+      for (final r in rows) {
+        final w = r['word'] as String?;
+        if (w != null) appState.addSavedWord(w, details: r);
+      }
+    }
+
+    Future<void> runSync() async {
+      final words = <Map<String, dynamic>>[
+        for (final w in appState.savedWords)
+          <String, dynamic>{'word': w, ...?appState.savedWordsDetails[w]},
+      ];
+      final missing = await userDataProvider!.syncSavedWords(words);
+      pushPulledWords(missing);
+    }
+
+    // Initial sync, then debounce on saved-words changes.
+    unawaited(runSync());
+    Timer? debounce;
+    int lastWordsLen = appState.savedWords.length;
+    appState.addListener(() {
+      final len = appState.savedWords.length;
+      if (len != lastWordsLen) {
+        lastWordsLen = len;
+        debounce?.cancel();
+        debounce = Timer(const Duration(seconds: 5), runSync);
+      }
+    });
   }
 
   runApp(
