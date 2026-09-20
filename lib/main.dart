@@ -42,6 +42,7 @@ import 'data/datasources/supabase_data_source.dart';
 import 'core/services/srs_service.dart' as srs_core;
 import 'presentation/providers/srs_provider.dart';
 import 'presentation/providers/supabase_provider.dart';
+import 'presentation/providers/user_data_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -236,6 +237,7 @@ void main() async {
 
   SupabaseProvider? supabaseProvider;
   SrsProvider? srsProvider;
+  UserDataProvider? userDataProvider;
   if (supabaseDataSource != null && srsServiceCore != null) {
     supabaseProvider = SupabaseProvider(
       supabaseService: supabaseService,
@@ -247,6 +249,7 @@ void main() async {
       syncService: syncService,
     );
     await srsProvider.init();
+    userDataProvider = UserDataProvider(dataSource: supabaseDataSource);
   }
 
   runApp(
@@ -260,6 +263,8 @@ void main() async {
           ChangeNotifierProvider.value(value: supabaseProvider),
         if (srsProvider != null)
           ChangeNotifierProvider.value(value: srsProvider),
+        if (userDataProvider != null)
+          ChangeNotifierProvider.value(value: userDataProvider),
       ],
       child: const LangApp(),
     ),

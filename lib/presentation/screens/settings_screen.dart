@@ -8,6 +8,8 @@ import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/presentation/screens/dictionary_list_screen.dart';
 import 'package:lang/presentation/screens/yomitan_settings_screen.dart';
 import 'package:lang/presentation/screens/import_screen.dart';
+import 'package:lang/presentation/providers/supabase_provider.dart';
+import 'package:lang/presentation/providers/user_data_provider.dart';
 import 'package:lang/utils/screen_size.dart';
 import 'package:lang/utils/font_scale.dart';
 import 'package:lang/presentation/widgets/clipboard_settings.dart';
@@ -1346,8 +1348,100 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
           ),
+
+          const SizedBox(height: 16),
+          const _CloudSyncSection(),
         ],
       ),
+    );
+  }
+}
+
+/// Cloud sync section: shows Supabase connection status and last manual
+/// sync of saved words / history; only appears when Supabase is configured.
+class _CloudSyncSection extends StatelessWidget {
+  const _CloudSyncSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final supabase = context.watch<SupabaseProvider?>();
+    final sync = context.watch<UserDataProvider?>();
+    if (supabase == null) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Cloud Sync',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          elevation: 1,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      supabase.isAuthenticated
+                          ? Icons.cloud_done
+                          : Icons.cloud_off,
+                      color: supabase.isAuthenticated
+                          ? Colors.green
+                          : Colors.grey,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      supabase.isAuthenticated
+                          ? 'Connected (${supabase.userId?.substring(0, 8)}…)'
+                          : 'Not connected',
+                    ),
+                  ],
+                ),
+                if (sync != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    sync.lastSync == null
+                        ? 'Never synced'
+                        : 'Last sync: ${sync.lastSync!.toLocal()}',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  ),
+                  if (sync.error != null)
+                    Text(
+                      'Error: ${sync.error}',
+                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                    ),
+                  const SizedBox(height: 8),
+                  FilledButton.icon(
+                    onPressed: sync.syncing
+                        ? null
+                        : () async {
+                            final appState = context.read<AppState>();
+                            final localWords = <Map<String, dynamic>>[
+                              for (final w in appState.savedWords)
+                                {'word': w, ...?appState.savedWordsDetails[w]},
+                            ];
+                            await sync.syncSavedWords(localWords);
+                            // TODO(user): add history sync once schema lands
+                          },
+                    icon: sync.syncing
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.sync),
+                    label: Text(sync.syncing ? 'Syncing…' : 'Sync now'),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
