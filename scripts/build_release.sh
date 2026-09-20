@@ -9,7 +9,7 @@ docker build -t "$IMAGE" -f docker/Dockerfile .
 
 mkdir -p dist
 
-docker run --rm \
+docker run --rm --shm-size=4g \
   -v "$PWD":/app \
   -v lang-pub-cache:/opt/pub-cache \
   -v lang-gradle-cache:/root/.gradle \
