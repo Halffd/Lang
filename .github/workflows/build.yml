@@ -20,6 +20,10 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      # tesseract_ocr ships both TesseractOcrPlugin.java and a matching .kt
+      # skeleton — newer Kotlin rejects the redeclaration.
+      - name: Remove duplicate tesseract kotlin stub
+        run: rm -f "$HOME/.pub-cache/hosted/pub.dev/tesseract_ocr-*/android/src/main/kotlin/io/paratoner/tesseract_ocr/TesseractOcrPlugin.kt"
       - run: flutter build apk --release --split-per-abi
       - uses: actions/upload-artifact@v4
         with:
