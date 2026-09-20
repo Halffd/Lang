@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
@@ -129,7 +130,21 @@ class ClipboardMonitorService {
           : (reader.hasValue(Formats.jpeg) ? Formats.jpeg : null);
       if (format == null) return;
 
-      final bytes = await reader.readValue(format);
+      final completer = Completer<Uint8List?>();
+      reader.getFile(
+        format,
+        (file) async {
+          final sink = BytesBuilder();
+          await for (final chunk in file.getStream()) {
+            sink.add(chunk);
+          }
+          completer.complete(sink.takeBytes());
+        },
+        onError: (_) {
+          if (!completer.isCompleted) completer.complete(null);
+        },
+      );
+      final bytes = await completer.future;
       if (bytes == null || bytes.isEmpty) return;
 
       final hash = _hashBytes(bytes);

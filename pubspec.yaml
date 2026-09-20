@@ -52,7 +52,7 @@ dependencies:
   flutter_secure_storage: ^9.2.2
   supabase: ^2.7.0
   supabase_flutter: ^2.6.0
-  supabase_auth_ui: ^0.4.4
+  supabase_auth_ui: ^0.7.0
   uuid: ^4.5.1
   google_mlkit_translation: ^0.12.0
   google_mlkit_text_recognition: ^0.14.0
@@ -64,9 +64,8 @@ dependencies:
   record: ^5.1.2
   pdfx: ^2.4.0
   epubx: ^4.0.0
-  syncfusion_flutter_pdfviewer: ^33.2.13
+  syncfusion_flutter_pdfviewer: ^31.1.21
   epub_view: ^3.2.0
-  advance_pdf_viewer: ^2.0.0
   permission_handler: ^11.3.1
   screenshot: ^3.0.0
   path_provider: ^2.1.5
@@ -84,7 +83,7 @@ dependencies:
   desktop_drop: ^0.5.0
 
   meta: any
-  super_clipboard: ^0.1.7+6
+  super_clipboard: ^0.9.1
   sensors_plus: ^7.1.0
 dev_dependencies:
   flutter_test:

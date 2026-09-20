@@ -47,3 +47,7 @@ app.*.map.json
 .codex
 .claude
 l10n_untranslated.txt
+
+# release artifacts
+dist/
+android/build/

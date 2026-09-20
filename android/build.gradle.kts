@@ -13,6 +13,31 @@ subprojects {
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
 subprojects {
+    val sub = this
+    sub.afterEvaluate {
+        plugins.withId("com.android.library") {
+            val android = extensions.getByName("android")
+                as com.android.build.gradle.LibraryExtension
+            if (android.namespace == null) {
+                val manifest = android.sourceSets.getByName("main").manifest.srcFile
+                val pkg = groovy.xml.XmlParser().parse(manifest).attribute("package") as? String
+                if (pkg != null) android.namespace = pkg
+            }
+            android.compileOptions {
+                sourceCompatibility = JavaVersion.VERSION_17
+                targetCompatibility = JavaVersion.VERSION_17
+            }
+        }
+        plugins.withId("org.jetbrains.kotlin.android") {
+            tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java) {
+                compilerOptions {
+                    jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+                }
+            }
+        }
+    }
+}
+subprojects {
     project.evaluationDependsOn(":app")
 }
 
