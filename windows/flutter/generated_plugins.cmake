@@ -12,7 +12,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   hotkey_manager_windows
   irondash_engine_context
   local_notifier
-  pdfx
   permission_handler_windows
   record_windows
   screen_retriever_windows
