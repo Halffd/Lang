@@ -33,6 +33,9 @@ subprojects {
                 compilerOptions {
                     jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
                 }
+                // tesseract_ocr 0.5.0 packs a .kt stub next to its real .java
+                // implementation; K2 treats it as a redeclaration.
+                exclude("**/TesseractOcrPlugin.kt")
             }
         }
     }
