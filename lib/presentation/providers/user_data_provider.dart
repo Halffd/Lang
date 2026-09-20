@@ -20,6 +20,9 @@ class UserDataProvider with ChangeNotifier {
   String? _error;
   String? get error => _error;
 
+  List<Map<String, dynamic>> _lastPulledWords = const [];
+  List<Map<String, dynamic>> get lastPulledWords => _lastPulledWords;
+
   UserDataProvider({SupabaseDataSource? dataSource}) : _dataSource = dataSource;
 
   bool get available => _dataSource != null;
@@ -45,6 +48,7 @@ class UserDataProvider with ChangeNotifier {
         for (final r in remote)
           if (!localSet.contains(r['word'])) r,
       ];
+      _lastPulledWords = missingLocal;
       _lastSync = DateTime.now();
       return missingLocal;
     } catch (e) {

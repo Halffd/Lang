@@ -10,6 +10,7 @@ import 'package:lang/presentation/screens/yomitan_settings_screen.dart';
 import 'package:lang/presentation/screens/import_screen.dart';
 import 'package:lang/presentation/providers/supabase_provider.dart';
 import 'package:lang/presentation/providers/user_data_provider.dart';
+import 'package:lang/core/services/history_service.dart';
 import 'package:lang/utils/screen_size.dart';
 import 'package:lang/utils/font_scale.dart';
 import 'package:lang/presentation/widgets/clipboard_settings.dart';
@@ -1425,7 +1426,17 @@ class _CloudSyncSection extends StatelessWidget {
                                 {'word': w, ...?appState.savedWordsDetails[w]},
                             ];
                             await sync.syncSavedWords(localWords);
-                            // TODO(user): add history sync once schema lands
+                            // Apply pull: words only remote become local
+                            final missing = sync.lastPulledWords;
+                            for (final r in missing) {
+                              final w = r['word'] as String?;
+                              if (w != null) {
+                                appState.addSavedWord(w, details: r);
+                              }
+                            }
+                            // History: append-only sync via seen_words table
+                            final history = HistoryService.instance;
+                            await sync.syncHistory(history.items);
                           },
                     icon: sync.syncing
                         ? const SizedBox(
