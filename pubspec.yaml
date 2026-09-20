@@ -62,7 +62,6 @@ dependencies:
   video_player: ^2.9.2
   audioplayers: ^6.1.0
   record: ^5.1.2
-  pdfx: ^2.4.0
   epubx: ^4.0.0
   syncfusion_flutter_pdfviewer: ^31.1.21
   epub_view: ^3.2.0
