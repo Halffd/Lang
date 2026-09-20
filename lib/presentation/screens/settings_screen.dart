@@ -114,98 +114,36 @@ class SettingsScreen extends StatelessWidget {
         title: Text(AppLocalizations.of(context)!.settings),
         centerTitle: true,
       ),
-      body: ListView(
-        padding: ScreenSize.adaptivePadding(context),
-        children: [
-          // General settings section
-          Text(
-            AppLocalizations.of(context)!.generalSettings,
-            style: TextStyle(
-              fontSize: fs(context, 18, 'headers'),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // Language selection
-          Card(
-            elevation: 1,
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.dictionaryLanguage,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                    ),
-                    initialValue: () {
-                      // Double-check that the value is valid at build time
-                      final currentLang = appState.language;
-                      if (LanguageOption.all.any(
-                        (option) => option.code == currentLang,
-                      )) {
-                        return currentLang;
-                      } else {
-                        // If the value is invalid right now, return default
-                        return 'ja';
-                      }
-                    }(),
-                    items: [
-                      for (final languageOption in LanguageOption.all)
-                        DropdownMenuItem(
-                          value: languageOption.code,
-                          child: Text(
-                            _getLanguageName(context, languageOption.code),
-                          ),
-                        ),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        appState.setLanguage(value);
-                      }
-                    },
-                  ),
-                ],
+      body: ScreenSize.maybeCenter(
+        context,
+        ListView(
+          padding: ScreenSize.adaptivePadding(context),
+          children: [
+            // General settings section
+            Text(
+              AppLocalizations.of(context)!.generalSettings,
+              style: TextStyle(
+                fontSize: fs(context, 18, 'headers'),
+                fontWeight: FontWeight.bold,
               ),
             ),
-          ),
+            const SizedBox(height: 8),
 
-          // Theme settings
-          Card(
-            elevation: 1,
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.appearance,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  // Theme mode selection
-                  ListTile(
-                    title: Text(AppLocalizations.of(context)!.themeMode),
-                    subtitle: Text(
-                      AppLocalizations.of(context)!.themeModeSubtitle,
+            // Language selection
+            Card(
+              elevation: 1,
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.dictionaryLanguage,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: DropdownButtonFormField<ThemeMode>(
-                      initialValue: appState.themeMode,
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         contentPadding: EdgeInsets.symmetric(
@@ -213,489 +151,518 @@ class SettingsScreen extends StatelessWidget {
                           vertical: 8,
                         ),
                       ),
+                      initialValue: () {
+                        // Double-check that the value is valid at build time
+                        final currentLang = appState.language;
+                        if (LanguageOption.all.any(
+                          (option) => option.code == currentLang,
+                        )) {
+                          return currentLang;
+                        } else {
+                          // If the value is invalid right now, return default
+                          return 'ja';
+                        }
+                      }(),
                       items: [
-                        DropdownMenuItem(
-                          value: ThemeMode.system,
-                          child: Text(
-                            AppLocalizations.of(context)!.systemTheme,
+                        for (final languageOption in LanguageOption.all)
+                          DropdownMenuItem(
+                            value: languageOption.code,
+                            child: Text(
+                              _getLanguageName(context, languageOption.code),
+                            ),
                           ),
-                        ),
-                        DropdownMenuItem(
-                          value: ThemeMode.light,
-                          child: Text(AppLocalizations.of(context)!.lightTheme),
-                        ),
-                        DropdownMenuItem(
-                          value: ThemeMode.dark,
-                          child: Text(AppLocalizations.of(context)!.darkTheme),
-                        ),
                       ],
                       onChanged: (value) {
                         if (value != null) {
-                          appState.setThemeMode(value);
+                          appState.setLanguage(value);
                         }
                       },
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
 
-          const SizedBox(height: 16),
-
-          // Search settings section
-          Text(
-            AppLocalizations.of(context)!.uiAndNavigation,
-            style: TextStyle(
-              fontSize: fs(context, 18, 'headers'),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          Card(
-            elevation: 1,
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SwitchListTile(
-                    title: Text(
-                      AppLocalizations.of(context)!.autoHideNavigation,
+            // Theme settings
+            Card(
+              elevation: 1,
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.appearance,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    subtitle: Text(
-                      AppLocalizations.of(context)!.hideNavigationBottom,
-                    ),
-                    value: appState.autoHideNavigation,
-                    onChanged: (value) => appState.setAutoHideNavigation(value),
-                  ),
-                  const Divider(),
-                  SwitchListTile(
-                    title: Text(AppLocalizations.of(context)!.defaultFlexMode),
-                    subtitle: Text(
-                      AppLocalizations.of(context)!.useFlexibleGrid,
-                    ),
-                    value: appState.defaultFlexMode,
-                    onChanged: (value) => appState.setDefaultFlexMode(value),
-                  ),
-                  const Divider(),
-                  ListTile(
-                    title: Text(
-                      AppLocalizations.of(context)!.keyboardShortcuts,
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(AppLocalizations.of(context)!.ctrl1Search),
-                        Text(AppLocalizations.of(context)!.ctrl2Reader),
-                        Text(AppLocalizations.of(context)!.ctrl3Lists),
-                        Text(AppLocalizations.of(context)!.ctrl4Dictionaries),
-                        Text(AppLocalizations.of(context)!.ctrl5Translator),
-                        Text(AppLocalizations.of(context)!.ctrl6Settings),
-                      ],
-                    ),
-                  ),
-                  const Divider(),
-                  // Script input conversion setting
-                  SwitchListTile(
-                    title: Text(
-                      AppLocalizations.of(context)!.scriptConversionTitle,
-                    ),
-                    subtitle: Text(
-                      AppLocalizations.of(context)!.convertRomanizedToScript,
-                    ),
-                    value: appState.autoConvertInput,
-                    onChanged: (value) {
-                      appState.setAutoConvertInput(value);
-                    },
-                  ),
-                  const Divider(),
-                  // Default screen selection
-                  ListTile(
-                    title: Text(AppLocalizations.of(context)!.defaultScreen),
-                    subtitle: Text(
-                      AppLocalizations.of(context)!.defaultScreenSubtitle,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: DropdownButtonFormField<int>(
-                      initialValue:
-                          (appState.defaultScreenIndex >= 0 &&
-                              appState.defaultScreenIndex <= 8)
-                          ? appState.defaultScreenIndex
-                          : 0, // fallback to 0 if current value is invalid
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
+                    const SizedBox(height: 16),
+                    // Theme mode selection
+                    ListTile(
+                      title: Text(AppLocalizations.of(context)!.themeMode),
+                      subtitle: Text(
+                        AppLocalizations.of(context)!.themeModeSubtitle,
                       ),
-                      items: [
-                        DropdownMenuItem(
-                          value: 0,
-                          child: Text(AppLocalizations.of(context)!.analyze),
-                        ),
-                        DropdownMenuItem(
-                          value: 1,
-                          child: Text(AppLocalizations.of(context)!.search),
-                        ),
-                        DropdownMenuItem(
-                          value: 2,
-                          child: Text(AppLocalizations.of(context)!.reader),
-                        ),
-                        DropdownMenuItem(
-                          value: 3,
-                          child: Text(
-                            AppLocalizations.of(context)!.dictionaries,
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 4,
-                          child: Text(
-                            AppLocalizations.of(context)!.writerTitle,
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 5,
-                          child: Text(AppLocalizations.of(context)!.saved),
-                        ),
-                        DropdownMenuItem(
-                          value: 6,
-                          child: Text(AppLocalizations.of(context)!.history),
-                        ),
-                        const DropdownMenuItem(value: 7, child: Text('SRS')),
-                        DropdownMenuItem(
-                          value: 8,
-                          child: Text(AppLocalizations.of(context)!.ai),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        if (value != null) {
-                          appState.setDefaultScreenIndex(value);
-                        }
-                      },
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Zoom level control
-                  ListTile(
-                    title: Text(AppLocalizations.of(context)!.zoomLevel),
-                    subtitle: Text(
-                      AppLocalizations.of(context)!.zoomLevelSubtitle,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Slider(
-                            value: appState.zoomLevel,
-                            min: 0.5,
-                            max: 3.0,
-                            divisions:
-                                50, // Provides 0.05 increments between 0.5 and 3.0
-                            label: '${appState.zoomLevel.toStringAsFixed(2)}x',
-                            onChanged: (value) {
-                              appState.setZoomLevel(value);
-                            },
-                          ),
-                        ),
-                        Text(
-                          '${appState.zoomLevel.toStringAsFixed(2)}x',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Font size control
-                  ListTile(
-                    title: Text(AppLocalizations.of(context)!.fontSize),
-                    subtitle: Text(
-                      AppLocalizations.of(context)!.fontSizeSubtitle,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Slider(
-                            value: appState.fontSizeMultiplier,
-                            min: 0.8,
-                            max: 2.0,
-                            divisions:
-                                24, // Provides 0.05 increments between 0.8 and 2.0
-                            label:
-                                '${(appState.fontSizeMultiplier * 100).round()}%',
-                            onChanged: (value) {
-                              appState.setFontSizeMultiplier(value);
-                            },
-                          ),
-                        ),
-                        Text(
-                          '${(appState.fontSizeMultiplier * 100).round()}%',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(),
-                  // Per-section font size multipliers
-                  Text(
-                    AppLocalizations.of(context)!.fontGroupSizes,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  _FontGroupSlider(
-                    label: AppLocalizations.of(context)!.fontGroupHeaders,
-                    group: 'headers',
-                  ),
-                  _FontGroupSlider(
-                    label: AppLocalizations.of(context)!.fontGroupSentences,
-                    group: 'sentences',
-                  ),
-                  _FontGroupSlider(
-                    label: AppLocalizations.of(context)!.fontGroupTranslations,
-                    group: 'translations',
-                  ),
-                  _FontGroupSlider(
-                    label: AppLocalizations.of(context)!.fontGroupWords,
-                    group: 'words',
-                  ),
-                  _FontGroupSlider(
-                    label: AppLocalizations.of(context)!.fontGroupKanji,
-                    group: 'kanji',
-                  ),
-                  _FontGroupSlider(
-                    label: AppLocalizations.of(context)!.fontGroupUi,
-                    group: 'ui',
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Search settings section
-          Text(
-            AppLocalizations.of(context)!.searchSettings,
-            style: TextStyle(
-              fontSize: fs(context, 18, 'headers'),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // Search options
-          Card(
-            elevation: 1,
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.searchOptions,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  const ClipboardSettings(),
-                ],
-              ),
-            ),
-          ),
-
-          // Display options
-          Card(
-            elevation: 1,
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.displayOptions,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  SwitchListTile(
-                    title: Text(AppLocalizations.of(context)!.showParticles),
-                    subtitle: Text(
-                      AppLocalizations.of(context)!.highlightParticles,
-                    ),
-                    value: appState.showParticles,
-                    onChanged: (value) {
-                      appState.setShowParticles(value);
-                    },
-                  ),
-                  const Divider(),
-                  SwitchListTile(
-                    title: Text(AppLocalizations.of(context)!.showKanji),
-                    subtitle: Text(
-                      AppLocalizations.of(context)!.displayKanjiInfo,
-                    ),
-                    value: appState.showKanji,
-                    onChanged: (value) {
-                      appState.setShowKanji(value);
-                    },
-                  ),
-                  const Divider(),
-                  ListTile(
-                    title: Text(AppLocalizations.of(context)!.minFrequency),
-                    subtitle: Text(
-                      AppLocalizations.of(context)!.filterByFrequency,
-                    ),
-                    trailing: SizedBox(
-                      width: 100,
-                      child: TextField(
-                        keyboardType: TextInputType.number,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: DropdownButtonFormField<ThemeMode>(
+                        initialValue: appState.themeMode,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(
-                            horizontal: 12,
+                            horizontal: 16,
                             vertical: 8,
                           ),
                         ),
-                        controller: TextEditingController(
-                          text: appState.minFrequency.toString(),
-                        ),
+                        items: [
+                          DropdownMenuItem(
+                            value: ThemeMode.system,
+                            child: Text(
+                              AppLocalizations.of(context)!.systemTheme,
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: ThemeMode.light,
+                            child: Text(
+                              AppLocalizations.of(context)!.lightTheme,
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: ThemeMode.dark,
+                            child: Text(
+                              AppLocalizations.of(context)!.darkTheme,
+                            ),
+                          ),
+                        ],
                         onChanged: (value) {
-                          final intValue = int.tryParse(value);
-                          if (intValue != null) {
-                            appState.setMinFrequency(intValue);
+                          if (value != null) {
+                            appState.setThemeMode(value);
                           }
                         },
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
 
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          // Popup dictionary settings
-          Card(
-            elevation: 1,
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.popupDictionary,
-                    style: TextStyle(
-                      fontSize: fs(context, 15, 'headers'),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    AppLocalizations.of(context)!.popupDictionarySubtitle,
-                    style: TextStyle(
-                      fontSize: fs(context, 11, 'ui'),
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const PopupDictionarySettings(),
-                ],
+            // Search settings section
+            Text(
+              AppLocalizations.of(context)!.uiAndNavigation,
+              style: TextStyle(
+                fontSize: fs(context, 18, 'headers'),
+                fontWeight: FontWeight.bold,
               ),
             ),
-          ),
+            const SizedBox(height: 8),
 
-          const SizedBox(height: 16),
-
-          // Advanced settings section
-          Text(
-            AppLocalizations.of(context)!.advancedSettings,
-            style: TextStyle(
-              fontSize: fs(context, 18, 'headers'),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // Anki Decks and Profiles settings
-          Card(
-            elevation: 1,
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.ankiProfiles,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  // Anki Deck Selection
-                  ScreenSize.isCompact(context)
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(AppLocalizations.of(context)!.currentAnkiDeck),
-                            const SizedBox(height: 8),
-                            DropdownButtonFormField<String>(
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                              ),
-                              initialValue:
-                                  appState.ankiDecks.contains(
-                                    appState.currentAnkiDeck,
-                                  )
-                                  ? appState.currentAnkiDeck
-                                  : (appState.ankiDecks.isNotEmpty
-                                        ? appState.ankiDecks.first
-                                        : 'Default'),
-                              items: appState.ankiDecks.isNotEmpty
-                                  ? appState.ankiDecks.map((deck) {
-                                      return DropdownMenuItem(
-                                        value: deck,
-                                        child: Text(deck),
-                                      );
-                                    }).toList()
-                                  : [
-                                      const DropdownMenuItem(
-                                        value: 'Default',
-                                        child: Text('Default'),
-                                      ),
-                                    ],
+            Card(
+              elevation: 1,
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SwitchListTile(
+                      title: Text(
+                        AppLocalizations.of(context)!.autoHideNavigation,
+                      ),
+                      subtitle: Text(
+                        AppLocalizations.of(context)!.hideNavigationBottom,
+                      ),
+                      value: appState.autoHideNavigation,
+                      onChanged: (value) =>
+                          appState.setAutoHideNavigation(value),
+                    ),
+                    const Divider(),
+                    SwitchListTile(
+                      title: Text(
+                        AppLocalizations.of(context)!.defaultFlexMode,
+                      ),
+                      subtitle: Text(
+                        AppLocalizations.of(context)!.useFlexibleGrid,
+                      ),
+                      value: appState.defaultFlexMode,
+                      onChanged: (value) => appState.setDefaultFlexMode(value),
+                    ),
+                    const Divider(),
+                    ListTile(
+                      title: Text(
+                        AppLocalizations.of(context)!.keyboardShortcuts,
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(AppLocalizations.of(context)!.ctrl1Search),
+                          Text(AppLocalizations.of(context)!.ctrl2Reader),
+                          Text(AppLocalizations.of(context)!.ctrl3Lists),
+                          Text(AppLocalizations.of(context)!.ctrl4Dictionaries),
+                          Text(AppLocalizations.of(context)!.ctrl5Translator),
+                          Text(AppLocalizations.of(context)!.ctrl6Settings),
+                        ],
+                      ),
+                    ),
+                    const Divider(),
+                    // Script input conversion setting
+                    SwitchListTile(
+                      title: Text(
+                        AppLocalizations.of(context)!.scriptConversionTitle,
+                      ),
+                      subtitle: Text(
+                        AppLocalizations.of(context)!.convertRomanizedToScript,
+                      ),
+                      value: appState.autoConvertInput,
+                      onChanged: (value) {
+                        appState.setAutoConvertInput(value);
+                      },
+                    ),
+                    const Divider(),
+                    // Default screen selection
+                    ListTile(
+                      title: Text(AppLocalizations.of(context)!.defaultScreen),
+                      subtitle: Text(
+                        AppLocalizations.of(context)!.defaultScreenSubtitle,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: DropdownButtonFormField<int>(
+                        initialValue:
+                            (appState.defaultScreenIndex >= 0 &&
+                                appState.defaultScreenIndex <= 8)
+                            ? appState.defaultScreenIndex
+                            : 0, // fallback to 0 if current value is invalid
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                        ),
+                        items: [
+                          DropdownMenuItem(
+                            value: 0,
+                            child: Text(AppLocalizations.of(context)!.analyze),
+                          ),
+                          DropdownMenuItem(
+                            value: 1,
+                            child: Text(AppLocalizations.of(context)!.search),
+                          ),
+                          DropdownMenuItem(
+                            value: 2,
+                            child: Text(AppLocalizations.of(context)!.reader),
+                          ),
+                          DropdownMenuItem(
+                            value: 3,
+                            child: Text(
+                              AppLocalizations.of(context)!.dictionaries,
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 4,
+                            child: Text(
+                              AppLocalizations.of(context)!.writerTitle,
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 5,
+                            child: Text(AppLocalizations.of(context)!.saved),
+                          ),
+                          DropdownMenuItem(
+                            value: 6,
+                            child: Text(AppLocalizations.of(context)!.history),
+                          ),
+                          const DropdownMenuItem(value: 7, child: Text('SRS')),
+                          DropdownMenuItem(
+                            value: 8,
+                            child: Text(AppLocalizations.of(context)!.ai),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            appState.setDefaultScreenIndex(value);
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Zoom level control
+                    ListTile(
+                      title: Text(AppLocalizations.of(context)!.zoomLevel),
+                      subtitle: Text(
+                        AppLocalizations.of(context)!.zoomLevelSubtitle,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Slider(
+                              value: appState.zoomLevel,
+                              min: 0.5,
+                              max: 3.0,
+                              divisions:
+                                  50, // Provides 0.05 increments between 0.5 and 3.0
+                              label:
+                                  '${appState.zoomLevel.toStringAsFixed(2)}x',
                               onChanged: (value) {
-                                if (value != null) {
-                                  appState.setCurrentAnkiDeck(value);
-                                }
+                                appState.setZoomLevel(value);
                               },
                             ),
-                          ],
-                        )
-                      : Row(
-                          children: [
-                            Expanded(
-                              flex: 3,
-                              child: Text(
+                          ),
+                          Text(
+                            '${appState.zoomLevel.toStringAsFixed(2)}x',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Font size control
+                    ListTile(
+                      title: Text(AppLocalizations.of(context)!.fontSize),
+                      subtitle: Text(
+                        AppLocalizations.of(context)!.fontSizeSubtitle,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Slider(
+                              value: appState.fontSizeMultiplier,
+                              min: 0.8,
+                              max: 2.0,
+                              divisions:
+                                  24, // Provides 0.05 increments between 0.8 and 2.0
+                              label:
+                                  '${(appState.fontSizeMultiplier * 100).round()}%',
+                              onChanged: (value) {
+                                appState.setFontSizeMultiplier(value);
+                              },
+                            ),
+                          ),
+                          Text(
+                            '${(appState.fontSizeMultiplier * 100).round()}%',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(),
+                    // Per-section font size multipliers
+                    Text(
+                      AppLocalizations.of(context)!.fontGroupSizes,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    _FontGroupSlider(
+                      label: AppLocalizations.of(context)!.fontGroupHeaders,
+                      group: 'headers',
+                    ),
+                    _FontGroupSlider(
+                      label: AppLocalizations.of(context)!.fontGroupSentences,
+                      group: 'sentences',
+                    ),
+                    _FontGroupSlider(
+                      label: AppLocalizations.of(
+                        context,
+                      )!.fontGroupTranslations,
+                      group: 'translations',
+                    ),
+                    _FontGroupSlider(
+                      label: AppLocalizations.of(context)!.fontGroupWords,
+                      group: 'words',
+                    ),
+                    _FontGroupSlider(
+                      label: AppLocalizations.of(context)!.fontGroupKanji,
+                      group: 'kanji',
+                    ),
+                    _FontGroupSlider(
+                      label: AppLocalizations.of(context)!.fontGroupUi,
+                      group: 'ui',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Search settings section
+            Text(
+              AppLocalizations.of(context)!.searchSettings,
+              style: TextStyle(
+                fontSize: fs(context, 18, 'headers'),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Search options
+            Card(
+              elevation: 1,
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.searchOptions,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 16),
+                    const ClipboardSettings(),
+                  ],
+                ),
+              ),
+            ),
+
+            // Display options
+            Card(
+              elevation: 1,
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.displayOptions,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 16),
+                    SwitchListTile(
+                      title: Text(AppLocalizations.of(context)!.showParticles),
+                      subtitle: Text(
+                        AppLocalizations.of(context)!.highlightParticles,
+                      ),
+                      value: appState.showParticles,
+                      onChanged: (value) {
+                        appState.setShowParticles(value);
+                      },
+                    ),
+                    const Divider(),
+                    SwitchListTile(
+                      title: Text(AppLocalizations.of(context)!.showKanji),
+                      subtitle: Text(
+                        AppLocalizations.of(context)!.displayKanjiInfo,
+                      ),
+                      value: appState.showKanji,
+                      onChanged: (value) {
+                        appState.setShowKanji(value);
+                      },
+                    ),
+                    const Divider(),
+                    ListTile(
+                      title: Text(AppLocalizations.of(context)!.minFrequency),
+                      subtitle: Text(
+                        AppLocalizations.of(context)!.filterByFrequency,
+                      ),
+                      trailing: SizedBox(
+                        width: 100,
+                        child: TextField(
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                          controller: TextEditingController(
+                            text: appState.minFrequency.toString(),
+                          ),
+                          onChanged: (value) {
+                            final intValue = int.tryParse(value);
+                            if (intValue != null) {
+                              appState.setMinFrequency(intValue);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Popup dictionary settings
+            Card(
+              elevation: 1,
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.popupDictionary,
+                      style: TextStyle(
+                        fontSize: fs(context, 15, 'headers'),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      AppLocalizations.of(context)!.popupDictionarySubtitle,
+                      style: TextStyle(
+                        fontSize: fs(context, 11, 'ui'),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const PopupDictionarySettings(),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Advanced settings section
+            Text(
+              AppLocalizations.of(context)!.advancedSettings,
+              style: TextStyle(
+                fontSize: fs(context, 18, 'headers'),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Anki Decks and Profiles settings
+            Card(
+              elevation: 1,
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.ankiProfiles,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 16),
+                    // Anki Deck Selection
+                    ScreenSize.isCompact(context)
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
                                 AppLocalizations.of(context)!.currentAnkiDeck,
                               ),
-                            ),
-                            Expanded(
-                              flex: 4,
-                              child: DropdownButtonFormField<String>(
+                              const SizedBox(height: 8),
+                              DropdownButtonFormField<String>(
                                 decoration: const InputDecoration(
                                   border: OutlineInputBorder(),
                                   contentPadding: EdgeInsets.symmetric(
@@ -730,65 +697,67 @@ class SettingsScreen extends StatelessWidget {
                                   }
                                 },
                               ),
-                            ),
-                          ],
-                        ),
-                  const SizedBox(height: 16),
-                  // Profile Selection
-                  ScreenSize.isCompact(context)
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(AppLocalizations.of(context)!.currentProfile),
-                            const SizedBox(height: 8),
-                            DropdownButtonFormField<String>(
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: Text(
+                                  AppLocalizations.of(context)!.currentAnkiDeck,
                                 ),
                               ),
-                              initialValue:
-                                  appState.profiles.contains(
-                                    appState.currentProfile,
-                                  )
-                                  ? appState.currentProfile
-                                  : (appState.profiles.isNotEmpty
-                                        ? appState.profiles.first
-                                        : 'Default'),
-                              items: appState.profiles.isNotEmpty
-                                  ? appState.profiles.map((profile) {
-                                      return DropdownMenuItem(
-                                        value: profile,
-                                        child: Text(profile),
-                                      );
-                                    }).toList()
-                                  : [
-                                      const DropdownMenuItem(
-                                        value: 'Default',
-                                        child: Text('Default'),
-                                      ),
-                                    ],
-                              onChanged: (value) {
-                                if (value != null) {
-                                  appState.setCurrentProfile(value);
-                                }
-                              },
-                            ),
-                          ],
-                        )
-                      : Row(
-                          children: [
-                            Expanded(
-                              flex: 3,
-                              child: Text(
+                              Expanded(
+                                flex: 4,
+                                child: DropdownButtonFormField<String>(
+                                  decoration: const InputDecoration(
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                  ),
+                                  initialValue:
+                                      appState.ankiDecks.contains(
+                                        appState.currentAnkiDeck,
+                                      )
+                                      ? appState.currentAnkiDeck
+                                      : (appState.ankiDecks.isNotEmpty
+                                            ? appState.ankiDecks.first
+                                            : 'Default'),
+                                  items: appState.ankiDecks.isNotEmpty
+                                      ? appState.ankiDecks.map((deck) {
+                                          return DropdownMenuItem(
+                                            value: deck,
+                                            child: Text(deck),
+                                          );
+                                        }).toList()
+                                      : [
+                                          const DropdownMenuItem(
+                                            value: 'Default',
+                                            child: Text('Default'),
+                                          ),
+                                        ],
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      appState.setCurrentAnkiDeck(value);
+                                    }
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                    const SizedBox(height: 16),
+                    // Profile Selection
+                    ScreenSize.isCompact(context)
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
                                 AppLocalizations.of(context)!.currentProfile,
                               ),
-                            ),
-                            Expanded(
-                              flex: 4,
-                              child: DropdownButtonFormField<String>(
+                              const SizedBox(height: 8),
+                              DropdownButtonFormField<String>(
                                 decoration: const InputDecoration(
                                   border: OutlineInputBorder(),
                                   contentPadding: EdgeInsets.symmetric(
@@ -823,307 +792,327 @@ class SettingsScreen extends StatelessWidget {
                                   }
                                 },
                               ),
-                            ),
-                          ],
-                        ),
-                ],
-              ),
-            ),
-          ),
-
-          // AnkiConnect settings
-          Card(
-            elevation: 1,
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'AnkiConnect',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      Switch(
-                        value: appState.ankiConnectEnabled,
-                        onChanged: (v) => appState.setAnkiConnectEnabled(v),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  if (appState.ankiConnectEnabled) ...[
-                    // Connection URL
-                    Text(
-                      'API URL',
-                      style: TextStyle(fontSize: fs(context, 13)),
-                    ),
-                    const SizedBox(height: 4),
-                    TextField(
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'http://127.0.0.1:8765',
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        isDense: true,
-                      ),
-                      controller: TextEditingController(
-                        text: appState.ankiConnectUrl,
-                      ),
-                      onChanged: (v) => appState.setAnkiConnectUrl(v),
-                    ),
-                    const SizedBox(height: 12),
-                    // Test connection button + status
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        final service = AnkiConnectService(
-                          appState.ankiConnectUrl,
-                        );
-                        final ok = await service.testConnection();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                ok
-                                    ? 'AnkiConnect connected'
-                                    : 'Connection failed',
-                              ),
-                              backgroundColor: ok ? Colors.green : Colors.red,
-                            ),
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.wifi_find, size: 18),
-                      label: const Text('Test Connection'),
-                    ),
-                    const SizedBox(height: 12),
-                    // Deck selection
-                    Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              isDense: true,
-                              labelText: 'Deck',
-                            ),
-                            initialValue:
-                                appState.ankiDecks.contains(
-                                  appState.currentAnkiDeck,
-                                )
-                                ? appState.currentAnkiDeck
-                                : (appState.ankiDecks.isNotEmpty
-                                      ? appState.ankiDecks.first
-                                      : 'Default'),
-                            items: appState.ankiDecks
-                                .map(
-                                  (d) => DropdownMenuItem(
-                                    value: d,
-                                    child: Text(d),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (v) {
-                              if (v != null) appState.setCurrentAnkiDeck(v);
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.refresh, size: 20),
-                          tooltip: 'Fetch decks from AnkiConnect',
-                          onPressed: () async {
-                            final service = AnkiConnectService(
-                              appState.ankiConnectUrl,
-                            );
-                            try {
-                              final decks = await service.getDeckNames();
-                              appState.setAnkiDecks(decks);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Found ${decks.length} decks',
-                                    ),
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Failed: $e')),
-                                );
-                              }
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    // Note model selection
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              hintText: 'Basic',
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              isDense: true,
-                              labelText: 'Note Type',
-                            ),
-                            controller: TextEditingController(
-                              text: appState.ankiConnectModel,
-                            ),
-                            onChanged: (v) => appState.setAnkiConnectModel(v),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.refresh, size: 20),
-                          tooltip: 'Fetch note types from AnkiConnect',
-                          onPressed: () async {
-                            final service = AnkiConnectService(
-                              appState.ankiConnectUrl,
-                            );
-                            try {
-                              final models = await service.getModelNames();
-                              if (context.mounted) {
-                                showDialog(
-                                  context: context,
-                                  builder: (ctx) => SimpleDialog(
-                                    title: const Text('Select Note Type'),
-                                    children: models
-                                        .map(
-                                          (m) => SimpleDialogOption(
-                                            onPressed: () {
-                                              appState.setAnkiConnectModel(m);
-                                              Navigator.pop(ctx);
-                                            },
-                                            child: Text(m),
-                                          ),
-                                        )
-                                        .toList(),
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Failed: $e')),
-                                );
-                              }
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    // Sync on save toggle
-                    SwitchListTile(
-                      title: Text(
-                        'Auto-sync to Anki',
-                        style: TextStyle(fontSize: fs(context, 14)),
-                      ),
-                      subtitle: Text(
-                        'Send to Anki when saving a word',
-                        style: TextStyle(fontSize: fs(context, 12)),
-                      ),
-                      value: appState.ankiSyncOnSave,
-                      onChanged: (v) => appState.setAnkiSyncOnSave(v),
-                      dense: true,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-
-          // Clipboard and Forvo settings
-          Card(
-            elevation: 1,
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.enhancedFeatures,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  SwitchListTile(
-                    title: Text(
-                      AppLocalizations.of(context)!.clipboardAutoDetect,
-                    ),
-                    subtitle: Text(
-                      AppLocalizations.of(context)!.autoDetectProcessText,
-                    ),
-                    value: appState.clipboardAutoDetect,
-                    onChanged: (value) {
-                      appState.setClipboardAutoDetect(value);
-                    },
-                  ),
-                  const Divider(),
-                  SwitchListTile(
-                    title: Text(AppLocalizations.of(context)!.forvoAudio),
-                    subtitle: Text(
-                      AppLocalizations.of(context)!.enableForvoPronunciations,
-                    ),
-                    value: appState.forvoAudioEnabled,
-                    onChanged: (value) {
-                      appState.setForvoAudioEnabled(value);
-                    },
-                  ),
-                  if (appState.forvoAudioEnabled) ...[
-                    const SizedBox(height: 8),
-                    ScreenSize.isCompact(context)
-                        ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Forvo API Key'),
-                              const SizedBox(height: 8),
-                              TextField(
-                                decoration: const InputDecoration(
-                                  border: OutlineInputBorder(),
-                                  hintText: 'Enter your Forvo API key',
-                                  contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
-                                ),
-                                obscureText: true,
-                                controller: TextEditingController(
-                                  text: appState.forvoApiKey,
-                                ),
-                                onChanged: (value) {
-                                  appState.setForvoApiKey(value);
-                                },
-                              ),
                             ],
                           )
                         : Row(
                             children: [
-                              const Expanded(
+                              Expanded(
                                 flex: 3,
-                                child: Text('Forvo API Key'),
+                                child: Text(
+                                  AppLocalizations.of(context)!.currentProfile,
+                                ),
                               ),
                               Expanded(
                                 flex: 4,
-                                child: TextField(
+                                child: DropdownButtonFormField<String>(
+                                  decoration: const InputDecoration(
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                  ),
+                                  initialValue:
+                                      appState.profiles.contains(
+                                        appState.currentProfile,
+                                      )
+                                      ? appState.currentProfile
+                                      : (appState.profiles.isNotEmpty
+                                            ? appState.profiles.first
+                                            : 'Default'),
+                                  items: appState.profiles.isNotEmpty
+                                      ? appState.profiles.map((profile) {
+                                          return DropdownMenuItem(
+                                            value: profile,
+                                            child: Text(profile),
+                                          );
+                                        }).toList()
+                                      : [
+                                          const DropdownMenuItem(
+                                            value: 'Default',
+                                            child: Text('Default'),
+                                          ),
+                                        ],
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      appState.setCurrentProfile(value);
+                                    }
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                  ],
+                ),
+              ),
+            ),
+
+            // AnkiConnect settings
+            Card(
+              elevation: 1,
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'AnkiConnect',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Switch(
+                          value: appState.ankiConnectEnabled,
+                          onChanged: (v) => appState.setAnkiConnectEnabled(v),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    if (appState.ankiConnectEnabled) ...[
+                      // Connection URL
+                      Text(
+                        'API URL',
+                        style: TextStyle(fontSize: fs(context, 13)),
+                      ),
+                      const SizedBox(height: 4),
+                      TextField(
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: 'http://127.0.0.1:8765',
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          isDense: true,
+                        ),
+                        controller: TextEditingController(
+                          text: appState.ankiConnectUrl,
+                        ),
+                        onChanged: (v) => appState.setAnkiConnectUrl(v),
+                      ),
+                      const SizedBox(height: 12),
+                      // Test connection button + status
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          final service = AnkiConnectService(
+                            appState.ankiConnectUrl,
+                          );
+                          final ok = await service.testConnection();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  ok
+                                      ? 'AnkiConnect connected'
+                                      : 'Connection failed',
+                                ),
+                                backgroundColor: ok ? Colors.green : Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.wifi_find, size: 18),
+                        label: const Text('Test Connection'),
+                      ),
+                      const SizedBox(height: 12),
+                      // Deck selection
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                isDense: true,
+                                labelText: 'Deck',
+                              ),
+                              initialValue:
+                                  appState.ankiDecks.contains(
+                                    appState.currentAnkiDeck,
+                                  )
+                                  ? appState.currentAnkiDeck
+                                  : (appState.ankiDecks.isNotEmpty
+                                        ? appState.ankiDecks.first
+                                        : 'Default'),
+                              items: appState.ankiDecks
+                                  .map(
+                                    (d) => DropdownMenuItem(
+                                      value: d,
+                                      child: Text(d),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (v) {
+                                if (v != null) appState.setCurrentAnkiDeck(v);
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.refresh, size: 20),
+                            tooltip: 'Fetch decks from AnkiConnect',
+                            onPressed: () async {
+                              final service = AnkiConnectService(
+                                appState.ankiConnectUrl,
+                              );
+                              try {
+                                final decks = await service.getDeckNames();
+                                appState.setAnkiDecks(decks);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Found ${decks.length} decks',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Failed: $e')),
+                                  );
+                                }
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Note model selection
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                hintText: 'Basic',
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                isDense: true,
+                                labelText: 'Note Type',
+                              ),
+                              controller: TextEditingController(
+                                text: appState.ankiConnectModel,
+                              ),
+                              onChanged: (v) => appState.setAnkiConnectModel(v),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.refresh, size: 20),
+                            tooltip: 'Fetch note types from AnkiConnect',
+                            onPressed: () async {
+                              final service = AnkiConnectService(
+                                appState.ankiConnectUrl,
+                              );
+                              try {
+                                final models = await service.getModelNames();
+                                if (context.mounted) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (ctx) => SimpleDialog(
+                                      title: const Text('Select Note Type'),
+                                      children: models
+                                          .map(
+                                            (m) => SimpleDialogOption(
+                                              onPressed: () {
+                                                appState.setAnkiConnectModel(m);
+                                                Navigator.pop(ctx);
+                                              },
+                                              child: Text(m),
+                                            ),
+                                          )
+                                          .toList(),
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Failed: $e')),
+                                  );
+                                }
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Sync on save toggle
+                      SwitchListTile(
+                        title: Text(
+                          'Auto-sync to Anki',
+                          style: TextStyle(fontSize: fs(context, 14)),
+                        ),
+                        subtitle: Text(
+                          'Send to Anki when saving a word',
+                          style: TextStyle(fontSize: fs(context, 12)),
+                        ),
+                        value: appState.ankiSyncOnSave,
+                        onChanged: (v) => appState.setAnkiSyncOnSave(v),
+                        dense: true,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+
+            // Clipboard and Forvo settings
+            Card(
+              elevation: 1,
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.enhancedFeatures,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 16),
+                    SwitchListTile(
+                      title: Text(
+                        AppLocalizations.of(context)!.clipboardAutoDetect,
+                      ),
+                      subtitle: Text(
+                        AppLocalizations.of(context)!.autoDetectProcessText,
+                      ),
+                      value: appState.clipboardAutoDetect,
+                      onChanged: (value) {
+                        appState.setClipboardAutoDetect(value);
+                      },
+                    ),
+                    const Divider(),
+                    SwitchListTile(
+                      title: Text(AppLocalizations.of(context)!.forvoAudio),
+                      subtitle: Text(
+                        AppLocalizations.of(context)!.enableForvoPronunciations,
+                      ),
+                      value: appState.forvoAudioEnabled,
+                      onChanged: (value) {
+                        appState.setForvoAudioEnabled(value);
+                      },
+                    ),
+                    if (appState.forvoAudioEnabled) ...[
+                      const SizedBox(height: 8),
+                      ScreenSize.isCompact(context)
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Forvo API Key'),
+                                const SizedBox(height: 8),
+                                TextField(
                                   decoration: const InputDecoration(
                                     border: OutlineInputBorder(),
                                     hintText: 'Enter your Forvo API key',
@@ -1140,220 +1129,367 @@ class SettingsScreen extends StatelessWidget {
                                     appState.setForvoApiKey(value);
                                   },
                                 ),
-                              ),
-                            ],
-                          ),
-                  ],
-                  const Divider(),
-                  SwitchListTile(
-                    title: Text(AppLocalizations.of(context)!.autoTranslation),
-                    subtitle: Text(
-                      AppLocalizations.of(context)!.autoTranslateWords,
-                    ),
-                    value: appState.autoTranslate,
-                    onChanged: (value) {
-                      appState.setAutoTranslate(value);
-                    },
-                  ),
-                  const Divider(),
-                  SwitchListTile(
-                    title: Text(AppLocalizations.of(context)!.autoPasteReader),
-                    subtitle: Text(
-                      AppLocalizations.of(context)!.autoPasteReaderSubtitle,
-                    ),
-                    value: appState.autoPasteReader,
-                    onChanged: (value) {
-                      appState.setAutoPasteReader(value);
-                    },
-                  ),
-                  SwitchListTile(
-                    title: const Text('Inline Definitions'),
-                    subtitle: const Text(
-                      'Show definition text below each word',
-                    ),
-                    value: appState.showInlineDefinitions,
-                    onChanged: (value) {
-                      appState.setShowInlineDefinitions(value);
-                    },
-                  ),
-                  SwitchListTile(
-                    title: const Text('Hover Definitions'),
-                    subtitle: const Text(
-                      'Show definition popup on hover / long-press',
-                    ),
-                    value: appState.showHoverDefinitions,
-                    onChanged: (value) {
-                      appState.setShowHoverDefinitions(value);
-                    },
-                  ),
-                  const Divider(),
-                  ListTile(
-                    title: const Text('Translation Provider'),
-                    subtitle: const Text(
-                      'Choose engine for sentence/word translation',
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: DropdownButtonFormField<TranslationProvider>(
-                      initialValue: appState.translationProvider,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
+                              ],
+                            )
+                          : Row(
+                              children: [
+                                const Expanded(
+                                  flex: 3,
+                                  child: Text('Forvo API Key'),
+                                ),
+                                Expanded(
+                                  flex: 4,
+                                  child: TextField(
+                                    decoration: const InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      hintText: 'Enter your Forvo API key',
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                    ),
+                                    obscureText: true,
+                                    controller: TextEditingController(
+                                      text: appState.forvoApiKey,
+                                    ),
+                                    onChanged: (value) {
+                                      appState.setForvoApiKey(value);
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ],
+                    const Divider(),
+                    SwitchListTile(
+                      title: Text(
+                        AppLocalizations.of(context)!.autoTranslation,
                       ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: TranslationProvider.googleCloud,
-                          child: Text('Google Cloud (free, online)'),
-                        ),
-                        DropdownMenuItem(
-                          value: TranslationProvider.mlKit,
-                          child: Text('ML Kit (offline, on-device)'),
-                        ),
-                        DropdownMenuItem(
-                          value: TranslationProvider.gemini,
-                          child: Text('Gemini AI (requires API key)'),
-                        ),
-                      ],
+                      subtitle: Text(
+                        AppLocalizations.of(context)!.autoTranslateWords,
+                      ),
+                      value: appState.autoTranslate,
                       onChanged: (value) {
-                        if (value != null) {
-                          appState.setTranslationProvider(value);
-                        }
+                        appState.setAutoTranslate(value);
                       },
                     ),
+                    const Divider(),
+                    SwitchListTile(
+                      title: Text(
+                        AppLocalizations.of(context)!.autoPasteReader,
+                      ),
+                      subtitle: Text(
+                        AppLocalizations.of(context)!.autoPasteReaderSubtitle,
+                      ),
+                      value: appState.autoPasteReader,
+                      onChanged: (value) {
+                        appState.setAutoPasteReader(value);
+                      },
+                    ),
+                    SwitchListTile(
+                      title: const Text('Inline Definitions'),
+                      subtitle: const Text(
+                        'Show definition text below each word',
+                      ),
+                      value: appState.showInlineDefinitions,
+                      onChanged: (value) {
+                        appState.setShowInlineDefinitions(value);
+                      },
+                    ),
+                    SwitchListTile(
+                      title: const Text('Hover Definitions'),
+                      subtitle: const Text(
+                        'Show definition popup on hover / long-press',
+                      ),
+                      value: appState.showHoverDefinitions,
+                      onChanged: (value) {
+                        appState.setShowHoverDefinitions(value);
+                      },
+                    ),
+                    const Divider(),
+                    ListTile(
+                      title: const Text('Translation Provider'),
+                      subtitle: const Text(
+                        'Choose engine for sentence/word translation',
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: DropdownButtonFormField<TranslationProvider>(
+                        initialValue: appState.translationProvider,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: TranslationProvider.googleCloud,
+                            child: Text('Google Cloud (free, online)'),
+                          ),
+                          DropdownMenuItem(
+                            value: TranslationProvider.mlKit,
+                            child: Text('ML Kit (offline, on-device)'),
+                          ),
+                          DropdownMenuItem(
+                            value: TranslationProvider.gemini,
+                            child: Text('Gemini AI (requires API key)'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            appState.setTranslationProvider(value);
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Dictionaries section
+            Text(
+              AppLocalizations.of(context)!.dictionaries,
+              style: TextStyle(
+                fontSize: fs(context, 18, 'headers'),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Card(
+              elevation: 1,
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.tune),
+                    title: const Text('Yomitan Settings'),
+                    subtitle: const Text(
+                      'Profiles, scanning, popup, audio, anki export settings',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const YomitanSettingsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.library_books),
+                    title: const Text('Manage Dictionaries'),
+                    subtitle: const Text(
+                      'Enable/disable, reorder, set priority per dictionary',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DictionaryListScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.file_upload),
+                    title: const Text('Import Dictionary'),
+                    subtitle: const Text('Import Yomichan .zip dictionaries'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ImportScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
             ),
-          ),
 
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          // Dictionaries section
-          Text(
-            AppLocalizations.of(context)!.dictionaries,
-            style: TextStyle(
-              fontSize: fs(context, 18, 'headers'),
-              fontWeight: FontWeight.bold,
+            // About section
+            Text(
+              AppLocalizations.of(context)!.about,
+              style: TextStyle(
+                fontSize: fs(context, 18, 'headers'),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            Card(
+              elevation: 1,
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.appName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: fs(context, 16, 'headers'),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(AppLocalizations.of(context)!.version('1.0.0')),
+                    const SizedBox(height: 16),
+                    Text(
+                      AppLocalizations.of(context)!.multilingualLearningTool,
+                      style: TextStyle(fontSize: fs(context, 14)),
+                    ),
+                    const SizedBox(height: 16),
+                    TextButton(
+                      onPressed: () {
+                        // Open privacy policy
+                      },
+                      child: Text(AppLocalizations.of(context)!.privacyPolicy),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        // Open terms of service
+                      },
+                      child: Text(AppLocalizations.of(context)!.termsOfService),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+            const _LayoutSection(),
+
+            const SizedBox(height: 16),
+            const _CloudSyncSection(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Layout mode, padding/margin/border scales and content geometry.
+class _LayoutSection extends StatelessWidget {
+  const _LayoutSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final appState = context.watch<AppState>();
+    Widget row(
+      String label,
+      double value,
+      ValueChanged<double> onChange, {
+      double min = 0.3,
+      double max = 2.5,
+    }) {
+      return Row(
+        children: [
+          SizedBox(width: 130, child: Text(label)),
+          Expanded(
+            child: Slider(
+              value: value.clamp(min, max),
+              min: min,
+              max: max,
+              divisions: 22,
+              label: value.toStringAsFixed(2),
+              onChanged: onChange,
             ),
           ),
-          const SizedBox(height: 8),
-          Card(
-            elevation: 1,
-            margin: const EdgeInsets.symmetric(vertical: 8),
+          SizedBox(
+            width: 46,
+            child: Text(
+              value.toStringAsFixed(2),
+              style: const TextStyle(fontSize: 12),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Layout',
+          style: TextStyle(
+            fontSize: fs(context, 18, 'headers'),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          elevation: 1,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ListTile(
-                  leading: const Icon(Icons.tune),
-                  title: const Text('Yomitan Settings'),
-                  subtitle: const Text(
-                    'Profiles, scanning, popup, audio, anki export settings',
+                // Mode picker
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: 'auto', label: Text('Auto')),
+                    ButtonSegment(value: 'mobile', label: Text('Mobile')),
+                    ButtonSegment(value: 'tablet', label: Text('Tablet')),
+                    ButtonSegment(value: 'desktop', label: Text('Desktop')),
+                    ButtonSegment(value: 'centered', label: Text('Centered')),
+                  ],
+                  selected: {appState.layoutMode},
+                  onSelectionChanged: (s) => appState.setLayoutMode(s.first),
+                ),
+                const SizedBox(height: 12),
+                row('Padding', appState.paddingScale, appState.setPaddingScale),
+                row('Margins', appState.marginScale, appState.setMarginScale),
+                row(
+                  'Border radius',
+                  appState.borderRadiusScale,
+                  appState.setBorderRadiusScale,
+                ),
+                row(
+                  'Border width',
+                  appState.borderWidthScale,
+                  appState.setBorderWidthScale,
+                ),
+                if (appState.layoutMode == 'centered') ...[
+                  const Divider(),
+                  row(
+                    'Content width',
+                    appState.contentMaxWidth,
+                    (v) {
+                      appState.setContentMaxWidth(v);
+                    },
+                    min: 480,
+                    max: 2400,
                   ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const YomitanSettingsScreen(),
-                      ),
-                    );
-                  },
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.library_books),
-                  title: const Text('Manage Dictionaries'),
-                  subtitle: const Text(
-                    'Enable/disable, reorder, set priority per dictionary',
+                  row(
+                    'Height fraction',
+                    appState.contentHeightFraction,
+                    (v) {
+                      appState.setContentHeightFraction(v);
+                    },
+                    min: 0.5,
+                    max: 1.0,
                   ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const DictionaryListScreen(),
-                      ),
-                    );
-                  },
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.file_upload),
-                  title: const Text('Import Dictionary'),
-                  subtitle: const Text('Import Yomichan .zip dictionaries'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ImportScreen(),
-                      ),
-                    );
-                  },
-                ),
+                ],
               ],
             ),
           ),
-
-          const SizedBox(height: 16),
-
-          // About section
-          Text(
-            AppLocalizations.of(context)!.about,
-            style: TextStyle(
-              fontSize: fs(context, 18, 'headers'),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          Card(
-            elevation: 1,
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.appName,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: fs(context, 16, 'headers'),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(AppLocalizations.of(context)!.version('1.0.0')),
-                  const SizedBox(height: 16),
-                  Text(
-                    AppLocalizations.of(context)!.multilingualLearningTool,
-                    style: TextStyle(fontSize: fs(context, 14)),
-                  ),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () {
-                      // Open privacy policy
-                    },
-                    child: Text(AppLocalizations.of(context)!.privacyPolicy),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      // Open terms of service
-                    },
-                    child: Text(AppLocalizations.of(context)!.termsOfService),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-          const _CloudSyncSection(),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

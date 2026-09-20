@@ -211,6 +211,15 @@ class AppState extends ChangeNotifier {
   String _hoverPopupModifier = 'none'; // 'none', 'ctrl', 'shift', 'alt'
   List<String> _hoverPopupLanguages = []; // empty = all languages
 
+  // Layout settings
+  String _layoutMode = 'auto'; // auto/mobile/tablet/desktop/centered
+  double _paddingScale = 1.0;
+  double _marginScale = 1.0;
+  double _borderRadiusScale = 1.0;
+  double _borderWidthScale = 1.0;
+  double _contentMaxWidth = 1100.0; // px, used in centered mode
+  double _contentHeightFraction = 1.0; // fraction of available height
+
   // Profile activation
   String _profileActivationScreen =
       'all'; // 'all', 'search', 'reader', 'srs', 'browser'
@@ -639,6 +648,56 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  String get layoutMode => _layoutMode;
+  double get paddingScale => _paddingScale;
+  double get marginScale => _marginScale;
+  double get borderRadiusScale => _borderRadiusScale;
+  double get borderWidthScale => _borderWidthScale;
+  double get contentMaxWidth => _contentMaxWidth;
+  double get contentHeightFraction => _contentHeightFraction;
+
+  void setLayoutMode(String value) {
+    _layoutMode = value;
+    _storageService.setString('layout_mode', value);
+    notifyListeners();
+  }
+
+  void setPaddingScale(double value) {
+    _paddingScale = value;
+    _storageService.setDouble('padding_scale', value);
+    notifyListeners();
+  }
+
+  void setMarginScale(double value) {
+    _marginScale = value;
+    _storageService.setDouble('margin_scale', value);
+    notifyListeners();
+  }
+
+  void setBorderRadiusScale(double value) {
+    _borderRadiusScale = value;
+    _storageService.setDouble('border_radius_scale', value);
+    notifyListeners();
+  }
+
+  void setBorderWidthScale(double value) {
+    _borderWidthScale = value;
+    _storageService.setDouble('border_width_scale', value);
+    notifyListeners();
+  }
+
+  void setContentMaxWidth(double value) {
+    _contentMaxWidth = value;
+    _storageService.setDouble('content_max_width', value);
+    notifyListeners();
+  }
+
+  void setContentHeightFraction(double value) {
+    _contentHeightFraction = value;
+    _storageService.setDouble('content_height_fraction', value);
+    notifyListeners();
+  }
+
   void setHoverPopupDelay(int value) {
     _hoverPopupDelay = value;
     _storageService.setInt('hover_popup_delay', value);
@@ -872,6 +931,17 @@ class AppState extends ChangeNotifier {
           _storageService.getBool('show_hover_definitions') ?? true;
       _useLocalTranslation =
           _storageService.getBool('use_local_translation') ?? false;
+      _layoutMode = _storageService.getStringSync('layout_mode') ?? 'auto';
+      _paddingScale = _storageService.getDouble('padding_scale') ?? 1.0;
+      _marginScale = _storageService.getDouble('margin_scale') ?? 1.0;
+      _borderRadiusScale =
+          _storageService.getDouble('border_radius_scale') ?? 1.0;
+      _borderWidthScale =
+          _storageService.getDouble('border_width_scale') ?? 1.0;
+      _contentMaxWidth =
+          _storageService.getDouble('content_max_width') ?? 1100.0;
+      _contentHeightFraction =
+          _storageService.getDouble('content_height_fraction') ?? 1.0;
       final savedProvider = _storageService.getStringSync(
         'translation_provider',
       );

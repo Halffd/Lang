@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:lang/utils/layout_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -99,6 +100,11 @@ void main() async {
   // Sync provider learning language with persisted preference
   analyzerProvider.appState = appState;
   analyzerProvider.restoreLanguage(appState.learningLanguage);
+
+  // Feed layout settings into the shared LayoutConfig so every widget sees
+  // them without needing Provider.
+  _syncLayout(appState);
+  appState.addListener(() => _syncLayout(appState));
 
   // Clipboard history: record copied text in the activity feed
   await HistoryService.instance.load();
@@ -326,6 +332,25 @@ void main() async {
       ],
       child: const LangApp(),
     ),
+  );
+}
+
+/// Feed AppState layout settings into the global LayoutConfig.
+void _syncLayout(AppState a) {
+  LayoutConfig.instance.update(
+    mode: switch (a.layoutMode) {
+      'mobile' => LayoutMode.mobile,
+      'tablet' => LayoutMode.tablet,
+      'desktop' => LayoutMode.desktop,
+      'centered' => LayoutMode.centered,
+      _ => LayoutMode.auto,
+    },
+    paddingScale: a.paddingScale,
+    marginScale: a.marginScale,
+    borderRadiusScale: a.borderRadiusScale,
+    borderWidthScale: a.borderWidthScale,
+    contentMaxWidth: a.contentMaxWidth,
+    contentHeightFraction: a.contentHeightFraction,
   );
 }
 
