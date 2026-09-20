@@ -281,6 +281,16 @@ void main() async {
         debounce = Timer(const Duration(seconds: 5), runSync);
       }
     });
+
+    // Realtime: when another device writes a saved word, pull it down.
+    syncService.onSavedWordsChange((table, newRow, oldRow) {
+      if (newRow != null) {
+        final w = newRow['word'] as String?;
+        if (w != null && !appState.savedWords.contains(w)) {
+          appState.addSavedWord(w, details: newRow);
+        }
+      }
+    });
   }
 
   runApp(
