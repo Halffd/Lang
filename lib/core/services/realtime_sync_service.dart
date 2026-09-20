@@ -1,7 +1,12 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
 
-typedef BroadcastCallback = void Function(String table, Map<String, dynamic>? newRow, Map<String, dynamic>? oldRow);
+typedef BroadcastCallback =
+    void Function(
+      String table,
+      Map<String, dynamic>? newRow,
+      Map<String, dynamic>? oldRow,
+    );
 
 class RealtimeSyncService {
   static final RealtimeSyncService _instance = RealtimeSyncService._internal();
@@ -21,10 +26,12 @@ class RealtimeSyncService {
     if (_isConnected) return;
 
     _channel = _supabaseService.subscribeToUserChannel(userId);
-    _channel!.onBroadcast(
-      event: 'postgres_changes',
-      callback: (payload, [error]) => _handleBroadcast(payload),
-    ).subscribe();
+    _channel!
+        .onBroadcast(
+          event: 'postgres_changes',
+          callback: (payload, [error]) => _handleBroadcast(payload),
+        )
+        .subscribe();
 
     _isConnected = true;
   }
@@ -68,6 +75,10 @@ class RealtimeSyncService {
 
   void onSavedWordsChange(BroadcastCallback callback) {
     onTableChange('saved_words', callback);
+  }
+
+  void onSeenWordsChange(BroadcastCallback callback) {
+    onTableChange('seen_words', callback);
   }
 
   void onSrsCardsChange(BroadcastCallback callback) {

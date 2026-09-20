@@ -291,6 +291,23 @@ void main() async {
         }
       }
     });
+
+    // Realtime: history items recorded on another device add themselves to
+    // the local history feed.
+    syncService.onSeenWordsChange((table, newRow, oldRow) {
+      final word = newRow?['word'] as String?;
+      if (word != null &&
+          word.isNotEmpty &&
+          !HistoryService.instance.items.any(
+            (i) => i.category == HistoryCategory.word && i.title == word,
+          )) {
+        HistoryService.instance.record(
+          HistoryCategory.word,
+          word,
+          subtitle: 'synced',
+        );
+      }
+    });
   }
 
   runApp(
