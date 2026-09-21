@@ -37,6 +37,7 @@ import 'presentation/screens/history_screen.dart';
 import 'presentation/screens/ai_screen.dart';
 import 'presentation/screens/reader_screen.dart';
 import 'presentation/screens/srs_screen.dart';
+import 'presentation/screens/study_screen.dart';
 import 'presentation/screens/dictionary_screen.dart';
 import 'presentation/screens/writer_screen.dart';
 import 'presentation/providers/ai_provider.dart';
@@ -768,6 +769,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     const HistoryScreen(),
     const SRSScreen(),
     const AiScreen(),
+    const StudyScreen(),
   ];
 
   /// Route names for the popup dictionary screen scope filter.
@@ -781,6 +783,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     'history',
     'srs',
     'ai',
+    'study',
   ];
 
   @override
@@ -877,6 +880,10 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           NavigationDestination(
             icon: const Icon(Icons.auto_awesome),
             label: AppLocalizations.of(context)!.ai,
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.local_play),
+            label: 'Study',
           ),
         ],
       ),
