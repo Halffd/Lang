@@ -157,6 +157,20 @@ class _LessonPageState extends State<LessonPage> {
           );
           break;
         case LessonType.flashcard:
+          out.add(
+            LessonStep(
+              prompt: Center(
+                child: Text(
+                  card.word,
+                  style: const TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              correctAnswer: card.meaning,
+            ),
+          );
           break;
       }
     }
