@@ -255,9 +255,9 @@ class _StudyScreenState extends State<StudyScreen> {
       builder: (ctx) => _LessonTypeSheet(
         deck: deck,
         cardCount: cards.length,
-        onPick: (type) {
+        onPick: (type) async {
           Navigator.of(ctx).pop();
-          Navigator.of(context).push(
+          await Navigator.of(context).push(
             MaterialPageRoute<void>(
               builder: (_) => LessonPage(
                 cards: cards,
@@ -266,6 +266,8 @@ class _StudyScreenState extends State<StudyScreen> {
               ),
             ),
           );
+          // Refresh xp/streak after returning from a lesson
+          if (mounted) await _loadStats();
         },
       ),
     );

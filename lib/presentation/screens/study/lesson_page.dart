@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:record/record.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:lang/core/services/audio_service.dart';
 import 'package:lang/data/repositories/srs_service.dart';
@@ -233,23 +234,30 @@ class _LessonPageState extends State<LessonPage> {
   Widget build(BuildContext context) {
     if (_idx >= _steps.length) return _buildFinish();
     final step = _steps[_idx];
-    _steps[_idx]; // step not needed beyond grade call
 
-    return LessonScaffold(
-      current: _idx + 1,
-      total: _steps.length,
-      onSkip: () => _grade(false),
-      onExit: () => Navigator.of(context).maybePop(),
-      child: Stack(
-        children: [
-          _buildBody(step),
-          if (_graded)
-            GradeBanner(
-              correct: _lastCorrect,
-              correctAnswer: step.correctAnswer,
-              onContinue: _next,
-            ),
-        ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        await _onWillPop();
+        if (mounted && context.mounted) Navigator.of(context).pop();
+      },
+      child: LessonScaffold(
+        current: _idx + 1,
+        total: _steps.length,
+        onSkip: () => _grade(false),
+        onExit: () => Navigator.of(context).maybePop(),
+        child: Stack(
+          children: [
+            _buildBody(step),
+            if (_graded)
+              GradeBanner(
+                correct: _lastCorrect,
+                correctAnswer: step.correctAnswer,
+                onContinue: _next,
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -459,6 +467,35 @@ class _LessonPageState extends State<LessonPage> {
     );
   }
 
+  Future<void> _persistXp(int xp) async {
+    final p = await SharedPreferences.getInstance();
+    final today = DateTime.now();
+    final total = (p.getInt('study_xp') ?? 0) + xp;
+    final lastMs = p.getInt('study_last_ms') ?? 0;
+    final lastDate = DateTime.fromMillisecondsSinceEpoch(lastMs);
+    final streakDays = DateTime(
+      today.year,
+      today.month,
+      today.day,
+    ).difference(DateTime(lastDate.year, lastDate.month, lastDate.day)).inDays;
+    int streak = p.getInt('study_streak') ?? 0;
+    if (streakDays == 1) {
+      streak += 1;
+    } else if (streakDays > 1) {
+      streak = 1;
+    } else {
+      streak += 0; // same day, no change
+    }
+    await p.setInt('study_xp', total);
+    await p.setInt('study_streak', streak);
+    await p.setInt('study_last_ms', DateTime.now().millisecondsSinceEpoch);
+  }
+
+  Future<bool> _onWillPop() async {
+    if (xpEarned > 0) await _persistXp(xpEarned);
+    return true;
+  }
+
   Widget _buildFinish() {
     return Scaffold(
       body: Center(
@@ -473,7 +510,10 @@ class _LessonPageState extends State<LessonPage> {
             ),
             const SizedBox(height: 24),
             FilledButton(
-              onPressed: () => Navigator.of(context).maybePop(),
+              onPressed: () async {
+                await _onWillPop();
+                if (mounted) Navigator.of(context).maybePop();
+              },
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF58CC02),
                 padding: const EdgeInsets.symmetric(
