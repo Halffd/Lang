@@ -9,6 +9,7 @@ import 'package:lang/domain/entities/srs_deck.dart';
 
 import 'study/lesson_page.dart';
 import 'study/lesson_widgets.dart';
+import 'study/ai_lesson_generator.dart';
 
 /// Duolingo-style study tab: deck map with XP/streak, tap to choose lesson type.
 class StudyScreen extends StatefulWidget {
@@ -122,6 +123,16 @@ class _StudyScreenState extends State<StudyScreen> {
                   ),
                 ),
               ),
+              IconButton.filledTonal(
+                icon: const Icon(Icons.auto_awesome),
+                tooltip: 'AI-generated lesson',
+                onPressed: () => showModalBottomSheet<void>(
+                  context: context,
+                  isScrollControlled: true,
+                  builder: (_) => const AiDeckGeneratorSheet(),
+                ),
+              ),
+              const SizedBox(width: 8),
               IconButton.filledTonal(
                 icon: const Icon(Icons.tune),
                 onPressed: _showSettingsSheet,

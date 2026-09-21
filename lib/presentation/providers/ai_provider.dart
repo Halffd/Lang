@@ -100,6 +100,12 @@ class AiProvider with ChangeNotifier {
   String? get _activeGeminiKey => _geminiApiKey.isEmpty ? null : _geminiApiKey;
   String? get _activeHfKey => _hfApiKey.isEmpty ? null : _hfApiKey;
 
+  /// Direct access for power-user flows (e.g., AI lesson generator).
+  AiRepository get repository => _repository;
+
+  Future<String> generateText(String prompt, {String? apiKey}) =>
+      _repository.generateText(prompt, _selectedProvider, apiKey: apiKey);
+
   Future<void> sendMessage(String text) async {
     if (text.trim().isEmpty || !_isAiEnabled) return;
 
