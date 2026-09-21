@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:lang/utils/layout_config.dart';
+import 'package:lang/utils/screen_size.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -735,6 +736,13 @@ class LangApp extends StatelessWidget {
             iconTheme: const IconThemeData(size: 22, color: Colors.white70),
           ),
           home: const PopupDictionaryScope(child: MainNavigationShell()),
+          // When layout mode is 'centered', wrap every route's scaffold in
+          // a width/height-capped surface centered on the screen.
+          // Other modes: unchanged.
+          builder: (context, child) {
+            if (child == null) return const SizedBox.shrink();
+            return ScreenSize.maybeCenter(context, child);
+          },
         );
       },
     );
