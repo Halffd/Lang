@@ -32,8 +32,7 @@ class StructuredDefinition extends StatelessWidget {
     // listen: false is fine — options rarely change and the host
     // screens rebuild on AppState notifications anyway
     final AppState appState = Provider.of<AppState>(context, listen: false);
-    final options =
-        appState?.dictionaryDisplayOptions ?? DictionaryDisplayOptions();
+    final options = appState.dictionaryDisplayOptions;
 
     final plainStyle = TextStyle(
       fontSize: fs(context, fontSize, 'translations'),

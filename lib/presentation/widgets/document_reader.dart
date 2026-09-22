@@ -187,8 +187,6 @@ class DocumentReaderState extends State<DocumentReader> {
         return _buildMangaViewer();
       case DocumentType.fb2:
         return _buildFb2Viewer();
-      default:
-        return const Center(child: Text('Unsupported document type'));
     }
   }
 

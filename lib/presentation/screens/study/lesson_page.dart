@@ -19,11 +19,15 @@ class LessonPage extends StatefulWidget {
   final LessonType type;
   final SRSService srs;
 
+  /// 0 = unlimited; otherwise the deck is truncated to this many cards.
+  final int sentenceCap;
+
   const LessonPage({
     super.key,
     required this.cards,
     required this.type,
     required this.srs,
+    this.sentenceCap = 0,
   });
 
   @override
@@ -60,19 +64,14 @@ class _LessonPageState extends State<LessonPage> {
 
   List<LessonStep> _sortSteps(List<LessonStep> src) {
     final cards = widget.cards;
-    final weakIdx = <int, double>{};
-    for (var i = 0; i < cards.length; i++) {
-      weakIdx[i] = cards[i].easeFactor;
+    // Truncate to sentence cap if configured
+    var limited = cards;
+    if (widget.sentenceCap > 0 && cards.length > widget.sentenceCap) {
+      limited = cards.take(widget.sentenceCap).toList();
     }
-    // we don't track step↔card mapping for MC (uses shuffled pairs), so map
-    // by linkedList order: index i of step -> index of its source card.
-    // Since generation is per-card, index matches.
     final idx = List<int>.generate(src.length, (i) => i);
-    idx.sort((a, b) {
-      final ca = cards[a].easeFactor;
-      final cb = cards[b].easeFactor;
-      return ca.compareTo(cb);
-    });
+    // sort step indexes by linked card's ease factor (weak first)
+    idx.sort((a, b) => limited[a].easeFactor.compareTo(limited[b].easeFactor));
     return [for (final i in idx) src[i]];
   }
 
