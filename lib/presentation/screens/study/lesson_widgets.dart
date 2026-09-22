@@ -38,6 +38,11 @@ enum LessonType {
 
   /// Duolingo "match the pairs": two columns of tiles; tap one per side.
   matchWords,
+
+  /// Clozemaster-style: sentence with the target word removed; pick one of
+  /// 4 options or type it (same word + meaning space as flashcard, but the
+  /// prompt is a sentence with "____").
+  cloze,
 }
 
 /// Data for a match-pairs round: word-meaning pairs shuffled.

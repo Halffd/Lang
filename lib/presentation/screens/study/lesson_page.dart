@@ -215,6 +215,34 @@ class _LessonPageState extends State<LessonPage> {
             ),
           );
           break;
+        case LessonType.cloze:
+          // Written choice: pick the right word from 4 (LWR = less wrong rows)
+          final dest = widget.cards
+              .map((c) => c.word)
+              .where((w) => w != card.word)
+              .take(3)
+              .toList();
+          final clozeSentence = (card.notes?.isNotEmpty == true)
+              ? card.notes!
+              : '${card.reading ?? ''} ____ (${card.meaning})';
+          out.add(
+            LessonStep(
+              prompt: Center(
+                child: Text(
+                  clozeSentence.replaceAll(card.word, '____'),
+                  style: const TextStyle(fontSize: 22),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              correctAnswer: card.word,
+              choices: ([
+                card.word,
+                ...dest,
+              ]..shuffle(math.Random())).cast<String>(),
+              promptLabel: 'Fill in the blank',
+            ),
+          );
+          break;
         case LessonType.matchWords:
           break; // unreachable — handled above
       }
@@ -342,13 +370,19 @@ class _LessonPageState extends State<LessonPage> {
       case LessonType.multipleChoice:
       case LessonType.kanji:
       case LessonType.listening:
+      case LessonType.cloze:
         return MultipleChoiceView(
           word: widget.type == LessonType.listening
               ? ''
+              : widget.type == LessonType.cloze
+              ? step.promptLabel.isEmpty
+                    ? 'Fill in the blank'
+                    : step.promptLabel
               : widget.cards[_idx].word,
           subLabel: switch (widget.type) {
             LessonType.listening => '🎧 Listen',
             LessonType.kanji => widget.cards[_idx].reading,
+            LessonType.cloze => 'Choose the missing word',
             _ => widget.cards[_idx].reading,
           },
           meanings: step.choices!,
@@ -450,6 +484,9 @@ class _LessonPageState extends State<LessonPage> {
   }
 
   Widget _gradeBtn(String label, Color color, int q) {
+    // Preview of the next review day per quality, per Clozemaster tiers:
+    // again=today, hard=1d, good=10d, easy=30d, perfect=180d.
+    const daysLabels = ['today', '+1d', '+10d', '+30d', '+180d'];
     return ElevatedButton(
       onPressed: () => _grade(q >= 3),
       style: ElevatedButton.styleFrom(
@@ -458,7 +495,11 @@ class _LessonPageState extends State<LessonPage> {
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
-      child: Text(label),
+      child: Text(
+        '$label\n${daysLabels[q]}',
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 13),
+      ),
     );
   }
 

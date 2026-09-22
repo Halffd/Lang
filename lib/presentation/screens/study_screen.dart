@@ -428,6 +428,12 @@ class _LessonTypeSheet extends StatelessWidget {
                     'Match pairs',
                     Icons.grid_view,
                   ),
+                  _modeChip(
+                    context,
+                    LessonType.cloze,
+                    'Fill blank',
+                    Icons.short_text,
+                  ),
                 ],
               ],
             ),
