@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:lang/data/repositories/srs_service.dart';
+import 'package:lang/domain/entities/srs_card.dart';
 import 'package:lang/domain/entities/srs_deck.dart';
 import 'package:lang/utils/font_scale.dart';
 
@@ -22,6 +23,7 @@ class StudyScreen extends StatefulWidget {
 
 class _StudyScreenState extends State<StudyScreen> {
   int _xp = 0;
+  int _gems = 0;
   int _streak = 0;
   int _dailyGoal = 50;
 
@@ -35,6 +37,7 @@ class _StudyScreenState extends State<StudyScreen> {
     final p = await SharedPreferences.getInstance();
     setState(() {
       _xp = p.getInt('study_xp') ?? 0;
+      _gems = p.getInt('study_gems') ?? 0;
       _streak = p.getInt('study_streak') ?? 0;
       _dailyGoal = p.getInt('study_daily_goal') ?? 50;
     });
@@ -65,6 +68,13 @@ class _StudyScreenState extends State<StudyScreen> {
                 const SizedBox(width: 4),
                 Text(
                   '$_xp',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 10),
+                const Icon(Icons.diamond, color: Colors.cyan, size: 20),
+                const SizedBox(width: 2),
+                Text(
+                  '$_gems',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(width: 10),
@@ -123,6 +133,23 @@ class _StudyScreenState extends State<StudyScreen> {
                     color: Colors.grey[800],
                   ),
                 ),
+              ),
+              // Duolingo: dedicated review button uses weakest-first ordering
+              TextButton.icon(
+                icon: const Icon(Icons.timelapse, size: 18),
+                label: const Text('Review'),
+                onPressed: () {
+                  final srs = context.read<SRSService>();
+                  final weak = srs.dueCards.whereType<SRSCard>().toList()
+                    ..sort((a, b) => a.easeFactor.compareTo(b.easeFactor));
+                  if (weak.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('No cards due.')),
+                    );
+                    return;
+                  }
+                  _showTypePickerForList(weak, 'Review had a target');
+                },
               ),
               IconButton.filledTonal(
                 icon: const Icon(Icons.auto_awesome),
@@ -254,10 +281,16 @@ class _StudyScreenState extends State<StudyScreen> {
 
   void _showTypePicker(SrsDeck deck) {
     final cards = context.read<SRSService>().getDueCardsByDeck(deck.id);
+    _showTypePickerForList(cards, deck.name);
+  }
+
+  /// Show the same picker but over an arbitrary card list (cross-deck).
+  void _showTypePickerForList(List<SRSCard> cards, String title) {
     showModalBottomSheet<void>(
       context: context,
       builder: (ctx) => _LessonTypeSheet(
-        deck: deck,
+        deck: null,
+        titleOverride: title,
         cardCount: cards.length,
         onPick: (type) async {
           Navigator.of(ctx).pop();
@@ -270,7 +303,6 @@ class _StudyScreenState extends State<StudyScreen> {
               ),
             ),
           );
-          // Refresh xp/streak after returning from a lesson
           if (mounted) await _loadStats();
         },
       ),
@@ -320,25 +352,28 @@ class _StudyScreenState extends State<StudyScreen> {
 }
 
 class _LessonTypeSheet extends StatelessWidget {
-  final SrsDeck deck;
+  final SrsDeck? deck;
+  final String? titleOverride;
   final int cardCount;
   final void Function(LessonType) onPick;
 
   const _LessonTypeSheet({
-    required this.deck,
+    this.deck,
+    this.titleOverride,
     required this.cardCount,
     required this.onPick,
   });
 
   @override
   Widget build(BuildContext context) {
+    final title = titleOverride ?? deck?.name ?? 'Lesson';
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Choose mode', style: Theme.of(context).textTheme.titleLarge),
+          Text(title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 4),
           Text('$cardCount cards', style: TextStyle(color: Colors.grey[600])),
           const SizedBox(height: 16),

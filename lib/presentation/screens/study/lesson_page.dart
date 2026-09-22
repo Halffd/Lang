@@ -31,12 +31,15 @@ class LessonPage extends StatefulWidget {
 }
 
 class _LessonPageState extends State<LessonPage> {
-  late final List<LessonStep> _steps;
+  late List<LessonStep> _steps; // ordered working queue, mutable
+  late List<LessonStep> _failedQueue; // weak ones appended to the end
   int _idx = 0;
   bool _graded = false;
   bool _lastCorrect = false;
-
   int xpEarned = 0;
+  int gemsEarned = 0;
+  double _strength = 0.0; // 0..1 strength bar
+  static const double _strengthToWin = 1.0;
   final _textCtrl = TextEditingController();
   final _audio = AudioService();
 
@@ -49,7 +52,28 @@ class _LessonPageState extends State<LessonPage> {
   void initState() {
     super.initState();
     _steps = _generateSteps();
+    // Duolingo weak-first: order steps by card ease ascending then random
+    _steps = _sortSteps(_steps);
+    _failedQueue = [];
     _audio.init();
+  }
+
+  List<LessonStep> _sortSteps(List<LessonStep> src) {
+    final cards = widget.cards;
+    final weakIdx = <int, double>{};
+    for (var i = 0; i < cards.length; i++) {
+      weakIdx[i] = cards[i].easeFactor;
+    }
+    // we don't track step↔card mapping for MC (uses shuffled pairs), so map
+    // by linkedList order: index i of step -> index of its source card.
+    // Since generation is per-card, index matches.
+    final idx = List<int>.generate(src.length, (i) => i);
+    idx.sort((a, b) {
+      final ca = cards[a].easeFactor;
+      final cb = cards[b].easeFactor;
+      return ca.compareTo(cb);
+    });
+    return [for (final i in idx) src[i]];
   }
 
   @override
@@ -217,20 +241,30 @@ class _LessonPageState extends State<LessonPage> {
 
   Future<void> _grade(bool correct, {double score = 1}) async {
     if (_graded) return;
-    _steps[_idx]; // step not needed beyond grade call
-
     _lastCorrect = correct;
-
     _graded = true;
 
-    final due = widget.cards[_idx];
+    final card = widget.cards[_idx];
     final srGrade = correct ? (score >= 0.9 ? 4 : 3) : (score > 0.4 ? 2 : 1);
-    await widget.srs.reviewCard(due.id, srGrade);
+    await widget.srs.reviewCard(card.id, srGrade);
 
-    // XP: correct 10, wrong 2-scale for attempt
-    xpEarned += (10 * score).round().clamp(2, 50);
-
-    setState(() {});
+    // strength: 1 = full bar. wrong answers also get credit but less.
+    setState(() {
+      if (correct) {
+        _strength += 0.25 * score;
+        xpEarned += (10 * score).round().clamp(2, 50);
+      } else {
+        _strength = math.max(0, _strength - 0.15);
+        // wrong answers get pushed back — this card re-appears once.
+        _failedQueue.add(_steps[_idx]);
+      }
+    });
+    // move through; if we hit the end, drain _failedQueue
+    if (_idx == _steps.length - 1 && _failedQueue.isNotEmpty) {
+      _steps.addAll(_failedQueue);
+      _failedQueue.clear();
+    }
+    if (_strength >= _strengthToWin) _finish();
   }
 
   void _next() {
@@ -247,7 +281,27 @@ class _LessonPageState extends State<LessonPage> {
         final c = widget.cards[_idx];
         _audio.play(c.word, 'ja');
       }
+    } else {
+      _finish();
     }
+  }
+
+  void _finish() {
+    if (_strength >= _strengthToWin && _failedQueue.isEmpty) return;
+    // Cap at the last scheduled step even if strength bar isn't full
+    final done = _strength >= _strengthToWin || _idx >= _steps.length - 1;
+    if (!done) return;
+
+    // Gems: one per 8 XP + 5 if strength bar full
+    gemsEarned = (xpEarned ~/ 8) + (_strength >= _strengthToWin ? 5 : 0);
+    _saveGems();
+    setState(() => _idx = _steps.length); // push past the end -> _buildFinish
+  }
+
+  Future<void> _saveGems() async {
+    final p = await SharedPreferences.getInstance();
+    final cur = p.getInt('study_gems') ?? 0;
+    await p.setInt('study_gems', cur + gemsEarned);
   }
 
   @override
@@ -267,6 +321,7 @@ class _LessonPageState extends State<LessonPage> {
         total: _steps.length,
         onSkip: () => _grade(false),
         onExit: () => Navigator.of(context).maybePop(),
+        strength: _strength,
         child: Stack(
           children: [
             _buildBody(step),
@@ -528,16 +583,45 @@ class _LessonPageState extends State<LessonPage> {
   }
 
   Widget _buildFinish() {
+    final won = _strength >= _strengthToWin;
     return Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.celebration, size: 72, color: Colors.amber),
+            Icon(
+              won ? Icons.celebration : Icons.refresh,
+              size: 72,
+              color: won ? Colors.amber : Colors.grey,
+            ),
             const SizedBox(height: 16),
             Text(
-              '$xpEarned XP earned!',
+              won ? 'Strength bar full.' : 'Almost — try again!',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '$xpEarned XP earned' +
+                  (gemsEarned > 0 ? ' • +$gemsEarned 💎' : ''),
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Strength: '),
+                SizedBox(
+                  width: 140,
+                  child: LinearProgressIndicator(
+                    value: _strength.clamp(0.0, 1.0),
+                    backgroundColor: Colors.grey.shade300,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      won ? Colors.green : Colors.orange,
+                    ),
+                    minHeight: 10,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 24),
             FilledButton(
@@ -546,13 +630,13 @@ class _LessonPageState extends State<LessonPage> {
                 if (mounted) Navigator.of(context).maybePop();
               },
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF58CC02),
+                backgroundColor: won ? const Color(0xFF58CC02) : Colors.orange,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 32,
                   vertical: 14,
                 ),
               ),
-              child: const Text('Finish'),
+              child: Text(won ? 'Finish' : 'Review more'),
             ),
           ],
         ),

@@ -194,6 +194,7 @@ class LessonScaffold extends StatelessWidget {
   final Widget child;
   final VoidCallback onSkip;
   final VoidCallback onExit;
+  final double strength; // 0..1, glowing bar shown next to progress
 
   const LessonScaffold({
     super.key,
@@ -202,11 +203,15 @@ class LessonScaffold extends StatelessWidget {
     required this.child,
     required this.onSkip,
     required this.onExit,
+    this.strength = 0,
   });
 
   @override
   Widget build(BuildContext context) {
     final progress = total == 0 ? 0.0 : (current / total).clamp(0.0, 1.0);
+    final barColor = strength >= 0.8
+        ? Colors.green
+        : (strength >= 0.4 ? Colors.amber : Colors.red.shade400);
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7FB),
       appBar: AppBar(
@@ -217,10 +222,24 @@ class LessonScaffold extends StatelessWidget {
       ),
       body: Column(
         children: [
+          // step progress
           LinearProgressIndicator(
             value: progress,
             backgroundColor: Colors.grey.shade200,
-            minHeight: 6,
+            minHeight: 4,
+          ),
+          // strength bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: strength.clamp(0.0, 1.0),
+                backgroundColor: Colors.grey.shade200,
+                valueColor: AlwaysStoppedAnimation<Color>(barColor),
+                minHeight: 8,
+              ),
+            ),
           ),
           Expanded(child: child),
         ],
