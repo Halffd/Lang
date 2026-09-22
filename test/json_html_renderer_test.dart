@@ -33,8 +33,16 @@ void main() {
         'tag': 'div',
         'data': {'class': 'example-sentence'},
         'content': <Map<String, dynamic>>[
-          {'tag': 'span', 'data': <String, dynamic>{}, 'content': 'Japanese text'},
-          {'tag': 'span', 'data': <String, dynamic>{}, 'content': 'English translation'},
+          {
+            'tag': 'span',
+            'data': <String, dynamic>{},
+            'content': 'Japanese text',
+          },
+          {
+            'tag': 'span',
+            'data': <String, dynamic>{},
+            'content': 'English translation',
+          },
         ],
       });
       expect(widget, isA<Container>());
@@ -184,7 +192,6 @@ void main() {
     });
   });
 }
-
 
 // walk a widget tree (debug fill) and collect Text data strings
 String _findTextOf(Widget widget) {

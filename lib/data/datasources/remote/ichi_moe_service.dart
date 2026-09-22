@@ -8,21 +8,26 @@ import 'package:lang/utils/html_sanitizer.dart';
 /// Service for scraping data from ichi.moe
 class IchiMoeService {
   /// Fetches and parses data from ichi.moe for a given term
-  /// 
+  ///
   /// Parameters:
   /// - term: The Japanese term to search for
   /// - useRomaji: Whether to use romaji ('hb') or kana ('kana') - defaults to romaji
-  Future<List<model.DictionaryEntry>> search(String term, {bool useRomaji = true}) async {
+  Future<List<model.DictionaryEntry>> search(
+    String term, {
+    bool useRomaji = true,
+  }) async {
     try {
       final rmj = useRomaji ? 'hb' : 'kana';
-      final url = 'https://ichi.moe/cl/qr/?r=$rmj&q=${Uri.encodeComponent(term)}';
-      
+      final url =
+          'https://ichi.moe/cl/qr/?r=$rmj&q=${Uri.encodeComponent(term)}';
+
       debugPrint('Ichi.moe URL: $url'); // Debugging
-      
+
       final response = await http.get(
         Uri.parse(url),
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         },
       );
 
@@ -34,14 +39,18 @@ class IchiMoeService {
       final entries = <model.DictionaryEntry>[];
 
       // Find all gloss content containers
-      final glossContainers = document.querySelectorAll('div.gloss-content.scroll-pane > dl');
-      
+      final glossContainers = document.querySelectorAll(
+        'div.gloss-content.scroll-pane > dl',
+      );
+
       for (int i = 0; i < glossContainers.length; i++) {
         final container = glossContainers[i];
-        
+
         try {
           // Remove any note elements that might interfere
-          final notesToRemove = container.querySelectorAll('.sense-info-note.has-tip');
+          final notesToRemove = container.querySelectorAll(
+            '.sense-info-note.has-tip',
+          );
           for (final note in notesToRemove) {
             note.remove();
           }
@@ -49,14 +58,15 @@ class IchiMoeService {
           // Get the main term/reading from the dt element
           final dtElement = container.querySelector('dt');
           if (dtElement == null) continue;
-          
+
           String termReading = dtElement.innerHtml;
           final sanitizedTermReading = HtmlSanitizer.sanitize(termReading);
           String extractedTerm = sanitizedTermReading;
-          
+
           // Extract the actual term from the dt element (removing numbers if present)
           final parts = sanitizedTermReading.split(' ');
-          if (parts.length > 1 && int.tryParse(parts[0].substring(0, 1)) != null) {
+          if (parts.length > 1 &&
+              int.tryParse(parts[0].substring(0, 1)) != null) {
             extractedTerm = parts[1];
           } else {
             extractedTerm = parts[0];
@@ -65,7 +75,7 @@ class IchiMoeService {
           // Get the definitions from li elements
           final definitionElements = container.querySelectorAll('li');
           final definitions = <String>[];
-          
+
           for (final defElement in definitionElements) {
             if (defElement.innerHtml.isNotEmpty) {
               definitions.add(HtmlSanitizer.sanitize(defElement.innerHtml));
@@ -80,8 +90,9 @@ class IchiMoeService {
               (el) => el.classes.contains('term-and-readings'),
               orElse: () => Element.tag('div'),
             );
-            
-            if (contextElement.localName != 'div' || contextElement.text.isNotEmpty) {
+
+            if (contextElement.localName != 'div' ||
+                contextElement.text.isNotEmpty) {
               context = contextElement.text;
             }
           }
@@ -115,15 +126,20 @@ class IchiMoeService {
   }
 
   /// Enhanced search that also extracts readings and conjugations
-  Future<List<model.DictionaryEntry>> searchWithDetails(String term, {bool useRomaji = true}) async {
+  Future<List<model.DictionaryEntry>> searchWithDetails(
+    String term, {
+    bool useRomaji = true,
+  }) async {
     try {
       final rmj = useRomaji ? 'hb' : 'kana';
-      final url = 'https://ichi.moe/cl/qr/?r=$rmj&q=${Uri.encodeComponent(term)}';
-      
+      final url =
+          'https://ichi.moe/cl/qr/?r=$rmj&q=${Uri.encodeComponent(term)}';
+
       final response = await http.get(
         Uri.parse(url),
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         },
       );
 
@@ -135,14 +151,18 @@ class IchiMoeService {
       final entries = <model.DictionaryEntry>[];
 
       // Find all gloss content containers
-      final glossContainers = document.querySelectorAll('div.gloss-content.scroll-pane > dl');
-      
+      final glossContainers = document.querySelectorAll(
+        'div.gloss-content.scroll-pane > dl',
+      );
+
       for (int i = 0; i < glossContainers.length; i++) {
         final container = glossContainers[i];
-        
+
         try {
           // Remove any note elements that might interfere
-          final notesToRemove = container.querySelectorAll('.sense-info-note.has-tip');
+          final notesToRemove = container.querySelectorAll(
+            '.sense-info-note.has-tip',
+          );
           for (final note in notesToRemove) {
             note.remove();
           }
@@ -151,21 +171,24 @@ class IchiMoeService {
           final conjViaElement = container.querySelector('.conj-via');
           final meaningElements = container.querySelectorAll('li');
           final compoundElement = container.querySelector('dl>dt');
-          final compoundDescWord = container.querySelector('.compound-desc-word');
+          final compoundDescWord = container.querySelector(
+            '.compound-desc-word',
+          );
           final compoundGloss = container.querySelector('.compound-gloss');
           final compoundSection = container.querySelector('.compounds');
-          
+
           // Get the main term/reading from the dt element
           final dtElement = container.querySelector('dt');
           if (dtElement == null) continue;
-          
+
           String termReading = dtElement.innerHtml;
           final sanitizedTermReading = HtmlSanitizer.sanitize(termReading);
           String extractedTerm = sanitizedTermReading;
-          
+
           // Extract the actual term from the dt element (removing numbers if present)
           final parts = sanitizedTermReading.split(' ');
-          if (parts.length > 1 && int.tryParse(parts[0].substring(0, 1)) != null) {
+          if (parts.length > 1 &&
+              int.tryParse(parts[0].substring(0, 1)) != null) {
             extractedTerm = parts[1];
           } else {
             extractedTerm = parts[0];
@@ -174,16 +197,18 @@ class IchiMoeService {
           // Determine what to use as the main content
           String mainContent = '';
           List<Element> processedMeanings = [];
-          
+
           // Check if we have compound information
-          if (compoundElement != null && compoundSection != null && compoundDescWord != null) {
+          if (compoundElement != null &&
+              compoundSection != null &&
+              compoundDescWord != null) {
             // Use compound information as main content
             mainContent = HtmlSanitizer.sanitize(compoundSection.innerHtml);
             // Process meanings separately
             for (final u in meaningElements) {
               processedMeanings.add(u);
             }
-          } 
+          }
           // Check if we have conjugation information
           else if (conjViaElement != null) {
             // Use parent element's dd content
@@ -192,11 +217,12 @@ class IchiMoeService {
               // Clear and rebuild dd content with meanings
               ddElement.innerHtml = '';
               for (final u in meaningElements) {
-                ddElement.innerHtml += '<li>${HtmlSanitizer.sanitize(u.innerHtml)}</li>';
+                ddElement.innerHtml +=
+                    '<li>${HtmlSanitizer.sanitize(u.innerHtml)}</li>';
               }
               mainContent = HtmlSanitizer.sanitize(ddElement.innerHtml);
             }
-          } 
+          }
           // Check if we have compound gloss
           else if (compoundGloss != null) {
             final ddElement = container.querySelector('dd');
@@ -204,11 +230,12 @@ class IchiMoeService {
               // Clear and rebuild dd content with meanings
               ddElement.innerHtml = '';
               for (final u in meaningElements) {
-                ddElement.innerHtml += '<li>${HtmlSanitizer.sanitize(u.innerHtml)}</li>';
+                ddElement.innerHtml +=
+                    '<li>${HtmlSanitizer.sanitize(u.innerHtml)}</li>';
               }
               mainContent = HtmlSanitizer.sanitize(ddElement.innerHtml);
             }
-          } 
+          }
           // Default: just use the meanings
           else {
             for (final u in meaningElements) {
@@ -221,10 +248,11 @@ class IchiMoeService {
           if (mainContent.isNotEmpty) {
             definitions.add(mainContent);
           }
-          
+
           // Add any additional meanings that weren't processed
           for (final defElement in meaningElements) {
-            if (defElement.innerHtml.isNotEmpty && !mainContent.contains(defElement.innerHtml)) {
+            if (defElement.innerHtml.isNotEmpty &&
+                !mainContent.contains(defElement.innerHtml)) {
               definitions.add(defElement.innerHtml);
             }
           }
@@ -238,9 +266,14 @@ class IchiMoeService {
             definitionTags: [],
             rules: [],
             popularity: 0.0,
-            definitions: definitions.isNotEmpty ? definitions : ['No definitions found'],
+            definitions: definitions.isNotEmpty
+                ? definitions
+                : ['No definitions found'],
             sequence: i,
-            termTags: ['ichi.moe', 'enhanced'], // Mark as coming from ichi.moe with enhanced parsing
+            termTags: [
+              'ichi.moe',
+              'enhanced',
+            ], // Mark as coming from ichi.moe with enhanced parsing
           );
 
           entries.add(entry);

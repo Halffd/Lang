@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:lang/data/repositories/srs_service.dart';
 import 'package:lang/domain/entities/srs_deck.dart';
+import 'package:lang/utils/font_scale.dart';
 
 import 'study/lesson_page.dart';
 import 'study/lesson_widgets.dart';
@@ -117,7 +118,7 @@ class _StudyScreenState extends State<StudyScreen> {
                 child: Text(
                   'Due today: $dueCount',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: fs(context, 18, 'headers'),
                     fontWeight: FontWeight.bold,
                     color: Colors.grey[800],
                   ),
@@ -208,7 +209,10 @@ class _StudyScreenState extends State<StudyScreen> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    Text(deck.icon, style: const TextStyle(fontSize: 28)),
+                    Text(
+                      deck.icon,
+                      style: TextStyle(fontSize: fs(context, 28, 'kanji')),
+                    ),
                     if (hasDue)
                       Positioned(
                         top: 2,
@@ -222,7 +226,7 @@ class _StudyScreenState extends State<StudyScreen> {
                           child: Text(
                             '!',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: fs(context, 12),
                               color: color,
                               fontWeight: FontWeight.bold,
                             ),
@@ -239,7 +243,7 @@ class _StudyScreenState extends State<StudyScreen> {
         Text(
           '${deck.name}${hasDue ? ' · $dueCount' : ''}',
           style: TextStyle(
-            fontSize: 12,
+            fontSize: fs(context, 12),
             color: Colors.grey[700],
             fontWeight: FontWeight.w500,
           ),
@@ -282,9 +286,12 @@ class _StudyScreenState extends State<StudyScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Daily goal',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: fs(context, 18, 'headers'),
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 12),
             ...([25, 50, 100, 200].map(
@@ -295,11 +302,11 @@ class _StudyScreenState extends State<StudyScreen> {
                   groupValue: _dailyGoal,
                   onChanged: (v) async {
                     if (v == null) return;
+                    final nav = Navigator.of(ctx);
                     setState(() => _dailyGoal = v);
                     final p = await SharedPreferences.getInstance();
                     await p.setInt('study_daily_goal', v);
-                    if (!mounted) return;
-                    if (Navigator.of(ctx).canPop()) Navigator.of(ctx).pop();
+                    if (nav.canPop()) nav.pop();
                   },
                 ),
                 title: Text('$g XP'),
@@ -380,6 +387,12 @@ class _LessonTypeSheet extends StatelessWidget {
                     Icons.volume_up,
                   ),
                   _modeChip(context, LessonType.spoken, 'Speak', Icons.mic),
+                  _modeChip(
+                    context,
+                    LessonType.matchWords,
+                    'Match pairs',
+                    Icons.grid_view,
+                  ),
                 ],
               ],
             ),

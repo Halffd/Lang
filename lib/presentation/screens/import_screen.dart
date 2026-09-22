@@ -6,7 +6,7 @@ import 'package:lang/utils/font_scale.dart';
 
 class ImportScreen extends StatefulWidget {
   const ImportScreen({super.key});
-  
+
   @override
   State<ImportScreen> createState() => _ImportScreenState();
 }
@@ -15,7 +15,7 @@ class _ImportScreenState extends State<ImportScreen> {
   final ImportService _importService = ImportService();
   ImportProgress? _currentProgress;
   bool _isImporting = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -23,7 +23,7 @@ class _ImportScreenState extends State<ImportScreen> {
       setState(() {
         _currentProgress = progress;
       });
-      
+
       if (progress.status == ImportStatus.complete) {
         _showSuccessDialog();
       } else if (progress.status == ImportStatus.error) {
@@ -31,29 +31,29 @@ class _ImportScreenState extends State<ImportScreen> {
       }
     });
   }
-  
+
   @override
   void dispose() {
     _importService.dispose();
     super.dispose();
   }
-  
+
   Future<void> _pickAndImportFile() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['zip'],
       dialogTitle: 'Select Yomichan Dictionary',
     );
-    
+
     if (result == null || result.files.isEmpty) return;
-    
+
     final file = File(result.files.single.path!);
-    
+
     setState(() {
       _isImporting = true;
       _currentProgress = null;
     });
-    
+
     try {
       await _importService.importDictionary(file);
     } catch (e) {
@@ -68,7 +68,7 @@ class _ImportScreenState extends State<ImportScreen> {
       }
     }
   }
-  
+
   void _cancelImport() {
     _importService.cancel();
     setState(() {
@@ -76,7 +76,7 @@ class _ImportScreenState extends State<ImportScreen> {
       _currentProgress = null;
     });
   }
-  
+
   void _showSuccessDialog() {
     showDialog(
       context: context,
@@ -95,7 +95,7 @@ class _ImportScreenState extends State<ImportScreen> {
       ),
     );
   }
-  
+
   void _showErrorDialog(String error) {
     showDialog(
       context: context,
@@ -111,32 +111,24 @@ class _ImportScreenState extends State<ImportScreen> {
       ),
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Import Dictionary'),
-      ),
+      appBar: AppBar(title: const Text('Import Dictionary')),
       body: Center(
-        child: _isImporting
-            ? _buildImportingView()
-            : _buildIdleView(),
+        child: _isImporting ? _buildImportingView() : _buildIdleView(),
       ),
     );
   }
-  
+
   Widget _buildIdleView() {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.file_upload,
-            size: 80,
-            color: Colors.blue,
-          ),
+          const Icon(Icons.file_upload, size: 80, color: Colors.blue),
           const SizedBox(height: 24),
           Text(
             'Import Yomichan Dictionary',
@@ -149,10 +141,7 @@ class _ImportScreenState extends State<ImportScreen> {
           Text(
             'Select a Yomichan dictionary ZIP file to import',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: fs(context, 16),
-              color: Colors.grey,
-            ),
+            style: TextStyle(fontSize: fs(context, 16), color: Colors.grey),
           ),
           const SizedBox(height: 32),
           ElevatedButton.icon(
@@ -160,20 +149,17 @@ class _ImportScreenState extends State<ImportScreen> {
             icon: const Icon(Icons.folder_open),
             label: const Text('Select File'),
             style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 32,
-                vertical: 16,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
             ),
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildImportingView() {
     final progress = _currentProgress;
-    
+
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -190,7 +176,7 @@ class _ImportScreenState extends State<ImportScreen> {
             ),
           ),
           const SizedBox(height: 32),
-          
+
           // Status message
           Text(
             progress?.message ?? 'Starting import...',
@@ -201,7 +187,7 @@ class _ImportScreenState extends State<ImportScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Progress details
           if (progress != null && progress.itemsProcessed != null)
             Text(
@@ -213,9 +199,9 @@ class _ImportScreenState extends State<ImportScreen> {
                 color: Colors.grey[600],
               ),
             ),
-          
+
           const SizedBox(height: 8),
-          
+
           // Percentage
           if (progress != null)
             Text(
@@ -226,9 +212,9 @@ class _ImportScreenState extends State<ImportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-          
+
           const SizedBox(height: 32),
-          
+
           // Linear progress bar
           if (progress != null)
             LinearProgressIndicator(
@@ -236,9 +222,9 @@ class _ImportScreenState extends State<ImportScreen> {
               minHeight: 8,
               backgroundColor: Colors.grey[300],
             ),
-          
+
           const SizedBox(height: 32),
-          
+
           // Cancel button
           OutlinedButton.icon(
             onPressed: _cancelImport,
@@ -246,10 +232,7 @@ class _ImportScreenState extends State<ImportScreen> {
             label: const Text('Cancel'),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.red,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
           ),
         ],

@@ -98,11 +98,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   l10n.categoryClipboard,
                   Icons.content_copy,
                 ),
-                _chip(
-                  HistoryCategory.speech,
-                  l10n.categorySpeech,
-                  Icons.mic,
-                ),
+                _chip(HistoryCategory.speech, l10n.categorySpeech, Icons.mic),
               ],
             ),
           ),
@@ -198,11 +194,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         Colors.lightGreen,
         l10n.activityClipboard,
       ),
-      HistoryCategory.speech => (
-        Icons.mic,
-        Colors.purple,
-        l10n.activitySpeech,
-      ),
+      HistoryCategory.speech => (Icons.mic, Colors.purple, l10n.activitySpeech),
     };
 
     final time = DateFormat.MMMd().add_Hm().format(item.time);

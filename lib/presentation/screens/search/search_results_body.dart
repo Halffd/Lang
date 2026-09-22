@@ -31,7 +31,11 @@ class SearchResultsList extends StatelessWidget {
         if (result.kanji.isNotEmpty) ...[
           _SectionHeader(title: 'Kanji', count: result.kanji.length),
           ...result.kanji.map(
-            (kanji) => SearchKanjiCard(kanji: kanji, result: result, onDoubleTap: onKanjiDoubleTap),
+            (kanji) => SearchKanjiCard(
+              kanji: kanji,
+              result: result,
+              onDoubleTap: onKanjiDoubleTap,
+            ),
           ),
           const Divider(height: 32, thickness: 2),
         ],
@@ -165,6 +169,3 @@ class _SectionHeader extends StatelessWidget {
     );
   }
 }
-
-
-

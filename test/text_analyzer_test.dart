@@ -29,29 +29,38 @@ void main() {
       await appDatabase.close();
     });
 
-    test('analyzeText should process Japanese text and return frequencies', () async {
-      // Use a simple Japanese sentence for testing
-      const testText = '私は学生です。日本語を勉強しています。';
+    test(
+      'analyzeText should process Japanese text and return frequencies',
+      () async {
+        // Use a simple Japanese sentence for testing
+        const testText = '私は学生です。日本語を勉強しています。';
 
-      final results = await textAnalyzer.analyzeText(testText);
+        final results = await textAnalyzer.analyzeText(testText);
 
-      // Verify results are returned
-      expect(results, isList);
-      expect(results.length, greaterThanOrEqualTo(0)); // Could be 0 if no tokens are found
+        // Verify results are returned
+        expect(results, isList);
+        expect(
+          results.length,
+          greaterThanOrEqualTo(0),
+        ); // Could be 0 if no tokens are found
 
-      // If there are results, check the properties
-      if (results.isNotEmpty) {
-        final firstResult = results.first;
-        expect(firstResult.word, isA<String>());
-        expect(firstResult.count, isA<int>());
-        expect(firstResult.count, greaterThan(0));
-      }
-    });
+        // If there are results, check the properties
+        if (results.isNotEmpty) {
+          final firstResult = results.first;
+          expect(firstResult.word, isA<String>());
+          expect(firstResult.count, isA<int>());
+          expect(firstResult.count, greaterThan(0));
+        }
+      },
+    );
 
     test('analyzeTextTopWords should limit results', () async {
       const testText = '私は学生です。日本語を勉強しています。学生は勉強が好きです。';
 
-      final results = await textAnalyzer.analyzeTextTopWords(testText, limit: 5);
+      final results = await textAnalyzer.analyzeTextTopWords(
+        testText,
+        limit: 5,
+      );
 
       expect(results, isList);
       expect(results.length, lessThanOrEqualTo(5));

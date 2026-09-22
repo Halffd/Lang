@@ -2,7 +2,8 @@ import 'package:google_mlkit_translation/google_mlkit_translation.dart';
 import 'package:lang/domain/entities/translation_model.dart';
 
 class LocalTranslationService {
-  final OnDeviceTranslatorModelManager _modelManager = OnDeviceTranslatorModelManager();
+  final OnDeviceTranslatorModelManager _modelManager =
+      OnDeviceTranslatorModelManager();
   final Map<String, OnDeviceTranslator> _translators = {};
 
   static const Map<String, TranslateLanguage> _langMap = {
@@ -95,9 +96,15 @@ class LocalTranslationService {
     }
   }
 
-  Future<String> translateText(String text, String sourceLang, String targetLang) async {
+  Future<String> translateText(
+    String text,
+    String sourceLang,
+    String targetLang,
+  ) async {
     if (!isLanguageSupported(sourceLang) || !isLanguageSupported(targetLang)) {
-      throw UnsupportedError('Language pair $sourceLang -> $targetLang not supported by ML Kit');
+      throw UnsupportedError(
+        'Language pair $sourceLang -> $targetLang not supported by ML Kit',
+      );
     }
 
     await ensureModelDownloaded(sourceLang);
@@ -122,7 +129,11 @@ class LocalTranslationService {
     final wordTranslations = <WordTranslation>[];
     for (final word in sourceWords) {
       try {
-        final t = await translateText(word, request.sourceLanguage, request.targetLanguage);
+        final t = await translateText(
+          word,
+          request.sourceLanguage,
+          request.targetLanguage,
+        );
         wordTranslations.add(WordTranslation(source: word, translation: t));
       } catch (_) {
         wordTranslations.add(WordTranslation(source: word, translation: word));

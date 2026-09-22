@@ -1388,11 +1388,9 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
       freqColor = Colors.green;
     } else if (freq <= 5000) {
       freqColor = Colors.lightGreen;
-    }
-    else if (freq <= 15000) {
+    } else if (freq <= 15000) {
       freqColor = Colors.amber;
-    }
-    else {
+    } else {
       freqColor = Colors.orange;
     }
 

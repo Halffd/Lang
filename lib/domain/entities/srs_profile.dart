@@ -36,11 +36,13 @@ class SrsProfile {
       lastReviewDate: json['last_review_date'] != null
           ? DateTime.parse(json['last_review_date'] as String)
           : null,
-      dailyStats: (json['daily_stats'] as Map<String, dynamic>?)?.map(
+      dailyStats:
+          (json['daily_stats'] as Map<String, dynamic>?)?.map(
             (k, v) => MapEntry(k, v as int),
           ) ??
           {},
-      enabledDecks: (json['enabled_decks'] as List<dynamic>?)?.cast<String>() ?? [],
+      enabledDecks:
+          (json['enabled_decks'] as List<dynamic>?)?.cast<String>() ?? [],
       autoStudy: json['auto_study'] as bool? ?? false,
       maxCardsPerSession: json['max_cards_per_session'] as int? ?? 20,
     );
@@ -90,7 +92,8 @@ class SrsProfile {
     );
   }
 
-  double get goalProgress => dailyGoal > 0 ? (todayReviews / dailyGoal).clamp(0.0, 1.0) : 0.0;
+  double get goalProgress =>
+      dailyGoal > 0 ? (todayReviews / dailyGoal).clamp(0.0, 1.0) : 0.0;
 
   bool get goalMet => todayReviews >= dailyGoal;
 }

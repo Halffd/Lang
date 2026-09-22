@@ -57,14 +57,20 @@ void main() {
       }
     });
 
-    test('fetchWordDetails falls back to English for unsupported language', () async {
-      try {
-        final results = await service.fetchWordDetails('test', 'unsupported_lang');
-        expect(results, isA<List<WiktionaryEntry>>());
-      } catch (e) {
-        expect(true, isTrue);
-      }
-    });
+    test(
+      'fetchWordDetails falls back to English for unsupported language',
+      () async {
+        try {
+          final results = await service.fetchWordDetails(
+            'test',
+            'unsupported_lang',
+          );
+          expect(results, isA<List<WiktionaryEntry>>());
+        } catch (e) {
+          expect(true, isTrue);
+        }
+      },
+    );
 
     test('WiktionaryEntry has correct structure', () async {
       try {

@@ -8,7 +8,7 @@ class DictionaryEntry {
   final Map<String, dynamic>? metadata;
 
   // Add convenience getter
-  String get word => term;  // Add word getter for compatibility
+  String get word => term; // Add word getter for compatibility
 
   DictionaryEntry({
     required this.term,
@@ -27,7 +27,9 @@ class DictionaryEntry {
       definitions: List<String>.from(json['definitions']),
       tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
       frequency: json['frequency'] as int? ?? -1,
-      examples: json['examples'] != null ? List<String>.from(json['examples']) : [],
+      examples: json['examples'] != null
+          ? List<String>.from(json['examples'])
+          : [],
       metadata: json['metadata'] as Map<String, dynamic>?,
     );
   }
@@ -54,7 +56,7 @@ class DictionarySearchResult {
   final List<DictionaryEntry> entries;
   final String query;
   final bool hasMore;
-  
+
   DictionarySearchResult({
     required this.entries,
     required this.query,

@@ -59,10 +59,7 @@ class _ReaderScreenState extends State<ReaderScreen>
               icon: const Icon(Icons.content_paste, size: 18),
               text: l10n.readerTabClipboard,
             ),
-            Tab(
-              icon: const Icon(Icons.mic, size: 18),
-              text: l10n.speechTab,
-            ),
+            Tab(icon: const Icon(Icons.mic, size: 18), text: l10n.speechTab),
           ],
         ),
       ),

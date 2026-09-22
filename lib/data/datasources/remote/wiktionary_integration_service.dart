@@ -27,12 +27,14 @@ class WiktionaryIntegrationService {
       );
 
       final newEntries = wiktionaryDetails
-          .map((detail) => WiktionaryEntry(
-                word: query,
-                language: detectedLanguage,
-                definition: detail,
-                partOfSpeech: 'Detailed Info',
-              ))
+          .map(
+            (detail) => WiktionaryEntry(
+              word: query,
+              language: detectedLanguage,
+              definition: detail,
+              partOfSpeech: 'Detailed Info',
+            ),
+          )
           .toList();
 
       updatedWiktionaryMap['${query}_'] = newEntries;

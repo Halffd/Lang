@@ -443,15 +443,30 @@ void main() {
     });
     test('supportsLatinToScript full coverage', () {
       for (final lang in [
-        'ja', 'zh', 'ko', 'ru', 'uk', 'bg', 'sr', 'el',
-        'ka', 'hy', 'he', 'iw', 'ar', 'hi', 'th',
+        'ja',
+        'zh',
+        'ko',
+        'ru',
+        'uk',
+        'bg',
+        'sr',
+        'el',
+        'ka',
+        'hy',
+        'he',
+        'iw',
+        'ar',
+        'hi',
+        'th',
       ]) {
-        expect(ScriptConverter.supportsLatinToScript(lang), true,
-            reason: lang);
+        expect(ScriptConverter.supportsLatinToScript(lang), true, reason: lang);
       }
       for (final lang in ['en', 'fr', 'de', 'xx', '']) {
-        expect(ScriptConverter.supportsLatinToScript(lang), false,
-            reason: lang);
+        expect(
+          ScriptConverter.supportsLatinToScript(lang),
+          false,
+          reason: lang,
+        );
       }
     });
   });
@@ -533,5 +548,4 @@ void main() {
       expect(ScriptConverter.latinToScript('shalom', 'iw'), 'שלום');
     });
   });
-
 }

@@ -159,8 +159,6 @@ class TagRenderer {
   static List<Widget> renderTags(List<String> tagCodes) {
     if (tagCodes.isEmpty) return [];
 
-    return tagCodes
-        .map((tag) => renderTag(tag))
-        .toList();
+    return tagCodes.map((tag) => renderTag(tag)).toList();
   }
 }

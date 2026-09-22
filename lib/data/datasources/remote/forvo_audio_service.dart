@@ -27,17 +27,27 @@ class ForvoAudioService {
   }
 
   /// Search for pronunciation audio for a given word
-  Future<List<ForvoPronunciation>> searchPronunciations(String word, {String language = 'ja'}) async {
+  Future<List<ForvoPronunciation>> searchPronunciations(
+    String word, {
+    String language = 'ja',
+  }) async {
     if (_apiKey == null || _apiKey!.isEmpty) {
       return [];
     }
     try {
-      final url = Uri.parse('$_baseUrl/key/$_apiKey/format/json/action/word-pronunciations/word/$word/language/$language');
+      final url = Uri.parse(
+        '$_baseUrl/key/$_apiKey/format/json/action/word-pronunciations/word/$word/language/$language',
+      );
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final items = data['items'] as List? ?? [];
-        return items.map((item) => ForvoPronunciation.fromMap(item as Map<String, dynamic>)).toList();
+        return items
+            .map(
+              (item) =>
+                  ForvoPronunciation.fromMap(item as Map<String, dynamic>),
+            )
+            .toList();
       }
       return [];
     } catch (e) {

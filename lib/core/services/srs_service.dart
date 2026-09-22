@@ -34,7 +34,11 @@ class SrsService {
     );
   }
 
-  SrsCard processReview(SrsCard card, ReviewRating rating, {double intervalModifier = 1.0}) {
+  SrsCard processReview(
+    SrsCard card,
+    ReviewRating rating, {
+    double intervalModifier = 1.0,
+  }) {
     final quality = rating.value;
     final now = DateTime.now();
     double newEaseFactor = card.easeFactor;
@@ -46,13 +50,14 @@ class SrsService {
       newInterval = 0;
     } else {
       newRepetitions = card.repetitions + 1;
-      
+
       if (newRepetitions == 1) {
         newInterval = 1;
       } else if (newRepetitions == 2) {
         newInterval = 6;
       } else {
-        newInterval = (card.interval * card.easeFactor * intervalModifier).round();
+        newInterval = (card.interval * card.easeFactor * intervalModifier)
+            .round();
       }
 
       final efDelta = 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02);
@@ -89,7 +94,12 @@ class SrsService {
 
   List<SrsCard> getDueCards(List<SrsCard> cards) {
     final now = DateTime.now();
-    return cards.where((card) => card.dueDate.isBefore(now) || card.dueDate.isAtSameMomentAs(now)).toList()
+    return cards
+        .where(
+          (card) =>
+              card.dueDate.isBefore(now) || card.dueDate.isAtSameMomentAs(now),
+        )
+        .toList()
       ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
   }
 

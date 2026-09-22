@@ -6,12 +6,18 @@ import 'package:lang/domain/entities/dictionary.dart';
 /// Simplified stub implementation
 class RemoteDictionaryService {
   /// Fetch detailed Wiktionary entries for a word
-  Future<List<WiktionaryEntry>> fetchWiktionaryDetails(String word, {String language = 'en'}) async {
+  Future<List<WiktionaryEntry>> fetchWiktionaryDetails(
+    String word, {
+    String language = 'en',
+  }) async {
     return [];
   }
 
   /// Fetch etymology information for a word
-  Future<List<EtymologyEntry>> fetchEtymology(String word, {String language = 'en'}) async {
+  Future<List<EtymologyEntry>> fetchEtymology(
+    String word, {
+    String language = 'en',
+  }) async {
     return [];
   }
 
@@ -21,13 +27,18 @@ class RemoteDictionaryService {
   }
 
   /// Search Wiktionary for European language words
-  Future<List<WiktionaryEntry>> searchEuropeanWord(String query, {String language = 'en'}) async {
+  Future<List<WiktionaryEntry>> searchEuropeanWord(
+    String query, {
+    String language = 'en',
+  }) async {
     return [];
   }
 
   /// Extract Japanese words from text using ideographic components
   List<String> extractJapaneseWords(String text) {
-    final japaneseRegex = RegExp(r'[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf\u3400-\u4dbf]+');
+    final japaneseRegex = RegExp(
+      r'[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf\u3400-\u4dbf]+',
+    );
     final matches = japaneseRegex.allMatches(text);
     final words = <String>[];
     for (final match in matches) {
@@ -64,5 +75,9 @@ class IchiMoeResult {
   final String? reading;
   final List<String> definitions;
 
-  IchiMoeResult({required this.word, this.reading, this.definitions = const []});
+  IchiMoeResult({
+    required this.word,
+    this.reading,
+    this.definitions = const [],
+  });
 }

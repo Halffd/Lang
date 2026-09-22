@@ -180,34 +180,30 @@ class $DriftDictionaryEntriesTable extends DriftDictionaryEntries
   DriftDictionaryEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return DriftDictionaryEntry(
-      id:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}id'],
-          )!,
-      term:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}term'],
-          )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      term: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}term'],
+      )!,
       reading: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}reading'],
       ),
-      definitions:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}definitions'],
-          )!,
+      definitions: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}definitions'],
+      )!,
       tags: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}tags'],
       ),
-      frequency:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}frequency'],
-          )!,
+      frequency: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}frequency'],
+      )!,
       examples: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}examples'],
@@ -271,21 +267,18 @@ class DriftDictionaryEntry extends DataClass
     return DriftDictionaryEntriesCompanion(
       id: Value(id),
       term: Value(term),
-      reading:
-          reading == null && nullToAbsent
-              ? const Value.absent()
-              : Value(reading),
+      reading: reading == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reading),
       definitions: Value(definitions),
       tags: tags == null && nullToAbsent ? const Value.absent() : Value(tags),
       frequency: Value(frequency),
-      examples:
-          examples == null && nullToAbsent
-              ? const Value.absent()
-              : Value(examples),
-      metadata:
-          metadata == null && nullToAbsent
-              ? const Value.absent()
-              : Value(metadata),
+      examples: examples == null && nullToAbsent
+          ? const Value.absent()
+          : Value(examples),
+      metadata: metadata == null && nullToAbsent
+          ? const Value.absent()
+          : Value(metadata),
     );
   }
 
@@ -344,8 +337,9 @@ class DriftDictionaryEntry extends DataClass
       id: data.id.present ? data.id.value : this.id,
       term: data.term.present ? data.term.value : this.term,
       reading: data.reading.present ? data.reading.value : this.reading,
-      definitions:
-          data.definitions.present ? data.definitions.value : this.definitions,
+      definitions: data.definitions.present
+          ? data.definitions.value
+          : this.definitions,
       tags: data.tags.present ? data.tags.value : this.tags,
       frequency: data.frequency.present ? data.frequency.value : this.frequency,
       examples: data.examples.present ? data.examples.value : this.examples,
@@ -660,36 +654,30 @@ class $DriftTonesTable extends DriftTones
   DriftTone map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return DriftTone(
-      id:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}id'],
-          )!,
-      dictionaryId:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}dictionary_id'],
-          )!,
-      term:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}term'],
-          )!,
-      reading:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}reading'],
-          )!,
-      language:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}language'],
-          )!,
-      tones:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}tones'],
-          )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      dictionaryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}dictionary_id'],
+      )!,
+      term: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}term'],
+      )!,
+      reading: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reading'],
+      )!,
+      language: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}language'],
+      )!,
+      tones: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tones'],
+      )!,
     );
   }
 
@@ -782,10 +770,9 @@ class DriftTone extends DataClass implements Insertable<DriftTone> {
   DriftTone copyWithCompanion(DriftTonesCompanion data) {
     return DriftTone(
       id: data.id.present ? data.id.value : this.id,
-      dictionaryId:
-          data.dictionaryId.present
-              ? data.dictionaryId.value
-              : this.dictionaryId,
+      dictionaryId: data.dictionaryId.present
+          ? data.dictionaryId.value
+          : this.dictionaryId,
       term: data.term.present ? data.term.value : this.term,
       reading: data.reading.present ? data.reading.value : this.reading,
       language: data.language.present ? data.language.value : this.language,
@@ -1061,16 +1048,14 @@ class $WordOccurrencesTable extends WordOccurrences
   WordOccurrence map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return WordOccurrence(
-      id:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}id'],
-          )!,
-      word:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}word'],
-          )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      word: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}word'],
+      )!,
       reading: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}reading'],
@@ -1079,11 +1064,10 @@ class $WordOccurrencesTable extends WordOccurrences
         DriftSqlType.string,
         data['${effectivePrefix}base_form'],
       ),
-      position:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}position'],
-          )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
       sentenceId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}sentence_id'],
@@ -1134,19 +1118,16 @@ class WordOccurrence extends DataClass implements Insertable<WordOccurrence> {
     return WordOccurrencesCompanion(
       id: Value(id),
       word: Value(word),
-      reading:
-          reading == null && nullToAbsent
-              ? const Value.absent()
-              : Value(reading),
-      baseForm:
-          baseForm == null && nullToAbsent
-              ? const Value.absent()
-              : Value(baseForm),
+      reading: reading == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reading),
+      baseForm: baseForm == null && nullToAbsent
+          ? const Value.absent()
+          : Value(baseForm),
       position: Value(position),
-      sentenceId:
-          sentenceId == null && nullToAbsent
-              ? const Value.absent()
-              : Value(sentenceId),
+      sentenceId: sentenceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sentenceId),
     );
   }
 
@@ -1199,8 +1180,9 @@ class WordOccurrence extends DataClass implements Insertable<WordOccurrence> {
       reading: data.reading.present ? data.reading.value : this.reading,
       baseForm: data.baseForm.present ? data.baseForm.value : this.baseForm,
       position: data.position.present ? data.position.value : this.position,
-      sentenceId:
-          data.sentenceId.present ? data.sentenceId.value : this.sentenceId,
+      sentenceId: data.sentenceId.present
+          ? data.sentenceId.value
+          : this.sentenceId,
     );
   }
 
@@ -1378,11 +1360,10 @@ class $JapaneseTextFtsTable extends JapaneseTextFts
   JapaneseTextFt map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return JapaneseTextFt(
-      content:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}content'],
-          )!,
+      content: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content'],
+      )!,
     );
   }
 
@@ -1546,11 +1527,10 @@ class $ChineseTextFtsTable extends ChineseTextFts
   ChineseTextFt map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return ChineseTextFt(
-      content:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.string,
-            data['${effectivePrefix}content'],
-          )!,
+      content: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content'],
+      )!,
     );
   }
 
@@ -1878,18 +1858,18 @@ class $$DriftDictionaryEntriesTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer:
-              () => $$DriftDictionaryEntriesTableFilterComposer(
+          createFilteringComposer: () =>
+              $$DriftDictionaryEntriesTableFilterComposer(
                 $db: db,
                 $table: table,
               ),
-          createOrderingComposer:
-              () => $$DriftDictionaryEntriesTableOrderingComposer(
+          createOrderingComposer: () =>
+              $$DriftDictionaryEntriesTableOrderingComposer(
                 $db: db,
                 $table: table,
               ),
-          createComputedFieldComposer:
-              () => $$DriftDictionaryEntriesTableAnnotationComposer(
+          createComputedFieldComposer: () =>
+              $$DriftDictionaryEntriesTableAnnotationComposer(
                 $db: db,
                 $table: table,
               ),
@@ -1933,16 +1913,9 @@ class $$DriftDictionaryEntriesTableTableManager
                 examples: examples,
                 metadata: metadata,
               ),
-          withReferenceMapper:
-              (p0) =>
-                  p0
-                      .map(
-                        (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
-                        ),
-                      )
-                      .toList(),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
           prefetchHooksCallback: null,
         ),
       );
@@ -2121,12 +2094,12 @@ class $$DriftTonesTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer:
-              () => $$DriftTonesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer:
-              () => $$DriftTonesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer:
-              () => $$DriftTonesTableAnnotationComposer($db: db, $table: table),
+          createFilteringComposer: () =>
+              $$DriftTonesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DriftTonesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DriftTonesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
@@ -2159,16 +2132,9 @@ class $$DriftTonesTableTableManager
                 language: language,
                 tones: tones,
               ),
-          withReferenceMapper:
-              (p0) =>
-                  p0
-                      .map(
-                        (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
-                        ),
-                      )
-                      .toList(),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
           prefetchHooksCallback: null,
         ),
       );
@@ -2346,19 +2312,12 @@ class $$WordOccurrencesTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer:
-              () =>
-                  $$WordOccurrencesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer:
-              () => $$WordOccurrencesTableOrderingComposer(
-                $db: db,
-                $table: table,
-              ),
-          createComputedFieldComposer:
-              () => $$WordOccurrencesTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
+          createFilteringComposer: () =>
+              $$WordOccurrencesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WordOccurrencesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WordOccurrencesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
@@ -2391,16 +2350,9 @@ class $$WordOccurrencesTableTableManager
                 position: position,
                 sentenceId: sentenceId,
               ),
-          withReferenceMapper:
-              (p0) =>
-                  p0
-                      .map(
-                        (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
-                        ),
-                      )
-                      .toList(),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
           prefetchHooksCallback: null,
         ),
       );
@@ -2506,19 +2458,12 @@ class $$JapaneseTextFtsTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer:
-              () =>
-                  $$JapaneseTextFtsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer:
-              () => $$JapaneseTextFtsTableOrderingComposer(
-                $db: db,
-                $table: table,
-              ),
-          createComputedFieldComposer:
-              () => $$JapaneseTextFtsTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
+          createFilteringComposer: () =>
+              $$JapaneseTextFtsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$JapaneseTextFtsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$JapaneseTextFtsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> content = const Value.absent(),
@@ -2532,16 +2477,9 @@ class $$JapaneseTextFtsTableTableManager
                 content: content,
                 rowid: rowid,
               ),
-          withReferenceMapper:
-              (p0) =>
-                  p0
-                      .map(
-                        (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
-                        ),
-                      )
-                      .toList(),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
           prefetchHooksCallback: null,
         ),
       );
@@ -2640,16 +2578,12 @@ class $$ChineseTextFtsTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer:
-              () => $$ChineseTextFtsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer:
-              () =>
-                  $$ChineseTextFtsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer:
-              () => $$ChineseTextFtsTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
+          createFilteringComposer: () =>
+              $$ChineseTextFtsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ChineseTextFtsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ChineseTextFtsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> content = const Value.absent(),
@@ -2663,16 +2597,9 @@ class $$ChineseTextFtsTableTableManager
                 content: content,
                 rowid: rowid,
               ),
-          withReferenceMapper:
-              (p0) =>
-                  p0
-                      .map(
-                        (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
-                        ),
-                      )
-                      .toList(),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
           prefetchHooksCallback: null,
         ),
       );

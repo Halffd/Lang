@@ -10,7 +10,7 @@ class TokenizerService {
     if (text.isEmpty) return [];
 
     final language = _languageDetector.detect(text);
-    
+
     switch (language) {
       case 'ja':
         return await _tokenizeJapanese(text);
@@ -34,14 +34,16 @@ class TokenizerService {
     for (int i = 0; i < text.length; i++) {
       final char = text[i];
       if (RegExp(r'[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]').hasMatch(char)) {
-        tokens.add(Token(
-          surface: char,
-          reading: '',
-          definition: '',
-          partOfSpeech: 'character',
-          startIndex: i,
-          endIndex: i + 1,
-        ));
+        tokens.add(
+          Token(
+            surface: char,
+            reading: '',
+            definition: '',
+            partOfSpeech: 'character',
+            startIndex: i,
+            endIndex: i + 1,
+          ),
+        );
       }
     }
     return tokens;
@@ -53,14 +55,16 @@ class TokenizerService {
     for (int i = 0; i < text.length; i++) {
       final char = text[i];
       if (ChineseUtil.containsChinese(char)) {
-        tokens.add(Token(
-          surface: char,
-          reading: '',
-          definition: '',
-          partOfSpeech: 'character',
-          startIndex: i,
-          endIndex: i + 1,
-        ));
+        tokens.add(
+          Token(
+            surface: char,
+            reading: '',
+            definition: '',
+            partOfSpeech: 'character',
+            startIndex: i,
+            endIndex: i + 1,
+          ),
+        );
       }
     }
     return tokens;
@@ -70,14 +74,16 @@ class TokenizerService {
   List<Token> _tokenizeKorean(String text) {
     final tokens = <Token>[];
     for (int i = 0; i < text.length; i++) {
-      tokens.add(Token(
-        surface: text[i],
-        reading: '',
-        definition: '',
-        partOfSpeech: 'character',
-        startIndex: i,
-        endIndex: i + 1,
-      ));
+      tokens.add(
+        Token(
+          surface: text[i],
+          reading: '',
+          definition: '',
+          partOfSpeech: 'character',
+          startIndex: i,
+          endIndex: i + 1,
+        ),
+      );
     }
     return tokens;
   }
@@ -87,17 +93,19 @@ class TokenizerService {
     final tokens = <Token>[];
     final words = text.split(RegExp(r'\s+'));
     int index = 0;
-    
+
     for (final word in words) {
       if (word.isNotEmpty) {
-        tokens.add(Token(
-          surface: word,
-          reading: '',
-          definition: '',
-          partOfSpeech: 'word',
-          startIndex: index,
-          endIndex: index + word.length,
-        ));
+        tokens.add(
+          Token(
+            surface: word,
+            reading: '',
+            definition: '',
+            partOfSpeech: 'word',
+            startIndex: index,
+            endIndex: index + word.length,
+          ),
+        );
       }
       index += word.length + 1; // +1 for space
     }
@@ -109,22 +117,22 @@ class TokenizerService {
     final sentences = <String, String>{};
     String currentSentence = '';
     String currentToken = '';
-    
+
     for (final token in tokens) {
       currentToken += token.surface;
       currentSentence += token.surface;
-      
+
       if (token.surface.contains(RegExp(r'[。！？.!?]'))) {
         sentences[currentToken.trim()] = currentSentence.trim();
         currentToken = '';
         currentSentence = '';
       }
     }
-    
+
     if (currentToken.isNotEmpty) {
       sentences[currentToken.trim()] = currentSentence.trim();
     }
-    
+
     return sentences;
   }
 }

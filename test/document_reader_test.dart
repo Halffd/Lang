@@ -78,10 +78,22 @@ void main() {
     });
 
     test('filePath can be any string', () {
-      final pdfReader = DocumentReader(filePath: '/path/to/doc.pdf', fileType: 'pdf');
-      final epubReader = DocumentReader(filePath: '/path/to/book.epub', fileType: 'epub');
-      final txtReader = DocumentReader(filePath: '/path/to/text.txt', fileType: 'txt');
-      final mangaReader = DocumentReader(filePath: '/path/to/manga.cbz', fileType: 'cbz');
+      final pdfReader = DocumentReader(
+        filePath: '/path/to/doc.pdf',
+        fileType: 'pdf',
+      );
+      final epubReader = DocumentReader(
+        filePath: '/path/to/book.epub',
+        fileType: 'epub',
+      );
+      final txtReader = DocumentReader(
+        filePath: '/path/to/text.txt',
+        fileType: 'txt',
+      );
+      final mangaReader = DocumentReader(
+        filePath: '/path/to/manga.cbz',
+        fileType: 'cbz',
+      );
 
       expect(pdfReader.filePath, '/path/to/doc.pdf');
       expect(epubReader.filePath, '/path/to/book.epub');
@@ -93,10 +105,7 @@ void main() {
       final formats = ['pdf', 'epub', 'txt', 'manga', 'cbz', 'folder', 'fb2'];
 
       for (final format in formats) {
-        final reader = DocumentReader(
-          filePath: '/test/file',
-          fileType: format,
-        );
+        final reader = DocumentReader(filePath: '/test/file', fileType: format);
         expect(reader.fileType, format);
       }
     });
@@ -125,14 +134,8 @@ void main() {
 
   group('DocumentReader equality', () {
     test('two readers with same params are equal', () {
-      final reader1 = DocumentReader(
-        filePath: '/test.pdf',
-        fileType: 'pdf',
-      );
-      final reader2 = DocumentReader(
-        filePath: '/test.pdf',
-        fileType: 'pdf',
-      );
+      final reader1 = DocumentReader(filePath: '/test.pdf', fileType: 'pdf');
+      final reader2 = DocumentReader(filePath: '/test.pdf', fileType: 'pdf');
 
       expect(reader1.filePath, reader2.filePath);
       expect(reader1.fileType, reader2.fileType);

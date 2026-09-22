@@ -59,6 +59,23 @@ class _LessonPageState extends State<LessonPage> {
   }
 
   List<LessonStep> _generateSteps() {
+    // matchWords: one step covering all cards as a single matching round.
+    if (widget.type == LessonType.matchWords) {
+      return widget.cards.length >= 4
+          ? <LessonStep>[
+              LessonStep(prompt: const SizedBox.shrink(), correctAnswer: ''),
+            ]
+          : widget.cards
+                .map(
+                  (c) => LessonStep(
+                    prompt: Center(child: Text(c.meaning)),
+                    correctAnswer: c.word,
+                    choices: [c.word],
+                  ),
+                )
+                .toList();
+    }
+
     final rng = math.Random(widget.cards.length);
     final out = <LessonStep>[];
     final allMeanings = widget.cards.map((c) => c.meaning).toList();
@@ -174,6 +191,8 @@ class _LessonPageState extends State<LessonPage> {
             ),
           );
           break;
+        case LessonType.matchWords:
+          break; // unreachable — handled above
       }
     }
     return out;
@@ -300,7 +319,24 @@ class _LessonPageState extends State<LessonPage> {
         return _buildSpoken(step);
       case LessonType.flashcard:
         return _buildFlashcard();
+      case LessonType.matchWords:
+        return _buildMatchWords(step);
     }
+  }
+
+  Widget _buildMatchWords(LessonStep step) {
+    final pairs = widget.cards
+        .map((c) => MatchPair(c.word, c.meaning))
+        .toList();
+    return MatchWordsView(
+      pairs: pairs,
+      onRoundDone: (allCorrect) {
+        // Score the round: apply 10xp per pair, half that if any wrong
+        final base = pairs.length * 10;
+        _grade(true, score: allCorrect ? 1.0 : 0.5);
+        xpEarned += allCorrect ? base : base ~/ 2;
+      },
+    );
   }
 
   Widget _buildFlashcard() {

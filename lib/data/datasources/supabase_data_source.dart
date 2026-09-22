@@ -18,7 +18,11 @@ class SupabaseDataSource {
   Future<Map<String, dynamic>?> getProfile() async {
     final uid = userId;
     if (uid == null) return null;
-    return await _supabase.from('profiles').select().eq('id', uid).maybeSingle();
+    return await _supabase
+        .from('profiles')
+        .select()
+        .eq('id', uid)
+        .maybeSingle();
   }
 
   Future<void> updateProfile(Map<String, dynamic> profile) async {
@@ -61,7 +65,11 @@ class SupabaseDataSource {
   Future<void> deleteSavedWord(String id) async {
     final uid = userId;
     if (uid == null) return;
-    await _supabase.from('saved_words').delete().eq('id', id).eq('user_id', uid);
+    await _supabase
+        .from('saved_words')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', uid);
   }
 
   Future<Map<String, dynamic>?> getSavedWordByWord(String word) async {
@@ -87,7 +95,9 @@ class SupabaseDataSource {
     return List<Map<String, dynamic>>.from(response);
   }
 
-  Future<Map<String, dynamic>> addFavorite(Map<String, dynamic> favorite) async {
+  Future<Map<String, dynamic>> addFavorite(
+    Map<String, dynamic> favorite,
+  ) async {
     final uid = userId;
     if (uid == null) throw Exception('Not authenticated');
     final response = await _supabase
@@ -121,7 +131,10 @@ class SupabaseDataSource {
     return List<Map<String, dynamic>>.from(response);
   }
 
-  Future<Map<String, dynamic>> markWordSeen(String word, {String? wordId}) async {
+  Future<Map<String, dynamic>> markWordSeen(
+    String word, {
+    String? wordId,
+  }) async {
     final uid = userId;
     if (uid == null) throw Exception('Not authenticated');
     final response = await _supabase
@@ -149,7 +162,11 @@ class SupabaseDataSource {
     return List<Map<String, dynamic>>.from(response);
   }
 
-  Future<Map<String, dynamic>> markWordLearned(String word, {String? wordId, int? learnedLevel}) async {
+  Future<Map<String, dynamic>> markWordLearned(
+    String word, {
+    String? wordId,
+    int? learnedLevel,
+  }) async {
     final uid = userId;
     if (uid == null) throw Exception('Not authenticated');
     final response = await _supabase
@@ -178,7 +195,11 @@ class SupabaseDataSource {
     return List<Map<String, dynamic>>.from(response);
   }
 
-  Future<Map<String, dynamic>> createChat({String? title, String chatType = 'default', Map<String, dynamic>? metadata}) async {
+  Future<Map<String, dynamic>> createChat({
+    String? title,
+    String chatType = 'default',
+    Map<String, dynamic>? metadata,
+  }) async {
     final uid = userId;
     if (uid == null) throw Exception('Not authenticated');
     final response = await _supabase
@@ -194,13 +215,23 @@ class SupabaseDataSource {
     return response;
   }
 
-  Future<void> updateChat(String chatId, {String? title, Map<String, dynamic>? metadata}) async {
+  Future<void> updateChat(
+    String chatId, {
+    String? title,
+    Map<String, dynamic>? metadata,
+  }) async {
     final uid = userId;
     if (uid == null) return;
-    final updates = <String, dynamic>{'updated_at': DateTime.now().toIso8601String()};
+    final updates = <String, dynamic>{
+      'updated_at': DateTime.now().toIso8601String(),
+    };
     if (title != null) updates['title'] = title;
     if (metadata != null) updates['metadata'] = metadata;
-    await _supabase.from('chats').update(updates).eq('id', chatId).eq('user_id', uid);
+    await _supabase
+        .from('chats')
+        .update(updates)
+        .eq('id', chatId)
+        .eq('user_id', uid);
   }
 
   Future<void> deleteChat(String chatId) async {
@@ -270,7 +301,11 @@ class SupabaseDataSource {
   Future<void> deleteAppSetting(String key) async {
     final uid = userId;
     if (uid == null) return;
-    await _supabase.from('app_settings').delete().eq('user_id', uid).eq('key', key);
+    await _supabase
+        .from('app_settings')
+        .delete()
+        .eq('user_id', uid)
+        .eq('key', key);
   }
 
   // --- SRS Decks ---
@@ -306,25 +341,42 @@ class SupabaseDataSource {
     return response;
   }
 
-  Future<void> updateSrsDeck(String deckId, {String? name, String? description, String? icon, String? color}) async {
+  Future<void> updateSrsDeck(
+    String deckId, {
+    String? name,
+    String? description,
+    String? icon,
+    String? color,
+  }) async {
     final uid = userId;
     if (uid == null) return;
-    await _supabase.from('srs_decks').update({
-      'name': ?name,
-      'description': ?description,
-      'icon': ?icon,
-      'color': ?color,
-    }).eq('id', deckId).eq('user_id', uid);
+    await _supabase
+        .from('srs_decks')
+        .update({
+          'name': ?name,
+          'description': ?description,
+          'icon': ?icon,
+          'color': ?color,
+        })
+        .eq('id', deckId)
+        .eq('user_id', uid);
   }
 
   Future<void> deleteSrsDeck(String deckId) async {
     final uid = userId;
     if (uid == null) return;
-    await _supabase.from('srs_decks').delete().eq('id', deckId).eq('user_id', uid);
+    await _supabase
+        .from('srs_decks')
+        .delete()
+        .eq('id', deckId)
+        .eq('user_id', uid);
   }
 
   // --- SRS Cards ---
-  Future<List<Map<String, dynamic>>> getSrsCards({String? deckId, bool? dueOnly}) async {
+  Future<List<Map<String, dynamic>>> getSrsCards({
+    String? deckId,
+    bool? dueOnly,
+  }) async {
     final uid = userId;
     if (uid == null) return [];
     var query = _supabase.from('srs_cards').select().eq('user_id', uid);
@@ -362,36 +414,46 @@ class SupabaseDataSource {
     return response;
   }
 
-  Future<void> updateSrsCard(String cardId, Map<String, dynamic> updates) async {
+  Future<void> updateSrsCard(
+    String cardId,
+    Map<String, dynamic> updates,
+  ) async {
     final uid = userId;
     if (uid == null) return;
-    await _supabase.from('srs_cards').update({
-      ...updates,
-      'updated_at': DateTime.now().toIso8601String(),
-    }).eq('id', cardId).eq('user_id', uid);
+    await _supabase
+        .from('srs_cards')
+        .update({...updates, 'updated_at': DateTime.now().toIso8601String()})
+        .eq('id', cardId)
+        .eq('user_id', uid);
   }
 
   Future<void> deleteSrsCard(String cardId) async {
     final uid = userId;
     if (uid == null) return;
-    await _supabase.from('srs_cards').delete().eq('id', cardId).eq('user_id', uid);
+    await _supabase
+        .from('srs_cards')
+        .delete()
+        .eq('id', cardId)
+        .eq('user_id', uid);
   }
 
   // --- SRS Reviews ---
-  Future<List<Map<String, dynamic>>> getSrsReviews({String? cardId, int limit = 50}) async {
+  Future<List<Map<String, dynamic>>> getSrsReviews({
+    String? cardId,
+    int limit = 50,
+  }) async {
     final uid = userId;
     if (uid == null) return [];
-    
-    var query = _supabase
-        .from('srs_reviews')
-        .select()
-        .eq('user_id', uid);
-    
+
+    var query = _supabase.from('srs_reviews').select().eq('user_id', uid);
+
     if (cardId != null) {
       query = query.eq('card_id', cardId) as dynamic;
     }
-    
-    final response = await query.order('reviewed_at', ascending: false).limit(limit);
+
+    final response = await query
+        .order('reviewed_at', ascending: false)
+        .limit(limit);
     return List<Map<String, dynamic>>.from(response);
   }
 
@@ -427,7 +489,9 @@ class SupabaseDataSource {
     return List<Map<String, dynamic>>.from(response);
   }
 
-  Future<Map<String, dynamic>> addUserDictionary(Map<String, dynamic> dict) async {
+  Future<Map<String, dynamic>> addUserDictionary(
+    Map<String, dynamic> dict,
+  ) async {
     final uid = userId;
     if (uid == null) throw Exception('Not authenticated');
     final response = await _supabase
@@ -451,7 +515,11 @@ class SupabaseDataSource {
   Future<void> deleteUserDictionary(String id) async {
     final uid = userId;
     if (uid == null) return;
-    await _supabase.from('user_dictionaries').delete().eq('id', id).eq('user_id', uid);
+    await _supabase
+        .from('user_dictionaries')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', uid);
   }
 
   // --- Sync helpers ---
@@ -494,7 +562,12 @@ class SupabaseDataSource {
   Stream<List<Map<String, dynamic>>> watchChats() {
     final uid = userId;
     if (uid == null) return const Stream.empty();
-    return _supabase.from('chats').select().eq('user_id', uid).order('updated_at', ascending: false).asStream();
+    return _supabase
+        .from('chats')
+        .select()
+        .eq('user_id', uid)
+        .order('updated_at', ascending: false)
+        .asStream();
   }
 
   Stream<List<Map<String, dynamic>>> watchChatMessages(String chatId) {

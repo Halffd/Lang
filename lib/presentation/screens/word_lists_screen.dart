@@ -94,10 +94,7 @@ class _WordListsScreenState extends State<WordListsScreen>
     }
   }
 
-  Widget _buildWordList(
-    Set<String> words, {
-    required String emptyMessage,
-  }) {
+  Widget _buildWordList(Set<String> words, {required String emptyMessage}) {
     if (words.isEmpty) {
       return Center(
         child: Text(emptyMessage, style: Theme.of(context).textTheme.bodyLarge),
@@ -136,11 +133,7 @@ class _WordListsScreenState extends State<WordListsScreen>
       },
       itemBuilder: (context, index) {
         final word = recentWords[index];
-        return _buildWordTile(
-          word,
-          index,
-          recentWords.length,
-        );
+        return _buildWordTile(word, index, recentWords.length);
       },
     );
   }
@@ -167,11 +160,7 @@ class _WordListsScreenState extends State<WordListsScreen>
     );
   }
 
-  Widget _buildWordTile(
-    String word,
-    int index,
-    int totalCount,
-  ) {
+  Widget _buildWordTile(String word, int index, int totalCount) {
     final isFav = isWordFavorite(word);
     final isSaved = isWordSaved(word);
 
@@ -279,9 +268,6 @@ class _WordListsScreenState extends State<WordListsScreen>
       words.insert(newIndex, item);
     });
   }
-
-
-
 
   Widget _buildHistoryList() {
     final history = context.read<AnalyzerProvider>().history;

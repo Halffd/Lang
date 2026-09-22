@@ -51,8 +51,7 @@ void main() {
     expect(find.textContaining('"tag"'), findsNothing);
   });
 
-  testWidgets('ruby json renders base with furigana reading',
-      (tester) async {
+  testWidgets('ruby json renders base with furigana reading', (tester) async {
     await pumpDef(
       tester,
       '[{"tag": "ruby", "content": ["\u5b66\u6821", {"tag": "rt", "content": "\u304c\u3063\u3053\u3046"}]}]',

@@ -178,11 +178,9 @@ class AnalyzerProvider extends ChangeNotifier {
           band = 0;
         } else if (freq <= 5000) {
           band = 1;
-        }
-        else if (freq <= 15000) {
+        } else if (freq <= 15000) {
           band = 2;
-        }
-        else {
+        } else {
           band = 3;
         }
         return _filter.frequencyBands!.contains(band);
@@ -423,11 +421,9 @@ class AnalyzerProvider extends ChangeNotifier {
             key = 'Top 1K (Very Common)';
           } else if (freq <= 5000) {
             key = '1K-5K (Common)';
-          }
-          else if (freq <= 15000) {
+          } else if (freq <= 15000) {
             key = '5K-15K (Uncommon)';
-          }
-          else {
+          } else {
             key = '15K+ (Rare)';
           }
           break;

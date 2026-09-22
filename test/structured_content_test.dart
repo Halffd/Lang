@@ -206,7 +206,6 @@ void main() {
       expect(find.text('inner text'), findsOneWidget);
     });
 
-
     // find the deepest TextSpan in a RichText tree
     TextSpan? leafSpan(WidgetTester tester) {
       final rich = tester.widget<RichText>(find.byType(RichText));

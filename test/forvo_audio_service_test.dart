@@ -9,21 +9,33 @@ void main() {
       service = ForvoAudioService();
     });
 
-  test('searchPronunciations returns empty list without API key', () async {
-    final results = await service.searchPronunciations('test');
-    expect(results, isA<List<ForvoPronunciation>>());
-    expect(results.isEmpty, isTrue);
-  });
+    test('searchPronunciations returns empty list without API key', () async {
+      final results = await service.searchPronunciations('test');
+      expect(results, isA<List<ForvoPronunciation>>());
+      expect(results.isEmpty, isTrue);
+    });
 
-  test('searchPronunciations with language parameter works without key', () async {
-    final results = await service.searchPronunciations('test', language: 'ja');
-    expect(results, isA<List<ForvoPronunciation>>());
-  });
+    test(
+      'searchPronunciations with language parameter works without key',
+      () async {
+        final results = await service.searchPronunciations(
+          'test',
+          language: 'ja',
+        );
+        expect(results, isA<List<ForvoPronunciation>>());
+      },
+    );
 
-  test('searchPronunciations for Japanese word returns empty without key', () async {
-    final results = await service.searchPronunciations('日本', language: 'ja');
-    expect(results, isA<List<ForvoPronunciation>>());
-  });
+    test(
+      'searchPronunciations for Japanese word returns empty without key',
+      () async {
+        final results = await service.searchPronunciations(
+          '日本',
+          language: 'ja',
+        );
+        expect(results, isA<List<ForvoPronunciation>>());
+      },
+    );
 
     test('getAudioUrl returns valid URL format', () {
       final url = service.getAudioUrl('test', 'ja', 'user123');
@@ -67,11 +79,7 @@ void main() {
     });
 
     test('ForvoPronunciation fromMap handles alternative username key', () {
-      final map = {
-        'word': 'test',
-        'username': 'alt_user',
-        'votes': 3,
-      };
+      final map = {'word': 'test', 'username': 'alt_user', 'votes': 3};
 
       final pronunciation = ForvoPronunciation.fromMap(map);
 

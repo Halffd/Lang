@@ -62,7 +62,10 @@ void main() {
 
     test('fetchDetailedWordInformation returns list of lists', () async {
       try {
-        final result = await service.fetchDetailedWordInformation('test', false);
+        final result = await service.fetchDetailedWordInformation(
+          'test',
+          false,
+        );
         expect(result, isA<List<List<String>>>());
         expect(result.length, equals(5));
       } catch (e) {
@@ -70,32 +73,44 @@ void main() {
       }
     });
 
-    test('fetchDetailedWordInformation for Chinese character includes Kanjipedia', () async {
-      try {
-        final result = await service.fetchDetailedWordInformation('中', true);
-        expect(result, isA<List<List<String>>>());
-      } catch (e) {
-        expect(true, isTrue);
-      }
-    });
+    test(
+      'fetchDetailedWordInformation for Chinese character includes Kanjipedia',
+      () async {
+        try {
+          final result = await service.fetchDetailedWordInformation('中', true);
+          expect(result, isA<List<List<String>>>());
+        } catch (e) {
+          expect(true, isTrue);
+        }
+      },
+    );
 
     test('fetchWordDetailsForAnyLanguage returns list of strings', () async {
       try {
-        final result = await service.fetchWordDetailsForAnyLanguage('test', 'en');
+        final result = await service.fetchWordDetailsForAnyLanguage(
+          'test',
+          'en',
+        );
         expect(result, isA<List<String>>());
       } catch (e) {
         expect(true, isTrue);
       }
     });
 
-    test('fetchWordDetailsForAnyLanguage for Chinese character works', () async {
-      try {
-        final result = await service.fetchWordDetailsForAnyLanguage('中', 'zh');
-        expect(result, isA<List<String>>());
-      } catch (e) {
-        expect(true, isTrue);
-      }
-    });
+    test(
+      'fetchWordDetailsForAnyLanguage for Chinese character works',
+      () async {
+        try {
+          final result = await service.fetchWordDetailsForAnyLanguage(
+            '中',
+            'zh',
+          );
+          expect(result, isA<List<String>>());
+        } catch (e) {
+          expect(true, isTrue);
+        }
+      },
+    );
 
     test('isSingleChineseCharacter returns true for Chinese character', () {
       expect(service.isSingleChineseCharacter('中'), isTrue);
@@ -108,13 +123,19 @@ void main() {
       expect(service.isSingleChineseCharacter('中日'), isFalse);
     });
 
-    test('fetchDetailedWordInformation returns empty lists for non-existent word', () async {
-      try {
-        final result = await service.fetchDetailedWordInformation('xyznonexistent123', false);
-        expect(result, isA<List<List<String>>>());
-      } catch (e) {
-        expect(true, isTrue);
-      }
-    });
+    test(
+      'fetchDetailedWordInformation returns empty lists for non-existent word',
+      () async {
+        try {
+          final result = await service.fetchDetailedWordInformation(
+            'xyznonexistent123',
+            false,
+          );
+          expect(result, isA<List<List<String>>>());
+        } catch (e) {
+          expect(true, isTrue);
+        }
+      },
+    );
   });
 }

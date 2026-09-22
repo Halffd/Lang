@@ -1,5 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
+import 'package:lang/utils/font_scale.dart';
 import 'package:lang/utils/screen_size.dart';
 
 /// Shape of a single study-session step produced by any lesson type.
@@ -32,6 +35,156 @@ enum LessonType {
   listening,
   spoken,
   character,
+
+  /// Duolingo "match the pairs": two columns of tiles; tap one per side.
+  matchWords,
+}
+
+/// Data for a match-pairs round: word-meaning pairs shuffled.
+class MatchPair {
+  final String left; // word
+  final String right; // meaning
+  const MatchPair(this.left, this.right);
+}
+
+/// Interactive match-pairs view: tap one from left, then one from right.
+class MatchWordsView extends StatefulWidget {
+  final List<MatchPair> pairs;
+  final ValueChanged<bool> onRoundDone; // true if all correct
+
+  const MatchWordsView({
+    super.key,
+    required this.pairs,
+    required this.onRoundDone,
+  });
+
+  @override
+  State<MatchWordsView> createState() => _MatchWordsViewState();
+}
+
+class _MatchWordsViewState extends State<MatchWordsView> {
+  late final List<MatchPair> _shuffledLeft;
+  late final List<MatchPair> _shuffledRight;
+  int? _leftSelected;
+  int? _rightSelected;
+  final Set<int> _matchedLeft = {};
+  final Set<int> _matchedRight = {};
+  int _incorrectGuesses = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    final rng = math.Random();
+    _shuffledLeft = List.of(widget.pairs)..shuffle(rng);
+    _shuffledRight = List.of(widget.pairs)..shuffle(rng);
+  }
+
+  void _tapLeft(int i) {
+    setState(() => _leftSelected = i);
+  }
+
+  void _tapRight(int i) {
+    setState(() {
+      _rightSelected = i;
+    });
+    if (_leftSelected != null) _check();
+  }
+
+  void _check() {
+    final l = _leftSelected;
+    final r = _rightSelected;
+    if (l == null || r == null) return;
+    final left = _shuffledLeft[l];
+    final right = _shuffledRight[r];
+    if (left == right) {
+      _matchedLeft.add(l);
+      _matchedRight.add(r);
+      _leftSelected = null;
+      _rightSelected = null;
+      if (_matchedLeft.length == widget.pairs.length) {
+        final correct = _incorrectGuesses == 0;
+        widget.onRoundDone(correct);
+      }
+    } else {
+      _incorrectGuesses++;
+    }
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: ScreenSize.adaptivePadding(context),
+      child: Column(
+        children: [
+          Text(
+            'Match the pairs',
+            style: TextStyle(
+              fontSize: fs(context, 20, 'headers'),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _tileColumn(_shuffledLeft, true)),
+                const SizedBox(width: 16),
+                Expanded(child: _tileColumn(_shuffledRight, false)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tileColumn(List<MatchPair> list, bool isLeft) {
+    return ListView.separated(
+      itemCount: list.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (_, i) {
+        final selected = isLeft ? _leftSelected == i : _rightSelected == i;
+        final matched = isLeft
+            ? _matchedLeft.contains(i)
+            : _matchedRight.contains(i);
+        final label = isLeft ? list[i].left : list[i].right;
+        return Opacity(
+          opacity: matched ? 0.3 : 1,
+          child: InkWell(
+            onTap: matched ? null : () => isLeft ? _tapLeft(i) : _tapRight(i),
+            child: Container(
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+              decoration: BoxDecoration(
+                color: selected
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: matched
+                      ? Colors.green
+                      : (selected
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.grey.shade300),
+                  width: matched ? 2 : 1.5,
+                ),
+              ),
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: fs(context, 16, 'words'),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 /// Common chrome around every lesson page: progress bar + close button.

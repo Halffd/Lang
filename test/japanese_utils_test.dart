@@ -125,5 +125,4 @@ void main() {
       expect(JapaneseUtils.romajiToKana('shu'), 'しゅ');
     });
   });
-
 }

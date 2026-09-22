@@ -12,13 +12,16 @@ class SearchService {
   final LanguageDetector _languageDetector = LanguageDetector();
 
   /// Main search method - searches all sources and merges results
-  Future<SearchResult> search(String query, {SearchOptions options = const SearchOptions()}) async {
+  Future<SearchResult> search(
+    String query, {
+    SearchOptions options = const SearchOptions(),
+  }) async {
     if (query.isEmpty) {
       return SearchResult(entries: [], kanji: [], query: query);
     }
 
     final language = _languageDetector.detect(query);
-    
+
     // Route to appropriate search strategy based on language
     switch (language) {
       case 'ja':
@@ -33,13 +36,21 @@ class SearchService {
   }
 
   /// Search for Japanese text
-  Future<SearchResult> _searchJapanese(String query, SearchOptions options) async {
+  Future<SearchResult> _searchJapanese(
+    String query,
+    SearchOptions options,
+  ) async {
     final localResults = await _localService.searchJapanese(query);
     final localEntries = _localService.convertToModelEntries(localResults);
     final yomichanResults = await _yomichanService.searchEntries(query);
 
     return SearchResult(
-      entries: localEntries + yomichanResults.map((r) => r.entry).whereType<DictionaryEntry>().toList(),
+      entries:
+          localEntries +
+          yomichanResults
+              .map((r) => r.entry)
+              .whereType<DictionaryEntry>()
+              .toList(),
       kanji: [],
       query: query,
       hasMore: localEntries.length >= 50,
@@ -47,13 +58,21 @@ class SearchService {
   }
 
   /// Search for Chinese text
-  Future<SearchResult> _searchChinese(String query, SearchOptions options) async {
+  Future<SearchResult> _searchChinese(
+    String query,
+    SearchOptions options,
+  ) async {
     final localResults = await _localService.searchHanzi(query);
     final localEntries = _localService.convertToModelEntries(localResults);
     final yomichanResults = await _yomichanService.searchEntries(query);
 
     return SearchResult(
-      entries: localEntries + yomichanResults.map((r) => r.entry).whereType<DictionaryEntry>().toList(),
+      entries:
+          localEntries +
+          yomichanResults
+              .map((r) => r.entry)
+              .whereType<DictionaryEntry>()
+              .toList(),
       kanji: [],
       query: query,
       hasMore: localEntries.length >= 50,
@@ -61,35 +80,43 @@ class SearchService {
   }
 
   /// Search for Korean text
-  Future<SearchResult> _searchKorean(String query, SearchOptions options) async {
+  Future<SearchResult> _searchKorean(
+    String query,
+    SearchOptions options,
+  ) async {
     final yomichanResults = await _yomichanService.searchEntries(query);
 
     return SearchResult(
-      entries: yomichanResults.map((r) => r.entry).whereType<DictionaryEntry>().toList(),
+      entries: yomichanResults
+          .map((r) => r.entry)
+          .whereType<DictionaryEntry>()
+          .toList(),
       kanji: [],
       query: query,
     );
   }
 
   /// Search for European languages (English, etc.)
-  Future<SearchResult> _searchEuropean(String query, SearchOptions options) async {
+  Future<SearchResult> _searchEuropean(
+    String query,
+    SearchOptions options,
+  ) async {
     final localResults = await _localService.searchExact(query);
     final localEntries = _localService.convertToModelEntries(localResults);
 
-    return SearchResult(
-      entries: localEntries,
-      kanji: [],
-      query: query,
-    );
+    return SearchResult(entries: localEntries, kanji: [], query: query);
   }
 
   /// Search for a single kanji/Chinese character
   Future<SearchResult> searchKanji(String character) async {
     final yomichanResults = await _yomichanService.searchKanji(character);
-    
+
     return SearchResult(
       entries: [],
-      kanji: yomichanResults.map((r) => r.kanji).whereType<KanjiEntry>().toList(),
+      kanji: yomichanResults
+          .map((r) => r.kanji)
+          .whereType<KanjiEntry>()
+          .toList(),
       query: character,
     );
   }
@@ -98,7 +125,6 @@ class SearchService {
   Future<List<Token>> tokenize(String text) async {
     return await _tokenizerService.tokenize(text);
   }
-
 }
 
 /// Search options

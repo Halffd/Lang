@@ -40,10 +40,7 @@ class _AutoTranslateToggle extends StatelessWidget {
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Auto:',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            Text('Auto:', style: Theme.of(context).textTheme.bodySmall),
             Switch(
               value: appState.autoTranslate,
               onChanged: appState.setAutoTranslate,
@@ -66,10 +63,7 @@ class _WiktionaryToggle extends StatelessWidget {
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Wik:',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            Text('Wik:', style: Theme.of(context).textTheme.bodySmall),
             Switch(
               value: appState.showWiktionary,
               onChanged: appState.setShowWiktionary,
@@ -108,7 +102,12 @@ class _HelpButton extends StatelessWidget {
                 Text('M: Toggle Auto-paste'),
               ],
             ),
-            actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
           ),
         );
       },

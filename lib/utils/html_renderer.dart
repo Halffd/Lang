@@ -27,28 +27,15 @@ class HtmlRenderer {
           margin: Margins.symmetric(vertical: 6.0),
           padding: HtmlPaddings.symmetric(horizontal: 4),
         ),
-        "span": Style(
-          fontSize: FontSize(14.0),
-          color: Colors.black87,
-        ),
+        "span": Style(fontSize: FontSize(14.0), color: Colors.black87),
         "a": Style(
           color: Colors.blue.shade700,
           textDecoration: TextDecoration.underline,
         ),
-        "b": Style(
-          fontWeight: FontWeight.bold,
-        ),
-        "i": Style(
-          fontStyle: FontStyle.italic,
-        ),
-        "strong": Style(
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-        ),
-        "em": Style(
-          fontStyle: FontStyle.italic,
-          color: Colors.black87,
-        ),
+        "b": Style(fontWeight: FontWeight.bold),
+        "i": Style(fontStyle: FontStyle.italic),
+        "strong": Style(fontWeight: FontWeight.bold, color: Colors.black87),
+        "em": Style(fontStyle: FontStyle.italic, color: Colors.black87),
         "h1": Style(
           fontSize: FontSize(22.0),
           fontWeight: FontWeight.w600,
@@ -83,12 +70,7 @@ class HtmlRenderer {
         "blockquote": Style(
           margin: Margins.symmetric(vertical: 8.0),
           padding: HtmlPaddings.symmetric(horizontal: 12, vertical: 8),
-          border: const Border(
-            left: BorderSide(
-              color: Colors.blue,
-              width: 3,
-            ),
-          ),
+          border: const Border(left: BorderSide(color: Colors.blue, width: 3)),
           backgroundColor: Colors.grey.shade50,
         ),
         "code": Style(

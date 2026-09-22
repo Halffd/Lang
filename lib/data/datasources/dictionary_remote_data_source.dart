@@ -28,12 +28,19 @@ class DictionaryRemoteDataSource {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         var document = html_parser.parse(response.body);
-        var definitionElements = document.querySelectorAll('div.gloss-content.scroll-pane > dl');
-        
-        return definitionElements.map((e) {
-          e.querySelectorAll('.sense-info-note.has-tip').forEach((el) => el.remove());
-          return e.text.trim();
-        }).where((s) => s.isNotEmpty).toList();
+        var definitionElements = document.querySelectorAll(
+          'div.gloss-content.scroll-pane > dl',
+        );
+
+        return definitionElements
+            .map((e) {
+              e
+                  .querySelectorAll('.sense-info-note.has-tip')
+                  .forEach((el) => el.remove());
+              return e.text.trim();
+            })
+            .where((s) => s.isNotEmpty)
+            .toList();
       }
     } catch (e) {
       // ignore

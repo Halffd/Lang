@@ -25,12 +25,15 @@ class MdbgService {
   Future<MdbgEntry?> lookupWord(String word) async {
     try {
       final uri = Uri.parse('$_baseUrl?page=worddict&wdrst=0&wdqb=$word');
-      final response = await http.get(
-        uri,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        },
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'User-Agent':
+                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode != 200) return null;
 
@@ -57,7 +60,9 @@ class MdbgService {
       final trad = entry.querySelector('.trad');
 
       final pinyinElement = entry.querySelector('.pinyin');
-      final pinyin = pinyinElement?.text.trim().replaceAll(RegExp(r'\[|\]'), '').trim() ?? '';
+      final pinyin =
+          pinyinElement?.text.trim().replaceAll(RegExp(r'\[|\]'), '').trim() ??
+          '';
 
       final defs = <String>[];
       final defElements = entry.querySelectorAll('.defs');
@@ -90,12 +95,15 @@ class MdbgService {
   Future<List<MdbgEntry>> searchWords(String query, {int limit = 10}) async {
     try {
       final uri = Uri.parse('$_baseUrl?page=worddict&wdrst=0&wdqb=$query');
-      final response = await http.get(
-        uri,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        },
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'User-Agent':
+                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode != 200) return [];
 
@@ -118,7 +126,9 @@ class MdbgService {
       if (word.isEmpty) continue;
 
       final pinyinElement = entry.querySelector('.pinyin');
-      final pinyin = pinyinElement?.text.trim().replaceAll(RegExp(r'\[|\]'), '').trim() ?? '';
+      final pinyin =
+          pinyinElement?.text.trim().replaceAll(RegExp(r'\[|\]'), '').trim() ??
+          '';
 
       final defs = <String>[];
       final defElements = entry.querySelectorAll('.defs');
@@ -129,11 +139,7 @@ class MdbgService {
         }
       }
 
-      results.add(MdbgEntry(
-        word: word,
-        pinyin: pinyin,
-        definitions: defs,
-      ));
+      results.add(MdbgEntry(word: word, pinyin: pinyin, definitions: defs));
     }
 
     return results;

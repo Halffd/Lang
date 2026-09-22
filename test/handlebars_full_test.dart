@@ -1209,7 +1209,8 @@ void main() {
     });
 
     test('conditional card type flags (jpmn pattern)', () {
-      const t = r'{{~#set "grammar-regex" "^日本語文法辞典" ~}}'
+      const t =
+          r'{{~#set "grammar-regex" "^日本語文法辞典" ~}}'
           r'{{~set "is-grammar" "no" ~}}'
           '{{#each definitions}}'
           r'{{~#set "match" ~}}'

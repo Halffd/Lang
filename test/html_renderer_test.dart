@@ -5,38 +5,34 @@ import 'package:lang/utils/html_renderer.dart';
 
 void main() {
   group('HtmlRenderer Tests', () {
-    testWidgets('renderHtml returns SizedBox.shrink for empty content', (WidgetTester tester) async {
+    testWidgets('renderHtml returns SizedBox.shrink for empty content', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Material(
-            child: HtmlRenderer.renderHtml(''),
-          ),
-        ),
+        MaterialApp(home: Material(child: HtmlRenderer.renderHtml(''))),
       );
 
       expect(find.byType(SizedBox), findsOneWidget);
     });
 
-    testWidgets('renderHtmlSafe returns SizedBox.shrink for empty content', (WidgetTester tester) async {
+    testWidgets('renderHtmlSafe returns SizedBox.shrink for empty content', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Material(
-            child: HtmlRenderer.renderHtmlSafe(''),
-          ),
-        ),
+        MaterialApp(home: Material(child: HtmlRenderer.renderHtmlSafe(''))),
       );
 
       expect(find.byType(SizedBox), findsOneWidget);
     });
 
-    testWidgets('renderHtmlSafe handles JSON-encoded HTML', (WidgetTester tester) async {
+    testWidgets('renderHtmlSafe handles JSON-encoded HTML', (
+      WidgetTester tester,
+    ) async {
       final jsonString = '"<p>Test paragraph</p>"';
-      
+
       await tester.pumpWidget(
         MaterialApp(
-          home: Material(
-            child: HtmlRenderer.renderHtmlSafe(jsonString),
-          ),
+          home: Material(child: HtmlRenderer.renderHtmlSafe(jsonString)),
         ),
       );
 
@@ -44,14 +40,14 @@ void main() {
       expect(find.text('Test paragraph'), findsOneWidget);
     });
 
-    testWidgets('renderHtmlSafe handles invalid JSON gracefully', (WidgetTester tester) async {
+    testWidgets('renderHtmlSafe handles invalid JSON gracefully', (
+      WidgetTester tester,
+    ) async {
       final invalidJson = '{invalid json}';
-      
+
       await tester.pumpWidget(
         MaterialApp(
-          home: Material(
-            child: HtmlRenderer.renderHtmlSafe(invalidJson),
-          ),
+          home: Material(child: HtmlRenderer.renderHtmlSafe(invalidJson)),
         ),
       );
 
@@ -59,14 +55,14 @@ void main() {
       expect(find.text(invalidJson), findsOneWidget);
     });
 
-    testWidgets('renderHtmlSafe handles non-string JSON', (WidgetTester tester) async {
+    testWidgets('renderHtmlSafe handles non-string JSON', (
+      WidgetTester tester,
+    ) async {
       final jsonNumber = '123';
-      
+
       await tester.pumpWidget(
         MaterialApp(
-          home: Material(
-            child: HtmlRenderer.renderHtmlSafe(jsonNumber),
-          ),
+          home: Material(child: HtmlRenderer.renderHtmlSafe(jsonNumber)),
         ),
       );
 
@@ -74,14 +70,14 @@ void main() {
       expect(find.text('123'), findsOneWidget);
     });
 
-    testWidgets('renderHtml renders basic HTML tags', (WidgetTester tester) async {
+    testWidgets('renderHtml renders basic HTML tags', (
+      WidgetTester tester,
+    ) async {
       final htmlContent = '<p>This is a paragraph</p><div>This is a div</div>';
-      
+
       await tester.pumpWidget(
         MaterialApp(
-          home: Material(
-            child: HtmlRenderer.renderHtml(htmlContent),
-          ),
+          home: Material(child: HtmlRenderer.renderHtml(htmlContent)),
         ),
       );
 
@@ -90,14 +86,14 @@ void main() {
       expect(find.text('This is a div'), findsOneWidget);
     });
 
-    testWidgets('renderHtmlSafe renders basic HTML tags', (WidgetTester tester) async {
+    testWidgets('renderHtmlSafe renders basic HTML tags', (
+      WidgetTester tester,
+    ) async {
       final htmlContent = '<p>This is a paragraph</p><div>This is a div</div>';
-      
+
       await tester.pumpWidget(
         MaterialApp(
-          home: Material(
-            child: HtmlRenderer.renderHtmlSafe(htmlContent),
-          ),
+          home: Material(child: HtmlRenderer.renderHtmlSafe(htmlContent)),
         ),
       );
 
@@ -106,14 +102,14 @@ void main() {
       expect(find.text('This is a div'), findsOneWidget);
     });
 
-    testWidgets('renderHtml renders formatted text', (WidgetTester tester) async {
+    testWidgets('renderHtml renders formatted text', (
+      WidgetTester tester,
+    ) async {
       final htmlContent = '<b>Bold text</b> and <i>italic text</i>';
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Material(
-            child: HtmlRenderer.renderHtml(htmlContent),
-          ),
+          home: Material(child: HtmlRenderer.renderHtml(htmlContent)),
         ),
       );
 
@@ -121,14 +117,14 @@ void main() {
       expect(find.byType(Html), findsOneWidget);
     });
 
-    testWidgets('renderHtmlSafe renders formatted text', (WidgetTester tester) async {
+    testWidgets('renderHtmlSafe renders formatted text', (
+      WidgetTester tester,
+    ) async {
       final htmlContent = '<b>Bold text</b> and <i>italic text</i>';
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Material(
-            child: HtmlRenderer.renderHtmlSafe(htmlContent),
-          ),
+          home: Material(child: HtmlRenderer.renderHtmlSafe(htmlContent)),
         ),
       );
 
@@ -137,13 +133,12 @@ void main() {
     });
 
     testWidgets('renderHtml handles headings', (WidgetTester tester) async {
-      final htmlContent = '<h1>Heading 1</h1><h2>Heading 2</h2><h3>Heading 3</h3>';
-      
+      final htmlContent =
+          '<h1>Heading 1</h1><h2>Heading 2</h2><h3>Heading 3</h3>';
+
       await tester.pumpWidget(
         MaterialApp(
-          home: Material(
-            child: HtmlRenderer.renderHtml(htmlContent),
-          ),
+          home: Material(child: HtmlRenderer.renderHtml(htmlContent)),
         ),
       );
 
@@ -154,13 +149,12 @@ void main() {
     });
 
     testWidgets('renderHtmlSafe handles headings', (WidgetTester tester) async {
-      final htmlContent = '<h1>Heading 1</h1><h2>Heading 2</h2><h3>Heading 3</h3>';
-      
+      final htmlContent =
+          '<h1>Heading 1</h1><h2>Heading 2</h2><h3>Heading 3</h3>';
+
       await tester.pumpWidget(
         MaterialApp(
-          home: Material(
-            child: HtmlRenderer.renderHtmlSafe(htmlContent),
-          ),
+          home: Material(child: HtmlRenderer.renderHtmlSafe(htmlContent)),
         ),
       );
 
@@ -171,13 +165,12 @@ void main() {
     });
 
     testWidgets('renderHtml handles lists', (WidgetTester tester) async {
-      final htmlContent = '<ul><li>Item 1</li><li>Item 2</li></ul><ol><li>Ordered 1</li><li>Ordered 2</li></ol>';
-      
+      final htmlContent =
+          '<ul><li>Item 1</li><li>Item 2</li></ul><ol><li>Ordered 1</li><li>Ordered 2</li></ol>';
+
       await tester.pumpWidget(
         MaterialApp(
-          home: Material(
-            child: HtmlRenderer.renderHtml(htmlContent),
-          ),
+          home: Material(child: HtmlRenderer.renderHtml(htmlContent)),
         ),
       );
 
@@ -189,13 +182,12 @@ void main() {
     });
 
     testWidgets('renderHtmlSafe handles lists', (WidgetTester tester) async {
-      final htmlContent = '<ul><li>Item 1</li><li>Item 2</li></ul><ol><li>Ordered 1</li><li>Ordered 2</li></ol>';
-      
+      final htmlContent =
+          '<ul><li>Item 1</li><li>Item 2</li></ul><ol><li>Ordered 1</li><li>Ordered 2</li></ol>';
+
       await tester.pumpWidget(
         MaterialApp(
-          home: Material(
-            child: HtmlRenderer.renderHtmlSafe(htmlContent),
-          ),
+          home: Material(child: HtmlRenderer.renderHtmlSafe(htmlContent)),
         ),
       );
 

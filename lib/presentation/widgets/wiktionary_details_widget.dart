@@ -34,9 +34,9 @@ class WiktionaryDetailsWidget extends StatelessWidget {
                 Text(
                   'Wiktionary Details',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue[800],
-                      ),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue[800],
+                  ),
                 ),
               ],
             ),
@@ -52,7 +52,11 @@ class WiktionaryDetailsWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildWiktionaryEntry(BuildContext context, WiktionaryEntry entry, int index) {
+  Widget _buildWiktionaryEntry(
+    BuildContext context,
+    WiktionaryEntry entry,
+    int index,
+  ) {
     List<Widget> children = [];
 
     // Part of speech
@@ -79,9 +83,7 @@ class WiktionaryDetailsWidget extends StatelessWidget {
 
     // Definition
     if (entry.definition.isNotEmpty) {
-      children.add(
-        HtmlRenderer.renderHtmlSafe(entry.definition),
-      );
+      children.add(HtmlRenderer.renderHtmlSafe(entry.definition));
       children.add(const SizedBox(height: 8));
     }
 
@@ -98,7 +100,7 @@ class WiktionaryDetailsWidget extends StatelessWidget {
         ),
       );
       children.add(const SizedBox(height: 4));
-      
+
       for (final example in entry.examples) {
         children.add(
           Padding(
@@ -106,10 +108,11 @@ class WiktionaryDetailsWidget extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('• ', style: TextStyle(fontSize: fs(context, 14, 'translations'))),
-                Expanded(
-                  child: HtmlRenderer.renderHtmlSafe(example),
+                Text(
+                  '• ',
+                  style: TextStyle(fontSize: fs(context, 14, 'translations')),
                 ),
+                Expanded(child: HtmlRenderer.renderHtmlSafe(example)),
               ],
             ),
           ),
@@ -121,7 +124,7 @@ class WiktionaryDetailsWidget extends StatelessWidget {
 
     // Synonyms and Antonyms
     List<Widget> relatedWordsWidgets = [];
-    
+
     if (entry.synonyms.isNotEmpty) {
       relatedWordsWidgets.add(
         Padding(
@@ -140,23 +143,28 @@ class WiktionaryDetailsWidget extends StatelessWidget {
               Expanded(
                 child: Wrap(
                   spacing: 4,
-                  children: entry.synonyms.map((synonym) => 
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.blue[50],
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.blue[200]!),
-                      ),
-                      child: Text(
-                        synonym,
-                        style: TextStyle(
-                          fontSize: fs(context, 11),
-                          color: Colors.blue[800],
+                  children: entry.synonyms
+                      .map(
+                        (synonym) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.blue[50],
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.blue[200]!),
+                          ),
+                          child: Text(
+                            synonym,
+                            style: TextStyle(
+                              fontSize: fs(context, 11),
+                              color: Colors.blue[800],
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  ).toList(),
+                      )
+                      .toList(),
                 ),
               ),
             ],
@@ -164,7 +172,7 @@ class WiktionaryDetailsWidget extends StatelessWidget {
         ),
       );
     }
-    
+
     if (entry.antonyms.isNotEmpty) {
       relatedWordsWidgets.add(
         Padding(
@@ -183,23 +191,28 @@ class WiktionaryDetailsWidget extends StatelessWidget {
               Expanded(
                 child: Wrap(
                   spacing: 4,
-                  children: entry.antonyms.map((antonym) => 
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.red[50],
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.red[200]!),
-                      ),
-                      child: Text(
-                        antonym,
-                        style: TextStyle(
-                          fontSize: fs(context, 11),
-                          color: Colors.red[800],
+                  children: entry.antonyms
+                      .map(
+                        (antonym) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.red[50],
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.red[200]!),
+                          ),
+                          child: Text(
+                            antonym,
+                            style: TextStyle(
+                              fontSize: fs(context, 11),
+                              color: Colors.red[800],
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  ).toList(),
+                      )
+                      .toList(),
                 ),
               ),
             ],
@@ -207,7 +220,7 @@ class WiktionaryDetailsWidget extends StatelessWidget {
         ),
       );
     }
-    
+
     if (relatedWordsWidgets.isNotEmpty) {
       children.addAll(relatedWordsWidgets);
       children.add(const SizedBox(height: 8));

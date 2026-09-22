@@ -17,8 +17,13 @@ class AnkiNoteTypeConfig {
   /// e.g. "{{furigana}}" or "{expression} ({reading})".
   final List<AnkiFieldConfig> fields;
 
-  AnkiNoteTypeConfig(this.type, this.deck, this.model, this.fields,
-      {this.enabled = true});
+  AnkiNoteTypeConfig(
+    this.type,
+    this.deck,
+    this.model,
+    this.fields, {
+    this.enabled = true,
+  });
 
   String get typeName {
     switch (type) {
@@ -33,16 +38,18 @@ class AnkiNoteTypeConfig {
     }
   }
 
-  AnkiFieldConfig field(String name) =>
-      fields.firstWhere((f) => f.name == name, orElse: () => AnkiFieldConfig(name, ''));
+  AnkiFieldConfig field(String name) => fields.firstWhere(
+    (f) => f.name == name,
+    orElse: () => AnkiFieldConfig(name, ''),
+  );
 
   Map<String, dynamic> toJson() => {
-        'type': type.name,
-        'deck': deck,
-        'model': model,
-        'enabled': enabled,
-        'fields': fields.map((f) => f.toJson()).toList(),
-      };
+    'type': type.name,
+    'deck': deck,
+    'model': model,
+    'enabled': enabled,
+    'fields': fields.map((f) => f.toJson()).toList(),
+  };
 
   static AnkiNoteTypeConfig fromJson(Map<String, dynamic> json) {
     final t = AnkiNoteType.values.firstWhere(
@@ -76,95 +83,107 @@ class AnkiFieldConfig {
 
   Map<String, dynamic> toJson() => {'name': name, 'value': value};
 
-  static AnkiFieldConfig fromJson(Map<String, dynamic> json) =>
-      AnkiFieldConfig(json['name'] as String? ?? '',
-          json['value'] as String? ?? '');
+  static AnkiFieldConfig fromJson(Map<String, dynamic> json) => AnkiFieldConfig(
+    json['name'] as String? ?? '',
+    json['value'] as String? ?? '',
+  );
 }
 
 /// Default note type configuration matching jp-mining-note style
 /// field layouts from the user's template listing.
 class DefaultNoteTypes {
   static List<AnkiFieldConfig> _expressionFields() => [
-        AnkiFieldConfig('Word', '{expression}'),
-        AnkiFieldConfig('WordReading', '{furigana-plain}'),
-        AnkiFieldConfig('PAOverride', ''),
-        AnkiFieldConfig('PAOverrideText', ''),
-        AnkiFieldConfig('AJTWordPitch', '{pitch-accents}'),
-        AnkiFieldConfig('PrimaryDefinition', '{glossary-first}'),
-        AnkiFieldConfig('PrimaryDefinitionPicture', '{clipboard-image}'),
-        AnkiFieldConfig('Sentence', '{sentence}'),
-        AnkiFieldConfig('SentenceReading', '{sentence-furigana-plain}'),
-        AnkiFieldConfig('AltDisplay', ''),
-        AnkiFieldConfig('AltDisplayPASentenceCard', ''),
-        AnkiFieldConfig('AdditionalNotes', '{clipboard-text}'),
-        AnkiFieldConfig('IsSentenceCard', ''),
-        AnkiFieldConfig('IsClickCard', ''),
-        AnkiFieldConfig('IsHoverCard', ''),
-        AnkiFieldConfig('IsTargetedSentenceCard', ''),
-        AnkiFieldConfig('PAShowInfo', ''),
-        AnkiFieldConfig('PATestOnlyWord', ''),
-        AnkiFieldConfig('PADoNotTest', ''),
-        AnkiFieldConfig('PASeparateWordCard', ''),
-        AnkiFieldConfig('PASeparateSentenceCard', ''),
-        AnkiFieldConfig('SeparateClozeDeletionCard', ''),
-        AnkiFieldConfig('Hint', '{hint}'),
-        AnkiFieldConfig('HintNotHidden', ''),
-        AnkiFieldConfig('Picture', '{screenshot}'),
-        AnkiFieldConfig('WordAudio', '{audio}'),
-        AnkiFieldConfig('SentenceAudio', '{sentence-audio}'),
-        AnkiFieldConfig('PAGraphs', '{pitch-accent-graphs}'),
-        AnkiFieldConfig('PAPositions', '{pitch-accent-positions}'),
-        AnkiFieldConfig('PASilence', ''),
-        AnkiFieldConfig('WordReadingHiragana', '{reading}'),
-        AnkiFieldConfig('FrequenciesStylized', '{frequencies}'),
-        AnkiFieldConfig('FrequencySort', '{frequency-harmonic-rank}'),
-        AnkiFieldConfig('SecondaryDefinition', '{glossary-no-dictionary}'),
-        AnkiFieldConfig('ExtraDefinitions', '{glossary}'),
-        AnkiFieldConfig('UtilityDictionaries', '{tags}'),
-        AnkiFieldConfig('Comment', ''),
-      ];
+    AnkiFieldConfig('Word', '{expression}'),
+    AnkiFieldConfig('WordReading', '{furigana-plain}'),
+    AnkiFieldConfig('PAOverride', ''),
+    AnkiFieldConfig('PAOverrideText', ''),
+    AnkiFieldConfig('AJTWordPitch', '{pitch-accents}'),
+    AnkiFieldConfig('PrimaryDefinition', '{glossary-first}'),
+    AnkiFieldConfig('PrimaryDefinitionPicture', '{clipboard-image}'),
+    AnkiFieldConfig('Sentence', '{sentence}'),
+    AnkiFieldConfig('SentenceReading', '{sentence-furigana-plain}'),
+    AnkiFieldConfig('AltDisplay', ''),
+    AnkiFieldConfig('AltDisplayPASentenceCard', ''),
+    AnkiFieldConfig('AdditionalNotes', '{clipboard-text}'),
+    AnkiFieldConfig('IsSentenceCard', ''),
+    AnkiFieldConfig('IsClickCard', ''),
+    AnkiFieldConfig('IsHoverCard', ''),
+    AnkiFieldConfig('IsTargetedSentenceCard', ''),
+    AnkiFieldConfig('PAShowInfo', ''),
+    AnkiFieldConfig('PATestOnlyWord', ''),
+    AnkiFieldConfig('PADoNotTest', ''),
+    AnkiFieldConfig('PASeparateWordCard', ''),
+    AnkiFieldConfig('PASeparateSentenceCard', ''),
+    AnkiFieldConfig('SeparateClozeDeletionCard', ''),
+    AnkiFieldConfig('Hint', '{hint}'),
+    AnkiFieldConfig('HintNotHidden', ''),
+    AnkiFieldConfig('Picture', '{screenshot}'),
+    AnkiFieldConfig('WordAudio', '{audio}'),
+    AnkiFieldConfig('SentenceAudio', '{sentence-audio}'),
+    AnkiFieldConfig('PAGraphs', '{pitch-accent-graphs}'),
+    AnkiFieldConfig('PAPositions', '{pitch-accent-positions}'),
+    AnkiFieldConfig('PASilence', ''),
+    AnkiFieldConfig('WordReadingHiragana', '{reading}'),
+    AnkiFieldConfig('FrequenciesStylized', '{frequencies}'),
+    AnkiFieldConfig('FrequencySort', '{frequency-harmonic-rank}'),
+    AnkiFieldConfig('SecondaryDefinition', '{glossary-no-dictionary}'),
+    AnkiFieldConfig('ExtraDefinitions', '{glossary}'),
+    AnkiFieldConfig('UtilityDictionaries', '{tags}'),
+    AnkiFieldConfig('Comment', ''),
+  ];
 
   static List<AnkiFieldConfig> _readingFields() => _expressionFields();
 
   static List<AnkiFieldConfig> _kanjiFields() => [
-        AnkiFieldConfig('Word', '{character}'),
-        AnkiFieldConfig('Reading', '{onyomi}, {kunyomi}'),
-        AnkiFieldConfig('Glossary', '{glossary}'),
-        AnkiFieldConfig('Sentence', '{sentence}'),
-        AnkiFieldConfig('Sentence-English', '{sentence}'),
-        AnkiFieldConfig('Picture', '{screenshot}'),
-        AnkiFieldConfig('Audio', '{audio}'),
-        AnkiFieldConfig('Sentence-Audio', '{sentence-audio}'),
-        AnkiFieldConfig('Hint', '{hint}'),
-      ];
+    AnkiFieldConfig('Word', '{character}'),
+    AnkiFieldConfig('Reading', '{onyomi}, {kunyomi}'),
+    AnkiFieldConfig('Glossary', '{glossary}'),
+    AnkiFieldConfig('Sentence', '{sentence}'),
+    AnkiFieldConfig('Sentence-English', '{sentence}'),
+    AnkiFieldConfig('Picture', '{screenshot}'),
+    AnkiFieldConfig('Audio', '{audio}'),
+    AnkiFieldConfig('Sentence-Audio', '{sentence-audio}'),
+    AnkiFieldConfig('Hint', '{hint}'),
+  ];
 
   static List<AnkiFieldConfig> _nameFields() => [
-        AnkiFieldConfig('Word', '{expression}'),
-        AnkiFieldConfig('Reading', '{reading}'),
-        AnkiFieldConfig('Glossary', '{glossary}'),
-        AnkiFieldConfig('Sentence', '{sentence}'),
-        AnkiFieldConfig('Sentence-English', '{sentence}'),
-        AnkiFieldConfig('Picture', '{screenshot}'),
-        AnkiFieldConfig('Audio', '{audio}'),
-        AnkiFieldConfig('Sentence-Audio', '{sentence-audio}'),
-        AnkiFieldConfig('Hint', '{hint}'),
-      ];
+    AnkiFieldConfig('Word', '{expression}'),
+    AnkiFieldConfig('Reading', '{reading}'),
+    AnkiFieldConfig('Glossary', '{glossary}'),
+    AnkiFieldConfig('Sentence', '{sentence}'),
+    AnkiFieldConfig('Sentence-English', '{sentence}'),
+    AnkiFieldConfig('Picture', '{screenshot}'),
+    AnkiFieldConfig('Audio', '{audio}'),
+    AnkiFieldConfig('Sentence-Audio', '{sentence-audio}'),
+    AnkiFieldConfig('Hint', '{hint}'),
+  ];
 
   static AnkiNoteTypeConfig expression() => AnkiNoteTypeConfig(
-      AnkiNoteType.expression, 'Mining', 'jp-mining-note',
-      _expressionFields());
+    AnkiNoteType.expression,
+    'Mining',
+    'jp-mining-note',
+    _expressionFields(),
+  );
 
   static AnkiNoteTypeConfig reading() => AnkiNoteTypeConfig(
-      AnkiNoteType.reading, 'Mining', 'jp-mining-note', _readingFields());
+    AnkiNoteType.reading,
+    'Mining',
+    'jp-mining-note',
+    _readingFields(),
+  );
 
-  static AnkiNoteTypeConfig kanji() => AnkiNoteTypeConfig(
-      AnkiNoteType.kanji, 'Kanji', 'Basic', _kanjiFields());
+  static AnkiNoteTypeConfig kanji() =>
+      AnkiNoteTypeConfig(AnkiNoteType.kanji, 'Kanji', 'Basic', _kanjiFields());
 
-  static AnkiNoteTypeConfig name() => AnkiNoteTypeConfig(
-      AnkiNoteType.name, 'Names', 'Basic', _nameFields());
+  static AnkiNoteTypeConfig name() =>
+      AnkiNoteTypeConfig(AnkiNoteType.name, 'Names', 'Basic', _nameFields());
 
-  static List<AnkiNoteTypeConfig> all() =>
-      [expression(), reading(), kanji(), name()];
+  static List<AnkiNoteTypeConfig> all() => [
+    expression(),
+    reading(),
+    kanji(),
+    name(),
+  ];
 }
 
 /// Container for all note types, persisted as JSON.
@@ -176,19 +195,19 @@ class AnkiNoteTypes {
   Map<String, String> markerTemplates = {};
 
   AnkiNoteTypes(this.types, {Map<String, String>? markerTemplates})
-      : markerTemplates = markerTemplates ?? {};
+    : markerTemplates = markerTemplates ?? {};
 
   static AnkiNoteTypes defaults() => AnkiNoteTypes(DefaultNoteTypes.all());
 
-  AnkiNoteTypeConfig byType(AnkiNoteType t) =>
-      types.firstWhere((c) => c.type == t,
-          orElse: () => DefaultNoteTypes.all()
-              .firstWhere((c) => c.type == t));
+  AnkiNoteTypeConfig byType(AnkiNoteType t) => types.firstWhere(
+    (c) => c.type == t,
+    orElse: () => DefaultNoteTypes.all().firstWhere((c) => c.type == t),
+  );
 
   Map<String, dynamic> toJson() => {
-        'types': types.map((t) => t.toJson()).toList(),
-        'markerTemplates': markerTemplates,
-      };
+    'types': types.map((t) => t.toJson()).toList(),
+    'markerTemplates': markerTemplates,
+  };
 
   static AnkiNoteTypes fromJson(Map<String, dynamic> json) {
     final ts = json['types'] as List? ?? [];

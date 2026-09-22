@@ -73,51 +73,75 @@ class TonePattern {
       romanization: map['romanization'] as String?,
     );
   }
-  
+
   // Get tone mark symbol for Mandarin
   String getMandarinToneMark() {
     switch (toneNumber) {
-      case 1: return 'ˉ'; // First tone (flat)
-      case 2: return 'ˊ'; // Second tone (rising)
-      case 3: return 'ˇ'; // Third tone (dipping)
-      case 4: return 'ˋ'; // Fourth tone (falling)
-      default: return ''; // Neutral tone
+      case 1:
+        return 'ˉ'; // First tone (flat)
+      case 2:
+        return 'ˊ'; // Second tone (rising)
+      case 3:
+        return 'ˇ'; // Third tone (dipping)
+      case 4:
+        return 'ˋ'; // Fourth tone (falling)
+      default:
+        return ''; // Neutral tone
     }
   }
-  
+
   // Get tone mark symbol for Cantonese
   String getCantoneseToneMark() {
     // Cantonese has 6 tones, but often simplified to 3 categories
     switch (toneNumber) {
-      case 1: return '˥'; // High level
-      case 2: return '˧˥'; // High rising
-      case 3: return '˧'; // Mid level
-      case 4: return '˨˩'; // Low falling
-      case 5: return '˩˧'; // Low rising
-      case 6: return '˨'; // Low level
-      default: return '';
+      case 1:
+        return '˥'; // High level
+      case 2:
+        return '˧˥'; // High rising
+      case 3:
+        return '˧'; // Mid level
+      case 4:
+        return '˨˩'; // Low falling
+      case 5:
+        return '˩˧'; // Low rising
+      case 6:
+        return '˨'; // Low level
+      default:
+        return '';
     }
   }
-  
+
   // Get tone name in English
   String getToneName(String language) {
     if (language == 'mandarin') {
       switch (toneNumber) {
-        case 1: return 'First Tone (high level)';
-        case 2: return 'Second Tone (rising)';
-        case 3: return 'Third Tone (dipping)';
-        case 4: return 'Fourth Tone (falling)';
-        default: return 'Neutral Tone';
+        case 1:
+          return 'First Tone (high level)';
+        case 2:
+          return 'Second Tone (rising)';
+        case 3:
+          return 'Third Tone (dipping)';
+        case 4:
+          return 'Fourth Tone (falling)';
+        default:
+          return 'Neutral Tone';
       }
     } else if (language == 'cantonese') {
       switch (toneNumber) {
-        case 1: return 'High Level (yam1)';
-        case 2: return 'High Rising (yam2)';
-        case 3: return 'Mid Level (yam3)';
-        case 4: return 'Low Falling (yam4)';
-        case 5: return 'Low Rising (yam5)';
-        case 6: return 'Low Level (yam6)';
-        default: return 'Tone $toneNumber';
+        case 1:
+          return 'High Level (yam1)';
+        case 2:
+          return 'High Rising (yam2)';
+        case 3:
+          return 'Mid Level (yam3)';
+        case 4:
+          return 'Low Falling (yam4)';
+        case 5:
+          return 'Low Rising (yam5)';
+        case 6:
+          return 'Low Level (yam6)';
+        default:
+          return 'Tone $toneNumber';
       }
     }
     return 'Tone $toneNumber';
@@ -137,27 +161,31 @@ class ToneDisplay {
     required this.individualTones,
     required this.language,
   });
-  
+
   static ToneDisplay fromToneInfo(ToneInfo toneInfo) {
     final pinyinParts = toneInfo.reading.split(' ');
     final pinyinWithTonesParts = <String>[];
-    
+
     for (int i = 0; i < pinyinParts.length; i++) {
       final pinyin = pinyinParts[i];
       final tonePattern = toneInfo.tones.firstWhere(
         (t) => t.position == i,
         orElse: () => TonePattern(position: i, toneNumber: 0),
       );
-      
+
       // Apply tone marks to pinyin characters
       final tonedPinyin = _applyToneToPinyin(pinyin, tonePattern.toneNumber);
       pinyinWithTonesParts.add(tonedPinyin);
     }
-    
+
     final pinyinWithTones = pinyinWithTonesParts.join(' ');
-    final toneNumbers = toneInfo.tones.map((t) => t.toneNumber.toString()).join(' ');
-    final individualTones = toneInfo.tones.map((t) => t.getToneName(toneInfo.language)).toList();
-    
+    final toneNumbers = toneInfo.tones
+        .map((t) => t.toneNumber.toString())
+        .join(' ');
+    final individualTones = toneInfo.tones
+        .map((t) => t.getToneName(toneInfo.language))
+        .toList();
+
     return ToneDisplay(
       pinyinWithTones: pinyinWithTones,
       toneNumbers: toneNumbers,
@@ -165,22 +193,22 @@ class ToneDisplay {
       language: toneInfo.language,
     );
   }
-  
+
   static String _applyToneToPinyin(String pinyin, int toneNumber) {
     if (toneNumber <= 0 || toneNumber > 4) return pinyin; // No tone or neutral
-    
+
     // This is a simplified implementation - a full implementation would map
     // each vowel according to Chinese pinyin tone rules
     final vowelMap = {
-      1: { 'a': 'ā', 'o': 'ō', 'e': 'ē', 'i': 'ī', 'u': 'ū', 'ü': 'ǖ' },
-      2: { 'a': 'á', 'o': 'ó', 'e': 'é', 'i': 'í', 'u': 'ú', 'ü': 'ǘ' },
-      3: { 'a': 'ǎ', 'o': 'ǒ', 'e': 'ě', 'i': 'ǐ', 'u': 'ǔ', 'ü': 'ǚ' },
-      4: { 'a': 'à', 'o': 'ò', 'e': 'è', 'i': 'ì', 'u': 'ù', 'ü': 'ǜ' },
+      1: {'a': 'ā', 'o': 'ō', 'e': 'ē', 'i': 'ī', 'u': 'ū', 'ü': 'ǖ'},
+      2: {'a': 'á', 'o': 'ó', 'e': 'é', 'i': 'í', 'u': 'ú', 'ü': 'ǘ'},
+      3: {'a': 'ǎ', 'o': 'ǒ', 'e': 'ě', 'i': 'ǐ', 'u': 'ǔ', 'ü': 'ǚ'},
+      4: {'a': 'à', 'o': 'ò', 'e': 'è', 'i': 'ì', 'u': 'ù', 'ü': 'ǜ'},
     };
-    
+
     final vowels = ['a', 'o', 'e', 'i', 'u', 'ü'];
     final toneVowelMap = vowelMap[toneNumber]!;
-    
+
     // Find the primary vowel to apply tone mark to
     // According to pinyin rules: a > o > e > i > u > ü
     for (final vowel in vowels) {
@@ -188,7 +216,7 @@ class ToneDisplay {
         return pinyin.replaceAll(vowel, toneVowelMap[vowel]!);
       }
     }
-    
+
     // If no vowel found in the map, return original
     return pinyin;
   }

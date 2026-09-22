@@ -13,7 +13,8 @@ class NoteLocalDataSource {
     final prefs = await SharedPreferences.getInstance();
     if (!prefs.containsKey(_wordsKey)) await prefs.setString(_wordsKey, '');
     if (!prefs.containsKey(_saveKey)) await prefs.setString(_saveKey, '{}');
-    if (!prefs.containsKey(_historyKey)) await prefs.setStringList(_historyKey, []);
+    if (!prefs.containsKey(_historyKey))
+      await prefs.setStringList(_historyKey, []);
   }
 
   Future<Map<String, dynamic>> getSave() async {
@@ -31,7 +32,9 @@ class NoteLocalDataSource {
   Future<List<Map<String, dynamic>>> getSavedEntries() async {
     final save = await getSave();
     // Convert the map to a list of entries, sorted by ID (timestamp) descending
-    final entries = save.values.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    final entries = save.values
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
     entries.sort((a, b) => (b['id'] ?? '0').compareTo(a['id'] ?? '0'));
     return entries;
   }
@@ -46,7 +49,7 @@ class NoteLocalDataSource {
 
   Future<void> addWord(String word, {String? sentence}) async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // Update words list
     List<String> words = await getWords();
     if (!words.contains(word)) {
@@ -57,14 +60,11 @@ class NoteLocalDataSource {
 
     // Update save object
     Map<String, dynamic> save = await getSave();
-    final String timestamp = (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString();
-    
-    final entry = {
-      'word': word,
-      'sentence': sentence ?? '',
-      'id': timestamp,
-    };
-    
+    final String timestamp = (DateTime.now().millisecondsSinceEpoch ~/ 1000)
+        .toString();
+
+    final entry = {'word': word, 'sentence': sentence ?? '', 'id': timestamp};
+
     save[timestamp] = entry;
     await prefs.setString(_saveKey, json.encode(save));
     _saveCache = save;
@@ -72,7 +72,7 @@ class NoteLocalDataSource {
 
   Future<void> removeWord(String word) async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // Update words list
     List<String> words = await getWords();
     if (words.contains(word)) {
@@ -87,7 +87,7 @@ class NoteLocalDataSource {
       (k) => save[k]['word'] == word,
       orElse: () => '',
     );
-    
+
     if (keyToRemove.isNotEmpty) {
       save.remove(keyToRemove);
       await prefs.setString(_saveKey, json.encode(save));

@@ -20,7 +20,8 @@ class DictionaryEntry {
   // Add fields to maintain compatibility with UI
   List<String> get tags => termTags ?? (definitionTags ?? []);
   int get frequency => popularity.toInt();
-  List<String> get examples => []; // No examples in Yomichan format, return empty list
+  List<String> get examples =>
+      []; // No examples in Yomichan format, return empty list
 
   // Add convenience getter to maintain compatibility
   String get word => term;
@@ -47,7 +48,7 @@ class DictionaryEntry {
   // Constructor for creating from JSON or other sources where dictionaryId might not be available
   DictionaryEntry.fromData({
     this.id,
-    this.dictionaryId = 0,  // Default to 0 if not specified
+    this.dictionaryId = 0, // Default to 0 if not specified
     required this.term,
     required this.reading,
     this.definitionTags,
@@ -67,13 +68,15 @@ class DictionaryEntry {
       dictionaryId: json['dictionaryId'] ?? json['dictionary_id'] ?? 0,
       term: json['term'] as String,
       reading: json['reading'] as String,
-      definitionTags: _extractStringList(json['definitionTags']) ??
+      definitionTags:
+          _extractStringList(json['definitionTags']) ??
           _extractStringList(json['definition_tags']),
       rules: _extractStringList(json['rules']),
       popularity: (json['popularity'] as num?)?.toDouble() ?? 0.0,
       definitions: _extractStringList(json['definitions']) ?? [],
       sequence: json['sequence'],
-      termTags: _extractStringList(json['termTags']) ??
+      termTags:
+          _extractStringList(json['termTags']) ??
           _extractStringList(json['term_tags']),
       audioUrl: json['audioUrl'] as String?,
       imageUrl: json['imageUrl'] as String?,
@@ -205,7 +208,7 @@ class Dictionary {
   final bool enabled;
   final int priority;
   final DateTime importedAt;
-  
+
   Dictionary({
     this.id,
     required this.name,
@@ -220,7 +223,7 @@ class Dictionary {
     this.priority = 0,
     required this.importedAt,
   });
-  
+
   Map<String, dynamic> toMap() {
     return {
       if (id != null) 'id': id,
@@ -237,7 +240,7 @@ class Dictionary {
       'imported_at': importedAt.millisecondsSinceEpoch,
     };
   }
-  
+
   factory Dictionary.fromMap(Map<String, dynamic> map) {
     return Dictionary(
       id: map['id'] as int?,
@@ -297,7 +300,7 @@ class KanjiEntry {
   final List<String>? tags;
   final List<String> meanings;
   final Map<String, dynamic>? stats;
-  
+
   KanjiEntry({
     this.id,
     required this.dictionaryId,
@@ -308,7 +311,7 @@ class KanjiEntry {
     required this.meanings,
     this.stats,
   });
-  
+
   Map<String, dynamic> toMap() {
     return {
       if (id != null) 'id': id,
@@ -321,7 +324,7 @@ class KanjiEntry {
       'stats': stats != null ? jsonEncode(stats) : null,
     };
   }
-  
+
   factory KanjiEntry.fromMap(Map<String, dynamic> map) {
     return KanjiEntry(
       id: map['id'] as int?,
@@ -352,7 +355,7 @@ class DictionaryTag {
   final int sortOrder;
   final String? notes;
   final double popularity;
-  
+
   DictionaryTag({
     this.id,
     required this.dictionaryId,
@@ -362,7 +365,7 @@ class DictionaryTag {
     this.notes,
     this.popularity = 0,
   });
-  
+
   Map<String, dynamic> toMap() {
     return {
       if (id != null) 'id': id,
@@ -374,7 +377,7 @@ class DictionaryTag {
       'popularity': popularity,
     };
   }
-  
+
   factory DictionaryTag.fromMap(Map<String, dynamic> map) {
     return DictionaryTag(
       id: map['id'] as int?,
@@ -394,7 +397,7 @@ class PitchAccent {
   final String term;
   final String reading;
   final List<PitchPattern> pitches;
-  
+
   PitchAccent({
     this.id,
     required this.dictionaryId,
@@ -402,7 +405,7 @@ class PitchAccent {
     required this.reading,
     required this.pitches,
   });
-  
+
   Map<String, dynamic> toMap() {
     return {
       if (id != null) 'id': id,
@@ -412,7 +415,7 @@ class PitchAccent {
       'pitches': jsonEncode(pitches.map((p) => p.toMap()).toList()),
     };
   }
-  
+
   factory PitchAccent.fromMap(Map<String, dynamic> map) {
     return PitchAccent(
       id: map['id'] as int?,
@@ -429,25 +432,17 @@ class PitchAccent {
 class PitchPattern {
   final int position;
   final List<String>? tags;
-  
-  PitchPattern({
-    required this.position,
-    this.tags,
-  });
-  
+
+  PitchPattern({required this.position, this.tags});
+
   Map<String, dynamic> toMap() {
-    return {
-      'position': position,
-      if (tags != null) 'tags': tags,
-    };
+    return {'position': position, if (tags != null) 'tags': tags};
   }
-  
+
   factory PitchPattern.fromMap(Map<String, dynamic> map) {
     return PitchPattern(
       position: map['position'] as int,
-      tags: map['tags'] != null
-          ? List<String>.from(map['tags'])
-          : null,
+      tags: map['tags'] != null ? List<String>.from(map['tags']) : null,
     );
   }
 }
@@ -460,7 +455,7 @@ class FrequencyData {
   final String frequencyType;
   final double value;
   final String? displayValue;
-  
+
   FrequencyData({
     this.id,
     required this.dictionaryId,
@@ -470,7 +465,7 @@ class FrequencyData {
     required this.value,
     this.displayValue,
   });
-  
+
   Map<String, dynamic> toMap() {
     return {
       if (id != null) 'id': id,
@@ -482,7 +477,7 @@ class FrequencyData {
       'display_value': displayValue,
     };
   }
-  
+
   factory FrequencyData.fromMap(Map<String, dynamic> map) {
     return FrequencyData(
       id: map['id'] as int?,

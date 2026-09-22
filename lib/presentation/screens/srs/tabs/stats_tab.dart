@@ -18,7 +18,9 @@ class StatsTab extends StatelessWidget {
     final suspended = cards.where((c) => c.type == CardType.suspended).length;
 
     final avgEase = cards.isNotEmpty
-        ? (cards.map((c) => c.easeFactor).reduce((a, b) => a + b) / cards.length).toDouble()
+        ? (cards.map((c) => c.easeFactor).reduce((a, b) => a + b) /
+                  cards.length)
+              .toDouble()
         : 2.5;
 
     final intervals = cards.map((c) => c.interval).where((i) => i > 0).toList();
@@ -37,7 +39,15 @@ class StatsTab extends StatelessWidget {
         const SizedBox(height: 16),
         _IntervalDistributionChart(cards: cards),
         const SizedBox(height: 16),
-        _buildStatsSummary(context, totalCards, dueCount, reviewed, suspended, avgEase, avgInterval),
+        _buildStatsSummary(
+          context,
+          totalCards,
+          dueCount,
+          reviewed,
+          suspended,
+          avgEase,
+          avgInterval,
+        ),
       ],
     );
   }
@@ -60,10 +70,14 @@ class StatsTab extends StatelessWidget {
   }
 
   Widget _buildProgressSection(List<SRSCard> cards) {
-    final due = cards.where((c) => c.isDue && c.type != CardType.suspended).length;
+    final due = cards
+        .where((c) => c.isDue && c.type != CardType.suspended)
+        .length;
     final learning = cards.where((c) => c.type == CardType.learning).length;
     final review = cards.where((c) => c.type == CardType.review).length;
-    final mature = cards.where((c) => c.type == CardType.review && c.reviewCount > 8).length;
+    final mature = cards
+        .where((c) => c.type == CardType.review && c.reviewCount > 8)
+        .length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -77,8 +91,12 @@ class StatsTab extends StatelessWidget {
 
   Widget _buildStatsSummary(
     BuildContext context,
-    int total, int due, int reviewed, int suspended,
-    double avgEase, double avgInterval,
+    int total,
+    int due,
+    int reviewed,
+    int suspended,
+    double avgEase,
+    double avgInterval,
   ) {
     return Card(
       child: Padding(
@@ -86,14 +104,23 @@ class StatsTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Summary', style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold)),
+            Text(
+              'Summary',
+              style: TextStyle(
+                fontSize: fs(context, 18, 'headers'),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 12),
             _detailRow('Total Cards', '$total'),
             _detailRow('Due for Review', '$due'),
             _detailRow('Ever Reviewed', '$reviewed'),
             _detailRow('Suspended', '$suspended'),
             _detailRow('Avg Ease Factor', avgEase.toStringAsFixed(2)),
-            _detailRow('Avg Interval', '${avgInterval.toStringAsFixed(1)} days'),
+            _detailRow(
+              'Avg Interval',
+              '${avgInterval.toStringAsFixed(1)} days',
+            ),
           ],
         ),
       ),
@@ -119,7 +146,11 @@ class _StatCard extends StatelessWidget {
   final String value;
   final Color color;
 
-  const _StatCard({required this.label, required this.value, required this.color});
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -129,8 +160,18 @@ class _StatCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(value, style: TextStyle(fontSize: fs(context, 28, 'words'), fontWeight: FontWeight.bold, color: color)),
-            Text(label, style: TextStyle(color: Colors.grey, fontSize: fs(context, 12))),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: fs(context, 28, 'words'),
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            Text(
+              label,
+              style: TextStyle(color: Colors.grey, fontSize: fs(context, 12)),
+            ),
           ],
         ),
       ),
@@ -154,10 +195,7 @@ class _ProgressRow extends StatelessWidget {
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label),
-            Text('$pct% ($value)'),
-          ],
+          children: [Text(label), Text('$pct% ($value)')],
         ),
         const SizedBox(height: 4),
         LinearProgressIndicator(
@@ -205,7 +243,13 @@ class _EaseDistributionChart extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Ease Factor Distribution', style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold)),
+            Text(
+              'Ease Factor Distribution',
+              style: TextStyle(
+                fontSize: fs(context, 18, 'headers'),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 16),
             SizedBox(
               height: 150,
@@ -220,9 +264,18 @@ class _EaseDistributionChart extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         getTitlesWidget: (val, _) {
-                          final labels = ['Hard', 'Normal', 'Easy', 'Very Easy'];
-                          return Text(val.toInt() < labels.length ? labels[val.toInt()] : '',
-                              style: TextStyle(fontSize: fs(context, 9)));
+                          final labels = [
+                            'Hard',
+                            'Normal',
+                            'Easy',
+                            'Very Easy',
+                          ];
+                          return Text(
+                            val.toInt() < labels.length
+                                ? labels[val.toInt()]
+                                : '',
+                            style: TextStyle(fontSize: fs(context, 9)),
+                          );
                         },
                         reservedSize: 32,
                       ),
@@ -231,22 +284,38 @@ class _EaseDistributionChart extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 30,
-                        getTitlesWidget: (val, _) => Text(val.toInt() > 0 ? '${val.toInt()}' : '',
-                            style: TextStyle(fontSize: fs(context, 10))),
+                        getTitlesWidget: (val, _) => Text(
+                          val.toInt() > 0 ? '${val.toInt()}' : '',
+                          style: TextStyle(fontSize: fs(context, 10)),
+                        ),
                       ),
                     ),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                   ),
                   gridData: const FlGridData(show: false),
                   borderData: FlBorderData(show: false),
-                  barGroups: easeBuckets.entries.toList().asMap().entries.map((e) {
+                  barGroups: easeBuckets.entries.toList().asMap().entries.map((
+                    e,
+                  ) {
                     Color color;
                     switch (e.value.key) {
-                      case 'Hard (<2.0)': color = Colors.red; break;
-                      case 'Normal (2.0-2.5)': color = Colors.orange; break;
-                      case 'Easy (2.5-3.0)': color = Colors.lightGreen; break;
-                      default: color = Colors.green; break;
+                      case 'Hard (<2.0)':
+                        color = Colors.red;
+                        break;
+                      case 'Normal (2.0-2.5)':
+                        color = Colors.orange;
+                        break;
+                      case 'Easy (2.5-3.0)':
+                        color = Colors.lightGreen;
+                        break;
+                      default:
+                        color = Colors.green;
+                        break;
                     }
                     return BarChartGroupData(
                       x: e.key,
@@ -255,7 +324,9 @@ class _EaseDistributionChart extends StatelessWidget {
                           toY: e.value.value.toDouble(),
                           color: color,
                           width: 20,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(4),
+                          ),
                         ),
                       ],
                     );
@@ -324,7 +395,13 @@ class _IntervalDistributionChart extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Interval Distribution', style: TextStyle(fontSize: fs(context, 18, 'headers'), fontWeight: FontWeight.bold)),
+            Text(
+              'Interval Distribution',
+              style: TextStyle(
+                fontSize: fs(context, 18, 'headers'),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 16),
             SizedBox(
               height: 150,
@@ -339,9 +416,21 @@ class _IntervalDistributionChart extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         getTitlesWidget: (val, _) {
-                          final labels = ['1d', '2-3d', '4-7d', '1-2w', '2-4w', '1-3m', '3m+'];
-                          return Text(val.toInt() < labels.length ? labels[val.toInt()] : '',
-                              style: TextStyle(fontSize: fs(context, 9)));
+                          final labels = [
+                            '1d',
+                            '2-3d',
+                            '4-7d',
+                            '1-2w',
+                            '2-4w',
+                            '1-3m',
+                            '3m+',
+                          ];
+                          return Text(
+                            val.toInt() < labels.length
+                                ? labels[val.toInt()]
+                                : '',
+                            style: TextStyle(fontSize: fs(context, 9)),
+                          );
                         },
                         reservedSize: 32,
                       ),
@@ -350,12 +439,18 @@ class _IntervalDistributionChart extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 30,
-                        getTitlesWidget: (val, _) => Text(val.toInt() > 0 ? '${val.toInt()}' : '',
-                            style: TextStyle(fontSize: fs(context, 10))),
+                        getTitlesWidget: (val, _) => Text(
+                          val.toInt() > 0 ? '${val.toInt()}' : '',
+                          style: TextStyle(fontSize: fs(context, 10)),
+                        ),
                       ),
                     ),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                   ),
                   gridData: const FlGridData(show: false),
                   borderData: FlBorderData(show: false),
@@ -367,7 +462,9 @@ class _IntervalDistributionChart extends StatelessWidget {
                           toY: e.value.value.toDouble(),
                           color: Colors.blue,
                           width: 20,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(4),
+                          ),
                         ),
                       ],
                     );

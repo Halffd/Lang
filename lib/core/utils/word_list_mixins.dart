@@ -24,8 +24,7 @@ mixin SavedWordsMixin {
       _savedWords.addAll(words);
     } catch (e) {
       debugPrint('Error loading saved words: $e');
-    } finally {
-    }
+    } finally {}
   }
 
   Future<void> toggleSavedWord(String word, {required bool isSaved}) async {
@@ -72,8 +71,7 @@ mixin DeletedWordsMixin {
       _deletedWords.addAll(words);
     } catch (e) {
       debugPrint('Error loading deleted words: $e');
-    } finally {
-    }
+    } finally {}
   }
 
   Future<void> deleteWord(String word) async {
@@ -128,8 +126,7 @@ mixin AnkiWordsMixin {
       _ankiWords.addAll(words);
     } catch (e) {
       debugPrint('Error loading Anki words: $e');
-    } finally {
-    }
+    } finally {}
   }
 
   Future<void> toggleAnkiWord(String word, {required bool isAnki}) async {
@@ -176,11 +173,13 @@ mixin FavoriteWordsMixin {
       _favoriteWords.addAll(words);
     } catch (e) {
       debugPrint('Error loading favorite words: $e');
-    } finally {
-    }
+    } finally {}
   }
 
-  Future<void> toggleFavoriteWord(String word, {required bool isFavorite}) async {
+  Future<void> toggleFavoriteWord(
+    String word, {
+    required bool isFavorite,
+  }) async {
     if (!_favoriteWordsStorageInitialized) {
       debugPrint('Warning: Storage service not initialized for favorite words');
       return;
@@ -224,8 +223,7 @@ mixin SRSWordsMixin {
       _srsWords.addAll(words);
     } catch (e) {
       debugPrint('Error loading SRS words: $e');
-    } finally {
-    }
+    } finally {}
   }
 
   Future<void> toggleSRSWord(String word, {required bool isInSRS}) async {
@@ -250,15 +248,20 @@ mixin SRSWordsMixin {
 }
 
 /// Combined mixin that includes all word list functionalities
-mixin AllWordListsMixin on SavedWordsMixin, DeletedWordsMixin, AnkiWordsMixin, FavoriteWordsMixin, SRSWordsMixin {
-
+mixin AllWordListsMixin
+    on
+        SavedWordsMixin,
+        DeletedWordsMixin,
+        AnkiWordsMixin,
+        FavoriteWordsMixin,
+        SRSWordsMixin {
   // You can add combined methods here if needed
   bool isWordInAnyList(String word) {
     return isWordSaved(word) ||
-           isWordInAnki(word) ||
-           isWordFavorite(word) ||
-           isWordDeleted(word) ||
-           isWordInSRS(word);
+        isWordInAnki(word) ||
+        isWordFavorite(word) ||
+        isWordDeleted(word) ||
+        isWordInSRS(word);
   }
 
   Future<void> removeWordFromAllLists(String word) async {

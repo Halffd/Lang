@@ -9,7 +9,7 @@ class DictionaryLocalDataSource {
 
   Future<void> init() async {
     if (_db != null) return;
-    
+
     String path = join(await getDatabasesPath(), 'yomu_dict.db');
     _db = await openDatabase(
       path,
@@ -51,9 +51,11 @@ class DictionaryLocalDataSource {
             dictionary TEXT
           )
         ''');
-        await db.execute('CREATE INDEX idx_terms_expression ON terms (expression)');
+        await db.execute(
+          'CREATE INDEX idx_terms_expression ON terms (expression)',
+        );
         await db.execute('CREATE INDEX idx_terms_reading ON terms (reading)');
-        
+
         await db.execute('''
           CREATE TABLE kanji (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,7 +67,9 @@ class DictionaryLocalDataSource {
             dictionary TEXT
           )
         ''');
-        await db.execute('CREATE INDEX idx_kanji_character ON kanji (character)');
+        await db.execute(
+          'CREATE INDEX idx_kanji_character ON kanji (character)',
+        );
 
         await db.execute('''
           CREATE TABLE termMeta (
@@ -76,7 +80,9 @@ class DictionaryLocalDataSource {
             dictionary TEXT
           )
         ''');
-        await db.execute('CREATE INDEX idx_termMeta_expression ON termMeta (expression)');
+        await db.execute(
+          'CREATE INDEX idx_termMeta_expression ON termMeta (expression)',
+        );
 
         await db.execute('''
           CREATE TABLE tagMeta (
@@ -110,15 +116,19 @@ class DictionaryLocalDataSource {
 
   Future<void> importDictionaryArchive(Uint8List bytes) async {
     final archive = ZipDecoder().decodeBytes(bytes);
-    
+
     final indexFile = archive.findFile('index.json');
     if (indexFile == null) throw Exception('index.json not found');
-    
+
     final indexData = json.decode(utf8.decode(indexFile.content));
     final String title = indexData['title'];
     final int version = indexData['version'];
 
-    final existing = await _db!.query('dictionaries', where: 'title = ?', whereArgs: [title]);
+    final existing = await _db!.query(
+      'dictionaries',
+      where: 'title = ?',
+      whereArgs: [title],
+    );
     if (existing.isNotEmpty) return;
 
     await _db!.insert('dictionaries', {'title': title, 'version': version});
@@ -140,7 +150,10 @@ class DictionaryLocalDataSource {
     }
   }
 
-  Future<void> _importTermBank(List<dynamic> entries, String dictionaryTitle) async {
+  Future<void> _importTermBank(
+    List<dynamic> entries,
+    String dictionaryTitle,
+  ) async {
     await _db?.transaction((txn) async {
       final batch = txn.batch();
       for (var entry in entries) {
@@ -162,7 +175,10 @@ class DictionaryLocalDataSource {
     });
   }
 
-  Future<void> _importKanjiBank(List<dynamic> entries, String dictionaryTitle) async {
+  Future<void> _importKanjiBank(
+    List<dynamic> entries,
+    String dictionaryTitle,
+  ) async {
     await _db?.transaction((txn) async {
       final batch = txn.batch();
       for (var entry in entries) {
@@ -179,14 +195,19 @@ class DictionaryLocalDataSource {
     });
   }
 
-  Future<void> _importTermMetaBank(List<dynamic> entries, String dictionaryTitle) async {
+  Future<void> _importTermMetaBank(
+    List<dynamic> entries,
+    String dictionaryTitle,
+  ) async {
     await _db?.transaction((txn) async {
       final batch = txn.batch();
       for (var entry in entries) {
         batch.insert('termMeta', {
           'expression': entry[0],
           'mode': entry[1],
-          'data': entry[2] is Map || entry[2] is List ? json.encode(entry[2]) : entry[2].toString(),
+          'data': entry[2] is Map || entry[2] is List
+              ? json.encode(entry[2])
+              : entry[2].toString(),
           'dictionary': dictionaryTitle,
         });
       }
@@ -194,7 +215,10 @@ class DictionaryLocalDataSource {
     });
   }
 
-  Future<void> _importTagBank(List<dynamic> entries, String dictionaryTitle) async {
+  Future<void> _importTagBank(
+    List<dynamic> entries,
+    String dictionaryTitle,
+  ) async {
     await _db?.transaction((txn) async {
       final batch = txn.batch();
       for (var entry in entries) {
@@ -233,9 +257,9 @@ class DictionaryLocalDataSource {
         final data = meta.first['data'];
         if (data is int) return data;
         if (data is String) {
-           final decoded = json.decode(data);
-           if (decoded is int) return decoded;
-           if (decoded is Map) return decoded['value'];
+          final decoded = json.decode(data);
+          if (decoded is int) return decoded;
+          if (decoded is Map) return decoded['value'];
         }
       } catch (_) {}
     }

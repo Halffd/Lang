@@ -25,10 +25,7 @@ void main() {
           ],
           child: const SearchScreen(),
         ),
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          useMaterial3: true,
-        ),
+        theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       ),
     );
 
@@ -37,7 +34,6 @@ void main() {
     // The search screen shows the search input area
     expect(find.byType(TextField), findsWidgets);
     expect(find.text('Search for a word...'), findsOneWidget);
-
   });
 }
 

@@ -4,7 +4,12 @@ import '../entities/srs_review.dart';
 
 abstract class SrsRepository {
   Future<List<SrsDeck>> getDecks();
-  Future<SrsDeck> createDeck(String name, {String? description, String? icon, String? color});
+  Future<SrsDeck> createDeck(
+    String name, {
+    String? description,
+    String? icon,
+    String? color,
+  });
   Future<void> updateDeck(SrsDeck deck);
   Future<void> deleteDeck(String deckId);
 

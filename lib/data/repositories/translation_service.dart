@@ -7,7 +7,8 @@ enum TranslationProvider { googleCloud, mlKit, gemini }
 
 class TranslationService {
   static const String _baseUrl = 'https://translate.googleapis.com';
-  static const String _geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+  static const String _geminiUrl =
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
   final LocalTranslationService? localService;
   final String? geminiApiKey;
@@ -57,7 +58,10 @@ class TranslationService {
     }
     try {
       final fullTranslation = await _geminiTranslateText(
-        request.sourceText, request.sourceLanguage, request.targetLanguage);
+        request.sourceText,
+        request.sourceLanguage,
+        request.targetLanguage,
+      );
 
       final sourceWords = request.sourceText
           .split(RegExp(r'\s+'))
@@ -66,10 +70,16 @@ class TranslationService {
       final wordTranslations = <WordTranslation>[];
       for (final word in sourceWords) {
         try {
-          final t = await _geminiTranslateText(word, request.sourceLanguage, request.targetLanguage);
+          final t = await _geminiTranslateText(
+            word,
+            request.sourceLanguage,
+            request.targetLanguage,
+          );
           wordTranslations.add(WordTranslation(source: word, translation: t));
         } catch (_) {
-          wordTranslations.add(WordTranslation(source: word, translation: word));
+          wordTranslations.add(
+            WordTranslation(source: word, translation: word),
+          );
         }
       }
 
@@ -82,10 +92,15 @@ class TranslationService {
     }
   }
 
-  Future<TranslationResult> _translateGoogleCloud(TranslationRequest request) async {
+  Future<TranslationResult> _translateGoogleCloud(
+    TranslationRequest request,
+  ) async {
     try {
       final fullTranslation = await _googleTranslateText(
-        request.sourceText, request.sourceLanguage, request.targetLanguage);
+        request.sourceText,
+        request.sourceLanguage,
+        request.targetLanguage,
+      );
 
       final sourceWords = request.sourceText
           .split(RegExp(r'\s+'))
@@ -95,11 +110,13 @@ class TranslationService {
 
       for (final word in sourceWords) {
         final wordTranslation = await _googleTranslateText(
-          word, request.sourceLanguage, request.targetLanguage);
-        wordTranslations.add(WordTranslation(
-          source: word,
-          translation: wordTranslation,
-        ));
+          word,
+          request.sourceLanguage,
+          request.targetLanguage,
+        );
+        wordTranslations.add(
+          WordTranslation(source: word, translation: wordTranslation),
+        );
       }
 
       return TranslationResult(
@@ -119,12 +136,19 @@ class TranslationService {
     }
   }
 
-  Future<String> _googleTranslateText(String text, String sourceLang, String targetLang) async {
-    final url = '$_baseUrl/translate_a/single?client=gtx&sl=$sourceLang&tl=$targetLang&dt=t&q=${Uri.encodeComponent(text)}';
+  Future<String> _googleTranslateText(
+    String text,
+    String sourceLang,
+    String targetLang,
+  ) async {
+    final url =
+        '$_baseUrl/translate_a/single?client=gtx&sl=$sourceLang&tl=$targetLang&dt=t&q=${Uri.encodeComponent(text)}';
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode != 200) {
-      throw Exception('Translation request failed with status: ${response.statusCode}');
+      throw Exception(
+        'Translation request failed with status: ${response.statusCode}',
+      );
     }
 
     final data = json.decode(response.body);
@@ -142,24 +166,36 @@ class TranslationService {
     }
   }
 
-  Future<String> _geminiTranslateText(String text, String sourceLang, String targetLang) async {
+  Future<String> _geminiTranslateText(
+    String text,
+    String sourceLang,
+    String targetLang,
+  ) async {
     final langName = _languageName(targetLang);
-    final prompt = 'Translate the following text to $langName. Output ONLY the translation, nothing else:\n\n$text';
+    final prompt =
+        'Translate the following text to $langName. Output ONLY the translation, nothing else:\n\n$text';
 
     final url = Uri.parse('$_geminiUrl?key=$geminiApiKey');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'contents': [{
-          'parts': [{'text': prompt}]
-        }]
+        'contents': [
+          {
+            'parts': [
+              {'text': prompt},
+            ],
+          },
+        ],
       }),
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return data['candidates'][0]['content']['parts'][0]['text']?.toString().trim() ?? text;
+      return data['candidates'][0]['content']['parts'][0]['text']
+              ?.toString()
+              .trim() ??
+          text;
     } else {
       throw Exception('Gemini translation failed: ${response.statusCode}');
     }
@@ -167,16 +203,46 @@ class TranslationService {
 
   static String _languageName(String code) {
     const names = {
-      'en': 'English', 'ja': 'Japanese', 'zh': 'Chinese', 'ko': 'Korean',
-      'es': 'Spanish', 'fr': 'French', 'de': 'German', 'it': 'Italian',
-      'pt': 'Portuguese', 'ru': 'Russian', 'ar': 'Arabic', 'hi': 'Hindi',
-      'th': 'Thai', 'vi': 'Vietnamese', 'id': 'Indonesian', 'ms': 'Malay',
-      'tl': 'Filipino', 'tr': 'Turkish', 'nl': 'Dutch', 'pl': 'Polish',
-      'uk': 'Ukrainian', 'sv': 'Swedish', 'da': 'Danish', 'fi': 'Finnish',
-      'no': 'Norwegian', 'cs': 'Czech', 'ro': 'Romanian', 'hu': 'Hungarian',
-      'el': 'Greek', 'he': 'Hebrew', 'bg': 'Bulgarian', 'hr': 'Croatian',
-      'sk': 'Slovak', 'sl': 'Slovenian', 'et': 'Estonian', 'lv': 'Latvian',
-      'lt': 'Lithuanian', 'ca': 'Catalan', 'sr': 'Serbian', 'sw': 'Swahili',
+      'en': 'English',
+      'ja': 'Japanese',
+      'zh': 'Chinese',
+      'ko': 'Korean',
+      'es': 'Spanish',
+      'fr': 'French',
+      'de': 'German',
+      'it': 'Italian',
+      'pt': 'Portuguese',
+      'ru': 'Russian',
+      'ar': 'Arabic',
+      'hi': 'Hindi',
+      'th': 'Thai',
+      'vi': 'Vietnamese',
+      'id': 'Indonesian',
+      'ms': 'Malay',
+      'tl': 'Filipino',
+      'tr': 'Turkish',
+      'nl': 'Dutch',
+      'pl': 'Polish',
+      'uk': 'Ukrainian',
+      'sv': 'Swedish',
+      'da': 'Danish',
+      'fi': 'Finnish',
+      'no': 'Norwegian',
+      'cs': 'Czech',
+      'ro': 'Romanian',
+      'hu': 'Hungarian',
+      'el': 'Greek',
+      'he': 'Hebrew',
+      'bg': 'Bulgarian',
+      'hr': 'Croatian',
+      'sk': 'Slovak',
+      'sl': 'Slovenian',
+      'et': 'Estonian',
+      'lv': 'Latvian',
+      'lt': 'Lithuanian',
+      'ca': 'Catalan',
+      'sr': 'Serbian',
+      'sw': 'Swahili',
     };
     return names[code] ?? code;
   }

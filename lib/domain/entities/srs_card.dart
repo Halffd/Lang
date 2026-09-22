@@ -71,7 +71,9 @@ class SrsCard {
     };
   }
 
-  bool get isDue => DateTime.now().isAfter(dueDate) || DateTime.now().isAtSameMomentAs(dueDate);
+  bool get isDue =>
+      DateTime.now().isAfter(dueDate) ||
+      DateTime.now().isAtSameMomentAs(dueDate);
 
   SrsCard copyWith({
     String? id,
@@ -287,16 +289,23 @@ class SRSCard {
   int get interval => reviewCount == 0 ? 0 : (reviewCount * easeFactor).round();
 
   bool get hasImage => imageBase64 != null && imageBase64!.isNotEmpty;
-  bool get hasAudio => (audioBase64 != null && audioBase64!.isNotEmpty) || (audioUrl != null && audioUrl!.isNotEmpty);
-  bool get hasVideo => (videoBase64 != null && videoBase64!.isNotEmpty) || (videoUrl != null && videoUrl!.isNotEmpty);
+  bool get hasAudio =>
+      (audioBase64 != null && audioBase64!.isNotEmpty) ||
+      (audioUrl != null && audioUrl!.isNotEmpty);
+  bool get hasVideo =>
+      (videoBase64 != null && videoBase64!.isNotEmpty) ||
+      (videoUrl != null && videoUrl!.isNotEmpty);
 
-  bool get isDue => DateTime.now().isAfter(nextReview) || DateTime.now().isAtSameMomentAs(nextReview);
+  bool get isDue =>
+      DateTime.now().isAfter(nextReview) ||
+      DateTime.now().isAtSameMomentAs(nextReview);
 
   SRSCard calculateNextReview(int quality) {
     if (type == CardType.suspended) return this;
 
     const minEaseFactor = 1.3;
-    double newEaseFactor = easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+    double newEaseFactor =
+        easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
     if (newEaseFactor < minEaseFactor) newEaseFactor = minEaseFactor;
 
     int newInterval;
@@ -333,5 +342,11 @@ class SRSCard {
   }
 
   SRSCard suspend() => copyWith(type: CardType.suspended);
-  SRSCard unsuspend() => copyWith(type: reviewCount == 0 ? CardType.newCard : reviewCount < 3 ? CardType.learning : CardType.review);
+  SRSCard unsuspend() => copyWith(
+    type: reviewCount == 0
+        ? CardType.newCard
+        : reviewCount < 3
+        ? CardType.learning
+        : CardType.review,
+  );
 }

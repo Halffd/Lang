@@ -34,7 +34,6 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
     _card = widget.card;
   }
 
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -58,15 +57,22 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
                     children: [
                       Text(
                         _card.word,
-                        style: TextStyle(fontSize: fs(context, 24, 'kanji'), fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: fs(context, 24, 'kanji'),
+                          fontWeight: FontWeight.bold,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (_card.reading != null && _card.reading!.isNotEmpty) ...[
+                      if (_card.reading != null &&
+                          _card.reading!.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Text(
                           _card.reading!,
-                          style: TextStyle(fontSize: fs(context, 16, 'words'), color: theme.colorScheme.onSurfaceVariant),
+                          style: TextStyle(
+                            fontSize: fs(context, 16, 'words'),
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ],
@@ -74,9 +80,22 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
                 ),
                 if (isSuspended)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: Colors.grey, borderRadius: BorderRadius.circular(12)),
-                    child: Text('SUSPENDED', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: fs(context, 12))),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.grey,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'SUSPENDED',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: fs(context, 12),
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -89,12 +108,20 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
                   children: [
                     Text('Meaning', style: theme.textTheme.titleMedium),
                     const SizedBox(height: 8),
-                    Text(_card.meaning, style: TextStyle(fontSize: fs(context, 16, 'words'))),
+                    Text(
+                      _card.meaning,
+                      style: TextStyle(fontSize: fs(context, 16, 'words')),
+                    ),
                     if (_card.notes != null && _card.notes!.isNotEmpty) ...[
                       const SizedBox(height: 16),
                       Text('Notes', style: theme.textTheme.titleMedium),
                       const SizedBox(height: 8),
-                      Text(_card.notes!, style: TextStyle(fontSize: fs(context, 14, 'translations'))),
+                      Text(
+                        _card.notes!,
+                        style: TextStyle(
+                          fontSize: fs(context, 14, 'translations'),
+                        ),
+                      ),
                     ],
                   ],
                 ),
@@ -111,14 +138,23 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
                     const SizedBox(height: 12),
                     _detailRow('ID', _card.id),
                     _detailRow('Type', _card.type.toString().split('.').last),
-                    _detailRow('Ease Factor', _card.easeFactor.toStringAsFixed(2)),
+                    _detailRow(
+                      'Ease Factor',
+                      _card.easeFactor.toStringAsFixed(2),
+                    ),
                     _detailRow('Interval', '${_card.interval} days'),
                     _detailRow('Reviews', '${_card.reviewCount}'),
                     _detailRow('Priority', '${_card.priority}'),
                     _detailRow('Language Level', '${_card.languageLevel}'),
                     if (_card.lastReviewDate != null)
-                      _detailRow('Last Review', _formatDateTime(_card.lastReviewDate!)),
-                    _detailRow('Next Review', _formatDateTime(_card.nextReview)),
+                      _detailRow(
+                        'Last Review',
+                        _formatDateTime(_card.lastReviewDate!),
+                      ),
+                    _detailRow(
+                      'Next Review',
+                      _formatDateTime(_card.nextReview),
+                    ),
                     if (_card.deck != null) ...[
                       (() {
                         final deck = widget.srsService.getDeckById(_card.deck!);
@@ -137,8 +173,16 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                OutlinedButton.icon(onPressed: widget.onEdit, icon: const Icon(Icons.edit), label: const Text('Edit')),
-                OutlinedButton.icon(onPressed: widget.onReset, icon: const Icon(Icons.refresh), label: const Text('Reset')),
+                OutlinedButton.icon(
+                  onPressed: widget.onEdit,
+                  icon: const Icon(Icons.edit),
+                  label: const Text('Edit'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: widget.onReset,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Reset'),
+                ),
                 OutlinedButton.icon(
                   onPressed: widget.onSuspend,
                   icon: Icon(isSuspended ? Icons.play_arrow : Icons.pause),
@@ -147,7 +191,10 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
                 OutlinedButton.icon(
                   onPressed: widget.onDelete,
                   icon: const Icon(Icons.delete, color: Colors.red),
-                  label: const Text('Delete', style: TextStyle(color: Colors.red)),
+                  label: const Text(
+                    'Delete',
+                    style: TextStyle(color: Colors.red),
+                  ),
                 ),
               ],
             ),

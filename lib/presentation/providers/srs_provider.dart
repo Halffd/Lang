@@ -37,9 +37,9 @@ class SrsProvider with ChangeNotifier {
     required SrsService srsService,
     required SupabaseDataSource supabaseDataSource,
     required RealtimeSyncService syncService,
-  })  : _srsService = srsService,
-        _supabaseDataSource = supabaseDataSource,
-        _syncService = syncService;
+  }) : _srsService = srsService,
+       _supabaseDataSource = supabaseDataSource,
+       _syncService = syncService;
 
   Future<void> init() async {
     await refreshDecks();
@@ -125,7 +125,12 @@ class SrsProvider with ChangeNotifier {
     }
   }
 
-  Future<SrsDeck?> createDeck(String name, {String? description, String icon = '📚', String color = '#3B82F6'}) async {
+  Future<SrsDeck?> createDeck(
+    String name, {
+    String? description,
+    String icon = '📚',
+    String color = '#3B82F6',
+  }) async {
     try {
       final deck = await _supabaseDataSource.createSrsDeck(
         name: name,
@@ -142,7 +147,13 @@ class SrsProvider with ChangeNotifier {
     }
   }
 
-  Future<void> updateDeck(String deckId, {String? name, String? description, String? icon, String? color}) async {
+  Future<void> updateDeck(
+    String deckId, {
+    String? name,
+    String? description,
+    String? icon,
+    String? color,
+  }) async {
     try {
       await _supabaseDataSource.updateSrsDeck(
         deckId,
@@ -246,7 +257,10 @@ class SrsProvider with ChangeNotifier {
   Future<void> answerCard(int rating) async {
     if (_currentReviewCard == null) return;
 
-    final reviewedCard = _srsService.processReview(_currentReviewCard!, ReviewRating.values.firstWhere((r) => r.value == rating));
+    final reviewedCard = _srsService.processReview(
+      _currentReviewCard!,
+      ReviewRating.values.firstWhere((r) => r.value == rating),
+    );
 
     try {
       await _supabaseDataSource.updateSrsCard(reviewedCard.id, {

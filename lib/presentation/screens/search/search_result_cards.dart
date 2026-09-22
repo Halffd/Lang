@@ -81,11 +81,11 @@ class SearchKanjiCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 ...kanji.meanings.asMap().entries.map(
-                      (entry) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2),
-                        child: Text('${entry.key + 1}. ${entry.value}'),
-                      ),
-                    ),
+                  (entry) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Text('${entry.key + 1}. ${entry.value}'),
+                  ),
+                ),
               ],
             ],
           ),
@@ -121,23 +121,28 @@ class SearchEntryCard extends StatelessWidget {
 
     return GestureDetector(
       onDoubleTap: () => onDoubleTap(entry),
-    child: Card(
-      margin: EdgeInsets.symmetric(
-        horizontal: ScreenSize.isCompact(context) ? 8 : 16,
-        vertical: 8,
-      ),
-      elevation: isSelected ? 4 : 1,
-      shape: isSelected
-          ? RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Theme.of(context).primaryColor, width: 2),
-            )
-          : null,
-      child: InkWell(
-        onTap: () => onTap(entry),
-        borderRadius: isSelected ? BorderRadius.circular(12) : BorderRadius.circular(4),
-        child: Padding(
-          padding: EdgeInsets.all(ScreenSize.isCompact(context) ? 12 : 16),
+      child: Card(
+        margin: EdgeInsets.symmetric(
+          horizontal: ScreenSize.isCompact(context) ? 8 : 16,
+          vertical: 8,
+        ),
+        elevation: isSelected ? 4 : 1,
+        shape: isSelected
+            ? RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: Theme.of(context).primaryColor,
+                  width: 2,
+                ),
+              )
+            : null,
+        child: InkWell(
+          onTap: () => onTap(entry),
+          borderRadius: isSelected
+              ? BorderRadius.circular(12)
+              : BorderRadius.circular(4),
+          child: Padding(
+            padding: EdgeInsets.all(ScreenSize.isCompact(context) ? 12 : 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -147,14 +152,15 @@ class SearchEntryCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                Text(
-                  entry.term,
-                  style: TextStyle(
-                    fontSize: fs(context, 24, 'words'),
-                    fontWeight: FontWeight.bold,
+                          Text(
+                            entry.term,
+                            style: TextStyle(
+                              fontSize: fs(context, 24, 'words'),
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          if (entry.reading.isNotEmpty && entry.reading != entry.term)
+                          if (entry.reading.isNotEmpty &&
+                              entry.reading != entry.term)
                             Text(
                               entry.reading,
                               style: TextStyle(
@@ -181,12 +187,20 @@ class SearchEntryCard extends StatelessWidget {
                     if (appState.favoriteWords.contains(entry.term))
                       const Padding(
                         padding: EdgeInsets.only(left: 4),
-                        child: Icon(Icons.favorite, color: Colors.red, size: 20),
+                        child: Icon(
+                          Icons.favorite,
+                          color: Colors.red,
+                          size: 20,
+                        ),
                       ),
                     if (appState.savedWords.contains(entry.term))
                       Padding(
                         padding: const EdgeInsets.only(left: 4),
-                        child: Icon(Icons.bookmark, color: Theme.of(context).primaryColor, size: 20),
+                        child: Icon(
+                          Icons.bookmark,
+                          color: Theme.of(context).primaryColor,
+                          size: 20,
+                        ),
                       ),
                   ],
                 ),
@@ -214,18 +228,19 @@ class SearchEntryCard extends StatelessWidget {
                   Row(
                     children: [
                       const Icon(Icons.graphic_eq, size: 16),
-const SizedBox(width: 4),
-            Text(
-              'Pitch: ${pitches.map((p) => p.pitches.map((pp) => pp.position).join(", ")).join(" / ")}',
-              style: TextStyle(
-                fontSize: fs(context, 12, 'translations'),
-                color: Colors.grey[700],
-              ),
-            ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Pitch: ${pitches.map((p) => p.pitches.map((pp) => pp.position).join(", ")).join(" / ")}',
+                        style: TextStyle(
+                          fontSize: fs(context, 12, 'translations'),
+                          color: Colors.grey[700],
+                        ),
+                      ),
                     ],
                   ),
                 ],
-                if (result.toneInfo[pitchKey] != null && result.toneInfo[pitchKey]!.isNotEmpty) ...[
+                if (result.toneInfo[pitchKey] != null &&
+                    result.toneInfo[pitchKey]!.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Row(
                     children: [
@@ -266,10 +281,16 @@ const SizedBox(width: 4),
                 ],
                 if (result.etymology[pitchKey]?.isNotEmpty == true) ...[
                   const SizedBox(height: 4),
-                  for (final etymologyEntry in result.etymology[pitchKey]!.take(1))
+                  for (final etymologyEntry in result.etymology[pitchKey]!.take(
+                    1,
+                  ))
                     Row(
                       children: [
-                        Icon(Icons.history, size: 14, color: Colors.orange[700]),
+                        Icon(
+                          Icons.history,
+                          size: 14,
+                          color: Colors.orange[700],
+                        ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -286,10 +307,15 @@ const SizedBox(width: 4),
                 ],
                 if (result.wiktionaryDetails[pitchKey]?.isNotEmpty == true) ...[
                   const SizedBox(height: 4),
-                  for (final wiktionaryEntry in result.wiktionaryDetails[pitchKey]!.take(1))
+                  for (final wiktionaryEntry
+                      in result.wiktionaryDetails[pitchKey]!.take(1))
                     Row(
                       children: [
-                        Icon(Icons.menu_book, size: 14, color: Colors.blue[700]),
+                        Icon(
+                          Icons.menu_book,
+                          size: 14,
+                          color: Colors.blue[700],
+                        ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -376,11 +402,13 @@ String extractTextFromJson(dynamic content) {
   if (content is List) return content.map(extractTextFromJson).join(' ');
   if (content is Map<String, dynamic>) {
     final result = <String>[];
-    if (content['content'] != null) result.add(extractTextFromJson(content['content']));
-    if (content['text'] != null) result.add(extractTextFromJson(content['text']));
-    if (content['title'] != null) result.add(extractTextFromJson(content['title']));
+    if (content['content'] != null)
+      result.add(extractTextFromJson(content['content']));
+    if (content['text'] != null)
+      result.add(extractTextFromJson(content['text']));
+    if (content['title'] != null)
+      result.add(extractTextFromJson(content['title']));
     return result.where((s) => s.isNotEmpty).join(' ');
   }
   return content.toString();
 }
-

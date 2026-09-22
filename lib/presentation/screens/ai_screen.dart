@@ -40,9 +40,12 @@ class _AiScreenState extends State<AiScreen> {
         actions: [
           DropdownButton<String>(
             value: provider.selectedProvider,
-        items: [
-          DropdownMenuItem(value: 'Gemini', child: Text('Gemini')),
-          DropdownMenuItem(value: 'ChatGPT', child: Text(AppLocalizations.of(context)!.chatGptMock)),
+            items: [
+              DropdownMenuItem(value: 'Gemini', child: Text('Gemini')),
+              DropdownMenuItem(
+                value: 'ChatGPT',
+                child: Text(AppLocalizations.of(context)!.chatGptMock),
+              ),
             ],
             onChanged: (val) => provider.setProvider(val!),
           ),
@@ -54,9 +57,9 @@ class _AiScreenState extends State<AiScreen> {
       ),
       body: Column(
         children: [
-        // Templates
-        SizedBox(
-          height: ScreenSize.isCompact(context) ? 40 : 50,
+          // Templates
+          SizedBox(
+            height: ScreenSize.isCompact(context) ? 40 : 50,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -80,7 +83,8 @@ class _AiScreenState extends State<AiScreen> {
                   child: ActionChip(
                     avatar: const Icon(Icons.translate, size: 16),
                     label: Text(AppLocalizations.of(context)!.translate),
-                    onPressed: () => provider.runTranslate(_controller.text, 'English'),
+                    onPressed: () =>
+                        provider.runTranslate(_controller.text, 'English'),
                   ),
                 ),
                 Padding(
@@ -108,9 +112,13 @@ class _AiScreenState extends State<AiScreen> {
               padding: const EdgeInsets.all(12),
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                color: theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.3,
+                ),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,10 +126,16 @@ class _AiScreenState extends State<AiScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(AppLocalizations.of(context)!.aiBreakdown, style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary)),
+                      Text(
+                        AppLocalizations.of(context)!.aiBreakdown,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
                       IconButton(
                         icon: const Icon(Icons.close, size: 16),
-                        onPressed: () => provider.updateSettings(), // This will just refresh UI
+                        onPressed: () => provider
+                            .updateSettings(), // This will just refresh UI
                       ),
                     ],
                   ),
@@ -133,15 +147,29 @@ class _AiScreenState extends State<AiScreen> {
                       return Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.1,
+                          ),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+                          border: Border.all(
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.2,
+                            ),
+                          ),
                         ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(item['term']!, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            Text(item['meaning']!, style: theme.textTheme.bodySmall),
+                            Text(
+                              item['term']!,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              item['meaning']!,
+                              style: theme.textTheme.bodySmall,
+                            ),
                           ],
                         ),
                       );
@@ -160,19 +188,21 @@ class _AiScreenState extends State<AiScreen> {
                 final msg = provider.messages[index];
                 final isUser = msg.sender == AiSender.user;
                 return Align(
-                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: isUser
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
                   child: Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(12),
                     constraints: BoxConstraints(
-                maxWidth: ScreenSize.isCompact(context)
-                    ? MediaQuery.of(context).size.width * 0.9
-                    : MediaQuery.of(context).size.width * 0.8,
-              ),
+                      maxWidth: ScreenSize.isCompact(context)
+                          ? MediaQuery.of(context).size.width * 0.9
+                          : MediaQuery.of(context).size.width * 0.8,
+                    ),
                     decoration: BoxDecoration(
-                      color: isUser 
-                        ? theme.colorScheme.primaryContainer 
-                        : theme.colorScheme.secondaryContainer,
+                      color: isUser
+                          ? theme.colorScheme.primaryContainer
+                          : theme.colorScheme.secondaryContainer,
                       borderRadius: BorderRadius.circular(16).copyWith(
                         bottomRight: isUser ? const Radius.circular(0) : null,
                         bottomLeft: !isUser ? const Radius.circular(0) : null,
@@ -192,9 +222,9 @@ class _AiScreenState extends State<AiScreen> {
                         Text(
                           msg.text,
                           style: TextStyle(
-                            color: isUser 
-                              ? theme.colorScheme.onPrimaryContainer 
-                              : theme.colorScheme.onSecondaryContainer,
+                            color: isUser
+                                ? theme.colorScheme.onPrimaryContainer
+                                : theme.colorScheme.onSecondaryContainer,
                           ),
                         ),
                       ],
@@ -209,18 +239,18 @@ class _AiScreenState extends State<AiScreen> {
               padding: EdgeInsets.all(8.0),
               child: LinearProgressIndicator(),
             ),
-        // Input Area
-        Padding(
-          padding: ScreenSize.adaptivePadding(context),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          // Input Area
+          Padding(
+            padding: ScreenSize.adaptivePadding(context),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Expanded(
                   child: TextField(
                     controller: _controller,
                     maxLines: null,
-        decoration: InputDecoration(
-          hintText: AppLocalizations.of(context)!.askAnything,
+                    decoration: InputDecoration(
+                      hintText: AppLocalizations.of(context)!.askAnything,
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -229,23 +259,23 @@ class _AiScreenState extends State<AiScreen> {
                 Column(
                   children: [
                     IconButton.filled(
-                      onPressed: provider.isLoading 
-                        ? null 
-                        : () {
-                            provider.sendMessage(_controller.text);
-                            _controller.clear();
-                            _scrollToBottom();
-                          },
+                      onPressed: provider.isLoading
+                          ? null
+                          : () {
+                              provider.sendMessage(_controller.text);
+                              _controller.clear();
+                              _scrollToBottom();
+                            },
                       icon: const Icon(Icons.send),
                     ),
                     IconButton(
-                      onPressed: provider.isLoading 
-                        ? null 
-                        : () {
-                            provider.generateImage(_controller.text);
-                            _controller.clear();
-                            _scrollToBottom();
-                          },
+                      onPressed: provider.isLoading
+                          ? null
+                          : () {
+                              provider.generateImage(_controller.text);
+                              _controller.clear();
+                              _scrollToBottom();
+                            },
                       icon: const Icon(Icons.image),
                       tooltip: AppLocalizations.of(context)!.generateImage,
                     ),

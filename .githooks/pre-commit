@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Auto-format dart sources before commit. Install via `git config core.hooksPath .githooks`.
+set -e
+
+cd "$(git rev-parse --show-toplevel)"
+STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep '\.dart$' || true)
+if [ -z "$STAGED" ]; then
+  exit 0
+fi
+command -v dart >/dev/null 2>&1 || { echo "dart not found; skipping format"; exit 0; }
+echo "Running dart format on ${#STAGED[@]} files"
+echo "$STAGED" | xargs -r dart format
+echo "$STAGED" | xargs -r git add --

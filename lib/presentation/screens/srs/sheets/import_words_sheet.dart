@@ -65,10 +65,7 @@ class _ImportWordsSheetState extends State<ImportWordsSheet> {
           title: const Text('Import Words'),
           actions: [
             if (!_importing)
-              TextButton(
-                onPressed: _import,
-                child: const Text('Import'),
-              ),
+              TextButton(onPressed: _import, child: const Text('Import')),
           ],
         ),
         body: Padding(
@@ -77,11 +74,20 @@ class _ImportWordsSheetState extends State<ImportWordsSheet> {
             children: [
               SegmentedButton<String>(
                 segments: const [
-                  ButtonSegment(value: 'paste', label: Text('Paste'), icon: Icon(Icons.content_paste)),
-                  ButtonSegment(value: 'csv', label: Text('CSV'), icon: Icon(Icons.table_chart)),
+                  ButtonSegment(
+                    value: 'paste',
+                    label: Text('Paste'),
+                    icon: Icon(Icons.content_paste),
+                  ),
+                  ButtonSegment(
+                    value: 'csv',
+                    label: Text('CSV'),
+                    icon: Icon(Icons.table_chart),
+                  ),
                 ],
                 selected: {_inputMethod},
-                onSelectionChanged: (s) => setState(() => _inputMethod = s.first),
+                onSelectionChanged: (s) =>
+                    setState(() => _inputMethod = s.first),
               ),
               const SizedBox(height: 16),
               Expanded(
@@ -111,7 +117,11 @@ class _ImportWordsSheetState extends State<ImportWordsSheet> {
                     child: FilledButton(
                       onPressed: _importing ? null : _import,
                       child: _importing
-                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
                           : const Text('Import'),
                     ),
                   ),

@@ -11,10 +11,7 @@ class SupabaseService {
   bool get isInitialized => _client.auth.currentSession != null;
   String? get currentUserId => _client.auth.currentUser?.id;
 
-  Future<void> init({
-    required String url,
-    required String anonKey,
-  }) async {
+  Future<void> init({required String url, required String anonKey}) async {
     await Supabase.initialize(url: url, anonKey: anonKey);
   }
 

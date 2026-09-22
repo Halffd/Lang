@@ -3,17 +3,19 @@ import '../entities/analyzed_word.dart';
 
 abstract class AnalyzerRepository {
   Future<void> init();
-  
+
   // Settings
   Future<Map<String, dynamic>> getSettings();
   Future<void> saveSettings(Map<String, dynamic> settings);
-  
+
   // Analysis
   Future<List<String>> tokenizeText(String text, String lang);
   Map<String, String> splitSentences(List<String> tokens);
-  
+
   // Dictionary / Lookup
-  Future<AnalyzedWord> enrichWord(String word, String lang, {
+  Future<AnalyzedWord> enrichWord(
+    String word,
+    String lang, {
     bool showIchiMoe = true,
     bool showWiktionary = true,
     bool showKanji = true,
@@ -32,7 +34,7 @@ abstract class AnalyzerRepository {
   Future<void> removeSavedWord(String word);
   Future<List<Map<String, dynamic>>> getSavedWords();
   Future<bool> isWordSaved(String word);
-  
+
   // History
   Future<List<String>> getHistory();
   Future<void> addToHistory(String word);

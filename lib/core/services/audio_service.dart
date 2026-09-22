@@ -6,7 +6,7 @@ class AudioService {
   bool _useSystemTts = false;
   Process? _currentProcess;
 
-Future<void> init() async {
+  Future<void> init() async {
     if (Platform.isLinux) {
       _useSystemTts = true;
       return;
@@ -48,34 +48,57 @@ Future<void> init() async {
 
   String _getLinuxVoice(String lang) {
     switch (lang) {
-      case 'ja': return 'ja';
-      case 'zh': return 'zh';
-      case 'en': return 'en';
-      case 'es': return 'es';
-      case 'fr': return 'fr';
-      case 'de': return 'de';
-      case 'ko': return 'ko';
-      case 'ru': return 'ru';
-      case 'it': return 'it';
-      case 'pt': return 'pt';
-      default: return 'en';
+      case 'ja':
+        return 'ja';
+      case 'zh':
+        return 'zh';
+      case 'en':
+        return 'en';
+      case 'es':
+        return 'es';
+      case 'fr':
+        return 'fr';
+      case 'de':
+        return 'de';
+      case 'ko':
+        return 'ko';
+      case 'ru':
+        return 'ru';
+      case 'it':
+        return 'it';
+      case 'pt':
+        return 'pt';
+      default:
+        return 'en';
     }
   }
 
   String _getLocale(String lang) {
     switch (lang) {
-      case 'ja': return 'ja-JP';
-      case 'zh': return 'zh-CN';
-      case 'en': return 'en-US';
-      case 'es': return 'es-ES';
-      case 'fr': return 'fr-FR';
-      case 'de': return 'de-DE';
-      case 'ko': return 'ko-KR';
-      case 'ru': return 'ru-RU';
-      case 'it': return 'it-IT';
-      case 'pt': return 'pt-BR';
-      case 'id': return 'id-ID';
-      default: return 'en-US';
+      case 'ja':
+        return 'ja-JP';
+      case 'zh':
+        return 'zh-CN';
+      case 'en':
+        return 'en-US';
+      case 'es':
+        return 'es-ES';
+      case 'fr':
+        return 'fr-FR';
+      case 'de':
+        return 'de-DE';
+      case 'ko':
+        return 'ko-KR';
+      case 'ru':
+        return 'ru-RU';
+      case 'it':
+        return 'it-IT';
+      case 'pt':
+        return 'pt-BR';
+      case 'id':
+        return 'id-ID';
+      default:
+        return 'en-US';
     }
   }
 }

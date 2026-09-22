@@ -137,22 +137,58 @@ class ChineseUtil {
 
   static String _removeTone(String pinyin) {
     return pinyin
-        .replaceAll('ā', 'a').replaceAll('á', 'a').replaceAll('ǎ', 'a').replaceAll('à', 'a')
-        .replaceAll('ē', 'e').replaceAll('é', 'e').replaceAll('ě', 'e').replaceAll('è', 'e')
-        .replaceAll('ī', 'i').replaceAll('í', 'i').replaceAll('ǐ', 'i').replaceAll('ì', 'i')
-        .replaceAll('ō', 'o').replaceAll('ó', 'o').replaceAll('ǒ', 'o').replaceAll('ò', 'o')
-        .replaceAll('ū', 'u').replaceAll('ú', 'u').replaceAll('ǔ', 'u').replaceAll('ù', 'u')
-        .replaceAll('ǖ', 'v').replaceAll('ǘ', 'v').replaceAll('ǚ', 'v').replaceAll('ǜ', 'v');
+        .replaceAll('ā', 'a')
+        .replaceAll('á', 'a')
+        .replaceAll('ǎ', 'a')
+        .replaceAll('à', 'a')
+        .replaceAll('ē', 'e')
+        .replaceAll('é', 'e')
+        .replaceAll('ě', 'e')
+        .replaceAll('è', 'e')
+        .replaceAll('ī', 'i')
+        .replaceAll('í', 'i')
+        .replaceAll('ǐ', 'i')
+        .replaceAll('ì', 'i')
+        .replaceAll('ō', 'o')
+        .replaceAll('ó', 'o')
+        .replaceAll('ǒ', 'o')
+        .replaceAll('ò', 'o')
+        .replaceAll('ū', 'u')
+        .replaceAll('ú', 'u')
+        .replaceAll('ǔ', 'u')
+        .replaceAll('ù', 'u')
+        .replaceAll('ǖ', 'v')
+        .replaceAll('ǘ', 'v')
+        .replaceAll('ǚ', 'v')
+        .replaceAll('ǜ', 'v');
   }
 
   static String _toToneNumber(String pinyin) {
     return pinyin
-        .replaceAll('ā', 'a1').replaceAll('á', 'a2').replaceAll('ǎ', 'a3').replaceAll('à', 'a4')
-        .replaceAll('ē', 'e1').replaceAll('é', 'e2').replaceAll('ě', 'e3').replaceAll('è', 'e4')
-        .replaceAll('ī', 'i1').replaceAll('í', 'i2').replaceAll('ǐ', 'i3').replaceAll('ì', 'i4')
-        .replaceAll('ō', 'o1').replaceAll('ó', 'o2').replaceAll('ǒ', 'o3').replaceAll('ò', 'o4')
-        .replaceAll('ū', 'u1').replaceAll('ú', 'u2').replaceAll('ǔ', 'u3').replaceAll('ù', 'u4')
-        .replaceAll('ǖ', 'v1').replaceAll('ǘ', 'v2').replaceAll('ǚ', 'v3').replaceAll('ǜ', 'v4');
+        .replaceAll('ā', 'a1')
+        .replaceAll('á', 'a2')
+        .replaceAll('ǎ', 'a3')
+        .replaceAll('à', 'a4')
+        .replaceAll('ē', 'e1')
+        .replaceAll('é', 'e2')
+        .replaceAll('ě', 'e3')
+        .replaceAll('è', 'e4')
+        .replaceAll('ī', 'i1')
+        .replaceAll('í', 'i2')
+        .replaceAll('ǐ', 'i3')
+        .replaceAll('ì', 'i4')
+        .replaceAll('ō', 'o1')
+        .replaceAll('ó', 'o2')
+        .replaceAll('ǒ', 'o3')
+        .replaceAll('ò', 'o4')
+        .replaceAll('ū', 'u1')
+        .replaceAll('ú', 'u2')
+        .replaceAll('ǔ', 'u3')
+        .replaceAll('ù', 'u4')
+        .replaceAll('ǖ', 'v1')
+        .replaceAll('ǘ', 'v2')
+        .replaceAll('ǚ', 'v3')
+        .replaceAll('ǜ', 'v4');
   }
 
   static bool containsChinese(String text) {
@@ -164,10 +200,15 @@ class ChineseUtil {
   }
 
   static bool containsIdeographic(String text) {
-    return RegExp(r'[\u4E00-\u9FFF\u3400-\u4DBF\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7AF]').hasMatch(text);
+    return RegExp(
+      r'[\u4E00-\u9FFF\u3400-\u4DBF\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7AF]',
+    ).hasMatch(text);
   }
 
-  static String toPinyin(String text, {PinyinFormat format = PinyinFormat.withToneMark}) {
+  static String toPinyin(
+    String text, {
+    PinyinFormat format = PinyinFormat.withToneMark,
+  }) {
     if (text.isEmpty) return '';
     final buffer = StringBuffer();
     for (int i = 0; i < text.length; i++) {
@@ -194,7 +235,10 @@ class ChineseUtil {
     return toPinyin(text, format: PinyinFormat.withoutTone);
   }
 
-  static String toSpacedPinyin(String text, {PinyinFormat format = PinyinFormat.withToneMark}) {
+  static String toSpacedPinyin(
+    String text, {
+    PinyinFormat format = PinyinFormat.withToneMark,
+  }) {
     return toPinyin(text, format: format);
   }
 
@@ -223,7 +267,8 @@ class ChineseUtil {
     if (text.isEmpty) return false;
     final words = text.split(RegExp(r'\s'));
     if (words.length > 10) return false;
-    return RegExp(r'^[a-zA-Z\s]+$').hasMatch(text) && words.any((w) => w.length > 1);
+    return RegExp(r'^[a-zA-Z\s]+$').hasMatch(text) &&
+        words.any((w) => w.length > 1);
   }
 
   static String normalizeForSearch(String text) {

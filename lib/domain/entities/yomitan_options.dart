@@ -50,13 +50,13 @@ class GeneralSettings {
   bool enableApi = false;
 
   Map<String, dynamic> toJson() => {
-        'enabled': enabled,
-        'language': language,
-        'showWelcomeGuide': showWelcomeGuide,
-        'showLookupInContextMenu': showLookupInContextMenu,
-        'maximumNumberOfResults': maximumNumberOfResults,
-        'enableApi': enableApi,
-      };
+    'enabled': enabled,
+    'language': language,
+    'showWelcomeGuide': showWelcomeGuide,
+    'showLookupInContextMenu': showLookupInContextMenu,
+    'maximumNumberOfResults': maximumNumberOfResults,
+    'enableApi': enableApi,
+  };
 
   void fromJson(Map<String, dynamic> json) {
     enabled = json['enabled'] ?? enabled;
@@ -80,10 +80,10 @@ class StorageSettings {
   bool persistentStorage = true;
 
   Map<String, dynamic> toJson() => {
-        'frequencySortingDictionary': frequencySortingDictionary,
-        'frequencySortingMode': frequencySortingMode.name,
-        'persistentStorage': persistentStorage,
-      };
+    'frequencySortingDictionary': frequencySortingDictionary,
+    'frequencySortingMode': frequencySortingMode.name,
+    'persistentStorage': persistentStorage,
+  };
 
   void fromJson(Map<String, dynamic> json) {
     frequencySortingDictionary =
@@ -103,7 +103,7 @@ class StorageSettings {
 class ScanningSettings {
   ScanModifierKey scanModifierKey = ScanModifierKey.shift;
   bool scanUsingMiddleMouseButton = true;
-  int scanDelay =0;
+  int scanDelay = 0;
   bool scanWithoutMouseMove = false;
   bool selectMatchedText = true;
   bool searchNonJapaneseText = true;
@@ -114,24 +114,33 @@ class ScanningSettings {
   int textScanLength = 400;
   int sentenceScanningExtent = 200;
   List<String> sentenceTerminationCharacters = [
-    '。', '！', '？', '.', '!', '?', '‼', '⁉', '｡', '！',
+    '。',
+    '！',
+    '？',
+    '.',
+    '!',
+    '?',
+    '‼',
+    '⁉',
+    '｡',
+    '！',
   ];
 
   Map<String, dynamic> toJson() => {
-        'scanModifierKey': scanModifierKey.name,
-        'scanUsingMiddleMouseButton': scanUsingMiddleMouseButton,
-        'scanDelay': scanDelay,
-        'scanWithoutMouseMove': scanWithoutMouseMove,
-        'selectMatchedText': selectMatchedText,
-        'searchNonJapaneseText': searchNonJapaneseText,
-        'layoutAwareScanning': layoutAwareScanning,
-        'deepContentScanning': deepContentScanning,
-        'normalizeCssZoom': normalizeCssZoom,
-        'wildcardScanning': wildcardScanning,
-        'textScanLength': textScanLength,
-        'sentenceScanningExtent': sentenceScanningExtent,
-        'sentenceTerminationCharacters': sentenceTerminationCharacters,
-      };
+    'scanModifierKey': scanModifierKey.name,
+    'scanUsingMiddleMouseButton': scanUsingMiddleMouseButton,
+    'scanDelay': scanDelay,
+    'scanWithoutMouseMove': scanWithoutMouseMove,
+    'selectMatchedText': selectMatchedText,
+    'searchNonJapaneseText': searchNonJapaneseText,
+    'layoutAwareScanning': layoutAwareScanning,
+    'deepContentScanning': deepContentScanning,
+    'normalizeCssZoom': normalizeCssZoom,
+    'wildcardScanning': wildcardScanning,
+    'textScanLength': textScanLength,
+    'sentenceScanningExtent': sentenceScanningExtent,
+    'sentenceTerminationCharacters': sentenceTerminationCharacters,
+  };
 
   void fromJson(Map<String, dynamic> json) {
     scanModifierKey = ScanModifierKey.values.firstWhere(
@@ -143,7 +152,8 @@ class ScanningSettings {
     scanDelay = json['scanDelay'] ?? scanDelay;
     scanWithoutMouseMove = json['scanWithoutMouseMove'] ?? scanWithoutMouseMove;
     selectMatchedText = json['selectMatchedText'] ?? selectMatchedText;
-    searchNonJapaneseText = json['searchNonJapaneseText'] ?? searchNonJapaneseText;
+    searchNonJapaneseText =
+        json['searchNonJapaneseText'] ?? searchNonJapaneseText;
     layoutAwareScanning = json['layoutAwareScanning'] ?? layoutAwareScanning;
     deepContentScanning = json['deepContentScanning'] ?? deepContentScanning;
     normalizeCssZoom = json['normalizeCssZoom'] ?? normalizeCssZoom;
@@ -174,16 +184,16 @@ class PopupBehaviorSettings {
   bool showIframePopupsInRootFrame = false;
 
   Map<String, dynamic> toJson() => {
-        'allowScanningSearchPage': allowScanningSearchPage,
-        'allowScanningPopupContent': allowScanningPopupContent,
-        'maximumNumberOfChildPopups': maximumNumberOfChildPopups,
-        'allowScanningPopupSourceTerms': allowScanningPopupSourceTerms,
-        'autoHideSearchPopup': autoHideSearchPopup,
-        'hidePopupOnCursorExit': hidePopupOnCursorExit,
-        'reducedMotionScrolling': reducedMotionScrolling,
-        'searchOnClickFromResultsList': searchOnClickFromResultsList,
-        'showIframePopupsInRootFrame': showIframePopupsInRootFrame,
-      };
+    'allowScanningSearchPage': allowScanningSearchPage,
+    'allowScanningPopupContent': allowScanningPopupContent,
+    'maximumNumberOfChildPopups': maximumNumberOfChildPopups,
+    'allowScanningPopupSourceTerms': allowScanningPopupSourceTerms,
+    'autoHideSearchPopup': autoHideSearchPopup,
+    'hidePopupOnCursorExit': hidePopupOnCursorExit,
+    'reducedMotionScrolling': reducedMotionScrolling,
+    'searchOnClickFromResultsList': searchOnClickFromResultsList,
+    'showIframePopupsInRootFrame': showIframePopupsInRootFrame,
+  };
 
   void fromJson(Map<String, dynamic> json) {
     allowScanningSearchPage =
@@ -228,22 +238,21 @@ class AppearanceSettings {
   bool pitchAccentPosition = true;
 
   Map<String, dynamic> toJson() => {
-        'theme': theme.name,
-        'fontSize': fontSize,
-        'lineHeight': lineHeight,
-        'fontFamily': fontFamily,
-        'compactGlossaries': compactGlossaries,
-        'compactTags': compactTags,
-        'showTagsForExpressionsAndReadings':
-            showTagsForExpressionsAndReadings,
-        'termDisplayStyle': termDisplayStyle.name,
-        'readingDisplayMode': readingDisplayMode.name,
-        'frequencyDisplayStyle': frequencyDisplayStyle,
-        'selectionIndicatorStyle': selectionIndicatorStyle.name,
-        'pitchAccentDownstep': pitchAccentDownstep,
-        'pitchAccentGraph': pitchAccentGraph,
-        'pitchAccentPosition': pitchAccentPosition,
-      };
+    'theme': theme.name,
+    'fontSize': fontSize,
+    'lineHeight': lineHeight,
+    'fontFamily': fontFamily,
+    'compactGlossaries': compactGlossaries,
+    'compactTags': compactTags,
+    'showTagsForExpressionsAndReadings': showTagsForExpressionsAndReadings,
+    'termDisplayStyle': termDisplayStyle.name,
+    'readingDisplayMode': readingDisplayMode.name,
+    'frequencyDisplayStyle': frequencyDisplayStyle,
+    'selectionIndicatorStyle': selectionIndicatorStyle.name,
+    'pitchAccentDownstep': pitchAccentDownstep,
+    'pitchAccentGraph': pitchAccentGraph,
+    'pitchAccentPosition': pitchAccentPosition,
+  };
 
   void fromJson(Map<String, dynamic> json) {
     theme = ThemePreset.values.firstWhere(
@@ -257,7 +266,7 @@ class AppearanceSettings {
     compactTags = json['compactTags'] ?? compactTags;
     showTagsForExpressionsAndReadings =
         json['showTagsForExpressionsAndReadings'] ??
-            showTagsForExpressionsAndReadings;
+        showTagsForExpressionsAndReadings;
     termDisplayStyle = TermDisplayStyle.values.firstWhere(
       (t) => t.name == json['termDisplayStyle'],
       orElse: () => TermDisplayStyle.frequencyTag,
@@ -266,7 +275,8 @@ class AppearanceSettings {
       (r) => r.name == json['readingDisplayMode'],
       orElse: () => ReadingDisplayMode.okurigana,
     );
-    frequencyDisplayStyle = json['frequencyDisplayStyle'] ?? frequencyDisplayStyle;
+    frequencyDisplayStyle =
+        json['frequencyDisplayStyle'] ?? frequencyDisplayStyle;
     selectionIndicatorStyle = SelectionIndicatorStyle.values.firstWhere(
       (s) => s.name == json['selectionIndicatorStyle'],
       orElse: () => SelectionIndicatorStyle.underline,
@@ -294,17 +304,17 @@ class PopupPositionSettings {
   double verticalOffset = 0;
 
   Map<String, dynamic> toJson() => {
-        'displayMode': displayMode.name,
-        'scale': scale,
-        'autoScale': autoScale,
-        'zoomLevel': zoomLevel,
-        'width': width,
-        'height': height,
-        'horizontalPosition': horizontalPosition.name,
-        'verticalPosition': verticalPosition.name,
-        'horizontalOffset': horizontalOffset,
-        'verticalOffset': verticalOffset,
-      };
+    'displayMode': displayMode.name,
+    'scale': scale,
+    'autoScale': autoScale,
+    'zoomLevel': zoomLevel,
+    'width': width,
+    'height': height,
+    'horizontalPosition': horizontalPosition.name,
+    'verticalPosition': verticalPosition.name,
+    'horizontalOffset': horizontalOffset,
+    'verticalOffset': verticalOffset,
+  };
 
   void fromJson(Map<String, dynamic> json) {
     displayMode = PopupDisplayMode.values.firstWhere(
@@ -346,15 +356,15 @@ class SearchWindowSettings {
   String topMode = 'top';
 
   Map<String, dynamic> toJson() => {
-        'stickySearchHeader': stickySearchHeader,
-        'useNativeWindow': useNativeWindow,
-        'width': width,
-        'height': height,
-        'left': left,
-        'leftMode': leftMode,
-        'top': top,
-        'topMode': topMode,
-      };
+    'stickySearchHeader': stickySearchHeader,
+    'useNativeWindow': useNativeWindow,
+    'width': width,
+    'height': height,
+    'left': left,
+    'leftMode': leftMode,
+    'top': top,
+    'topMode': topMode,
+  };
 
   void fromJson(Map<String, dynamic> json) {
     stickySearchHeader = json['stickySearchHeader'] ?? stickySearchHeader;
@@ -380,12 +390,12 @@ class AudioSettings {
   List<String> sources = ['jpod101', 'jisho', 'text-to-speech', 'custom'];
 
   Map<String, dynamic> toJson() => {
-        'enabled': enabled,
-        'autoPlaySearchResultAudio': autoPlaySearchResultAudio,
-        'fallbackSound': fallbackSound,
-        'volume': volume,
-        'sources': sources,
-      };
+    'enabled': enabled,
+    'autoPlaySearchResultAudio': autoPlaySearchResultAudio,
+    'fallbackSound': fallbackSound,
+    'volume': volume,
+    'sources': sources,
+  };
 
   void fromJson(Map<String, dynamic> json) {
     enabled = json['enabled'] ?? enabled;
@@ -407,17 +417,15 @@ class TextParsingSettings {
   bool parseMecab = false;
   bool showSpaceBetweenParsedWords = false;
   int sentenceScanningExtent = 200;
-  List<String> sentenceTerminationCharacters = [
-    '。', '！', '？', '.', '!', '?',
-  ];
+  List<String> sentenceTerminationCharacters = ['。', '！', '？', '.', '!', '?'];
 
   Map<String, dynamic> toJson() => {
-        'parseInternalParser': parseInternalParser,
-        'parseMecab': parseMecab,
-        'showSpaceBetweenParsedWords': showSpaceBetweenParsedWords,
-        'sentenceScanningExtent': sentenceScanningExtent,
-        'sentenceTerminationCharacters': sentenceTerminationCharacters,
-      };
+    'parseInternalParser': parseInternalParser,
+    'parseMecab': parseMecab,
+    'showSpaceBetweenParsedWords': showSpaceBetweenParsedWords,
+    'sentenceScanningExtent': sentenceScanningExtent,
+    'sentenceTerminationCharacters': sentenceTerminationCharacters,
+  };
 
   void fromJson(Map<String, dynamic> json) {
     parseInternalParser = json['parseInternalParser'] ?? parseInternalParser;
@@ -445,9 +453,9 @@ class TranslationSettings {
   List<Map<String, String>> customTextReplacements = [];
 
   Map<String, dynamic> toJson() => {
-        'searchResolutionFull': searchResolutionFull,
-        'customTextReplacements': customTextReplacements,
-      };
+    'searchResolutionFull': searchResolutionFull,
+    'customTextReplacements': customTextReplacements,
+  };
 
   void fromJson(Map<String, dynamic> json) {
     searchResolutionFull = json['searchResolutionFull'] ?? searchResolutionFull;
@@ -472,11 +480,11 @@ class ClipboardSettings {
   ClipboardSearchMode searchMode = ClipboardSearchMode.replace;
 
   Map<String, dynamic> toJson() => {
-        'enableBackgroundMonitoring': enableBackgroundMonitoring,
-        'enableSearchPageMonitoring': enableSearchPageMonitoring,
-        'maximumSearchTextLength': maximumSearchTextLength,
-        'searchMode': searchMode.name,
-      };
+    'enableBackgroundMonitoring': enableBackgroundMonitoring,
+    'enableSearchPageMonitoring': enableSearchPageMonitoring,
+    'maximumSearchTextLength': maximumSearchTextLength,
+    'searchMode': searchMode.name,
+  };
 
   void fromJson(Map<String, dynamic> json) {
     enableBackgroundMonitoring =
@@ -499,7 +507,9 @@ class ClipboardSettings {
 class AccessibilitySettings {
   bool googleDocsCompatibilityMode = false;
 
-  Map<String, dynamic> toJson() => {'googleDocsCompatibilityMode': googleDocsCompatibilityMode};
+  Map<String, dynamic> toJson() => {
+    'googleDocsCompatibilityMode': googleDocsCompatibilityMode,
+  };
 
   void fromJson(Map<String, dynamic> json) {
     googleDocsCompatibilityMode =
@@ -512,13 +522,14 @@ class SecuritySettings {
   bool useSecurePopupFrameUrl = false;
 
   Map<String, dynamic> toJson() => {
-        'useSecureContainerAroundPopups': useSecureContainerAroundPopups,
-        'useSecurePopupFrameUrl': useSecurePopupFrameUrl,
-      };
+    'useSecureContainerAroundPopups': useSecureContainerAroundPopups,
+    'useSecurePopupFrameUrl': useSecurePopupFrameUrl,
+  };
 
   void fromJson(Map<String, dynamic> json) {
     useSecureContainerAroundPopups =
-        json['useSecureContainerAroundPopups'] ?? useSecureContainerAroundPopups;
+        json['useSecureContainerAroundPopups'] ??
+        useSecureContainerAroundPopups;
     useSecurePopupFrameUrl =
         json['useSecurePopupFrameUrl'] ?? useSecurePopupFrameUrl;
   }
@@ -534,9 +545,9 @@ class ResultDisplaySettings {
   bool averageFrequencies = false;
 
   Map<String, dynamic> toJson() => {
-        'resultGroupingMode': resultGroupingMode.name,
-        'averageFrequencies': averageFrequencies,
-      };
+    'resultGroupingMode': resultGroupingMode.name,
+    'averageFrequencies': averageFrequencies,
+  };
 
   void fromJson(Map<String, dynamic> json) {
     resultGroupingMode = ResultGroupingMode.values.firstWhere(
@@ -568,28 +579,29 @@ class AnkiSettings {
   String noteViewerWindow = 'default';
 
   Map<String, dynamic> toJson() => {
-        'enabled': enabled,
-        'serverAddress': serverAddress,
-        'tags': tags,
-        'apiKey': apiKey,
-        'checkForCardDuplicates': checkForCardDuplicates,
-        'duplicateScope': duplicateScope.name,
-        'duplicateAction': duplicateAction.name,
-        'prioritizeDuplicateChecks': prioritizeDuplicateChecks,
-        'screenshotFormat': screenshotFormat.name,
-        'idleDownloadTimeoutMs': idleDownloadTimeoutMs,
-        'suspendNewCards': suspendNewCards,
-        'showCardTagsAndFlags': showCardTagsAndFlags,
-        'forceSyncOnAddingCard': forceSyncOnAddingCard,
-        'noteViewerWindow': noteViewerWindow,
-      };
+    'enabled': enabled,
+    'serverAddress': serverAddress,
+    'tags': tags,
+    'apiKey': apiKey,
+    'checkForCardDuplicates': checkForCardDuplicates,
+    'duplicateScope': duplicateScope.name,
+    'duplicateAction': duplicateAction.name,
+    'prioritizeDuplicateChecks': prioritizeDuplicateChecks,
+    'screenshotFormat': screenshotFormat.name,
+    'idleDownloadTimeoutMs': idleDownloadTimeoutMs,
+    'suspendNewCards': suspendNewCards,
+    'showCardTagsAndFlags': showCardTagsAndFlags,
+    'forceSyncOnAddingCard': forceSyncOnAddingCard,
+    'noteViewerWindow': noteViewerWindow,
+  };
 
   void fromJson(Map<String, dynamic> json) {
     enabled = json['enabled'] ?? enabled;
     serverAddress = json['serverAddress'] ?? serverAddress;
     tags = json['tags'] ?? tags;
     apiKey = json['apiKey'] ?? apiKey;
-    checkForCardDuplicates = json['checkForCardDuplicates'] ?? checkForCardDuplicates;
+    checkForCardDuplicates =
+        json['checkForCardDuplicates'] ?? checkForCardDuplicates;
     duplicateScope = DuplicateScope.values.firstWhere(
       (s) => s.name == json['duplicateScope'],
       orElse: () => DuplicateScope.deck,
@@ -604,10 +616,12 @@ class AnkiSettings {
       (f) => f.name == json['screenshotFormat'],
       orElse: () => ScreenshotFormat.jpg,
     );
-    idleDownloadTimeoutMs = json['idleDownloadTimeoutMs'] ?? idleDownloadTimeoutMs;
+    idleDownloadTimeoutMs =
+        json['idleDownloadTimeoutMs'] ?? idleDownloadTimeoutMs;
     suspendNewCards = json['suspendNewCards'] ?? suspendNewCards;
     showCardTagsAndFlags = json['showCardTagsAndFlags'] ?? showCardTagsAndFlags;
-    forceSyncOnAddingCard = json['forceSyncOnAddingCard'] ?? forceSyncOnAddingCard;
+    forceSyncOnAddingCard =
+        json['forceSyncOnAddingCard'] ?? forceSyncOnAddingCard;
     noteViewerWindow = json['noteViewerWindow'] ?? noteViewerWindow;
   }
 }
@@ -642,50 +656,55 @@ class YomitanProfile {
   YomitanProfile(this.name);
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'general': general.toJson(),
-        'storage': storage.toJson(),
-        'scanning': scanning.toJson(),
-        'popupBehavior': popupBehavior.toJson(),
-        'appearance': appearance.toJson(),
-        'popupPosition': popupPosition.toJson(),
-        'searchWindow': searchWindow.toJson(),
-        'audio': audio.toJson(),
-        'textParsing': textParsing.toJson(),
-        'translation': translation.toJson(),
-        'clipboard': clipboard.toJson(),
-        'accessibility': accessibility.toJson(),
-        'security': security.toJson(),
-        'resultDisplay': resultDisplay.toJson(),
-        'anki': anki.toJson(),
-        'dictionarySettings': dictionarySettings.toJson(),
-      };
+    'name': name,
+    'general': general.toJson(),
+    'storage': storage.toJson(),
+    'scanning': scanning.toJson(),
+    'popupBehavior': popupBehavior.toJson(),
+    'appearance': appearance.toJson(),
+    'popupPosition': popupPosition.toJson(),
+    'searchWindow': searchWindow.toJson(),
+    'audio': audio.toJson(),
+    'textParsing': textParsing.toJson(),
+    'translation': translation.toJson(),
+    'clipboard': clipboard.toJson(),
+    'accessibility': accessibility.toJson(),
+    'security': security.toJson(),
+    'resultDisplay': resultDisplay.toJson(),
+    'anki': anki.toJson(),
+    'dictionarySettings': dictionarySettings.toJson(),
+  };
 
   static YomitanProfile fromJson(Map<String, dynamic> json) {
     final p = YomitanProfile(json['name'] as String? ?? 'Default');
     p.general.fromJson(json['general'] as Map<String, dynamic>? ?? {});
     p.storage.fromJson(json['storage'] as Map<String, dynamic>? ?? {});
     p.scanning.fromJson(json['scanning'] as Map<String, dynamic>? ?? {});
-    p.popupBehavior
-        .fromJson(json['popupBehavior'] as Map<String, dynamic>? ?? {});
+    p.popupBehavior.fromJson(
+      json['popupBehavior'] as Map<String, dynamic>? ?? {},
+    );
     p.appearance.fromJson(json['appearance'] as Map<String, dynamic>? ?? {});
-    p.popupPosition
-        .fromJson(json['popupPosition'] as Map<String, dynamic>? ?? {});
-    p.searchWindow
-        .fromJson(json['searchWindow'] as Map<String, dynamic>? ?? {});
+    p.popupPosition.fromJson(
+      json['popupPosition'] as Map<String, dynamic>? ?? {},
+    );
+    p.searchWindow.fromJson(
+      json['searchWindow'] as Map<String, dynamic>? ?? {},
+    );
     p.audio.fromJson(json['audio'] as Map<String, dynamic>? ?? {});
     p.textParsing.fromJson(json['textParsing'] as Map<String, dynamic>? ?? {});
-    p.translation
-        .fromJson(json['translation'] as Map<String, dynamic>? ?? {});
+    p.translation.fromJson(json['translation'] as Map<String, dynamic>? ?? {});
     p.clipboard.fromJson(json['clipboard'] as Map<String, dynamic>? ?? {});
-    p.accessibility
-        .fromJson(json['accessibility'] as Map<String, dynamic>? ?? {});
+    p.accessibility.fromJson(
+      json['accessibility'] as Map<String, dynamic>? ?? {},
+    );
     p.security.fromJson(json['security'] as Map<String, dynamic>? ?? {});
-    p.resultDisplay
-        .fromJson(json['resultDisplay'] as Map<String, dynamic>? ?? {});
+    p.resultDisplay.fromJson(
+      json['resultDisplay'] as Map<String, dynamic>? ?? {},
+    );
     p.anki.fromJson(json['anki'] as Map<String, dynamic>? ?? {});
-    p.dictionarySettings
-        .fromJson(json['dictionarySettings'] as Map<String, dynamic>? ?? {});
+    p.dictionarySettings.fromJson(
+      json['dictionarySettings'] as Map<String, dynamic>? ?? {},
+    );
     return p;
   }
 }
@@ -698,7 +717,8 @@ class YomitanOptions {
   List<YomitanProfile> profiles = [YomitanProfile('Default')];
   int activeProfileIndex = 0;
 
-  YomitanProfile get activeProfile => profiles[activeProfileIndex.clamp(0, profiles.length - 1)];
+  YomitanProfile get activeProfile =>
+      profiles[activeProfileIndex.clamp(0, profiles.length - 1)];
 
   // Global (not per-profile): dictionary enable map, export settings
   final Map<String, bool> dictionaryEnabled = {};
@@ -706,12 +726,12 @@ class YomitanOptions {
   int maxExportImageHeight = 640;
 
   Map<String, dynamic> toJson() => {
-        'profiles': profiles.map((p) => p.toJson()).toList(),
-        'activeProfileIndex': activeProfileIndex,
-        'dictionaryEnabled': dictionaryEnabled,
-        'maxExportImageWidth': maxExportImageWidth,
-        'maxExportImageHeight': maxExportImageHeight,
-      };
+    'profiles': profiles.map((p) => p.toJson()).toList(),
+    'activeProfileIndex': activeProfileIndex,
+    'dictionaryEnabled': dictionaryEnabled,
+    'maxExportImageWidth': maxExportImageWidth,
+    'maxExportImageHeight': maxExportImageHeight,
+  };
 
   static YomitanOptions fromJson(Map<String, dynamic> json) {
     final o = YomitanOptions();
@@ -735,8 +755,7 @@ class YomitanOptions {
   static YomitanOptions deserialize(String? raw) {
     if (raw == null || raw.isEmpty) return YomitanOptions();
     try {
-      return YomitanOptions.fromJson(
-          jsonDecode(raw) as Map<String, dynamic>);
+      return YomitanOptions.fromJson(jsonDecode(raw) as Map<String, dynamic>);
     } catch (_) {
       return YomitanOptions();
     }

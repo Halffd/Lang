@@ -75,20 +75,24 @@ class AnalyzerRepositoryImpl implements AnalyzerRepository {
     final localResults = await dictionaryLocalDataSource.lookupTerms(query);
     if (localResults.isEmpty) return [];
 
-    return await Future.wait(localResults.map((entry) async {
-      return enrichWord(
-        entry['expression'],
-        lang,
-        showIchiMoe: true,
-        showWiktionary: true,
-        showKanji: true,
-        showEtymology: true,
-      );
-    }));
+    return await Future.wait(
+      localResults.map((entry) async {
+        return enrichWord(
+          entry['expression'],
+          lang,
+          showIchiMoe: true,
+          showWiktionary: true,
+          showKanji: true,
+          showEtymology: true,
+        );
+      }),
+    );
   }
 
   @override
-  Future<AnalyzedWord> enrichWord(String word, String lang, {
+  Future<AnalyzedWord> enrichWord(
+    String word,
+    String lang, {
     bool showIchiMoe = true,
     bool showWiktionary = true,
     bool showKanji = true,

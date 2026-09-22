@@ -110,16 +110,13 @@ class _ScriptTextFieldState extends State<ScriptTextField> {
 
     // regex-replace each romanized word run
     final wordRun = RegExp("[a-zA-Z][a-zA-Z']*");
-    final converted = text.replaceAllMapped(
-      wordRun,
-      (m) {
-        final word = m.group(0)!;
-        if (_isJapanese) {
-          return JapaneseUtils.romajiToKana(word);
-        }
-        return ScriptConverter.latinToScript(word, widget.language);
-      },
-    );
+    final converted = text.replaceAllMapped(wordRun, (m) {
+      final word = m.group(0)!;
+      if (_isJapanese) {
+        return JapaneseUtils.romajiToKana(word);
+      }
+      return ScriptConverter.latinToScript(word, widget.language);
+    });
     if (converted != text) {
       widget.controller.text = converted;
       widget.controller.selection = TextSelection.collapsed(
@@ -135,17 +132,17 @@ class _ScriptTextFieldState extends State<ScriptTextField> {
         text.substring(0, start) + replacement + text.substring(end);
     final delta = replacement.length - (end - start);
     widget.controller.text = newText;
-    final newOffset = (sel.baseOffset < 0
-            ? newText.length
-            : (sel.baseOffset + delta))
-        .clamp(0, newText.length);
+    final newOffset =
+        (sel.baseOffset < 0 ? newText.length : (sel.baseOffset + delta)).clamp(
+          0,
+          newText.length,
+        );
     widget.controller.selection = TextSelection.collapsed(offset: newOffset);
   }
 
   bool _isRomajiChar(String c) {
     final code = c.codeUnitAt(0);
-    return (code >= 0x61 && code <= 0x7A) ||
-        (code >= 0x41 && code <= 0x5A);
+    return (code >= 0x61 && code <= 0x7A) || (code >= 0x41 && code <= 0x5A);
   }
 
   KeyEventResult _handleKey(FocusNode node, KeyEvent event) {

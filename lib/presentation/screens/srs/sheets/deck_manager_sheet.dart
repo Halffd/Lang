@@ -304,8 +304,7 @@ class _DeckManagerSheetState extends State<DeckManagerSheet> {
                                   _showAddDeckDialog(editDeck: deck);
                                 } else if (v == 'delete') {
                                   _confirmDeleteDeck(deck);
-                                }
-                                else if (v == 'select') {
+                                } else if (v == 'select') {
                                   widget.onDeckSelected(deck.id);
                                 }
                               },

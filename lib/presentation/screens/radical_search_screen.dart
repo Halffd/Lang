@@ -377,7 +377,9 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
                         children: [
                           Text(
                             '= ${_currentDecomposition!.components.join(' + ')}',
-                            style: TextStyle(fontSize: fs(context, 18, 'kanji')),
+                            style: TextStyle(
+                              fontSize: fs(context, 18, 'kanji'),
+                            ),
                           ),
                           if (_currentDecomposition!.description != null)
                             Text(
@@ -401,7 +403,10 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
                   children: _currentDecomposition!.components.map((comp) {
                     final isSelected = _selectedComponents.contains(comp);
                     return FilterChip(
-                      label: Text(comp, style: TextStyle(fontSize: fs(context, 18, 'kanji'))),
+                      label: Text(
+                        comp,
+                        style: TextStyle(fontSize: fs(context, 18, 'kanji')),
+                      ),
                       selected: isSelected,
                       onSelected: (_) => _toggleComponent(comp),
                     );
@@ -572,7 +577,9 @@ class _KanjiDetailSheet extends StatelessWidget {
                         if (meanings.isNotEmpty)
                           Text(
                             meanings.join(', '),
-                            style: TextStyle(fontSize: fs(context, 18, 'translations')),
+                            style: TextStyle(
+                              fontSize: fs(context, 18, 'translations'),
+                            ),
                           ),
                         if (onyomi.isNotEmpty) ...[
                           const SizedBox(height: 4),
@@ -600,7 +607,9 @@ class _KanjiDetailSheet extends StatelessWidget {
                               const SizedBox(width: 6),
                               Text(
                                 onyomi.join('・'),
-                                style: TextStyle(fontSize: fs(context, 14, 'words')),
+                                style: TextStyle(
+                                  fontSize: fs(context, 14, 'words'),
+                                ),
                               ),
                             ],
                           ),
@@ -631,7 +640,9 @@ class _KanjiDetailSheet extends StatelessWidget {
                               const SizedBox(width: 6),
                               Text(
                                 kunyomi.join('・'),
-                                style: TextStyle(fontSize: fs(context, 14, 'words')),
+                                style: TextStyle(
+                                  fontSize: fs(context, 14, 'words'),
+                                ),
                               ),
                             ],
                           ),
@@ -667,7 +678,12 @@ class _KanjiDetailSheet extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          Text(comp, style: TextStyle(fontSize: fs(context, 24, 'kanji'))),
+                          Text(
+                            comp,
+                            style: TextStyle(
+                              fontSize: fs(context, 24, 'kanji'),
+                            ),
+                          ),
                           if (result.decomposition!.description != null)
                             Text(
                               comp,

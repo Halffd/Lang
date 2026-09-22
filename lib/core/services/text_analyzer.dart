@@ -24,11 +24,13 @@ class TextAnalyzer {
   }
 
   // Analyze Japanese text
-  Future<List<WordFrequencyWithDefinition>> _analyzeJapanese(String text) async {
+  Future<List<WordFrequencyWithDefinition>> _analyzeJapanese(
+    String text,
+  ) async {
     await driftDb.clearWordOccurrences();
 
     try {
-      // Use existing dictionary tokenizer 
+      // Use existing dictionary tokenizer
       final tokens = await dictionaryService.tokenizeText(text);
       final wordOccurrences = <WordOccurrencesCompanion>[];
 
@@ -40,12 +42,16 @@ class TextAnalyzer {
           continue;
         }
 
-        wordOccurrences.add(WordOccurrencesCompanion.insert(
-          word: tokenText,
-          reading: Value(tokens[i].entry?.reading ?? ''),
-          baseForm: const Value(''), // Base form not available with current approach
-          position: i,
-        ));
+        wordOccurrences.add(
+          WordOccurrencesCompanion.insert(
+            word: tokenText,
+            reading: Value(tokens[i].entry?.reading ?? ''),
+            baseForm: const Value(
+              '',
+            ), // Base form not available with current approach
+            position: i,
+          ),
+        );
       }
 
       if (wordOccurrences.isNotEmpty) {
@@ -61,13 +67,15 @@ class TextAnalyzer {
   }
 
   // Analyze Chinese text using FTS5 approach (for demonstration)
-  Future<List<WordFrequencyWithDefinition>> _analyzeChineseWithFts5(String text) async {
+  Future<List<WordFrequencyWithDefinition>> _analyzeChineseWithFts5(
+    String text,
+  ) async {
     await driftDb.clearWordOccurrences();
 
     try {
       // For Chinese, we'll implement the FTS5 approach as described
       // This is a simplified version - in practice you'd want to use a proper tokenizer
-      
+
       // For now, we'll split Chinese text by character as a basic approach
       // that works reasonably well for Chinese since many words are single characters
       final chars = _splitChineseCharacters(text);
@@ -81,12 +89,14 @@ class TextAnalyzer {
           continue;
         }
 
-        wordOccurrences.add(WordOccurrencesCompanion.insert(
-          word: char,
-          reading: const Value(''), // No reading for pure Chinese chars
-          baseForm: const Value(''),
-          position: i,
-        ));
+        wordOccurrences.add(
+          WordOccurrencesCompanion.insert(
+            word: char,
+            reading: const Value(''), // No reading for pure Chinese chars
+            baseForm: const Value(''),
+            position: i,
+          ),
+        );
       }
 
       if (wordOccurrences.isNotEmpty) {
@@ -113,7 +123,9 @@ class TextAnalyzer {
   }
 
   // Fallback analysis using existing dictionary tokenizer
-  Future<List<WordFrequencyWithDefinition>> _analyzeWithDictionary(String text) async {
+  Future<List<WordFrequencyWithDefinition>> _analyzeWithDictionary(
+    String text,
+  ) async {
     await driftDb.clearWordOccurrences();
 
     try {
@@ -128,12 +140,16 @@ class TextAnalyzer {
           continue;
         }
 
-        wordOccurrences.add(WordOccurrencesCompanion.insert(
-          word: tokenText,
-          reading: Value(tokens[i].entry?.reading ?? ''),
-          baseForm: const Value(''), // Base form not available with current approach
-          position: i,
-        ));
+        wordOccurrences.add(
+          WordOccurrencesCompanion.insert(
+            word: tokenText,
+            reading: Value(tokens[i].entry?.reading ?? ''),
+            baseForm: const Value(
+              '',
+            ), // Base form not available with current approach
+            position: i,
+          ),
+        );
       }
 
       if (wordOccurrences.isNotEmpty) {
@@ -164,28 +180,55 @@ class TextAnalyzer {
   bool _isPunctuationOrParticle(String word) {
     // Common Japanese particles and punctuation to potentially exclude
     const particles = {
-      'は', 'が', 'を', 'に', 'へ', 'で', 'の', 'と', 'も', 'や', 'か', 
-      '、', '。', '「', '」', '『', '』', '（', '）', '…', '？', '！',
-      'から', 'まで', 'より'
+      'は',
+      'が',
+      'を',
+      'に',
+      'へ',
+      'で',
+      'の',
+      'と',
+      'も',
+      'や',
+      'か',
+      '、',
+      '。',
+      '「',
+      '」',
+      '『',
+      '』',
+      '（',
+      '）',
+      '…',
+      '？',
+      '！',
+      'から',
+      'まで',
+      'より',
     };
-    
+
     return particles.contains(word);
   }
-  
+
   // Method to analyze text and return only the most frequent words
-  Future<List<WordFrequencyWithDefinition>> analyzeTextTopWords(String text, {int limit = 100}) async {
+  Future<List<WordFrequencyWithDefinition>> analyzeTextTopWords(
+    String text, {
+    int limit = 100,
+  }) async {
     final allResults = await analyzeText(text);
     return allResults.take(limit).toList();
   }
-  
+
   // Enhanced analysis that includes Yomichan dictionary lookups as well
-  Future<List<EnhancedWordFrequency>> analyzeTextWithDictionary(String text) async {
+  Future<List<EnhancedWordFrequency>> analyzeTextWithDictionary(
+    String text,
+  ) async {
     final db = await dictionaryService.yomichanDatabase;
     final basicResults = await analyzeText(text);
-    
+
     // Enhance results with additional Yomichan dictionary data
     final enhancedResults = <EnhancedWordFrequency>[];
-    
+
     for (final result in basicResults) {
       // Get additional dictionary information from Yomichan database
       final dictionaryEntries = await db.query(
@@ -194,34 +237,36 @@ class TextAnalyzer {
         whereArgs: [result.word, result.word],
         limit: 5, // Get up to 5 matches
       );
-      
+
       // Get frequency data
       final frequencyData = await db.query(
         'frequencies',
         where: 'term = ?',
         whereArgs: [result.word],
       );
-      
+
       // Get pitch accent data
       final pitchData = await db.query(
         'pitches',
         where: 'term = ?',
         whereArgs: [result.word],
       );
-      
-      enhancedResults.add(EnhancedWordFrequency(
-        word: result.word,
-        count: result.count,
-        firstOccurrence: result.firstOccurrence,
-        definitions: result.definitions,
-        reading: result.reading,
-        popularity: result.popularity,
-        dictionaryEntries: dictionaryEntries.length,
-        frequencyData: frequencyData.length,
-        pitchData: pitchData.length,
-      ));
+
+      enhancedResults.add(
+        EnhancedWordFrequency(
+          word: result.word,
+          count: result.count,
+          firstOccurrence: result.firstOccurrence,
+          definitions: result.definitions,
+          reading: result.reading,
+          popularity: result.popularity,
+          dictionaryEntries: dictionaryEntries.length,
+          frequencyData: frequencyData.length,
+          pitchData: pitchData.length,
+        ),
+      );
     }
-    
+
     return enhancedResults;
   }
 }

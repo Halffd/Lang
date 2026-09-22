@@ -69,7 +69,10 @@ class _SettingsTabState extends State<SettingsTab> {
           ),
         ),
         const SizedBox(height: 24),
-        const Text('Keyboard Shortcuts (Study tab)', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text(
+          'Keyboard Shortcuts (Study tab)',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
         const _ShortcutRow('Space', 'Show/Hide answer'),
         const _ShortcutRow('1-5', 'Rate card (Again to Perfect)'),
@@ -80,9 +83,14 @@ class _SettingsTabState extends State<SettingsTab> {
               context: context,
               builder: (ctx) => AlertDialog(
                 title: const Text('Export Cards?'),
-                content: const Text('This would export all cards as JSON. Coming soon.'),
+                content: const Text(
+                  'This would export all cards as JSON. Coming soon.',
+                ),
                 actions: [
-                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('OK'),
+                  ),
                 ],
               ),
             );
@@ -113,7 +121,13 @@ class _ShortcutRow extends StatelessWidget {
               color: Colors.grey[300],
               borderRadius: BorderRadius.circular(4),
             ),
-            child: Text(shortcutKey, style: TextStyle(fontWeight: FontWeight.bold, fontSize: fs(context, 12))),
+            child: Text(
+              shortcutKey,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: fs(context, 12),
+              ),
+            ),
           ),
           const SizedBox(width: 8),
           Text(action, style: TextStyle(fontSize: fs(context, 14))),

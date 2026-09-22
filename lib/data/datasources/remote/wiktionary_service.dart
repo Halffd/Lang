@@ -10,7 +10,10 @@ class WiktionaryService {
   /// Parameters:
   /// - wordToSearch: The word to look up
   /// - languageCode: Language code (0 for zh, 1 for ja, 2 for id, defaults to en, >50 defaults to en)
-  Future<String> fetchWiktionaryData(String wordToSearch, [int? languageCode]) async {
+  Future<String> fetchWiktionaryData(
+    String wordToSearch, [
+    int? languageCode,
+  ]) async {
     String languageSubdomain = 'en';
 
     if (languageCode == 0) {
@@ -29,7 +32,9 @@ class WiktionaryService {
     String url = 'https://$languageSubdomain.wiktionary.org/wiki/$wordToSearch';
 
     try {
-      debugPrint('Wiktionary URL: $url'); // Keep for debugging during development
+      debugPrint(
+        'Wiktionary URL: $url',
+      ); // Keep for debugging during development
       final response = await http.get(
         Uri.parse(Uri.encodeFull(url)),
         headers: {'Content-Type': 'text/html; charset=UTF-8'},
@@ -42,7 +47,9 @@ class WiktionaryService {
       if (response.statusCode == 200) {
         return response.body;
       } else {
-        throw Exception('Failed to load Wiktionary data: ${response.statusCode}');
+        throw Exception(
+          'Failed to load Wiktionary data: ${response.statusCode}',
+        );
       }
     } catch (e) {
       debugPrint('Error fetching Wiktionary data: $e'); // Keep for debugging
@@ -51,13 +58,19 @@ class WiktionaryService {
   }
 
   /// Fetches Kanjipedia data for Chinese characters
-  Future<String> fetchKanjipediaData(String url, int flag, String word, bool isChineseCharacter) async {
+  Future<String> fetchKanjipediaData(
+    String url,
+    int flag,
+    String word,
+    bool isChineseCharacter,
+  ) async {
     try {
       final response = await http.get(
         Uri.parse(url),
         headers: {
           'Content-Type': 'text/html; charset=UTF-8',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         },
       );
 
@@ -66,7 +79,9 @@ class WiktionaryService {
       } else {
         // Only print in debug mode
         if (const bool.fromEnvironment("dart.vm.product") != true) {
-          debugPrint('Kanjipedia request failed with status: ${response.statusCode}');
+          debugPrint(
+            'Kanjipedia request failed with status: ${response.statusCode}',
+          );
         }
         return '';
       }
@@ -82,19 +97,29 @@ class WiktionaryService {
   /// Main function that combines Wiktionary and Kanjipedia data
   /// Returns a list containing [japaneseContent, originContent, alternativeContent, allContent, otherContent]
   /// This is similar to the originate function in the JavaScript version
-  Future<List<List<String>>> fetchDetailedWordInformation(String word, bool isChineseCharacter) async {
-    List<String> japaneseContent = [];      // Japanese content (jl)
-    List<String> originContent = [];        // Origin content (org)
-    List<String> alternativeContent = [];   // Alternative content (al)
-    List<String> otherContent = [];         // Other content (b)
-    List<String> allContent = [];           // All content (a)
-    String kanjipediaResult = '';           // Kanjipedia content
+  Future<List<List<String>>> fetchDetailedWordInformation(
+    String word,
+    bool isChineseCharacter,
+  ) async {
+    List<String> japaneseContent = []; // Japanese content (jl)
+    List<String> originContent = []; // Origin content (org)
+    List<String> alternativeContent = []; // Alternative content (al)
+    List<String> otherContent = []; // Other content (b)
+    List<String> allContent = []; // All content (a)
+    String kanjipediaResult = ''; // Kanjipedia content
 
     // First get Wiktionary data
     String wiktionaryContent = await fetchWiktionaryData(word);
 
     // Parse the Wiktionary content to extract different sections
-    await _parseWiktionaryContent(wiktionaryContent, japaneseContent, originContent, alternativeContent, allContent, otherContent);
+    await _parseWiktionaryContent(
+      wiktionaryContent,
+      japaneseContent,
+      originContent,
+      alternativeContent,
+      allContent,
+      otherContent,
+    );
 
     // For Chinese characters, also get Kanjipedia data
     if (isChineseCharacter && word.length == 1) {
@@ -102,7 +127,7 @@ class WiktionaryService {
         'https://www.kanjipedia.jp/search?kt=1&sk=leftHand&k=$word',
         0,
         word,
-        isChineseCharacter
+        isChineseCharacter,
       );
       kanjipediaResult = kanjipediaContent;
 
@@ -116,18 +141,24 @@ class WiktionaryService {
       }
     }
 
-    return [japaneseContent, originContent, alternativeContent, allContent, otherContent];
+    return [
+      japaneseContent,
+      originContent,
+      alternativeContent,
+      allContent,
+      otherContent,
+    ];
   }
 
   /// Parse Wiktionary HTML content to extract relevant information
   /// Modifies the provided lists in place
   Future<void> _parseWiktionaryContent(
     String content,
-    List<String> japaneseContent,      // Japanese content
-    List<String> originContent,        // Origin content
-    List<String> alternativeContent,   // Alternative content
-    List<String> allContent,           // All content
-    List<String> otherContent          // Other content
+    List<String> japaneseContent, // Japanese content
+    List<String> originContent, // Origin content
+    List<String> alternativeContent, // Alternative content
+    List<String> allContent, // All content
+    List<String> otherContent, // Other content
   ) async {
     try {
       final document = parse(content);
@@ -148,7 +179,8 @@ class WiktionaryService {
         final textContent = element.text.trim();
 
         // Check if this is a heading element that indicates a language section
-        if (tagName.startsWith('h') && int.tryParse(tagName.substring(1)) != null) {
+        if (tagName.startsWith('h') &&
+            int.tryParse(tagName.substring(1)) != null) {
           if (textContent.contains('Chin') || textContent.contains('Glyph')) {
             isInOriginSection = true;
             isInJapaneseSection = false;
@@ -173,7 +205,10 @@ class WiktionaryService {
         // Add content to appropriate section based on flags
         if (isInJapaneseSection && sanitizedHtml.isNotEmpty) {
           japaneseContent.add(sanitizedHtml);
-        } else if (isInOriginSection && sanitizedHtml.isNotEmpty && !textContent.contains('Chinese') && !textContent.contains('Glyph origin')) {
+        } else if (isInOriginSection &&
+            sanitizedHtml.isNotEmpty &&
+            !textContent.contains('Chinese') &&
+            !textContent.contains('Glyph origin')) {
           originContent.add(sanitizedHtml);
         } else if (isInAlternativeSection && sanitizedHtml.isNotEmpty) {
           alternativeContent.add(sanitizedHtml);
@@ -196,15 +231,21 @@ class WiktionaryService {
       final document = parse(content);
 
       // Extract origin information
-      final originElement = document.querySelector('#kanjiRightSection > ul > li.naritachi > div:nth-child(2) > p');
+      final originElement = document.querySelector(
+        '#kanjiRightSection > ul > li.naritachi > div:nth-child(2) > p',
+      );
       final origin = originElement?.text.trim() ?? '';
 
       // Extract meaning information
-      final meaningElement = document.querySelector('#kanjiRightSection > ul > li:nth-child(1) > div > p');
+      final meaningElement = document.querySelector(
+        '#kanjiRightSection > ul > li:nth-child(1) > div > p',
+      );
       final meaning = meaningElement?.text.trim() ?? '';
 
       // Extract usage information
-      final usageElement = document.querySelector('#kanjiRightSection > ul > li:nth-child(2) > div > p');
+      final usageElement = document.querySelector(
+        '#kanjiRightSection > ul > li:nth-child(2) > div > p',
+      );
       final usage = usageElement?.text.trim() ?? '';
 
       // Combine all information
@@ -225,13 +266,19 @@ class WiktionaryService {
 
   /// Enhanced method to fetch detailed information for any word in any language
   /// This method is specifically designed to support multi-language word lookup
-  Future<List<String>> fetchWordDetailsForAnyLanguage(String word, String detectedLanguage) async {
+  Future<List<String>> fetchWordDetailsForAnyLanguage(
+    String word,
+    String detectedLanguage,
+  ) async {
     try {
       // Determine if the word is a Chinese character (single character)
       bool isChineseCharacter = isSingleChineseCharacter(word);
 
       // Fetch detailed information using the existing method
-      final result = await fetchDetailedWordInformation(word, isChineseCharacter);
+      final result = await fetchDetailedWordInformation(
+        word,
+        isChineseCharacter,
+      );
 
       // Return combined content from all sources
       final combinedContent = <String>[];
@@ -250,7 +297,9 @@ class WiktionaryService {
   bool isSingleChineseCharacter(String word) {
     if (word.length != 1) return false;
 
-    final chineseRegExp = RegExp(r'[\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF]'); // Chinese characters
+    final chineseRegExp = RegExp(
+      r'[\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF]',
+    ); // Chinese characters
     return chineseRegExp.hasMatch(word);
   }
 }

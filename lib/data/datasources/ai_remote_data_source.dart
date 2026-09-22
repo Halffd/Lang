@@ -16,9 +16,11 @@ class AiRemoteDataSource {
       body: jsonEncode({
         'contents': [
           {
-            'parts': [{'text': prompt}]
-          }
-        ]
+            'parts': [
+              {'text': prompt},
+            ],
+          },
+        ],
       }),
     );
 
@@ -45,11 +47,17 @@ class AiRemoteDataSource {
     return parts[0]['text']?.toString() ?? 'No response';
   }
 
-  Future<String> generateImage(String prompt, String apiKey, {String? negativePrompt}) async {
+  Future<String> generateImage(
+    String prompt,
+    String apiKey, {
+    String? negativePrompt,
+  }) async {
     final url = Uri.parse(
       'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0',
     );
-    final fullPrompt = negativePrompt != null ? '$prompt [Negative: $negativePrompt]' : prompt;
+    final fullPrompt = negativePrompt != null
+        ? '$prompt [Negative: $negativePrompt]'
+        : prompt;
 
     final response = await _client.post(
       url,
@@ -70,7 +78,11 @@ class AiRemoteDataSource {
     return base64Encode(response.bodyBytes);
   }
 
-  Future<String> extractTextFromImage(String imageBase64, String prompt, String apiKey) async {
+  Future<String> extractTextFromImage(
+    String imageBase64,
+    String prompt,
+    String apiKey,
+  ) async {
     final url = Uri.parse(
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey',
     );
@@ -79,15 +91,18 @@ class AiRemoteDataSource {
       'contents': [
         {
           'parts': [
-            {'text': prompt.isNotEmpty ? prompt : 'Extract all text from this image. Preserve line breaks.'},
-            {'inlineData': {'mimeType': 'image/jpeg', 'data': imageBase64}},
-          ]
-        }
+            {
+              'text': prompt.isNotEmpty
+                  ? prompt
+                  : 'Extract all text from this image. Preserve line breaks.',
+            },
+            {
+              'inlineData': {'mimeType': 'image/jpeg', 'data': imageBase64},
+            },
+          ],
+        },
       ],
-      'generationConfig': {
-        'temperature': 0.1,
-        'maxOutputTokens': 8192,
-      }
+      'generationConfig': {'temperature': 0.1, 'maxOutputTokens': 8192},
     };
 
     final response = await _client.post(

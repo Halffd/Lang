@@ -385,7 +385,10 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
               _sectionLabel('Profile'),
               Text(
                 'Current: ${context.read<AppState>().currentProfile}',
-                style: TextStyle(color: theme.hintColor, fontSize: fs(context, 13)),
+                style: TextStyle(
+                  color: theme.hintColor,
+                  fontSize: fs(context, 13),
+                ),
               ),
               const SizedBox(height: 12),
 
@@ -520,7 +523,10 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
       padding: const EdgeInsets.only(bottom: 4),
       child: Text(
         text,
-        style: TextStyle(fontSize: fs(context, 12), fontWeight: FontWeight.w600),
+        style: TextStyle(
+          fontSize: fs(context, 12),
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

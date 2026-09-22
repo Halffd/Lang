@@ -38,10 +38,14 @@ class AiLocalDataSource {
     if (data == null) return [];
 
     final List decoded = jsonDecode(data);
-    return decoded.map((item) => {
-      'name': item['name']?.toString() ?? '',
-      'prompt': item['prompt']?.toString() ?? '',
-    }).toList();
+    return decoded
+        .map(
+          (item) => {
+            'name': item['name']?.toString() ?? '',
+            'prompt': item['prompt']?.toString() ?? '',
+          },
+        )
+        .toList();
   }
 
   Future<void> saveCustomPrompt(String name, String prompt) async {

@@ -22,7 +22,7 @@ void main() {
 
     test('search returns DictionaryEntry objects', () async {
       // This test will check the structure of the returned data
-      // Since we can't guarantee network connectivity in tests, 
+      // Since we can't guarantee network connectivity in tests,
       // we'll just verify the method doesn't crash with a valid input
       try {
         final results = await service.search('test');
@@ -67,7 +67,10 @@ void main() {
 
     test('searchWithDetails with romaji option works', () async {
       try {
-        final results = await service.searchWithDetails('test', useRomaji: true);
+        final results = await service.searchWithDetails(
+          'test',
+          useRomaji: true,
+        );
         expect(results, isA<List<DictionaryEntry>>());
       } catch (e) {
         // Network errors are expected in tests, so we just verify the type
@@ -77,7 +80,10 @@ void main() {
 
     test('searchWithDetails with kana option works', () async {
       try {
-        final results = await service.searchWithDetails('test', useRomaji: false);
+        final results = await service.searchWithDetails(
+          'test',
+          useRomaji: false,
+        );
         expect(results, isA<List<DictionaryEntry>>());
       } catch (e) {
         // Network errors are expected in tests, so we just verify the type

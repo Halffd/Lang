@@ -27,22 +27,29 @@ class EtymologyInfo {
       word: map['word'] ?? '',
       language: map['language'] ?? '',
       entries: List<EtymologyEntry>.from(
-        (map['entries'] as List).map<EtymologyEntry>((x) => EtymologyEntry.fromMap(x)),
+        (map['entries'] as List).map<EtymologyEntry>(
+          (x) => EtymologyEntry.fromMap(x),
+        ),
       ),
-      lastUpdated: DateTime.fromMillisecondsSinceEpoch(map['lastUpdated']?.toInt() ?? 0),
+      lastUpdated: DateTime.fromMillisecondsSinceEpoch(
+        map['lastUpdated']?.toInt() ?? 0,
+      ),
     );
   }
 
   String toJson() => json.encode(toMap());
 
-  factory EtymologyInfo.fromJson(String source) => EtymologyInfo.fromMap(json.decode(source));
+  factory EtymologyInfo.fromJson(String source) =>
+      EtymologyInfo.fromMap(json.decode(source));
 }
 
 class EtymologyEntry {
   final String sectionTitle;
-  final String originalLanguage;  // The original language being traced (e.g., Latin, Old English)
-  final String content;  // The etymology content
-  final Map<String, String> additionalLanguages;  // Additional languages for the same etymology
+  final String
+  originalLanguage; // The original language being traced (e.g., Latin, Old English)
+  final String content; // The etymology content
+  final Map<String, String>
+  additionalLanguages; // Additional languages for the same etymology
 
   EtymologyEntry({
     required this.sectionTitle,
@@ -65,11 +72,14 @@ class EtymologyEntry {
       sectionTitle: map['sectionTitle'] ?? '',
       originalLanguage: map['originalLanguage'] ?? '',
       content: map['content'] ?? '',
-      additionalLanguages: Map<String, String>.from(map['additionalLanguages'] ?? {}),
+      additionalLanguages: Map<String, String>.from(
+        map['additionalLanguages'] ?? {},
+      ),
     );
   }
 
   String toJson() => json.encode(toMap());
 
-  factory EtymologyEntry.fromJson(String source) => EtymologyEntry.fromMap(json.decode(source));
+  factory EtymologyEntry.fromJson(String source) =>
+      EtymologyEntry.fromMap(json.decode(source));
 }

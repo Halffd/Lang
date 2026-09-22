@@ -3,8 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lang/presentation/widgets/script_text_field.dart';
 
 void main() {
-  testWidgets('ScriptTextField builds without focus re-parent crash',
-      (tester) async {
+  testWidgets('ScriptTextField builds without focus re-parent crash', (
+    tester,
+  ) async {
     final controller = TextEditingController();
     await tester.pumpWidget(
       MaterialApp(
@@ -22,8 +23,9 @@ void main() {
     controller.dispose();
   });
 
-  testWidgets('ScriptTextField focus and type converts romaji to kana',
-      (tester) async {
+  testWidgets('ScriptTextField focus and type converts romaji to kana', (
+    tester,
+  ) async {
     final controller = TextEditingController();
     await tester.pumpWidget(
       MaterialApp(
@@ -48,8 +50,9 @@ void main() {
     controller.dispose();
   });
 
-  testWidgets('ScriptTextField multiple instances share nothing',
-      (tester) async {
+  testWidgets('ScriptTextField multiple instances share nothing', (
+    tester,
+  ) async {
     // Regression: FocusNode double-attach threw
     // "Tried to make a child into a parent of itself" when the
     // same node was passed to both Focus and TextField.
@@ -60,16 +63,8 @@ void main() {
         home: Scaffold(
           body: Column(
             children: [
-              ScriptTextField(
-                controller: c1,
-                language: 'ja',
-                enabled: true,
-              ),
-              ScriptTextField(
-                controller: c2,
-                language: 'ru',
-                enabled: true,
-              ),
+              ScriptTextField(controller: c1, language: 'ja', enabled: true),
+              ScriptTextField(controller: c2, language: 'ru', enabled: true),
             ],
           ),
         ),
@@ -81,8 +76,7 @@ void main() {
     c2.dispose();
   });
 
-  testWidgets('ScriptTextField with external focus node works',
-      (tester) async {
+  testWidgets('ScriptTextField with external focus node works', (tester) async {
     // The OCR input passes its own focus node
     final controller = TextEditingController();
     final node = FocusNode();
@@ -103,8 +97,7 @@ void main() {
     controller.dispose();
     node.dispose();
   });
-  testWidgets('ScriptTextField typing converts for greek',
-      (tester) async {
+  testWidgets('ScriptTextField typing converts for greek', (tester) async {
     final controller = TextEditingController();
     await tester.pumpWidget(
       MaterialApp(
@@ -128,8 +121,7 @@ void main() {
     controller.dispose();
   });
 
-  testWidgets('ScriptTextField typing converts for ukrainian',
-      (tester) async {
+  testWidgets('ScriptTextField typing converts for ukrainian', (tester) async {
     final controller = TextEditingController();
     await tester.pumpWidget(
       MaterialApp(
@@ -153,8 +145,7 @@ void main() {
     controller.dispose();
   });
 
-  testWidgets('ScriptTextField typing converts for georgian',
-      (tester) async {
+  testWidgets('ScriptTextField typing converts for georgian', (tester) async {
     final controller = TextEditingController();
     await tester.pumpWidget(
       MaterialApp(
@@ -177,8 +168,7 @@ void main() {
     controller.dispose();
   });
 
-  testWidgets('ScriptTextField typing converts for armenian',
-      (tester) async {
+  testWidgets('ScriptTextField typing converts for armenian', (tester) async {
     final controller = TextEditingController();
     await tester.pumpWidget(
       MaterialApp(
@@ -201,8 +191,9 @@ void main() {
     controller.dispose();
   });
 
-  testWidgets('ScriptTextField blur converts remaining latin (hebrew)',
-      (tester) async {
+  testWidgets('ScriptTextField blur converts remaining latin (hebrew)', (
+    tester,
+  ) async {
     final controller = TextEditingController();
     await tester.pumpWidget(
       MaterialApp(
@@ -232,5 +223,4 @@ void main() {
     expect(controller.text, 'שלום');
     controller.dispose();
   });
-
 }

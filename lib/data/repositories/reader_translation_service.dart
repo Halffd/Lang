@@ -11,8 +11,9 @@ class ReaderTranslationService {
   ReaderTranslationService(this._dictionaryService, this._translationService);
 
   Future<void> getDetailedTranslationForToken(
-    Token token, 
-    Function(String word, String language, List<String> details) onWiktionaryResult,
+    Token token,
+    Function(String word, String language, List<String> details)
+    onWiktionaryResult,
     Function(TranslationResult result) onTranslationResult,
     Function(String message) onError,
   ) async {
@@ -25,7 +26,10 @@ class ReaderTranslationService {
       final detectedLanguage = LanguageDetector.detect(token.text);
 
       // Check if we should use the enhanced Wiktionary service for detailed information
-      final wiktionaryDetails = await _fetchWiktionaryDetails(token.text, detectedLanguage);
+      final wiktionaryDetails = await _fetchWiktionaryDetails(
+        token.text,
+        detectedLanguage,
+      );
 
       if (wiktionaryDetails.isNotEmpty) {
         // Use Wiktionary details as primary source for multi-language support
@@ -58,9 +62,15 @@ class ReaderTranslationService {
     return token != null && token.isWord && token.text.isNotEmpty;
   }
 
-  Future<List<String>> _fetchWiktionaryDetails(String text, String language) async {
+  Future<List<String>> _fetchWiktionaryDetails(
+    String text,
+    String language,
+  ) async {
     try {
-      return await _dictionaryService.fetchWordDetailsMultiLanguage(text, language);
+      return await _dictionaryService.fetchWordDetailsMultiLanguage(
+        text,
+        language,
+      );
     } catch (e) {
       debugPrint('Error fetching Wiktionary details: $e');
       return [];

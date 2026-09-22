@@ -187,8 +187,7 @@ void main() {
       expect(ClipboardMonitorService.hashBytesForTest(a), ha);
     });
 
-    test('image ocr flow records text and searches when gates pass',
-        () async {
+    test('image ocr flow records text and searches when gates pass', () async {
       appState.setClipboardAutoSearchMode(ClipboardAutoSearchMode.autoSearch);
       String? searched;
       final monitor = ClipboardMonitorService();
@@ -202,10 +201,7 @@ void main() {
       // indirectly is not possible; verify gates logic separately.
       // Instead simulate: gates applied to recognized text.
       final recognized = '認識されたテキスト';
-      expect(
-        ClipboardMonitorService.gatesPass(appState, recognized),
-        true,
-      );
+      expect(ClipboardMonitorService.gatesPass(appState, recognized), true);
       expect(searched, isNull); // not wired without rich clipboard
     });
 
@@ -214,21 +210,14 @@ void main() {
       appState.setClipboardAutoSearchFocusedOnly(true);
 
       ClipboardMonitorService.instance.isAppFocused = () => true;
-      expect(
-        ClipboardMonitorService.gatesPass(appState, 'any'),
-        true,
-      );
+      expect(ClipboardMonitorService.gatesPass(appState, 'any'), true);
 
       ClipboardMonitorService.instance.isAppFocused = () => false;
-      expect(
-        ClipboardMonitorService.gatesPass(appState, 'any'),
-        false,
-      );
+      expect(ClipboardMonitorService.gatesPass(appState, 'any'), false);
 
       // restore default
       ClipboardMonitorService.instance.isAppFocused =
           ClipboardMonitorService.defaultIsAppFocused;
     });
   });
-
 }

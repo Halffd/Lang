@@ -23,18 +23,27 @@ class SRSService extends ChangeNotifier {
 
   Future<void> _loadCards() async {
     final cardsJson = _storageService.getStringList('srs_cards') ?? [];
-    _cards = cardsJson.map((json) => SRSCard.fromJson(jsonDecode(json))).toList();
+    _cards = cardsJson
+        .map((json) => SRSCard.fromJson(jsonDecode(json)))
+        .toList();
     notifyListeners();
   }
 
   Future<void> _loadDecks() async {
     final decksJson = _storageService.getStringList('srs_decks') ?? [];
-    _decks = decksJson.map((json) => SrsDeck.fromJson(jsonDecode(json))).toList();
+    _decks = decksJson
+        .map((json) => SrsDeck.fromJson(jsonDecode(json)))
+        .toList();
     if (_decks.isEmpty) {
       final now = DateTime.now();
       _decks = [
         SrsDeck(id: 'default', name: 'Default', createdAt: now, updatedAt: now),
-        SrsDeck(id: 'vocabulary', name: 'Vocabulary', createdAt: now, updatedAt: now),
+        SrsDeck(
+          id: 'vocabulary',
+          name: 'Vocabulary',
+          createdAt: now,
+          updatedAt: now,
+        ),
         SrsDeck(id: 'kanji', name: 'Kanji', createdAt: now, updatedAt: now),
       ];
       await _saveDecks();
@@ -57,11 +66,15 @@ class SRSService extends ChangeNotifier {
   List<SRSCard> get allCards => _cards;
   List<SrsDeck> get decks => _decks;
 
-  int getDeckCardCount(String deckId) => _cards.where((c) => c.deck == deckId).length;
+  int getDeckCardCount(String deckId) =>
+      _cards.where((c) => c.deck == deckId).length;
   int getDeckDueCount(String deckId) {
     final now = DateTime.now();
-    return _cards.where((c) => c.deck == deckId && c.nextReview.isBefore(now)).length;
+    return _cards
+        .where((c) => c.deck == deckId && c.nextReview.isBefore(now))
+        .length;
   }
+
   SrsDeck? getDeckById(String id) {
     try {
       return _decks.firstWhere((d) => d.id == id);
@@ -77,7 +90,9 @@ class SRSService extends ChangeNotifier {
 
   List<SRSCard> getDueCardsByDeck(String? deckId) {
     final now = DateTime.now();
-    return getCardsByDeck(deckId).where((c) => c.nextReview.isBefore(now)).toList()
+    return getCardsByDeck(
+        deckId,
+      ).where((c) => c.nextReview.isBefore(now)).toList()
       ..sort((a, b) => a.nextReview.compareTo(b.nextReview));
   }
 
