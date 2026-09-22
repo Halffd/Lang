@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:lang/domain/entities/srs_card.dart';
 import 'package:lang/data/repositories/srs_service.dart';
 import 'package:lang/utils/font_scale.dart';
+import 'package:lang/presentation/widgets/flip_card.dart';
 
 class StudyTab extends StatefulWidget {
   final SRSService srsService;
@@ -14,26 +15,17 @@ class StudyTab extends StatefulWidget {
   State<StudyTab> createState() => _StudyTabState();
 }
 
-class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin {
+class _StudyTabState extends State<StudyTab> {
   List<SRSCard> _sessionCards = [];
   int _sessionIndex = 0;
   bool _showAnswer = false;
   int _reviewed = 0;
   int _correct = 0;
-  late AnimationController _flipController;
-  late Animation<double> _flipAnimation;
   final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
-    _flipController = AnimationController(
-      duration: const Duration(milliseconds: 400),
-      vsync: this,
-    );
-    _flipAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _flipController, curve: Curves.easeInOut),
-    );
     _loadSession();
   }
 
@@ -50,11 +42,6 @@ class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin
   }
 
   void _flipCard() {
-    if (!_showAnswer) {
-      _flipController.forward();
-    } else {
-      _flipController.reverse();
-    }
     setState(() => _showAnswer = !_showAnswer);
   }
 
@@ -67,7 +54,6 @@ class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin
       if (quality >= 3) _correct++;
     });
 
-    _flipController.reset();
     setState(() => _showAnswer = false);
 
     if (_sessionIndex < _sessionCards.length - 1) {
@@ -89,7 +75,9 @@ class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin
           children: [
             Text('Reviewed: $_reviewed'),
             Text('Correct: $_correct'),
-            Text('Accuracy: ${_reviewed > 0 ? ((_correct / _reviewed) * 100).round() : 0}%'),
+            Text(
+              'Accuracy: ${_reviewed > 0 ? ((_correct / _reviewed) * 100).round() : 0}%',
+            ),
           ],
         ),
         actions: [
@@ -123,7 +111,6 @@ class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin
 
   @override
   void dispose() {
-    _flipController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
@@ -142,7 +129,10 @@ class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin
               style: TextStyle(fontSize: fs(context, 24, 'ui')),
             ),
             const SizedBox(height: 8),
-            const Text('Add cards or come back later', style: TextStyle(color: Colors.grey)),
+            const Text(
+              'Add cards or come back later',
+              style: TextStyle(color: Colors.grey),
+            ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: _loadSession,
@@ -179,17 +169,23 @@ class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin
     return Column(
       children: [
         LinearProgressIndicator(
-          value: _sessionCards.isNotEmpty ? (_sessionIndex + 1) / _sessionCards.length : 0,
+          value: _sessionCards.isNotEmpty
+              ? (_sessionIndex + 1) / _sessionCards.length
+              : 0,
           backgroundColor: Colors.grey[300],
         ),
         const SizedBox(height: 4),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('${_sessionIndex + 1} / ${_sessionCards.length}',
-                style: Theme.of(context).textTheme.bodySmall),
-            Text('Reviewed: $_reviewed  Accuracy: ${_reviewed > 0 ? ((_correct / _reviewed) * 100).round() : 0}%',
-                style: Theme.of(context).textTheme.bodySmall),
+            Text(
+              '${_sessionIndex + 1} / ${_sessionCards.length}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            Text(
+              'Reviewed: $_reviewed  Accuracy: ${_reviewed > 0 ? ((_correct / _reviewed) * 100).round() : 0}%',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ],
         ),
       ],
@@ -197,27 +193,11 @@ class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin
   }
 
   Widget _buildFlashcard(SRSCard card) {
-    return GestureDetector(
+    return FlipCard(
       onTap: _flipCard,
-      child: AnimatedBuilder(
-        animation: _flipAnimation,
-        builder: (context, child) {
-          final isBack = _flipAnimation.value >= 0.5;
-          final angle = isBack ? math.pi : 0.0;
-
-          return Transform(
-            transform: Matrix4.identity()..rotateY(angle),
-            alignment: Alignment.center,
-            child: isBack
-                ? Transform(
-                    transform: Matrix4.identity()..rotateY(math.pi),
-                    alignment: Alignment.center,
-                    child: _buildCardFace(card, showAnswer: true),
-                  )
-                : _buildCardFace(card, showAnswer: false),
-          );
-        },
-      ),
+      isBack: _showAnswer,
+      front: _buildCardFace(card, showAnswer: false),
+      back: _buildCardFace(card, showAnswer: true),
     );
   }
 
@@ -245,7 +225,10 @@ class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin
                 const SizedBox(height: 8),
                 Text(
                   card.reading!,
-                  style: TextStyle(fontSize: fs(context, 20, 'words'), color: theme.colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                    fontSize: fs(context, 20, 'words'),
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
               const SizedBox(height: 32),
@@ -265,7 +248,10 @@ class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin
                 const SizedBox(height: 4),
                 Text(
                   card.reading!,
-                  style: TextStyle(fontSize: fs(context, 16, 'words'), color: theme.colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                    fontSize: fs(context, 16, 'words'),
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
               const SizedBox(height: 16),
@@ -278,7 +264,10 @@ class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin
                 ),
                 child: Text(
                   card.meaning,
-                  style: TextStyle(fontSize: fs(context, 18, 'words'), color: theme.colorScheme.onPrimaryContainer),
+                  style: TextStyle(
+                    fontSize: fs(context, 18, 'words'),
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -308,7 +297,10 @@ class _StudyTabState extends State<StudyTab> with SingleTickerProviderStateMixin
   Widget _ratingChip(int rating, String label, Color color, String key) {
     return ElevatedButton(
       onPressed: () => _rateCard(rating),
-      style: ElevatedButton.styleFrom(backgroundColor: color, foregroundColor: Colors.white),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+      ),
       child: Text('$label ($key)'),
     );
   }

@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lang/core/services/audio_service.dart';
 import 'package:lang/data/repositories/srs_service.dart';
 import 'package:lang/domain/entities/srs_card.dart';
+import 'package:lang/presentation/widgets/flip_card.dart';
 import 'lesson_widgets.dart';
 
 /// Host page for every study style. Drives a step list and a shared score.
@@ -309,37 +310,31 @@ class _LessonPageState extends State<LessonPage> {
       child: Column(
         children: [
           Expanded(
-            child: Center(
-              child: GestureDetector(
-                onTap: _flip,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: double.infinity,
-                  height: 300,
-                  decoration: BoxDecoration(
-                    color: _kanjiFlipped ? Colors.indigo : Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 12,
-                      ),
-                    ],
+            child: FlipCard(
+              isBack: _kanjiFlipped,
+              onTap: _flip,
+              front: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Text(
+                  card.word,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Text(
-                        _kanjiFlipped ? card.meaning : card.word,
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: _kanjiFlipped ? Colors.white : Colors.black87,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              back: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Text(
+                  card.meaning,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
+                  textAlign: TextAlign.center,
                 ),
               ),
             ),
