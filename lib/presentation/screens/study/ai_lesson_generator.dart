@@ -7,6 +7,7 @@ import 'package:lang/data/repositories/srs_service.dart';
 import 'package:lang/domain/repositories/ai_repository.dart';
 import 'package:lang/domain/entities/srs_card.dart';
 import 'package:lang/domain/entities/srs_deck.dart';
+import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/presentation/providers/ai_provider.dart';
 import 'ai_exercise_parser.dart';
 import 'ai_lesson_page.dart';
@@ -172,21 +173,52 @@ Card count: ${template.cardCount}.
   }
 
   /// Generate an interactive lesson (typed exercises) via prompt JSON.
-  /// Returns parsed exercises, capped at [limit].
+  /// Returns parsed exercises, capped at [limit]. Deduped by parser.
+  ///
+  /// [knownWords] handling per review guidance: small vocab sets go into the
+  /// prompt as a soft constraint; big sets are post-filtered only (else the
+  /// prompt becomes a token disaster).
   Future<List<AiExercise>> generateInteractive(
     String systemPrompt,
     String provider,
     String? apiKey, {
     int limit = 50,
+    Set<String> knownWords = const {},
   }) async {
-    final userPrompt =
-        '$systemPrompt\n\n$kAiLessonScratchPrompt\n\nMax exercises: $limit.';
+    var userPrompt = '$systemPrompt\n\n$kAiLessonScratchPrompt';
+
+    if (knownWords.isNotEmpty && knownWords.length <= 200) {
+      final list = knownWords.take(200).join(', ');
+      userPrompt +=
+          '\n\nAvoid generating exercises made ONLY from these '
+          'already-mastered words: $list. Each exercise must include at least '
+          'one word NOT in this list.';
+    }
+    // Hard constraint trailing — models weigh the end more.
+    userPrompt += '\n\nMax exercises: $limit.';
+
     final raw = await repo.generateText(userPrompt, provider, apiKey: apiKey);
     final result = AiLessonResult.parse(raw);
-    if (result.exercises.isEmpty) {
+
+    var exercises = result.exercises;
+
+    if (knownWords.length > 200) {
+      exercises = exercises.where((e) {
+        if (e.type == 'match') return true;
+        final words = e.prompt.split(RegExp(r'\s+'));
+        return words.any(
+          (w) => !knownWords.contains(
+            w.toLowerCase().trim().replaceAll(RegExp(r'\s+'), ' '),
+          ),
+        );
+      }).toList();
+    }
+
+    exercises = exercises.take(limit).toList();
+    if (exercises.isEmpty) {
       throw const FormatException('AI returned no usable exercises');
     }
-    return result.exercises.take(limit).toList();
+    return exercises;
   }
 }
 
@@ -291,6 +323,7 @@ class _AiDeckGeneratorSheetState extends State<AiDeckGeneratorSheet> {
         _provider,
         _apiController.text.isEmpty ? null : _apiController.text,
         limit: _limit,
+        knownWords: context.read<AppState>().savedWords.toSet(),
       );
       if (!mounted) return;
       setState(() {

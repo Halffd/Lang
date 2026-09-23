@@ -180,6 +180,9 @@ class AiLessonResult {
 
   const AiLessonResult(this.exercises);
 
+  static String _normalize(String s) =>
+      s.toLowerCase().trim().replaceAll(RegExp(r'\s+'), ' ');
+
   /// Top-level parse: strips fences, then parses items ONE AT A TIME —
   /// one malformed exercise is skipped, the other 49 survive.
   static AiLessonResult parse(String raw) {
@@ -200,6 +203,7 @@ class AiLessonResult {
     }
 
     final exercises = <AiExercise>[];
+    final seen = <String>{}; // dedupe by normalized prompt
     for (final item in rawList) {
       try {
         AiExercise? ex;
@@ -222,6 +226,12 @@ class AiLessonResult {
         if (ex.type == 'match' && (ex.pairs == null || ex.pairs!.length < 2)) {
           continue;
         }
+        // dedupe: same normalized prompt skipped. Match steps have no
+        // prompt — key them on their pairs content instead.
+        final key = ex.prompt.isEmpty
+            ? 'match|${ex.pairs?.map((p) => p['left']).join('|') ?? ''}'
+            : _normalize(ex.prompt);
+        if (!seen.add(key)) continue;
         exercises.add(ex);
       } catch (_) {
         continue; // skip bad ones, don't crash the whole lesson

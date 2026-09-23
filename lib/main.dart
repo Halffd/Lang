@@ -46,7 +46,10 @@ import 'data/datasources/supabase_data_source.dart';
 import 'core/services/srs_service.dart' as srs_core;
 import 'presentation/providers/srs_provider.dart';
 import 'presentation/providers/supabase_provider.dart';
+import 'presentation/providers/user_profile_provider.dart';
 import 'presentation/providers/user_data_provider.dart';
+import 'presentation/screens/settings_screen.dart';
+import 'presentation/widgets/user_badge.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -247,6 +250,10 @@ void main() async {
   SupabaseProvider? supabaseProvider;
   SrsProvider? srsProvider;
   UserDataProvider? userDataProvider;
+  final userProfileProvider = UserProfileProvider(
+    ds: supabaseDataSource,
+    syncService: syncService,
+  );
   if (supabaseDataSource != null && srsServiceCore != null) {
     supabaseProvider = SupabaseProvider(
       supabaseService: supabaseService,
@@ -318,6 +325,9 @@ void main() async {
     });
   }
 
+  // profile loads from local prefs + pulls from Supabase when available
+  await userProfileProvider.init();
+
   runApp(
     MultiProvider(
       providers: [
@@ -325,6 +335,7 @@ void main() async {
         ChangeNotifierProvider.value(value: analyzerProvider),
         ChangeNotifierProvider.value(value: aiProvider),
         ChangeNotifierProvider.value(value: srsServiceLegacy),
+        ChangeNotifierProvider.value(value: userProfileProvider),
         if (supabaseProvider != null)
           ChangeNotifierProvider.value(value: supabaseProvider),
         if (srsProvider != null)
@@ -840,6 +851,25 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        toolbarHeight: 44,
+        titleSpacing: 0,
+        automaticallyImplyLeading: false,
+        title: const UserBadge(),
+        centerTitle: false,
+        actions: [
+          IconButton(
+            tooltip: 'Settings',
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              // open settings screen via route if exposed, else push
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
+              );
+            },
+          ),
+        ],
+      ),
       body: _screens[_currentIndex],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,

@@ -1,3 +1,5 @@
+import 'package:lang/presentation/providers/user_profile_provider.dart';
+import 'package:lang/presentation/widgets/user_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lang/data/services/anki_connect_service.dart';
@@ -119,6 +121,30 @@ class SettingsScreen extends StatelessWidget {
         ListView(
           padding: ScreenSize.adaptivePadding(context),
           children: [
+            // Profile card at top
+            Card(
+              child: ListTile(
+                leading: const CircleAvatar(child: Icon(Icons.person)),
+                title: Text(() {
+                  final p = context.watch<UserProfileProvider>().profile;
+                  return p.displayName.isEmpty
+                      ? 'Set up profile'
+                      : p.displayName;
+                }()),
+                subtitle: Text(() {
+                  final p = context.watch<UserProfileProvider>().profile;
+                  return '${p.languageTag} • Lv ${p.level} • ${p.xp} XP';
+                }()),
+                trailing: const Icon(Icons.edit),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const UserProfileEditor(),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+
             // General settings section
             Text(
               AppLocalizations.of(context)!.generalSettings,

@@ -477,6 +477,28 @@ class SupabaseDataSource {
     return response;
   }
 
+  // --- User Profile ---
+  Future<Map<String, dynamic>?> getUserProfile() async {
+    final uid = userId;
+    if (uid == null) return null;
+    final rows = await _supabase
+        .from('user_profiles')
+        .select()
+        .eq('user_id', uid)
+        .maybeSingle();
+    return rows;
+  }
+
+  Future<void> saveUserProfile(Map<String, dynamic> profile) async {
+    final uid = userId;
+    if (uid == null) return;
+    await _supabase.from('user_profiles').upsert({
+      'user_id': uid,
+      ...profile,
+      'updated_at': DateTime.now().toIso8601String(),
+    });
+  }
+
   // --- User Dictionaries ---
   Future<List<Map<String, dynamic>>> getUserDictionaries() async {
     final uid = userId;

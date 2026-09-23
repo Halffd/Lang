@@ -135,5 +135,20 @@ void main() {
       expect(r.exercises.length, 60);
       expect(r.exercises.take(50).length, 50);
     });
+
+    test('duplicate prompts deduped (normalized)', () {
+      const raw = '''
+[
+  {"type":"flashcard","prompt":"  Cat ","answer":"猫"},
+  {"type":"flashcard","prompt":"cat","answer":"猫"},
+  {"type":"written","prompt":"cat   here","answer":"x"},
+  {"type":"written","prompt":"cat here","answer":"y"}
+]
+''';
+      final r = AiLessonResult.parse(raw);
+      expect(r.exercises.length, 2);
+      expect(r.exercises[0].prompt.trim(), 'Cat');
+      expect(r.exercises[1].prompt, 'cat   here');
+    });
   });
 }

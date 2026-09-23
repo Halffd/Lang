@@ -10,7 +10,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lang/core/services/audio_service.dart';
 import 'package:lang/data/repositories/srs_service.dart';
 import 'package:lang/domain/entities/srs_card.dart';
+import 'package:lang/presentation/providers/user_profile_provider.dart';
 import 'package:lang/presentation/widgets/flip_card.dart';
+import 'package:provider/provider.dart';
 import 'lesson_widgets.dart';
 
 /// Host page for every study style. Drives a step list and a shared score.
@@ -606,6 +608,20 @@ class _LessonPageState extends State<LessonPage> {
     await p.setInt('study_xp', total);
     await p.setInt('study_streak', streak);
     await p.setInt('study_last_ms', DateTime.now().millisecondsSinceEpoch);
+    // Mirror the updated profile so top bar + settings reflect immediately.
+    if (!mounted) return;
+    try {
+      await context.read<UserProfileProvider>().setStats(
+        xp: total,
+        gems: p.getInt('study_gems') ?? 0,
+        streak: streak,
+        cardsMastered: widget.srs.allCards
+            .where((c) => c.easeFactor >= 2.5)
+            .length,
+      );
+    } catch (_) {
+      /* provider not registered in tests */
+    }
   }
 
   Future<bool> _onWillPop() async {
