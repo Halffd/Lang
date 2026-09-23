@@ -8,6 +8,7 @@ import 'package:lang/domain/repositories/ai_repository.dart';
 import 'package:lang/domain/entities/srs_card.dart';
 import 'package:lang/domain/entities/srs_deck.dart';
 import 'package:lang/presentation/providers/ai_provider.dart';
+import 'ai_lesson_page.dart';
 
 /// One user-configured prompt template for AI lesson generation.
 class AiLessonTemplate {
@@ -167,6 +168,24 @@ Card count: ${template.cardCount}.
     await srs.bulkAddCards(cards);
     return deckId;
   }
+
+  /// Generate an interactive lesson (typed exercises) via prompt JSON.
+  /// Returns parsed exercises, capped at [limit].
+  Future<List<AiExercise>> generateInteractive(
+    String systemPrompt,
+    String provider,
+    String? apiKey, {
+    int limit = 50,
+  }) async {
+    final userPrompt =
+        '$systemPrompt\n\n$kAiLessonScratchPrompt\n\nMax exercises: $limit.';
+    final raw = await repo.generateText(userPrompt, provider, apiKey: apiKey);
+    final result = AiLessonResult.parse(raw);
+    if (result.exercises.isEmpty) {
+      throw const FormatException('AI returned no usable exercises');
+    }
+    return result.exercises.take(limit).toList();
+  }
 }
 
 /// Small widget in the study screen to pick an AI template and generate.
@@ -182,7 +201,9 @@ class _AiDeckGeneratorSheetState extends State<AiDeckGeneratorSheet> {
   AiLessonTemplate? _selected;
   bool _loading = false;
   String? _error;
-  String _provider = 'auto';
+  String _provider = 'Gemini';
+  int _limit = 50;
+  List<AiExercise>? _lastInteractive;
   final _apiController = TextEditingController();
   final _templateNameCtrl = TextEditingController();
   final _templatePromptCtrl = TextEditingController();
@@ -244,6 +265,44 @@ class _AiDeckGeneratorSheetState extends State<AiDeckGeneratorSheet> {
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  /// Generates an interactive typed-exercise lesson and opens [AiLessonPage].
+  Future<void> _generateInteractive() async {
+    final t = _selected;
+    if (t == null) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final aiProvider = context.read<AiProvider>();
+      final generator = AiLessonGenerator(
+        repo: aiProvider.repository,
+        srs: context.read<SRSService>(),
+        deckId: AiLessonGenerator.deckIdFor(t.name),
+      );
+      final exercises = await generator.generateInteractive(
+        t.systemPrompt,
+        _provider,
+        _apiController.text.isEmpty ? null : _apiController.text,
+        limit: _limit,
+      );
+      if (!mounted) return;
+      setState(() {
+        _lastInteractive = exercises;
+        _loading = false;
+      });
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) =>
+              AiLessonPage(lesson: AiLessonResult(exercises), title: t.name),
+        ),
+      );
+    } catch (e) {
+      setState(() => _error = e.toString());
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -332,6 +391,23 @@ class _AiDeckGeneratorSheetState extends State<AiDeckGeneratorSheet> {
               ),
             ],
             const SizedBox(height: 12),
+            // limit selector
+            Row(
+              children: [
+                const Text('Max exercises'),
+                Expanded(
+                  child: Slider(
+                    value: _limit.toDouble(),
+                    min: 5,
+                    max: 100,
+                    divisions: 19,
+                    label: '$_limit',
+                    onChanged: (v) => setState(() => _limit = v.round()),
+                  ),
+                ),
+                Text('$_limit'),
+              ],
+            ),
             TextField(
               controller: _apiController,
               decoration: const InputDecoration(
@@ -347,25 +423,195 @@ class _AiDeckGeneratorSheetState extends State<AiDeckGeneratorSheet> {
                 style: const TextStyle(color: Colors.red, fontSize: 12),
               ),
             const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _loading || _selected == null ? null : _generate,
-                icon: _loading
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.auto_awesome),
-                label: Text(_loading ? 'Generating…' : 'Generate'),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _loading || _selected == null ? null : _generate,
+                    icon: _loading
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.auto_awesome),
+                    label: Text(_loading ? 'Generating…' : 'Save deck'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilledButton.tonalIcon(
+                    onPressed: _loading || _selected == null
+                        ? null
+                        : _generateInteractive,
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('Play now'),
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 8),
+            // Raw JSON + breakdown of the last generation
+            if (_lastInteractive != null) ...[
+              TextButton.icon(
+                icon: const Icon(Icons.data_object, size: 16),
+                label: const Text('View JSON'),
+                onPressed: () => _showJson(),
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.travel_explore, size: 16),
+                label: const Text('Word breakdown'),
+                onPressed: () => _showBreakdown(),
+              ),
+            ],
             const SizedBox(height: 6),
             Text(
               'AI-generated cards are tagged "[ai]" and stored in a "{selected?.name ?? '
               '}" deck.',
               style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Show the raw JSON of the last generation in a dialog.
+  void _showJson() {
+    final ex = _lastInteractive;
+    if (ex == null) return;
+    final json = const JsonEncoder.withIndent('  ').convert(
+      ex
+          .map(
+            (e) => {
+              'type': e.type,
+              'prompt': e.prompt,
+              if (e.promptSub != null) 'prompt_sub': e.promptSub,
+              'answer': e.answer,
+              if (e.choices != null) 'choices': e.choices,
+              if (e.pairs != null) 'pairs': e.pairs,
+              if (e.breakdown != null)
+                'breakdown': e.breakdown!
+                    .map(
+                      (b) => {
+                        'char': b.char,
+                        if (b.reading != null) 'reading': b.reading,
+                        'meaning': b.meaning,
+                      },
+                    )
+                    .toList(),
+            },
+          )
+          .toList(),
+    );
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Lesson JSON'),
+        content: SizedBox(
+          width: 480,
+          child: SingleChildScrollView(
+            child: SelectableText(
+              json,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Per-character/word breakdown: reuse the JSON breakdown if present, else
+  /// ask the AI for one on the first exercise prompt.
+  Future<void> _showBreakdown() async {
+    final ex = _lastInteractive;
+    if (ex == null || ex.isEmpty) return;
+    final existing = [
+      for (final e in ex) ...(e.breakdown ?? const <AiBreakdownPart>[]),
+    ];
+    if (existing.isNotEmpty) {
+      _showBreakdownSheet(existing, 'Breakdown');
+      return;
+    }
+    // Ask AI for a breakdown on all prompts (single call)
+    setState(() => _loading = true);
+    try {
+      final aiProvider = context.read<AiProvider>();
+      final words = ex
+          .map((e) => e.prompt)
+          .where((p) => p.trim().isNotEmpty)
+          .take(20)
+          .join('\n');
+      final prompt = '''Break down each word below into its parts (characters or
+compound components). Return a JSON array, nothing else:
+[{"char":"<word or character>","reading":"<reading>","meaning":"<meaning>"}]
+
+Words:
+$words''';
+      final raw = await aiProvider.generateText(prompt);
+      final parsed =
+          jsonDecode(
+                raw.trim().startsWith('```')
+                    ? raw
+                          .replaceAll(RegExp(r'^```[a-zA-Z]*\n?'), '')
+                          .replaceAll(RegExp(r'```$'), '')
+                    : raw,
+              )
+              as List<dynamic>;
+      final parts = parsed
+          .whereType<Map<String, dynamic>>()
+          .map(AiBreakdownPart.fromJson)
+          .toList();
+      if (!mounted) return;
+      _showBreakdownSheet(parts, 'Breakdown');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Breakdown failed: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _showBreakdownSheet(List<AiBreakdownPart> parts, String title) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 12),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    for (final p in parts)
+                      ListTile(
+                        dense: true,
+                        leading: Text(
+                          p.char,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        title: Text(p.reading ?? ''),
+                        subtitle: Text(p.meaning),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),

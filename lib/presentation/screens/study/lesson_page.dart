@@ -632,8 +632,7 @@ class _LessonPageState extends State<LessonPage> {
             ),
             const SizedBox(height: 4),
             Text(
-              '$xpEarned XP earned' +
-                  (gemsEarned > 0 ? ' • +$gemsEarned 💎' : ''),
+              '${xpEarned}XP earned${gemsEarned > 0 ? " • +$gemsEarned 💎" : ""}',
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
