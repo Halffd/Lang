@@ -3,11 +3,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lang/core/services/storage_service.dart';
+import 'package:lang/data/datasources/supabase_data_source.dart';
 import 'package:lang/data/repositories/srs_service.dart';
 import 'package:lang/domain/repositories/ai_repository.dart';
 import 'package:lang/domain/entities/srs_card.dart';
 import 'package:lang/domain/entities/srs_deck.dart';
 import 'package:lang/domain/entities/app_state.dart';
+import 'package:lang/presentation/providers/user_data_provider.dart';
 import 'package:lang/presentation/providers/ai_provider.dart';
 import 'ai_exercise_parser.dart';
 import 'ai_lesson_page.dart';
@@ -64,10 +66,14 @@ class AiLessonGenerator {
   final SRSService srs;
   final String deckId;
 
+  /// Optional: when wired, generated exercises also seed the shared bank.
+  final SupabaseDataSource? supabaseDs;
+
   AiLessonGenerator({
     required this.repo,
     required this.srs,
     required this.deckId,
+    this.supabaseDs,
   });
 
   /// Stable deck id derived from the template name so cards don't clash.
@@ -172,8 +178,111 @@ Card count: ${template.cardCount}.
     return deckId;
   }
 
-  /// Generate an interactive lesson (typed exercises) via prompt JSON.
-  /// Returns parsed exercises, capped at [limit]. Deduped by parser.
+  /// Bank-first hybrid: fetch pre-generated exercises (instant, free), then
+  /// top up with live generation if short. Insert what we generate back into
+  /// the bank so the next request doesn't pay for it again.
+  Future<List<AiExercise>> getLesson(
+    AiLessonTemplate template,
+    String language,
+    String provider,
+    String? apiKey, {
+    int limit = 50,
+    Set<String> knownWords = const {},
+  }) async {
+    // 1) pre-generated bank (main languages = instant, zero cost per user)
+    if (supabaseDs != null) {
+      try {
+        final rows = await supabaseDs!.fetchExerciseBank(
+          language: language,
+          level: template.name,
+          limit: limit,
+        );
+        if (rows.length >= limit) {
+          final bank = rows
+              .whereType<Map<String, dynamic>>()
+              .map(_exerciseFromBankRow)
+              .toList();
+          return bank.take(limit).toList();
+        }
+      } catch (_) {
+        /* bank absent offline — fall through */
+      }
+    }
+
+    // 2) full live generation for the whole request (bank short or missing)
+    final raw = await generateInteractive(
+      template.systemPrompt,
+      provider,
+      apiKey,
+      limit: limit,
+      knownWords: knownWords,
+    );
+
+    // 3) persist generated exercises into the bank for later reuse.
+    if (supabaseDs != null && raw.isNotEmpty) {
+      try {
+        await supabaseDs?.insertExerciseBank(
+          raw.map((e) => _bankRowFor(e, language, template.name)).toList(),
+        );
+      } catch (_) {
+        /* seeding the bank is best-effort */
+      }
+    }
+    return raw.take(limit).toList();
+  }
+
+  AiExercise _exerciseFromBankRow(Map<String, dynamic> r) {
+    return AiExercise(
+      type: r['type']?.toString() ?? 'flashcard',
+      prompt: r['prompt']?.toString() ?? '',
+      promptSub: r['prompt_sub']?.toString(),
+      answer: r['answer']?.toString() ?? '',
+      choices: (r['choices'] as List?)?.map((e) => e.toString()).toList(),
+      pairs: (r['pairs'] as List?)
+          ?.whereType<Map<String, dynamic>>()
+          .map(
+            (p) => {
+              'left': p['left'].toString(),
+              'right': p['right'].toString(),
+            },
+          )
+          .toList(),
+      breakdown: (r['breakdown'] as List?)
+          ?.whereType<Map<String, dynamic>>()
+          .map(AiBreakdownPart.fromJson)
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> _bankRowFor(
+    AiExercise e,
+    String language,
+    String level,
+  ) {
+    return {
+      'language': language,
+      'level': level,
+      'type': e.type,
+      'prompt': e.prompt,
+      'prompt_sub': e.promptSub,
+      'answer': e.answer,
+      'choices': e.choices,
+      'pairs': e.pairs,
+      'breakdown': e.breakdown == null
+          ? null
+          : [
+              for (final b in e.breakdown!)
+                {'char': b.char, 'reading': b.reading, 'meaning': b.meaning},
+            ],
+      'prompt_hash': e.prompt.toLowerCase().trim().replaceAll(
+        RegExp(r'\s+'),
+        ' ',
+      ),
+      'qa_status': 'pending',
+      'source': 'user_ai',
+    };
+  }
+
   ///
   /// [knownWords] handling per review guidance: small vocab sets go into the
   /// prompt as a soft constraint; big sets are post-filtered only (else the
@@ -318,8 +427,10 @@ class _AiDeckGeneratorSheetState extends State<AiDeckGeneratorSheet> {
         srs: context.read<SRSService>(),
         deckId: AiLessonGenerator.deckIdFor(t.name),
       );
-      final exercises = await generator.generateInteractive(
-        t.systemPrompt,
+      final ds = context.read<UserDataProvider>().dataSource;
+      final exercises = await generator.getLesson(
+        t,
+        context.read<AppState>().learningLanguage,
         _provider,
         _apiController.text.isEmpty ? null : _apiController.text,
         limit: _limit,

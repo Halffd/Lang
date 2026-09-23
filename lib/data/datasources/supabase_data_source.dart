@@ -477,6 +477,43 @@ class SupabaseDataSource {
     return response;
   }
 
+  // --- Exercise Bank (pre-generated, shared across users) ---
+  /// Fetch pre-generated/verified exercises for a language+level, deduped.
+  Future<List<Map<String, dynamic>>> fetchExerciseBank({
+    required String language,
+    required String level,
+    int limit = 50,
+    String qaStatus = 'verified',
+  }) async {
+    final rows = await _supabase
+        .from('exercise_bank')
+        .select()
+        .eq('language', language)
+        .eq('level', level)
+        .eq('qa_status', qaStatus)
+        .order('id', ascending: true)
+        .limit(limit);
+    return List<Map<String, dynamic>>.from(rows);
+  }
+
+  /// Insert exercises into the bank, silently dropping duplicates via the
+  /// unique index on (language, level, type, prompt_hash).
+  Future<int> insertExerciseBank(List<Map<String, dynamic>> rows) async {
+    if (rows.isEmpty) return 0;
+    final res = await _supabase
+        .from('exercise_bank')
+        .upsert(rows, onConflict: 'language,level,type,prompt_hash');
+    return (res as List).length;
+  }
+
+  /// Mark bank rows as verified / flagged after QA pass.
+  Future<void> setExerciseBankQa(int id, String status) async {
+    await _supabase
+        .from('exercise_bank')
+        .update({'qa_status': status})
+        .eq('id', id);
+  }
+
   // --- User Profile ---
   Future<Map<String, dynamic>?> getUserProfile() async {
     final uid = userId;

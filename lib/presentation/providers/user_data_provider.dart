@@ -27,6 +27,9 @@ class UserDataProvider with ChangeNotifier {
 
   bool get available => _dataSource != null;
 
+  /// Direct access for bank-first generation etc.
+  SupabaseDataSource? get dataSource => _dataSource;
+
   /// Push new local saved words to the cloud; pull words that are not local.
   /// Handles the merge via [SupabaseDataSource.syncSavedWords] for writes and
   /// returns the words that exist remotely but not locally so callers can
