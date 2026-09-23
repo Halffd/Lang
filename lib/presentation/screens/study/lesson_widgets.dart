@@ -4,6 +4,86 @@ import 'package:flutter/material.dart';
 
 import 'package:lang/utils/font_scale.dart';
 import 'package:lang/utils/screen_size.dart';
+import 'ai_exercise_parser.dart';
+
+/// Bottom sheet listing per-character/word breakdown parts.
+class BreakdownSheet extends StatelessWidget {
+  final List<AiBreakdownPart> parts;
+  final String title;
+
+  const BreakdownSheet({
+    super.key,
+    required this.parts,
+    this.title = 'Breakdown',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 12),
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  for (final p in parts)
+                    ListTile(
+                      dense: true,
+                      leading: Text(
+                        p.char,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      title: Text(p.reading ?? ''),
+                      subtitle: Text(p.meaning),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Cache for breakdown lookups so repeated words don't refire AI calls.
+class BreakdownCache {
+  final Future<List<Map<String, String>>> Function(
+    String word, {
+    String? apiKey,
+  })
+  _fetch;
+  final Map<String, List<AiBreakdownPart>> _cache = {};
+
+  BreakdownCache(this._fetch);
+
+  Future<List<AiBreakdownPart>> get(String word, {String? apiKey}) async {
+    final key = word.trim();
+    if (key.isEmpty) return const [];
+    final hit = _cache[key];
+    if (hit != null) return hit;
+    try {
+      final raw = await _fetch(key, apiKey: apiKey);
+      final parts = raw
+          .map(AiBreakdownPart.fromJson)
+          .where((p) => p.char.isNotEmpty)
+          .toList();
+      _cache[key] = parts;
+      return parts;
+    } catch (_) {
+      _cache[key] = const [];
+      return const [];
+    }
+  }
+}
 
 /// Shape of a single study-session step produced by any lesson type.
 /// The lesson page shows [prompt] to the user and calls [onAnswer]

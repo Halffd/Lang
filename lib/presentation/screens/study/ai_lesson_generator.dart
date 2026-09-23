@@ -8,7 +8,9 @@ import 'package:lang/domain/repositories/ai_repository.dart';
 import 'package:lang/domain/entities/srs_card.dart';
 import 'package:lang/domain/entities/srs_deck.dart';
 import 'package:lang/presentation/providers/ai_provider.dart';
+import 'ai_exercise_parser.dart';
 import 'ai_lesson_page.dart';
+import 'lesson_widgets.dart';
 
 /// One user-configured prompt template for AI lesson generation.
 class AiLessonTemplate {
@@ -528,7 +530,7 @@ class _AiDeckGeneratorSheetState extends State<AiDeckGeneratorSheet> {
   }
 
   /// Per-character/word breakdown: reuse the JSON breakdown if present, else
-  /// ask the AI for one on the first exercise prompt.
+  /// fetch per word via [BreakdownCache] (cached, so repeats don't refire).
   Future<void> _showBreakdown() async {
     final ex = _lastInteractive;
     if (ex == null || ex.isEmpty) return;
@@ -536,40 +538,35 @@ class _AiDeckGeneratorSheetState extends State<AiDeckGeneratorSheet> {
       for (final e in ex) ...(e.breakdown ?? const <AiBreakdownPart>[]),
     ];
     if (existing.isNotEmpty) {
-      _showBreakdownSheet(existing, 'Breakdown');
+      showModalBottomSheet<void>(
+        context: context,
+        builder: (ctx) => BreakdownSheet(parts: existing),
+      );
       return;
     }
-    // Ask AI for a breakdown on all prompts (single call)
     setState(() => _loading = true);
     try {
       final aiProvider = context.read<AiProvider>();
+      final cache = BreakdownCache(aiProvider.repository.breakdown);
       final words = ex
           .map((e) => e.prompt)
           .where((p) => p.trim().isNotEmpty)
           .take(20)
-          .join('\n');
-      final prompt = '''Break down each word below into its parts (characters or
-compound components). Return a JSON array, nothing else:
-[{"char":"<word or character>","reading":"<reading>","meaning":"<meaning>"}]
-
-Words:
-$words''';
-      final raw = await aiProvider.generateText(prompt);
-      final parsed =
-          jsonDecode(
-                raw.trim().startsWith('```')
-                    ? raw
-                          .replaceAll(RegExp(r'^```[a-zA-Z]*\n?'), '')
-                          .replaceAll(RegExp(r'```$'), '')
-                    : raw,
-              )
-              as List<dynamic>;
-      final parts = parsed
-          .whereType<Map<String, dynamic>>()
-          .map(AiBreakdownPart.fromJson)
-          .toList();
+          .toSet(); // dedupe — cloze/match reuse vocab
+      final fetched = <AiBreakdownPart>[];
+      for (final w in words) {
+        fetched.addAll(
+          await cache.get(
+            w,
+            apiKey: _apiController.text.isEmpty ? null : _apiController.text,
+          ),
+        );
+      }
       if (!mounted) return;
-      _showBreakdownSheet(parts, 'Breakdown');
+      showModalBottomSheet<void>(
+        context: context,
+        builder: (ctx) => BreakdownSheet(parts: fetched),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -579,44 +576,6 @@ $words''';
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  void _showBreakdownSheet(List<AiBreakdownPart> parts, String title) {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 12),
-            Flexible(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    for (final p in parts)
-                      ListTile(
-                        dense: true,
-                        leading: Text(
-                          p.char,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        title: Text(p.reading ?? ''),
-                        subtitle: Text(p.meaning),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Future<void> _saveTemplateAsNew() async {

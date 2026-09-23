@@ -1,107 +1,9 @@
-import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:lang/core/services/audio_service.dart';
+import 'ai_exercise_parser.dart';
 import 'lesson_widgets.dart';
-
-/// One generated exercise element.
-class AiExercise {
-  final String type; // flashcard, mc, written, cloze, match, spoken, listening
-  final String prompt;
-  final String? promptSub; // subtitle (reading, translation prompt, etc.)
-  final String answer;
-  final List<String>? choices;
-  final List<Map<String, String>>?
-  pairs; // for 'match': [{left: .., right: ..}, ...]
-  final List<AiBreakdownPart>? breakdown;
-
-  const AiExercise({
-    required this.type,
-    required this.prompt,
-    this.promptSub,
-    required this.answer,
-    this.choices,
-    this.pairs,
-    this.breakdown,
-  });
-
-  static AiExercise parse(Map<String, dynamic> m) {
-    List<AiBreakdownPart>? bd;
-    if (m['breakdown'] is List) {
-      bd = (m['breakdown'] as List)
-          .whereType<Map<String, dynamic>>()
-          .map((b) => AiBreakdownPart.fromJson(b))
-          .toList();
-    }
-    return AiExercise(
-      type: m['type']?.toString() ?? 'flashcard',
-      prompt: m['prompt']?.toString() ?? '',
-      promptSub: m['prompt_sub']?.toString() ?? m['promptSub']?.toString(),
-      answer: m['answer']?.toString() ?? '',
-      choices: (m['choices'] as List?)?.map((e) => e.toString()).toList(),
-      pairs: (m['pairs'] as List?)
-          ?.whereType<Map<String, dynamic>>()
-          .map(
-            (p) => {
-              'left': p['left'].toString(),
-              'right': p['right'].toString(),
-            },
-          )
-          .toList(),
-      breakdown: bd,
-    );
-  }
-}
-
-class AiBreakdownPart {
-  final String char;
-  final String? reading;
-  final String meaning;
-
-  const AiBreakdownPart({
-    required this.char,
-    this.reading,
-    required this.meaning,
-  });
-
-  factory AiBreakdownPart.fromJson(Map<String, dynamic> m) => AiBreakdownPart(
-    char: m['char']?.toString() ?? '',
-    reading: m['reading']?.toString(),
-    meaning: m['meaning']?.toString() ?? '',
-  );
-}
-
-/// Generic AI lesson prompt (used when no template chosen).
-const kAiLessonScratchPrompt =
-    '''Generate a language lesson as a JSON array. Each element is an exercise:
-{"type":"flashcard","prompt":"word or sentence","prompt_sub":"reading","answer":"meaning or translation"}
-{"type":"mc","prompt":"word","prompt_sub":"reading","choices":["a","b","c","d"],"answer":"<one of choices>"}
-{"type":"written","prompt":"meaning or translation","answer":"<the original language text>"}
-{"type":"cloze","prompt":"sentence with ____ blank","answer":"<missing word>","choices":["opt1","opt2","opt3","opt4"]}
-{"type":"match","pairs":[{"left":"word1","right":"meaning1"},{"left":"word2","right":"meaning2"}],"answer":""}
-{"type":"listening","prompt":"word to hear via TTS","choices":["a","b","c","d"],"answer":"<one of choices>"}
-{"type":"spoken","prompt":"word to repeat","answer":"word"}
-Each exercise also gets an optional "breakdown": [{"char":"漢","reading":"かん","meaning":"kanji"}] entry with per-character or per-word breakdown when the prompt contains multiple CJK characters.
-Return ONLY the JSON array, no prose, no code fences.''';
-
-class AiLessonResult {
-  final List<AiExercise> exercises;
-
-  const AiLessonResult(this.exercises);
-
-  static AiLessonResult parse(String raw) {
-    // Strip code fences
-    var s = raw.trim();
-    if (s.startsWith('```')) {
-      s = s.replaceAll(RegExp(r'^```[a-zA-Z]*\n?'), '');
-      s = s.replaceAll(RegExp(r'```$'), '');
-    }
-    final list = jsonDecode(s) as List<dynamic>;
-    return AiLessonResult(
-      list.whereType<Map<String, dynamic>>().map(AiExercise.parse).toList(),
-    );
-  }
-}
 
 /// Self-contained lesson experience driven entirely by AI JSON.
 class AiLessonPage extends StatefulWidget {
@@ -128,14 +30,32 @@ class _AiLessonPageState extends State<AiLessonPage> {
   int _xp = 0;
   final _textCtrl = TextEditingController();
   final _flip = ValueNotifier<bool>(false);
+  final _audio = AudioService();
+  static const _lessonLang = 'ja';
 
   AiExercise get _current => widget.lesson.exercises[_idx];
+
+  @override
+  void initState() {
+    super.initState();
+    // Warm the TTS engine once at lesson start so the first listening
+    // exercise has no spawn blip (espeak binary page-cache + language set).
+    _audio.init().then((_) {
+      if (mounted && _current.type == 'listening') _playCurrent();
+    });
+  }
 
   @override
   void dispose() {
     _textCtrl.dispose();
     _flip.dispose();
     super.dispose();
+  }
+
+  void _playCurrent() {
+    final prompt = _current.prompt;
+    if (prompt.trim().isEmpty) return;
+    _audio.play(prompt, _lessonLang);
   }
 
   void _grade(bool correct, {double score = 1}) {
@@ -159,6 +79,8 @@ class _AiLessonPageState extends State<AiLessonPage> {
       _flip.value = false;
       if (_idx < widget.lesson.exercises.length - 1) _idx++;
     });
+    // listening steps play their prompt on entry; others stay silent
+    if (_current.type == 'listening') _playCurrent();
   }
 
   @override
@@ -227,12 +149,29 @@ class _AiLessonPageState extends State<AiLessonPage> {
         );
       case 'mc':
       case 'listening':
-        return MultipleChoiceView(
-          word: ex.type == 'listening' ? '🎧 ${ex.prompt}' : ex.prompt,
-          subLabel: ex.promptSub,
-          meanings: ex.choices ?? const [],
-          correctIndex: (ex.choices ?? []).indexOf(ex.answer),
-          onPick: (i) => _grade(i == (ex.choices ?? []).indexOf(ex.answer)),
+        return Column(
+          children: [
+            if (ex.type == 'listening')
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: IconButton.filledTonal(
+                  iconSize: 40,
+                  tooltip: 'Replay',
+                  onPressed: _playCurrent,
+                  icon: const Icon(Icons.volume_up),
+                ),
+              ),
+            Expanded(
+              child: MultipleChoiceView(
+                word: ex.type == 'listening' ? '' : ex.prompt,
+                subLabel: ex.promptSub,
+                meanings: ex.choices ?? const [],
+                correctIndex: (ex.choices ?? []).indexOf(ex.answer),
+                onPick: (i) =>
+                    _grade(i == (ex.choices ?? []).indexOf(ex.answer)),
+              ),
+            ),
+          ],
         );
       case 'written':
       case 'cloze':
