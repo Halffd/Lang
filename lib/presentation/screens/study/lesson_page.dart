@@ -19,15 +19,11 @@ class LessonPage extends StatefulWidget {
   final LessonType type;
   final SRSService srs;
 
-  /// 0 = unlimited; otherwise the deck is truncated to this many cards.
-  final int sentenceCap;
-
   const LessonPage({
     super.key,
     required this.cards,
     required this.type,
     required this.srs,
-    this.sentenceCap = 0,
   });
 
   @override
@@ -64,14 +60,9 @@ class _LessonPageState extends State<LessonPage> {
 
   List<LessonStep> _sortSteps(List<LessonStep> src) {
     final cards = widget.cards;
-    // Truncate to sentence cap if configured
-    var limited = cards;
-    if (widget.sentenceCap > 0 && cards.length > widget.sentenceCap) {
-      limited = cards.take(widget.sentenceCap).toList();
-    }
     final idx = List<int>.generate(src.length, (i) => i);
     // sort step indexes by linked card's ease factor (weak first)
-    idx.sort((a, b) => limited[a].easeFactor.compareTo(limited[b].easeFactor));
+    idx.sort((a, b) => cards[a].easeFactor.compareTo(cards[b].easeFactor));
     return [for (final i in idx) src[i]];
   }
 

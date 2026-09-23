@@ -26,7 +26,6 @@ class _StudyScreenState extends State<StudyScreen> {
   int _gems = 0;
   int _streak = 0;
   int _dailyGoal = 50;
-  int _sentenceCap = 30;
 
   @override
   void initState() {
@@ -42,25 +41,6 @@ class _StudyScreenState extends State<StudyScreen> {
       _streak = p.getInt('study_streak') ?? 0;
       _dailyGoal = p.getInt('study_daily_goal') ?? 50;
     });
-  }
-
-  /// Daily sentence cap. 0 = unlimited (pro behavior).
-  static const _kDailyLimitKey = 'study_daily_limit';
-  Future<int> _dailyLimit() async {
-    final p = await SharedPreferences.getInstance();
-    return p.getInt(_kDailyLimitKey) ?? 30;
-  }
-
-  /// Remaining lesson starts for today.
-  Future<int> _lessonsRemainingToday() async {
-    final limit = await _dailyLimit();
-    if (limit <= 0) return 999;
-    final p = await SharedPreferences.getInstance();
-    final dayStart =
-        DateTime.now().millisecondsSinceEpoch -
-        DateTime.now().millisecondsSinceEpoch % (24 * 3600 * 1000);
-    final used = p.getInt('study_daily_done_$dayStart') ?? 0;
-    return limit - used;
   }
 
   @override
@@ -314,22 +294,12 @@ class _StudyScreenState extends State<StudyScreen> {
         cardCount: cards.length,
         onPick: (type) async {
           Navigator.of(ctx).pop();
-          // Enforce daily lesson cap
-          final remaining = await _lessonsRemainingToday();
-          if (!mounted) return;
-          if (remaining <= 0) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Daily lesson limit reached')),
-            );
-            return;
-          }
           await Navigator.of(context).push(
             MaterialPageRoute<void>(
               builder: (_) => LessonPage(
                 cards: cards,
                 type: type,
                 srs: context.read<SRSService>(),
-                sentenceCap: _sentenceCap,
               ),
             ),
           );
@@ -363,7 +333,7 @@ class _StudyScreenState extends State<StudyScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            ...([25, 50, 100, 200].map(
+            ...[25, 50, 100, 200].map(
               (g) => ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: Radio<int>(
@@ -380,45 +350,12 @@ class _StudyScreenState extends State<StudyScreen> {
                 ),
                 title: Text('$g XP'),
               ),
-            )),
-            const Divider(),
-            Text(
-              'Sentence cap per lesson (0 = unlimited)',
-              style: TextStyle(
-                fontSize: fs(context, 14),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            _DailySentencesChips(
-              buildLabel: (v) => _labelLeadSentenceCap(v, context),
             ),
           ],
         ),
       ),
     );
   }
-
-  Widget _DailySentencesChips({required Widget Function(int) buildLabel}) {
-    return Wrap(
-      spacing: 8,
-      children: [0, 30, 50, 100].map((v) {
-        final label = v == 0 ? 'Unlimited (Pro)' : '$v';
-        return ChoiceChip(
-          label: Text(label),
-          selected: _sentenceCap == v,
-          onSelected: (_) async {
-            setState(() => _sentenceCap = v);
-            final p = await SharedPreferences.getInstance();
-            await p.setInt('study_sentence_cap', v);
-          },
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _labelLeadSentenceCap(int v, BuildContext context) =>
-      Text(v == 0 ? 'Unlimited (Pro)' : '$v');
 }
 
 class _LessonTypeSheet extends StatelessWidget {
