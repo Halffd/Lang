@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import 'package:lang/core/services/history_service.dart';
 import 'package:lang/core/services/shake_detector.dart';
+import 'package:lang/data/services/anki_connect_service.dart';
 import 'package:lang/domain/entities/popup_dictionary_config.dart';
 import 'package:lang/utils/cjk_text_extractor.dart';
 
@@ -385,6 +386,70 @@ class PopupDictionaryController with ChangeNotifier {
       view.physicalSize.height / view.devicePixelRatio / 2,
     );
     _fire(center, PointerDeviceKind.unknown);
+  }
+
+  /// OCR flow: fire with an already-extracted term, no on-screen pointer hit.
+  Future<void> showLookupFor(String term) async {
+    if (term.trim().isEmpty) return;
+    if (!_currentRouteAllows()) return;
+    if (config.languages.isNotEmpty &&
+        !config.languages.contains(currentLearningLanguage))
+      return;
+    if (!config.allowsText(term)) return;
+    final builder = lookupBuilder;
+    final overlay = _rootOverlay;
+    final ctx = _rootContext;
+    if (builder == null || overlay == null || ctx == null) return;
+
+    if (_popupOpen) hide();
+    final epoch = ++_lookupEpoch;
+    final lookup = PopupLookup(
+      term: term.trim(),
+      sentence: term, // OCR standalone: use the term itself as context
+      position: Offset.zero,
+    );
+
+    final widget = await builder(ctx, lookup);
+    if (epoch != _lookupEpoch) return;
+    if (widget == null) return;
+
+    _activeTerm = term;
+    _entry = OverlayEntry(
+      builder: (context) {
+        final view = View.of(context);
+        final w = view.physicalSize.width / view.devicePixelRatio;
+        final h = view.physicalSize.height / view.devicePixelRatio;
+        return Positioned(
+          left: w / 2 - config.width / 2,
+          top: h / 4,
+          width: config.width,
+          child: Material(
+            elevation: 12,
+            borderRadius: BorderRadius.circular(16),
+            child: widget,
+          ),
+        );
+      },
+    );
+    _popupOpen = true;
+    overlay.insert(_entry!);
+    notifyListeners();
+    if (config.autoCopy) await Clipboard.setData(ClipboardData(text: term));
+    if (config.autoAnki) {
+      try {
+        final svc = AnkiConnectService();
+        await svc.addNote(
+          deckName: config.ankiDeck.isEmpty ? 'Default' : config.ankiDeck,
+          modelName: 'Basic',
+          fields: {
+            'Front': lookup.term,
+            'Back': lookup.sentence.isNotEmpty ? lookup.sentence : lookup.term,
+          },
+        );
+      } catch (_) {
+        /* ignored */
+      }
+    }
   }
 
   void hide() {

@@ -199,6 +199,15 @@ class _PopupDictionarySettingsState extends State<PopupDictionarySettings> {
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
+          title: const Text('Auto OCR popup'),
+          subtitle: const Text(
+            'After an OCR scan, look up the captured word in the popup automatically',
+          ),
+          value: config.autoOcrPopup,
+          onChanged: (v) => _update(appState, (c) => c..autoOcrPopup = v),
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
           title: Text(l10n.popupAutoCopy),
           value: config.autoCopy,
           onChanged: (v) => _update(appState, (c) => c..autoCopy = v),

@@ -405,5 +405,11 @@ void main() {
       final results = await provider.lookupWordDirect('  読む  ');
       expect(results, isNotNull);
     });
+
+    test('autoOcrPopup serializes/deserializes', () {
+      final c = PopupDictionaryConfig(autoOcrPopup: true);
+      final back = PopupDictionaryConfig.fromJson(c.toJson());
+      expect(back.autoOcrPopup, isTrue);
+    });
   });
 }

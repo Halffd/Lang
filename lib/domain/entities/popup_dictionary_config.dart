@@ -141,6 +141,10 @@ class PopupDictionaryConfig {
   /// Show the source sentence under the definition.
   bool showSentence;
 
+  /// OCR popup: after an OCR scan, automatically look up the selected text
+  /// without a separate trigger tap.
+  bool autoOcrPopup;
+
   PopupDictionaryConfig({
     this.trigger = PopupTrigger.shift,
     this.extraModifier = PopupExtraModifier.none,
@@ -160,6 +164,7 @@ class PopupDictionaryConfig {
     this.languages = const {},
     this.style = PopupStyle.card,
     this.width = 320,
+    this.autoOcrPopup = false,
     this.maxHeight = 380,
     this.fontScale = 1.0,
     this.showReading = true,
@@ -216,6 +221,7 @@ class PopupDictionaryConfig {
     'excludeRegex': excludeRegex,
     'detectCompounds': detectCompounds,
     'detectConjugations': detectConjugations,
+    'autoOcrPopup': autoOcrPopup,
     'allowedScreens': allowedScreens.map((s) => s.name).toList(),
     'altTrigger': altTrigger?.name,
     'altCondition': altCondition,
@@ -245,6 +251,7 @@ class PopupDictionaryConfig {
         excludeRegex: json['excludeRegex'] as String? ?? '',
         detectCompounds: json['detectCompounds'] as bool? ?? true,
         detectConjugations: json['detectConjugations'] as bool? ?? true,
+        autoOcrPopup: json['autoOcrPopup'] as bool? ?? false,
         allowedScreens:
             (json['allowedScreens'] as List?)
                 ?.map((s) => _enumByName(PopupScreenScope.values, s))

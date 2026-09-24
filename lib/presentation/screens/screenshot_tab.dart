@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 
 import 'package:lang/core/services/screenshot_service.dart';
+import 'package:lang/core/services/popup_dictionary_controller.dart';
 import 'package:lang/data/services/ocr_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/l10n/app_localizations.dart';
@@ -106,6 +107,23 @@ class _ScreenshotTabState extends State<ScreenshotTab> {
     } finally {
       ocrService.dispose();
     }
+  }
+
+  /// OCR popup auto-lookup: called when auto-ocr toggle is on and OCR
+  /// produced text. We pick the first token and open the popup.
+  Future<void> _ocrAutoPopup(String text) async {
+    final config = PopupDictionaryController.instance.config;
+    if (!config.autoOcrPopup) return;
+    if (text.trim().isEmpty) return;
+    // First meaningful CJK word (>=2 chars), else the first token.
+    final words = text
+        .split(RegExp(r'\s+|\n'))
+        .map((w) => w.trim())
+        .where((w) => w.length >= 2)
+        .toList();
+    if (words.isEmpty) return;
+    final word = words.first;
+    await PopupDictionaryController.instance.showLookupFor(word);
   }
 
   Future<void> _showItem(ScreenshotItem item) async {
@@ -449,6 +467,7 @@ class _ScreenshotTabState extends State<ScreenshotTab> {
           final text = await _runOcr(item.path);
           if (text != null && text.trim().isNotEmpty) {
             _service.setOcrText(item.id, text.trim());
+            await _ocrAutoPopup(text);
             if (appState.screenshotCopyOcrText) {
               await Clipboard.setData(ClipboardData(text: text.trim()));
             }
