@@ -187,7 +187,11 @@ class JsonHtmlRenderer {
         ts = ts.copyWith(decoration: TextDecoration.underline);
       }
       final color = _parseColor(style['color']);
-      if (color != null) ts = ts.copyWith(color: color);
+      // near-white content colors are invisible on light backgrounds —
+      // drop them and inherit the theme color instead
+      if (color != null && color.computeLuminance() < 0.9) {
+        ts = ts.copyWith(color: color);
+      }
     } else if (style is String) {
       // legacy CSS-ish string: "font-weight:bold;color:#123456"
       if (style.contains('bold')) ts = ts.copyWith(fontWeight: FontWeight.bold);
@@ -227,6 +231,26 @@ class JsonHtmlRenderer {
     return null;
   }
 
+  /// Remove color keys from a style node (recursively), keeping everything
+  /// else (font-weight, decoration...).
+  static dynamic _stripColor(dynamic style) {
+    if (style is Map) {
+      final copy = style.map((k, v) => MapEntry(k.toString(), v));
+      copy.remove('color');
+      if (copy['data'] is Map) {
+        copy['data'] = _stripColor(copy['data']);
+      }
+      return copy;
+    }
+    if (style is String) {
+      return style.replaceAllMapped(
+        RegExp(r'(?:^|;)\s*color:[^;]+;?', caseSensitive: false),
+        (m) => m.group(0)!.endsWith(';') ? '' : '',
+      );
+    }
+    return style;
+  }
+
   static Widget _styledText(String text, dynamic style) {
     return Text(text, style: _parseStyle(style).copyWith());
   }
@@ -242,14 +266,14 @@ class JsonHtmlRenderer {
     dynamic style,
   }) {
     final spans = <InlineSpan>[];
-    void walk(dynamic node) {
+    void walk(dynamic node, dynamic style) {
       if (node is String) {
         spans.add(TextSpan(text: node, style: _parseStyle(style)));
         return;
       }
       if (node is List) {
         for (final child in node) {
-          walk(child);
+          walk(child, style);
         }
         return;
       }
@@ -277,13 +301,21 @@ class JsonHtmlRenderer {
           return;
         }
         final childContent = m['content'];
-        final mergedStyle = m['style'] ?? style;
+        var mergedStyle = m['style'] ?? style;
+        // respectContentColors=false: strip color keys so block-level
+        // dictionary accent colors never cascade into every letter
+        if (!options.respectContentColors) {
+          mergedStyle = _stripColor(mergedStyle);
+        }
         if (childContent is String) {
           spans.add(
             TextSpan(text: childContent, style: _parseStyle(mergedStyle)),
           );
         } else {
-          walk(childContent is List ? childContent : [childContent]);
+          walk(
+            childContent is List ? childContent : [childContent],
+            mergedStyle,
+          );
         }
         return;
       }
@@ -292,10 +324,10 @@ class JsonHtmlRenderer {
 
     if (content is List) {
       for (final child in content) {
-        walk(child);
+        walk(child, style);
       }
     } else {
-      walk(content);
+      walk(content, style);
     }
     return spans;
   }
@@ -888,9 +920,15 @@ class _DefaultDisplayOptions implements DictionaryDisplayOptions {
   @override
   set showDictionaryName(bool _) {}
   @override
+  bool get respectContentColors => true;
+  @override
+  set respectContentColors(bool _) {}
+  @override
   Map<String, dynamic> toJson() => {};
   @override
   void fromJson(Map<String, dynamic> json) {}
   @override
   String serialize() => '';
+  @override
+  DictionaryDisplayOptions copy() => const _DefaultDisplayOptions();
 }

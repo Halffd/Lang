@@ -87,6 +87,10 @@ class SpeechService extends ChangeNotifier {
   String? _currentChunkPath;
   int _chunkStartMs = 0;
 
+  /// Session-relative clock origin so segment timestamps are mm:ss
+  /// offsets, not epoch ms.
+  int _sessionStartMs = 0;
+
   bool get isRecording => _recording;
 
   /// Seconds per live-recording chunk. Shorter = lower latency but
@@ -270,7 +274,8 @@ class SpeechService extends ChangeNotifier {
     if (!await _recorder.hasPermission()) return false;
 
     _recording = true;
-    _chunkStartMs = DateTime.now().millisecondsSinceEpoch;
+    _sessionStartMs = DateTime.now().millisecondsSinceEpoch;
+    _chunkStartMs = _sessionStartMs;
     var chunkIndex = 0;
 
     try {
@@ -289,7 +294,7 @@ class SpeechService extends ChangeNotifier {
       _chunkTimer = Timer.periodic(Duration(seconds: chunkSeconds), (_) async {
         if (!_recording) return;
         final finishedPath = _currentChunkPath;
-        final startMs = _chunkStartMs;
+        final startMs = _chunkStartMs - _sessionStartMs;
         // rotate to a fresh chunk file
         chunkIndex++;
         _currentChunkPath = '${dir.path}/live_chunk_$chunkIndex.wav';
@@ -320,7 +325,7 @@ class SpeechService extends ChangeNotifier {
                 text: text.trim(),
                 language: lang,
                 startMs: startMs,
-                endMs: DateTime.now().millisecondsSinceEpoch,
+                endMs: DateTime.now().millisecondsSinceEpoch - _sessionStartMs,
               ),
             );
           }
@@ -354,7 +359,7 @@ class SpeechService extends ChangeNotifier {
     _chunkTimer = null;
     _recording = false;
     final path = _currentChunkPath;
-    final startMs = _chunkStartMs;
+    final startMs = _chunkStartMs - _sessionStartMs;
     try {
       await _recorder.stop();
     } catch (_) {}
@@ -373,7 +378,7 @@ class SpeechService extends ChangeNotifier {
               text: text.trim(),
               language: lang,
               startMs: startMs,
-              endMs: DateTime.now().millisecondsSinceEpoch,
+              endMs: DateTime.now().millisecondsSinceEpoch - _sessionStartMs,
             ),
           );
         }

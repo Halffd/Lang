@@ -34,6 +34,11 @@ class DictionaryDisplayOptions {
   /// Hide the per-definition dictionary name badge
   bool showDictionaryName = true;
 
+  /// Honor color styles embedded in dictionary structured content.
+  /// Off = always use the theme color (popups use theme colors so
+  /// dictionary accent colors don't paint every letter).
+  bool respectContentColors = true;
+
   Map<String, dynamic> toJson() => {
     'showSentences': showSentences,
     'showImages': showImages,
@@ -45,6 +50,7 @@ class DictionaryDisplayOptions {
     'showStructuredContent': showStructuredContent,
     'collapseLongDefinitions': collapseLongDefinitions,
     'showDictionaryName': showDictionaryName,
+    'respectContentColors': respectContentColors,
   };
 
   void fromJson(Map<String, dynamic> json) {
@@ -60,9 +66,18 @@ class DictionaryDisplayOptions {
     collapseLongDefinitions =
         json['collapseLongDefinitions'] ?? collapseLongDefinitions;
     showDictionaryName = json['showDictionaryName'] ?? showDictionaryName;
+    respectContentColors = json['respectContentColors'] ?? respectContentColors;
   }
 
   String serialize() => jsonEncode(toJson());
+
+  /// Deep copy (via serialize roundtrip) — callers may tweak single fields
+  /// (e.g. popup disables content colors) without mutating shared prefs.
+  DictionaryDisplayOptions copy() {
+    final o = DictionaryDisplayOptions();
+    o.fromJson(toJson());
+    return o;
+  }
 
   static DictionaryDisplayOptions deserialize(String? raw) {
     final o = DictionaryDisplayOptions();

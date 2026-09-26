@@ -50,6 +50,7 @@ import 'presentation/providers/user_profile_provider.dart';
 import 'presentation/providers/user_data_provider.dart';
 import 'presentation/screens/settings_screen.dart';
 import 'presentation/widgets/user_badge.dart';
+import 'presentation/widgets/font_zoom_scope.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -479,6 +480,7 @@ class _PopupDictionaryBodyState extends State<_PopupDictionaryBody> {
     final theme = Theme.of(context);
     final result = widget.result;
     final entry = result.entry;
+    final appState = Provider.of<AppState>(context, listen: false);
     final popupConfig = PopupDictionaryController.instance.config;
     final fontScale = popupConfig.fontScale.clamp(0.5, 2.0);
     return Column(
@@ -516,6 +518,10 @@ class _PopupDictionaryBodyState extends State<_PopupDictionaryBody> {
               child: StructuredDefinition(
                 definition: entry.definitions.first,
                 fontSize: (12 * fontScale).roundToDouble(),
+                // popup: theme colors — dictionary accent colors don't
+                // paint every letter red
+                optionsOverride: appState.dictionaryDisplayOptions.copy()
+                  ..respectContentColors = false,
               ),
             ),
           ),
@@ -753,7 +759,7 @@ class LangApp extends StatelessWidget {
           // Other modes: unchanged.
           builder: (context, child) {
             if (child == null) return const SizedBox.shrink();
-            return ScreenSize.maybeCenter(context, child);
+            return FontZoomScope(child: ScreenSize.maybeCenter(context, child));
           },
         );
       },

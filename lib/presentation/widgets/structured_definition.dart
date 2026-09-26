@@ -20,10 +20,14 @@ class StructuredDefinition extends StatelessWidget {
   /// settings 'translations' group).
   final double fontSize;
 
+  /// Overrides appState options (popup uses theme colors).
+  final DictionaryDisplayOptions? optionsOverride;
+
   const StructuredDefinition({
     super.key,
     required this.definition,
     this.fontSize = 14,
+    this.optionsOverride,
   });
 
   @override
@@ -32,7 +36,7 @@ class StructuredDefinition extends StatelessWidget {
     // listen: false is fine — options rarely change and the host
     // screens rebuild on AppState notifications anyway
     final AppState appState = Provider.of<AppState>(context, listen: false);
-    final options = appState.dictionaryDisplayOptions;
+    final options = optionsOverride ?? appState.dictionaryDisplayOptions;
 
     final plainStyle = TextStyle(
       fontSize: fs(context, fontSize, 'translations'),

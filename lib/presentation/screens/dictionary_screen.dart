@@ -33,6 +33,12 @@ class _DictionaryScreenState extends State<DictionaryScreen>
   String _query = '';
   int _offset = 0;
   bool _hasMore = true;
+
+  /// Epoch guard: only the latest browse may commit its page — a slow
+  /// in-flight response for an older query must not overwrite or mix
+  /// into the newer results (which showed up as duplicated letters).
+  int _browseEpoch = 0;
+
   static const int _pageSize = 50;
 
   @override
@@ -74,24 +80,37 @@ class _DictionaryScreenState extends State<DictionaryScreen>
   Future<void> _browse(String query, {bool append = false}) async {
     if (_loading) return;
     setState(() => _loading = true);
+    final epoch = ++_browseEpoch;
     try {
       final page = await _yomichan.browseEntries(
         query,
         limit: _pageSize,
         offset: append ? _offset : 0,
       );
-      if (!mounted) return;
+      if (!mounted || epoch != _browseEpoch) return; // superseded
       setState(() {
         if (append) {
-          _entries.addAll(page);
+          // dedupe: same (word, reading) from multiple dictionaries
+          // or overlapping pages must not show twice
+          final seen = {
+            for (final e in _entries) '${e.entry.word}@${e.entry.reading}',
+          };
+          for (final e in page) {
+            final key = '${e.entry.word}@${e.entry.reading}';
+            if (seen.add(key)) _entries.add(e);
+          }
         } else {
-          _entries = page;
+          final seen = <String>{};
+          _entries = [
+            for (final e in page)
+              if (seen.add('${e.entry.word}@${e.entry.reading}')) e,
+          ];
         }
         _offset = (append ? _offset : 0) + page.length;
         _hasMore = page.length >= _pageSize;
       });
     } catch (_) {
-      if (mounted) {
+      if (mounted && epoch == _browseEpoch) {
         setState(() {
           _entries = append ? _entries : [];
           _hasMore = false;

@@ -8,6 +8,7 @@ import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/presentation/providers/ai_provider.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/presentation/widgets/script_text_field.dart';
+import 'package:lang/domain/entities/analyzed_word.dart';
 import 'package:lang/presentation/widgets/word_detail_sheet.dart';
 import 'package:lang/presentation/screens/screenshot_tab.dart';
 import 'package:lang/l10n/app_localizations.dart';
@@ -290,29 +291,70 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _buildSearchInput(ThemeData theme, AnalyzerProvider provider) {
     final appState = context.read<AppState>();
 
-    return ScriptTextField(
-      controller: _searchController,
-      language: provider.currentLanguage,
-      enabled: appState.autoConvertInput,
-      decoration: InputDecoration(
-        hintText: 'Search for a word...',
-        prefixIcon: const Icon(Icons.search),
-        suffixIcon: ValueListenableBuilder(
-          valueListenable: _searchController,
-          builder: (context, value, child) {
-            return _searchController.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      _searchController.clear();
-                      provider.clearSearch();
-                    },
-                  )
-                : const SizedBox.shrink();
-          },
+    return Row(
+      children: [
+        // language dropdown
+        SizedBox(
+          width: 96,
+          child: DropdownButtonFormField<String>(
+            initialValue: provider.currentLanguage,
+            isDense: true,
+            decoration: InputDecoration(
+              labelText: 'Lang',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 8,
+              ),
+            ),
+            items: const [
+              DropdownMenuItem(value: 'ja', child: Text('JA')),
+              DropdownMenuItem(value: 'zh', child: Text('ZH')),
+              DropdownMenuItem(value: 'ko', child: Text('KO')),
+              DropdownMenuItem(value: 'en', child: Text('EN')),
+              DropdownMenuItem(value: 'es', child: Text('ES')),
+              DropdownMenuItem(value: 'fr', child: Text('FR')),
+              DropdownMenuItem(value: 'de', child: Text('DE')),
+              DropdownMenuItem(value: 'ru', child: Text('RU')),
+            ],
+            onChanged: (v) {
+              if (v != null) {
+                provider.setLanguage(v);
+                setState(() {});
+              }
+            },
+          ),
         ),
-      ),
-      onSubmitted: (query) => provider.searchWord(query),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ScriptTextField(
+            controller: _searchController,
+            language: provider.currentLanguage,
+            enabled: appState.autoConvertInput,
+            decoration: InputDecoration(
+              hintText: 'Search for a word...',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: ValueListenableBuilder(
+                valueListenable: _searchController,
+                builder: (context, value, child) {
+                  return _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            provider.clearSearch();
+                          },
+                        )
+                      : const SizedBox.shrink();
+                },
+              ),
+            ),
+            onSubmitted: (query) => provider.searchWord(query),
+          ),
+        ),
+      ],
     );
   }
 
@@ -502,25 +544,29 @@ class _SearchScreenState extends State<SearchScreen> {
           _searchController.text.isEmpty
               ? 'Type something to search'
               : 'No results found',
-          style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+          style: TextStyle(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+          ),
         ),
       );
     }
 
+    final results = provider.searchResults;
+    // AI insights: single button at the very bottom with auto toggle.
     return ListView.builder(
-      itemCount: provider.searchResults.length,
+      itemCount: results.length + 1,
       itemBuilder: (context, index) {
-        final word = provider.searchResults[index];
-        return Card(
-          child: ListTile(
-            title: Text(
-              word.word,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text('Freq: ${word.frequency ?? "?"}'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => WordDetailSheet.show(context, provider, word),
-          ),
+        if (index == results.length) {
+          return _AiInsightsCard(
+            query: _searchController.text,
+            provider: provider,
+          );
+        }
+        final word = results[index];
+        return _WordResultCard(
+          word: word,
+          provider: provider,
+          onTap: () => WordDetailSheet.show(context, provider, word),
         );
       },
     );
@@ -898,6 +944,246 @@ class _WordGrid extends StatelessWidget {
           }).toList(),
         );
       },
+    );
+  }
+}
+
+/// Search result card: definition visible directly, full detail on tap.
+class _WordResultCard extends StatelessWidget {
+  final AnalyzedWord word;
+  final AnalyzerProvider provider;
+  final VoidCallback onTap;
+
+  const _WordResultCard({
+    required this.word,
+    required this.provider,
+    required this.onTap,
+  });
+
+  List<String> get _definitions {
+    // local definitions are structured-content maps — flatten to text
+    if (word.localDefinitions.isNotEmpty) {
+      return [
+        for (final d in word.localDefinitions)
+          _flattenContent(d['content'] ?? d),
+      ];
+    }
+    if (word.ichiMoeDefinitions.isNotEmpty) return word.ichiMoeDefinitions;
+    if (word.mdbgData?.definitions.isNotEmpty == true) {
+      return word.mdbgData!.definitions;
+    }
+    return const [];
+  }
+
+  static String _flattenContent(dynamic node) {
+    if (node is String) return node;
+    if (node is List) return node.map(_flattenContent).join();
+    if (node is Map) {
+      return (node['content'] != null)
+          ? _flattenContent(node['content'])
+          : node.values.map(_flattenContent).join();
+    }
+    return node?.toString() ?? '';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final defs = _definitions;
+    return Card(
+      elevation: 1,
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      word.word,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  if (word.reading != null && word.reading!.isNotEmpty)
+                    Text(
+                      word.reading!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
+                      ),
+                    ),
+                  if (word.frequency != null) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.secondaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${word.frequency}',
+                        style: theme.textTheme.labelSmall,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              if (defs.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  defs.take(3).join('; '),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+              if (word.sourceDictionary != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  word.sourceDictionary!,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// AI insights: single button at the bottom of results; generates an
+/// explanation for the current query. Auto-collapses after regenerating.
+class _AiInsightsCard extends StatefulWidget {
+  final String query;
+  final AnalyzerProvider provider;
+
+  const _AiInsightsCard({required this.query, required this.provider});
+
+  @override
+  State<_AiInsightsCard> createState() => _AiInsightsCardState();
+}
+
+class _AiInsightsCardState extends State<_AiInsightsCard> {
+  bool _auto = true; // auto-generate when query changes
+  bool _loading = false;
+  String? _insight;
+  String? _error;
+  String? _lastQuery;
+
+  @override
+  void didUpdateWidget(covariant _AiInsightsCard old) {
+    super.didUpdateWidget(old);
+    // auto toggle: regenerate when the query changes
+    if (_auto && widget.query.isNotEmpty && widget.query != _lastQuery) {
+      _lastQuery = widget.query;
+      _generate();
+    }
+  }
+
+  Future<void> _generate() async {
+    final q = widget.query.trim();
+    if (q.isEmpty) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final ai = context.read<AiProvider>();
+      final text = await ai.generateText(
+        'Explain the word or phrase "$q" for a language learner: meaning, '
+        'nuance, common usage, one example sentence, and any gotchas. '
+        'Be concise (max 120 words).',
+      );
+      if (!mounted) return;
+      setState(() => _insight = text);
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.surfaceContainerHighest,
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.auto_awesome, size: 18),
+                const SizedBox(width: 6),
+                Text('AI insights', style: theme.textTheme.titleSmall),
+                const Spacer(),
+                // auto toggle
+                Switch(
+                  value: _auto,
+                  onChanged: (v) {
+                    setState(() => _auto = v);
+                    if (v && _insight == null) _generate();
+                  },
+                ),
+              ],
+            ),
+            if (_loading)
+              const Padding(
+                padding: EdgeInsets.all(12),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_insight != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  _insight!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
+                  ),
+                ),
+              )
+            else if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'AI unavailable: $_error',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
+                ),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: TextButton.icon(
+                  icon: const Icon(Icons.auto_awesome, size: 16),
+                  label: const Text('Generate insights'),
+                  onPressed: _generate,
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -29,6 +29,7 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
   String? _currentFilePath;
   String? _currentFileType;
   bool _showControls = true;
+  String _pastedText = '';
 
   @override
   void initState() {
@@ -73,8 +74,23 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
                   },
                 ),
               )
+            else if (_currentFileType == 'text')
+              Positioned.fill(
+                child: _TextReaderView(
+                  initialText: _pastedText,
+                  onOpened: (t) => HistoryService.instance.record(
+                    HistoryCategory.document,
+                    'Pasted text',
+                    subtitle: t.length > 80 ? t.substring(0, 80) : t,
+                  ),
+                ),
+              )
             else
-              const Center(child: Text('No document selected')),
+              _ReaderLanding(
+                onOpenFile: _openFile,
+                onOpenManga: _openMangaFolder,
+                onPasteText: _openTextPaste,
+              ),
             if (_showControls &&
                 _currentFileType != null &&
                 _currentFileType != 'txt')
@@ -264,6 +280,59 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
     );
   }
 
+  /// Text mode: multiline paste box, then a scrollable reader view.
+  void _openTextPaste() {
+    final ctrl = TextEditingController(text: _pastedText);
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Paste text to read',
+              style: Theme.of(ctx).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: ctrl,
+              maxLines: 8,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: 'Paste or type text…',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              icon: const Icon(Icons.menu_book),
+              label: const Text('Read'),
+              onPressed: () {
+                if (ctrl.text.trim().isEmpty) return;
+                Navigator.of(ctx).pop();
+                setState(() {
+                  _pastedText = ctrl.text.trim();
+                  _currentFilePath = null; // not a file
+                  _currentFileType = 'text';
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _openFile() async {
     try {
       final FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -375,6 +444,138 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
             child: const Text('Close'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Reader landing (nothing open): recents list from history + actions.
+class _ReaderLanding extends StatelessWidget {
+  final VoidCallback onOpenFile;
+  final VoidCallback onOpenManga;
+  final VoidCallback onPasteText;
+
+  const _ReaderLanding({
+    required this.onOpenFile,
+    required this.onOpenManga,
+    required this.onPasteText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final recents = HistoryService.instance.items
+        .where((i) => i.category == HistoryCategory.document)
+        .take(10)
+        .toList();
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Icon(Icons.menu_book, size: 48),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                icon: const Icon(Icons.folder_open),
+                label: const Text('Open file'),
+                onPressed: onOpenFile,
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.photo_library),
+                label: const Text('Open manga folder'),
+                onPressed: onOpenManga,
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.notes),
+                label: const Text('Paste text'),
+                onPressed: onPasteText,
+              ),
+              if (recents.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                Text('Recent documents', style: theme.textTheme.titleSmall),
+                const SizedBox(height: 8),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: recents.length,
+                    itemBuilder: (context, i) {
+                      final item = recents[i];
+                      final filePath = item.subtitle ?? '';
+                      final isFile = filePath.contains('/');
+                      return ListTile(
+                        dense: true,
+                        leading: Icon(
+                          isFile ? Icons.insert_drive_file : Icons.notes,
+                          size: 20,
+                        ),
+                        title: Text(
+                          item.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: isFile
+                            ? Text(
+                                filePath,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall,
+                              )
+                            : null,
+                        onTap: isFile
+                            ? () => _openRecent(context, filePath)
+                            : null,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  static void _openRecent(BuildContext context, String filePath) {
+    final ext = filePath.split('.').last.toLowerCase();
+    final fileType = switch (ext) {
+      'pdf' => 'pdf',
+      'epub' => 'epub',
+      'fb2' => 'fb2',
+      'cbz' || 'zip' => 'manga',
+      _ => 'txt',
+    };
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            DocumentReaderScreen(filePath: filePath, fileType: fileType),
+      ),
+    );
+  }
+}
+
+/// Multiline text reader view: scrollable text with popup-dictionary support.
+class _TextReaderView extends StatelessWidget {
+  final String initialText;
+  final void Function(String text)? onOpened;
+
+  const _TextReaderView({required this.initialText, this.onOpened});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: SelectableText(
+        initialText,
+        style: theme.textTheme.bodyLarge?.copyWith(height: 1.7),
       ),
     );
   }

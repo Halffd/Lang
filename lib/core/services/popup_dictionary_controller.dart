@@ -53,6 +53,10 @@ class PopupDictionaryController with ChangeNotifier {
   int _clickCount = 0;
   bool _popupOpen = false;
 
+  /// On-screen bounds of the open popup; pointer events inside these
+  /// bounds never re-trigger or dismiss the popup.
+  Rect? _popupRect;
+
   /// Term currently shown in the popup; hover events over the same
   /// run (mouse micro-movement) must not re-trigger the lookup.
   String _activeTerm = '';
@@ -263,8 +267,10 @@ class PopupDictionaryController with ChangeNotifier {
 
   Future<void> _fire(Offset position, PointerDeviceKind kind) async {
     // same-run dedupe: while the popup is open, moving the mouse
-    // within the current term must not re-trigger the lookup
+    // within the current term must not re-trigger the lookup.
+    // cursor inside the popup card: leave the popup alone entirely.
     if (_popupOpen) {
+      if (_popupRect != null && _popupRect!.contains(position)) return;
       final extractor = CjkTextExtractor();
       final current = extractor.extractAt(position, config);
       if (current != null && current.term == _activeTerm) return;
@@ -329,6 +335,7 @@ class PopupDictionaryController with ChangeNotifier {
         final cardHeight = maxHeight + 16.0; // max height + margins
         final left = position.dx.clamp(0.0, screen.dx - cardWidth);
         final top = (position.dy + 18).clamp(0.0, screen.dy - cardHeight);
+        _popupRect = Rect.fromLTWH(left, top, cardWidth, cardHeight);
         return Positioned(
           left: left,
           top: top,
@@ -419,6 +426,12 @@ class PopupDictionaryController with ChangeNotifier {
         final view = View.of(context);
         final w = view.physicalSize.width / view.devicePixelRatio;
         final h = view.physicalSize.height / view.devicePixelRatio;
+        _popupRect = Rect.fromLTWH(
+          w / 2 - config.width / 2,
+          h / 4,
+          config.width,
+          320,
+        );
         return Positioned(
           left: w / 2 - config.width / 2,
           top: h / 4,
@@ -459,6 +472,7 @@ class PopupDictionaryController with ChangeNotifier {
     _entry?.remove();
     _entry = null;
     _popupOpen = false;
+    _popupRect = null;
     _activeTerm = '';
     _delayTimer?.cancel();
     notifyListeners();
