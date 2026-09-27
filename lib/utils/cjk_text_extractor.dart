@@ -9,47 +9,78 @@ class CjkHit {
   const CjkHit({required this.term, required this.sentence});
 }
 
-/// Hit-tests the render tree at a screen position for a
-/// [RenderParagraph] (RichText), then extracts the CJK-aware word
-/// and surrounding sentence at the pointer — the yomichan-style
-/// scan with length limits, compound detection and deconjugation.
+/// A text renderer found under the pointer, plus the renderer-specific
+/// way to map a local point to a character offset.
+class _TextTarget {
+  final RenderBox box;
+  final InlineSpan? text;
+  final int Function(Offset local) offsetAt;
+
+  const _TextTarget({
+    required this.box,
+    required this.text,
+    required this.offsetAt,
+  });
+}
+
+/// Hit-tests the render tree at a screen position for a text renderer,
+/// then extracts the CJK-aware word and surrounding sentence at the
+/// pointer — the yomichan-style scan with length limits, compound
+/// detection and deconjugation.
+///
+/// Both [RenderParagraph] (plain `Text`/`RichText`) and [RenderEditable]
+/// (`SelectableText`, and therefore the document reader's text mode) are
+/// recognised. Only matching RenderParagraph meant selectable text was
+/// invisible to the popup.
 class CjkTextExtractor {
   /// Extract term + sentence at [position]. Returns null when no
   /// text paragraph is hit or nothing CJK/valid passes the config
   /// gates.
   CjkHit? extractAt(Offset position, PopupDictionaryConfig config) {
-    final paragraph = _paragraphAt(position);
-    if (paragraph == null) return null;
+    final target = _textTargetAt(position);
+    if (target == null) return null;
 
-    final local = _globalToLocal(paragraph, position);
-    final textPosition = paragraph.getPositionForOffset(local);
-    final fullText = paragraph.text.toPlainText();
+    final box = target.box;
+    final local = _globalToLocal(box, position);
+    final offset = target.offsetAt(local);
+    final fullText = target.text?.toPlainText() ?? '';
+    if (fullText.isEmpty) return null;
 
-    final hit = extractAtPosition(fullText, textPosition.offset, config);
+    final hit = extractAtPosition(fullText, offset, config);
     return hit;
   }
 
-  RenderParagraph? _paragraphAt(Offset position) {
+  _TextTarget? _textTargetAt(Offset position) {
     final binding = RendererBinding.instance;
     for (final view in binding.renderViews) {
       final result = HitTestResult();
       view.hitTest(result, position: position);
       for (final entry in result.path) {
-        if (entry.target is RenderParagraph) {
-          return entry.target as RenderParagraph;
+        final target = entry.target;
+        if (target is RenderParagraph) {
+          return _TextTarget(
+            box: target,
+            text: target.text,
+            offsetAt: (local) => target.getPositionForOffset(local).offset,
+          );
+        }
+        if (target is RenderEditable) {
+          return _TextTarget(
+            box: target,
+            text: target.text,
+            offsetAt: (local) => target.getPositionForPoint(local).offset,
+          );
         }
       }
     }
     return null;
   }
 
-  Offset _globalToLocal(RenderParagraph paragraph, Offset position) {
-    // RichText paragraphs in this app sit in untransformed
-    // coordinate spaces (no scaling/rotation on text); the local
-    // position equals the global position minus the paragraph's
-    // paint offset chain. Compute the accumulated offset via the
-    // paint transform.
-    final matrix = paragraph.getTransformTo(null);
+  Offset _globalToLocal(RenderBox box, Offset position) {
+    // text in this app sits in untransformed coordinate spaces (no
+    // scaling/rotation); the local position equals the global position
+    // minus the paint offset chain, computed via the paint transform.
+    final matrix = box.getTransformTo(null);
     final inverse = Matrix4.tryInvert(matrix);
     if (inverse == null) return position;
     return MatrixUtils.transformPoint(inverse, position);

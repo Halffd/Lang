@@ -24,6 +24,7 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
   final GlobalKey<DocumentReaderState> _documentReaderKey =
       GlobalKey<DocumentReaderState>();
   final TextEditingController _pageController = TextEditingController();
+  final TextEditingController _textController = TextEditingController();
   int _currentPage = 1;
   int _totalPages = 1;
   String? _currentFilePath;
@@ -37,12 +38,41 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
     _pageController.text = '1';
     _currentFilePath = widget.filePath;
     _currentFileType = widget.fileType;
+    // reading is driven by the field itself — no submit button
+    _textController.text = _pastedText;
+    _textController.addListener(_onTextChanged);
   }
 
   @override
   void dispose() {
+    _textController.removeListener(_onTextChanged);
+    _textController.dispose();
     _pageController.dispose();
     super.dispose();
+  }
+
+  /// Text mode is entered and left purely by the content of the field, so
+  /// there is no "Read" button to press.
+  void _onTextChanged() {
+    final text = _textController.text;
+    final trimmed = text.trim();
+    final isText = _currentFilePath == null && trimmed.isNotEmpty;
+    if (isText == (_currentFileType == 'text') && trimmed == _pastedText) {
+      return;
+    }
+    setState(() {
+      _pastedText = trimmed;
+      if (isText) {
+        _currentFilePath = null;
+        _currentFileType = 'text';
+        _currentPage = 1;
+        _totalPages = 1;
+        _pageController.text = '1';
+      } else {
+        // emptied the field: back to the landing screen
+        _currentFileType = null;
+      }
+    });
   }
 
   void _toggleControls() {
@@ -54,49 +84,90 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GestureDetector(
-        onTap: _toggleControls,
-        child: Stack(
-          children: [
-            if (_currentFilePath != null && _currentFileType != null)
-              Positioned.fill(
-                child: DocumentReader(
-                  key: _documentReaderKey,
-                  filePath: _currentFilePath!,
-                  fileType: _currentFileType!,
-                  isMangaMode: widget.isMangaMode,
-                  onPageChanged: (currentPage, totalPages) {
-                    setState(() {
-                      _currentPage = currentPage;
-                      _totalPages = totalPages;
-                      _pageController.text = currentPage.toString();
-                    });
-                  },
-                ),
-              )
-            else if (_currentFileType == 'text')
-              Positioned.fill(
-                child: _TextReaderView(
-                  initialText: _pastedText,
-                  onOpened: (t) => HistoryService.instance.record(
-                    HistoryCategory.document,
-                    'Pasted text',
-                    subtitle: t.length > 80 ? t.substring(0, 80) : t,
-                  ),
-                ),
-              )
-            else
-              _ReaderLanding(
-                onOpenFile: _openFile,
-                onOpenManga: _openMangaFolder,
-                onPasteText: _openTextPaste,
+      body: Column(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: _toggleControls,
+              child: Stack(
+                children: [
+                  if (_currentFilePath != null && _currentFileType != null)
+                    Positioned.fill(
+                      child: DocumentReader(
+                        key: _documentReaderKey,
+                        filePath: _currentFilePath!,
+                        fileType: _currentFileType!,
+                        isMangaMode: widget.isMangaMode,
+                        onPageChanged: (currentPage, totalPages) {
+                          setState(() {
+                            _currentPage = currentPage;
+                            _totalPages = totalPages;
+                            _pageController.text = currentPage.toString();
+                          });
+                        },
+                      ),
+                    )
+                  else if (_currentFileType == 'text')
+                    Positioned.fill(
+                      child: _TextReaderView(
+                        initialText: _pastedText,
+                        onOpened: (t) => HistoryService.instance.record(
+                          HistoryCategory.document,
+                          'Pasted text',
+                          subtitle: t.length > 80 ? t.substring(0, 80) : t,
+                        ),
+                      ),
+                    )
+                  else
+                    _ReaderLanding(
+                      onOpenFile: _openFile,
+                      onOpenManga: _openMangaFolder,
+                    ),
+                  if (_showControls &&
+                      _currentFileType != null &&
+                      _currentFileType != 'txt')
+                    _buildNavigationOverlay(),
+                  if (_showControls) _buildAppBar(),
+                ],
               ),
-            if (_showControls &&
-                _currentFileType != null &&
-                _currentFileType != 'txt')
-              _buildNavigationOverlay(),
-            if (_showControls) _buildAppBar(),
-          ],
+            ),
+          ),
+          // Outside the tap-to-toggle detector on purpose: tapping the field
+          // to focus it must not hide the controls.
+          if (_currentFilePath == null) _buildTextInput(),
+        ],
+      ),
+    );
+  }
+
+  /// Always-visible multiline input pinned to the bottom. Reading starts as
+  /// soon as there is text; clearing it returns to the landing screen.
+  Widget _buildTextInput() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(
+          top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+          child: TextField(
+            controller: _textController,
+            minLines: 2,
+            maxLines: 6,
+            keyboardType: TextInputType.multiline,
+            textInputAction: TextInputAction.newline,
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: 'Paste or type text to read…',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -280,59 +351,6 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
     );
   }
 
-  /// Text mode: multiline paste box, then a scrollable reader view.
-  void _openTextPaste() {
-    final ctrl = TextEditingController(text: _pastedText);
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 16,
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Paste text to read',
-              style: Theme.of(ctx).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: ctrl,
-              maxLines: 8,
-              autofocus: true,
-              decoration: InputDecoration(
-                hintText: 'Paste or type text…',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              icon: const Icon(Icons.menu_book),
-              label: const Text('Read'),
-              onPressed: () {
-                if (ctrl.text.trim().isEmpty) return;
-                Navigator.of(ctx).pop();
-                setState(() {
-                  _pastedText = ctrl.text.trim();
-                  _currentFilePath = null; // not a file
-                  _currentFileType = 'text';
-                });
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _openFile() async {
     try {
       final FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -453,13 +471,8 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
 class _ReaderLanding extends StatelessWidget {
   final VoidCallback onOpenFile;
   final VoidCallback onOpenManga;
-  final VoidCallback onPasteText;
 
-  const _ReaderLanding({
-    required this.onOpenFile,
-    required this.onOpenManga,
-    required this.onPasteText,
-  });
+  const _ReaderLanding({required this.onOpenFile, required this.onOpenManga});
 
   @override
   Widget build(BuildContext context) {
@@ -492,10 +505,10 @@ class _ReaderLanding extends StatelessWidget {
                 onPressed: onOpenManga,
               ),
               const SizedBox(height: 8),
-              OutlinedButton.icon(
-                icon: const Icon(Icons.notes),
-                label: const Text('Paste text'),
-                onPressed: onPasteText,
+              Text(
+                'Or paste text below to read it',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall,
               ),
               if (recents.isNotEmpty) ...[
                 const SizedBox(height: 24),
