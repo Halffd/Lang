@@ -719,6 +719,11 @@ class AnalyzerProvider extends ChangeNotifier {
       final tokens = await _tokenizerService.tokenize(text);
       _sentences = _tokenizerService.splitSentences(tokens);
 
+      // Enrichment must match the script of the input, not only the
+      // selector: pasting Chinese while Japanese is selected used to
+      // attach Japanese readings to Chinese words here.
+      final textLanguage = _tokenizerService.detectLanguage(text);
+
       // reset stale translations from a previous analysis
       _sentenceTranslations.clear();
       _fullTranslation = '';
@@ -750,7 +755,7 @@ class AnalyzerProvider extends ChangeNotifier {
           chunk.map((token) async {
             final result = await _yomichanService.enrichWord(
               token.surface,
-              _currentLanguage,
+              textLanguage,
               showIchiMoe: _showIchiMoe,
               showWiktionary: _showWiktionary,
               showKanji: _showKanji,

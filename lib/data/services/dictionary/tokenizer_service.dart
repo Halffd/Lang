@@ -5,6 +5,11 @@ import 'package:lang/data/services/dictionary/language_detector.dart';
 class TokenizerService {
   final LanguageDetector _languageDetector = LanguageDetector();
 
+  /// Detected ISO 639-1 code for [text] — the same detector [tokenize]
+  /// uses, exposed so call sites can keep lookup and tokenisation in sync.
+  String detectLanguage(String text) =>
+      text.isEmpty ? 'en' : _languageDetector.detect(text);
+
   /// Tokenize text based on detected language
   Future<List<Token>> tokenize(String text) async {
     if (text.isEmpty) return [];

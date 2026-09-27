@@ -75,9 +75,41 @@ class WordFilter {
       (searchQuery != null && searchQuery!.isNotEmpty);
 }
 
+/// Measured height for the pinned analyse search bar.
+///
+/// The pinned sliver header needs a fixed extent, but the multiline
+/// search field inside it wraps, so the extent has to match real text
+/// layout. [TextPainter] does the real word-wrap at [fontSize] and
+/// [screenWidth]; callers pass the zoom-scaled size so zooming in grows
+/// the bar instead of overflowing it.
+double measureSearchBarHeight({
+  required String text,
+  required double screenWidth,
+  required double fontSize,
+}) {
+  // Horizontal plumbing mirrored from _buildSearchBar: container padding
+  // 16+16, gap 12, analyse button min width, prefix icon 48, clear button
+  // 48 when non-empty, border 1+1.
+  final textWidth =
+      (screenWidth - 32 - 12 - 130 - 48 - (text.isEmpty ? 0 : 48) - 2).clamp(
+        40.0,
+        double.infinity,
+      );
+  final painter = TextPainter(
+    text: TextSpan(
+      text: text.isEmpty ? ' ' : text,
+      style: TextStyle(fontSize: fontSize, height: 1.4),
+    ),
+    textDirection: TextDirection.ltr,
+  )..layout(maxWidth: textWidth);
+  // field: contentPadding 14+14, at least a single icon row
+  final fieldHeight = (28 + painter.height).clamp(52.0, 260.0);
+  // container: padding 16 top + 12 bottom
+  return (28 + fieldHeight).clamp(96.0, 288.0);
+}
+
 class AnalyzeScreen extends StatefulWidget {
   const AnalyzeScreen({super.key});
-
   @override
   State<AnalyzeScreen> createState() => _AnalyzeScreenState();
 }
@@ -174,16 +206,16 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
   double fs(double base, [String group = 'ui']) =>
       font_scale.fs(context, base, group);
 
-  /// Pinned search bar height: compact for short input, growing
-  /// with the text so long paragraphs still fit. Padding (28) +
-  /// first field line (~52) + ~24 per wrapped line, capped at 200.
-  double get _searchBarHeight {
-    final text = _controller.text;
-    final extraChars = text.length - 60;
-    if (extraChars <= 0) return 96;
-    final extraLines = (extraChars / 55).ceil().clamp(0, 4);
-    return (96 + extraLines * 24.0).clamp(96.0, 200.0);
-  }
+  /// Pinned search bar height: measured, not estimated. The old code
+  /// guessed "55 chars per wrapped line, 24px per line"; under text zoom
+  /// both numbers are wrong (chars per line halve, line height doubles),
+  /// which is exactly what produced the 35px bottom overflow in the
+  /// pinned header. TextPainter does the real word-wrap here.
+  double get _searchBarHeight => measureSearchBarHeight(
+    text: _controller.text,
+    screenWidth: MediaQuery.sizeOf(context).width,
+    fontSize: fs(15, 'sentences'),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -461,36 +493,34 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                 ),
               ),
               const SizedBox(width: 12),
-              SizedBox(
-                width: 130,
-                height: 48,
-                child: ElevatedButton.icon(
-                  onPressed: isLoading
-                      ? null
-                      : () => provider.analyzeText(_controller.text),
-                  icon: isLoading
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2.5),
-                        )
-                      : const Icon(Icons.analytics_outlined, size: 22),
-                  label: Text(
-                    isLoading ? l10n.processing : l10n.analyzeText,
-                    style: TextStyle(
-                      fontSize: fs(14, 'ui'),
-                      fontWeight: FontWeight.w600,
-                    ),
+              ElevatedButton.icon(
+                onPressed: isLoading
+                    ? null
+                    : () => provider.analyzeText(_controller.text),
+                icon: isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                      )
+                    : const Icon(Icons.analytics_outlined, size: 22),
+                label: Text(
+                  isLoading ? l10n.processing : l10n.analyzeText,
+                  style: TextStyle(
+                    fontSize: fs(14, 'ui'),
+                    fontWeight: FontWeight.w600,
                   ),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: isLoading ? 0 : 2,
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
+                ),
+                style: ElevatedButton.styleFrom(
+                  // was a hard 130px box, so zoomed-in labels clipped
+                  minimumSize: const Size(130, 48),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  elevation: isLoading ? 0 : 2,
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
                 ),
               ),
             ],

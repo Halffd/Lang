@@ -87,21 +87,35 @@ class DictionaryEntry {
   /// Helper method to safely extract a list of strings from JSON
   static List<String>? _extractStringList(dynamic value) {
     if (value == null) return null;
+
+    // A structured-content node (Map/List element) must stay valid JSON:
+    // `Map.toString()` yields Dart literal syntax, which no jsonDecode
+    // can parse, so the definition would render as raw text instead of
+    // the structured content.
+    List<String> encodeNodeList(List<dynamic> list) {
+      if (list.every((e) => e is String)) {
+        return List<String>.from(list);
+      }
+      return [jsonEncode(list)];
+    }
+
     if (value is List) {
       try {
-        return List<String>.from(value.map((e) => e.toString()));
+        return encodeNodeList(value);
       } catch (e) {
         // If conversion fails, return null
         return null;
       }
     } else if (value is String) {
-      // If it's a string, try to parse it as a JSON array or return a list with the string
+      // If it's a string, try to parse it as JSON or return it verbatim
       try {
         final parsed = jsonDecode(value);
         if (parsed is List) {
-          return List<String>.from(parsed.map((e) => e.toString()));
+          return encodeNodeList(parsed);
+        } else if (parsed is Map) {
+          return [jsonEncode(parsed)];
         } else {
-          // If it's not a list, return a list with the single string
+          // scalar JSON: keep the original string
           return [value];
         }
       } catch (e) {
