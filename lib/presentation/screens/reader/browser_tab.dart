@@ -1,7 +1,26 @@
-import 'package:flutter/material.dart';
 import 'package:desktop_webview_window/desktop_webview_window.dart';
+import 'package:flutter/material.dart';
+import 'package:lang/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+/// Resolves what the user typed in the address bar into a URL.
+///
+/// A bare query ("、暗算" or "Nihongo lesson 3") becomes a Wikipedia
+/// search, anything that looks like a host gets an https scheme, and
+/// input that is already a full URL is passed through untouched.
+String? normalizeBrowserUrl(String raw) {
+  var s = raw.trim();
+  if (s.isEmpty) return null;
+  if (!s.startsWith('http://') && !s.startsWith('https://')) {
+    final looksLikeHost = !s.contains(' ') && s.contains('.');
+    s = looksLikeHost
+        ? 'https://$s'
+        : 'https://www.wikipedia.org/wiki/Special:Search'
+              '?search=${Uri.encodeComponent(s)}';
+  }
+  return Uri.tryParse(s)?.toString();
+}
 
 /// Web browser tab: opens URLs in a native webview window
 /// (WebKitGTK on Linux, WebView2 on Windows — the embedded webview
@@ -22,6 +41,7 @@ class _BrowserTabState extends State<BrowserTab> {
   String? _error;
 
   static const _kRecentsKey = 'browser_recents';
+  static const _maxRecents = 20;
   static const _quickLinks = [
     ('NHK Easy News', 'https://www3.nhk.or.jp/news/easy/'),
     ('Wikipedia', 'https://www.wikipedia.org/'),
@@ -46,38 +66,26 @@ class _BrowserTabState extends State<BrowserTab> {
     setState(() => _recents = p.getStringList(_kRecentsKey) ?? []);
   }
 
-  Future<void> _remember(String url) async {
-    final next = [url, ..._recents.where((r) => r != url)].take(20).toList();
+  Future<void> _saveRecents(List<String> next) async {
     final p = await SharedPreferences.getInstance();
     await p.setStringList(_kRecentsKey, next);
     if (mounted) setState(() => _recents = next);
   }
 
-  String? _normalizeUrl(String raw) {
-    var s = raw.trim();
-    if (s.isEmpty) return null;
-    if (!s.startsWith('http://') && !s.startsWith('https://')) {
-      // bare query: treat as a search
-      if (s.contains(' ') || !s.contains('.')) {
-        s = 'https://www.wikipedia.org/wiki/Special:Search?search=${Uri.encodeComponent(s)}';
-      } else {
-        s = 'https://$s';
-      }
-    }
-    final uri = Uri.tryParse(s);
-    return uri?.toString();
-  }
+  Future<void> _remember(String url) => _saveRecents(
+    [url, ..._recents.where((r) => r != url)].take(_maxRecents).toList(),
+  );
 
   Future<void> _open() async {
-    final url = _normalizeUrl(_urlCtrl.text);
+    final url = normalizeBrowserUrl(_urlCtrl.text);
     if (url == null) return;
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _opening = true;
       _error = null;
     });
     try {
-      final available = await WebviewWindow.isWebviewAvailable();
-      if (available) {
+      if (await WebviewWindow.isWebviewAvailable()) {
         final webview = await WebviewWindow.create(
           configuration: const CreateConfiguration(
             title: 'Lang Browser',
@@ -86,17 +94,18 @@ class _BrowserTabState extends State<BrowserTab> {
         );
         webview.launch(url);
       } else {
-        // fallback: external browser
         await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
       }
       await _remember(url);
-    } catch (e) {
-      // webkit2gtk missing / runtime broken — fall back to url_launcher
+    } catch (_) {
+      // webview runtime missing or broken: fall back to the system browser
       try {
         await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
         await _remember(url);
-      } catch (e2) {
-        if (mounted) setState(() => _error = 'No browser available: $e2');
+      } catch (e) {
+        if (mounted) {
+          setState(() => _error = '${l10n?.browserNoRuntime}: $e');
+        }
       }
     } finally {
       if (mounted) setState(() => _opening = false);
@@ -106,18 +115,18 @@ class _BrowserTabState extends State<BrowserTab> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // URL bar
           Row(
             children: [
               Expanded(
                 child: TextField(
                   controller: _urlCtrl,
                   decoration: InputDecoration(
-                    hintText: 'URL or search…',
+                    hintText: l10n?.browserUrlHint,
                     prefixIcon: const Icon(Icons.language),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -136,7 +145,7 @@ class _BrowserTabState extends State<BrowserTab> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.open_in_new),
-                label: const Text('Open'),
+                label: Text(l10n?.browserOpen ?? 'Open'),
                 onPressed: _opening ? null : _open,
               ),
             ],
@@ -150,7 +159,6 @@ class _BrowserTabState extends State<BrowserTab> {
               ),
             ),
           const SizedBox(height: 12),
-          // quick links
           Align(
             alignment: Alignment.centerLeft,
             child: Wrap(
@@ -171,14 +179,18 @@ class _BrowserTabState extends State<BrowserTab> {
           if (_recents.isNotEmpty)
             Align(
               alignment: Alignment.centerLeft,
-              child: Text('Recent', style: theme.textTheme.titleSmall),
+              child: Text(
+                l10n?.browserRecents ?? 'Recent',
+                style: theme.textTheme.titleSmall,
+              ),
             ),
           Expanded(
             child: _recents.isEmpty
                 ? Center(
                     child: Text(
-                      'Open a page — it opens in a native browser window.\n'
-                      'URLs you visit show up here.',
+                      l10n?.browserEmpty ??
+                          'Open a page and it appears in a browser window.\n'
+                              'Visited URLs show up here.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: theme.colorScheme.onSurface.withValues(
@@ -202,11 +214,8 @@ class _BrowserTabState extends State<BrowserTab> {
                         ),
                         trailing: IconButton(
                           icon: const Icon(Icons.close, size: 16),
-                          onPressed: () async {
-                            final next = [..._recents]..removeAt(i);
-                            final p = await SharedPreferences.getInstance();
-                            await p.setStringList(_kRecentsKey, next);
-                            if (mounted) setState(() => _recents = next);
+                          onPressed: () {
+                            _saveRecents([..._recents]..removeAt(i));
                           },
                         ),
                         onTap: () {

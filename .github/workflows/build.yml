@@ -41,7 +41,8 @@ jobs:
             libgtk-3-dev liblzma-dev libgstreamer1.0-dev \
             libgstreamer-plugins-base1.0-dev libsecret-1-dev \
             libsqlite3-dev libmpv-dev libkeybinder-3.0-dev \
-            libnotify-dev libayatana-appindicator3-dev file wget xz-utils
+            libnotify-dev libayatana-appindicator3-dev \
+            libwebkit2gtk-4.1-dev file wget xz-utils
       - run: flutter config --enable-linux-desktop
       - run: flutter pub get
       - run: flutter build linux --release

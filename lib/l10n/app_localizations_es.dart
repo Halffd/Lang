@@ -909,6 +909,25 @@ class AppLocalizationsEs extends AppLocalizations {
   String get readerTabClipboard => 'Portapapeles';
 
   @override
+  String get readerTabBrowser => 'Navegador';
+
+  @override
+  String get browserUrlHint => 'URL o búsqueda';
+
+  @override
+  String get browserOpen => 'Abrir';
+
+  @override
+  String get browserRecents => 'Recientes';
+
+  @override
+  String get browserEmpty =>
+      'Abre una página y aparecerá en una ventana del navegador.\nLas URLs visitadas se muestran aquí.';
+
+  @override
+  String get browserNoRuntime => 'No hay navegador disponible';
+
+  @override
   String get openDocument => 'Abrir documento';
 
   @override

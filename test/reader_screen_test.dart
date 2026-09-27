@@ -8,6 +8,7 @@ import 'package:lang/core/services/history_service.dart';
 import 'package:lang/core/services/storage_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/l10n/app_localizations.dart';
+import 'package:lang/presentation/screens/reader/browser_tab.dart';
 import 'package:lang/presentation/screens/reader_screen.dart';
 import 'package:lang/presentation/screens/screenshot_tab.dart';
 
@@ -41,12 +42,23 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('shows three tabs', (tester) async {
+  testWidgets('shows reader tabs', (tester) async {
     await pumpReader(tester);
     expect(find.text('Reader'), findsWidgets);
     expect(find.text('Documents'), findsOneWidget);
+    expect(find.text('Browser'), findsOneWidget);
     expect(find.text('Screenshots'), findsOneWidget);
     expect(find.text('Clipboard'), findsOneWidget);
+  });
+
+  testWidgets('browser tab hosts the browser launcher', (tester) async {
+    await pumpReader(tester);
+    await tester.tap(find.text('Browser'));
+    await tester.pumpAndSettle();
+    expect(find.byType(BrowserTab), findsOneWidget);
+    expect(find.text('URL or search'), findsOneWidget);
+    expect(find.text('NHK Easy News'), findsOneWidget);
+    expect(find.textContaining('Visited URLs show up here'), findsOneWidget);
   });
 
   testWidgets('screenshot tab is hosted inside reader', (tester) async {

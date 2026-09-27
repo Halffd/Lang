@@ -891,6 +891,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerTabClipboard => '剪贴板';
 
   @override
+  String get readerTabBrowser => '浏览器';
+
+  @override
+  String get browserUrlHint => '网址或搜索';
+
+  @override
+  String get browserOpen => '打开';
+
+  @override
+  String get browserRecents => '最近';
+
+  @override
+  String get browserEmpty => '打开页面后会在浏览器窗口中显示。\n访问过的网址会显示在这里。';
+
+  @override
+  String get browserNoRuntime => '没有可用的浏览器';
+
+  @override
   String get openDocument => '打开文档';
 
   @override

@@ -907,6 +907,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerTabClipboard => 'Clipboard';
 
   @override
+  String get readerTabBrowser => 'Browser';
+
+  @override
+  String get browserUrlHint => 'URL or search';
+
+  @override
+  String get browserOpen => 'Open';
+
+  @override
+  String get browserRecents => 'Recent';
+
+  @override
+  String get browserEmpty =>
+      'Open a page and it appears in a browser window.\nVisited URLs show up here.';
+
+  @override
+  String get browserNoRuntime => 'No browser available';
+
+  @override
   String get openDocument => 'Open document';
 
   @override

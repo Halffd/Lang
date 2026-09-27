@@ -1812,6 +1812,42 @@ abstract class AppLocalizations {
   /// **'Clipboard'**
   String get readerTabClipboard;
 
+  /// No description provided for @readerTabBrowser.
+  ///
+  /// In en, this message translates to:
+  /// **'Browser'**
+  String get readerTabBrowser;
+
+  /// No description provided for @browserUrlHint.
+  ///
+  /// In en, this message translates to:
+  /// **'URL or search'**
+  String get browserUrlHint;
+
+  /// No description provided for @browserOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get browserOpen;
+
+  /// No description provided for @browserRecents.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get browserRecents;
+
+  /// No description provided for @browserEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Open a page and it appears in a browser window.\nVisited URLs show up here.'**
+  String get browserEmpty;
+
+  /// No description provided for @browserNoRuntime.
+  ///
+  /// In en, this message translates to:
+  /// **'No browser available'**
+  String get browserNoRuntime;
+
   /// No description provided for @openDocument.
   ///
   /// In en, this message translates to:

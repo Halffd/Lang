@@ -52,7 +52,10 @@ class _ReaderScreenState extends State<ReaderScreen>
               icon: const Icon(Icons.menu_book, size: 18),
               text: l10n.readerTabDocuments,
             ),
-            Tab(icon: const Icon(Icons.public, size: 18), text: 'Browser'),
+            Tab(
+              icon: const Icon(Icons.public, size: 18),
+              text: l10n.readerTabBrowser,
+            ),
             Tab(
               icon: const Icon(Icons.screenshot_monitor, size: 18),
               text: l10n.readerTabScreenshots,

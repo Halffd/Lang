@@ -892,6 +892,24 @@ class AppLocalizationsJa extends AppLocalizations {
   String get readerTabClipboard => 'クリップボード';
 
   @override
+  String get readerTabBrowser => 'ブラウザ';
+
+  @override
+  String get browserUrlHint => 'URL またはキーワード';
+
+  @override
+  String get browserOpen => '開く';
+
+  @override
+  String get browserRecents => '最近';
+
+  @override
+  String get browserEmpty => 'ページを開くとブラウザウィンドウに表示されます。\n訪問した URL がここに表示されます。';
+
+  @override
+  String get browserNoRuntime => 'ブラウザを利用できません';
+
+  @override
   String get openDocument => 'ドキュメントを開く';
 
   @override

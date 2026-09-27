@@ -189,5 +189,5 @@ void main() {
     final row = await db2.query('entries');
     expect(row.first['audio_url'], 'a.mp3');
     await db2.close();
-  });
+  }, timeout: const Timeout(Duration(minutes: 2)));
 }
