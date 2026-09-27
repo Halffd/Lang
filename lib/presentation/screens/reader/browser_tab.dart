@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:desktop_webview_window/desktop_webview_window.dart';
 import 'package:flutter/material.dart';
 import 'package:lang/l10n/app_localizations.dart';
@@ -22,11 +24,14 @@ String? normalizeBrowserUrl(String raw) {
   return Uri.tryParse(s)?.toString();
 }
 
-/// Web browser tab: opens URLs in a native webview window
-/// (WebKitGTK on Linux, WebView2 on Windows — the embedded webview
-/// packages have no desktop implementation, so a native window is the
-/// supported path). Falls back to url_launcher when the runtime is
-/// unavailable. Keeps a recents list of visited URLs.
+/// Web browser tab.
+///
+/// Windows and macOS open a native webview window (WebView2 / WKWebView,
+/// both part of the OS). Linux has no such OS component: the only Flutter
+/// plugin for it links libwebkit2gtk-4.1 at load time and bundles none of
+/// it, so the app would refuse to start on hosts without webkit2gtk. There
+/// the page is opened in the system browser instead. Keeps a recents list
+/// of visited URLs.
 class BrowserTab extends StatefulWidget {
   const BrowserTab({super.key});
 
@@ -85,7 +90,9 @@ class _BrowserTabState extends State<BrowserTab> {
       _error = null;
     });
     try {
-      if (await WebviewWindow.isWebviewAvailable()) {
+      if (Platform.isLinux || !await WebviewWindow.isWebviewAvailable()) {
+        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      } else {
         final webview = await WebviewWindow.create(
           configuration: const CreateConfiguration(
             title: 'Lang Browser',
@@ -93,20 +100,11 @@ class _BrowserTabState extends State<BrowserTab> {
           ),
         );
         webview.launch(url);
-      } else {
-        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
       }
       await _remember(url);
-    } catch (_) {
-      // webview runtime missing or broken: fall back to the system browser
-      try {
-        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-        await _remember(url);
-      } catch (e) {
-        if (mounted) {
-          setState(() => _error = '${l10n?.browserNoRuntime}: $e');
-        }
-      }
+    } catch (e) {
+      // no system browser, or the webview runtime failed to come up
+      if (mounted) setState(() => _error = '${l10n?.browserNoRuntime}: $e');
     } finally {
       if (mounted) setState(() => _opening = false);
     }
@@ -189,7 +187,7 @@ class _BrowserTabState extends State<BrowserTab> {
                 ? Center(
                     child: Text(
                       l10n?.browserEmpty ??
-                          'Open a page and it appears in a browser window.\n'
+                          'Open a page and it opens in your browser.\n'
                               'Visited URLs show up here.',
                       textAlign: TextAlign.center,
                       style: TextStyle(

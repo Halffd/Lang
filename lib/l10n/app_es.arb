@@ -614,7 +614,7 @@
   "browserUrlHint": "URL o búsqueda",
   "browserOpen": "Abrir",
   "browserRecents": "Recientes",
-  "browserEmpty": "Abre una página y aparecerá en una ventana del navegador.\nLas URLs visitadas se muestran aquí.",
+  "browserEmpty": "Abre una página y se abrirá en tu navegador.\nLas URLs visitadas se muestran aquí.",
   "browserNoRuntime": "No hay navegador disponible",
   "openDocument": "Abrir documento",
   "noDocument": "Ningún documento abierto",

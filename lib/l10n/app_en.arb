@@ -295,7 +295,7 @@
   "browserUrlHint": "URL or search",
   "browserOpen": "Open",
   "browserRecents": "Recent",
-  "browserEmpty": "Open a page and it appears in a browser window.\nVisited URLs show up here.",
+  "browserEmpty": "Open a page and it opens in your browser.\nVisited URLs show up here.",
   "browserNoRuntime": "No browser available",
   "openDocument": "Open document",
   "noDocument": "No document open",

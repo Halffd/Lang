@@ -904,7 +904,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get browserRecents => '最近';
 
   @override
-  String get browserEmpty => 'ページを開くとブラウザウィンドウに表示されます。\n訪問した URL がここに表示されます。';
+  String get browserEmpty => 'ページを開くとブラウザで開きます。\n訪問した URL がここに表示されます。';
 
   @override
   String get browserNoRuntime => 'ブラウザを利用できません';

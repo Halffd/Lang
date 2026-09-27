@@ -920,7 +920,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get browserEmpty =>
-      'Open a page and it appears in a browser window.\nVisited URLs show up here.';
+      'Open a page and it opens in your browser.\nVisited URLs show up here.';
 
   @override
   String get browserNoRuntime => 'No browser available';

@@ -175,7 +175,7 @@
   "browserUrlHint": "网址或搜索",
   "browserOpen": "打开",
   "browserRecents": "最近",
-  "browserEmpty": "打开页面后会在浏览器窗口中显示。\n访问过的网址会显示在这里。",
+  "browserEmpty": "打开页面后会在浏览器中打开。\n访问过的网址会显示在这里。",
   "browserNoRuntime": "没有可用的浏览器",
   "openDocument": "打开文档",
   "noDocument": "未打开文档",

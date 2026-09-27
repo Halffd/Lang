@@ -614,7 +614,7 @@
   "browserUrlHint": "URL またはキーワード",
   "browserOpen": "開く",
   "browserRecents": "最近",
-  "browserEmpty": "ページを開くとブラウザウィンドウに表示されます。\n訪問した URL がここに表示されます。",
+  "browserEmpty": "ページを開くとブラウザで開きます。\n訪問した URL がここに表示されます。",
   "browserNoRuntime": "ブラウザを利用できません",
   "openDocument": "ドキュメントを開く",
   "noDocument": "ドキュメントが開かれていません",

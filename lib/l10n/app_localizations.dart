@@ -1839,7 +1839,7 @@ abstract class AppLocalizations {
   /// No description provided for @browserEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Open a page and it appears in a browser window.\nVisited URLs show up here.'**
+  /// **'Open a page and it opens in your browser.\nVisited URLs show up here.'**
   String get browserEmpty;
 
   /// No description provided for @browserNoRuntime.

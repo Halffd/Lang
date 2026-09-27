@@ -1,0 +1,39 @@
+# Vendored fork of desktop_webview_window 0.3.0 (Apache-2.0).
+#
+# Upstream: https://github.com/MixinNetwork/flutter-plugins/tree/main/packages/desktop_webview_window
+#
+# Only change: the `linux` platform entry is dropped from the plugin's
+# platform list, and the native `linux/` sources are not vendored.
+#
+# Why: the Linux implementation links libwebkit2gtk-4.1 at load time and
+# bundles none of it (the upstream CMakeLists sets its bundled-libraries
+# list to the empty string), so the built app refuses to start on any
+# host that does not already have webkit2gtk-4.1 installed. Bundling the
+# stack instead costs ~80 MB (31 MB javascriptcore + 35 MB ICU) plus
+# WebKitGTK's gsettings schemas. The browser tab therefore uses the
+# system browser on Linux and the native webview window on Windows and
+# macOS, where WebView2/WKWebView ship with the OS.
+#
+# When upstream adds a Linux implementation that bundles its dependencies,
+# drop dependency_overrides in ../../pubspec.yaml and delete this directory.
+name: desktop_webview_window
+description: Show a webview window on your flutter desktop application.
+version: 0.3.0
+homepage: https://github.com/MixinNetwork/flutter-plugins/tree/main/packages/desktop_webview_window
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+  flutter: ">=2.5.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  path: ^1.8.0
+
+flutter:
+  plugin:
+    platforms:
+      macos:
+        pluginClass: DesktopWebviewWindowPlugin
+      windows:
+        pluginClass: DesktopWebviewWindowPlugin

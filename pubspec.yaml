@@ -148,3 +148,8 @@ executables:
 dependency_overrides:
   record_linux: 1.3.0
   archive: ^4.0.9
+  # Vendored fork with the linux platform removed: its native build links
+  # libwebkit2gtk-4.1 without bundling it, which makes the linux app fail
+  # to start on hosts without webkit2gtk. See the fork's pubspec.
+  desktop_webview_window:
+    path: packages/desktop_webview_window

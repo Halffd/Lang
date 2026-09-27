@@ -903,7 +903,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get browserRecents => '最近';
 
   @override
-  String get browserEmpty => '打开页面后会在浏览器窗口中显示。\n访问过的网址会显示在这里。';
+  String get browserEmpty => '打开页面后会在浏览器中打开。\n访问过的网址会显示在这里。';
 
   @override
   String get browserNoRuntime => '没有可用的浏览器';
