@@ -13,7 +13,7 @@ class ScreenSize {
       return switch (mode) {
         LayoutMode.mobile => ScreenType.compact,
         LayoutMode.tablet => ScreenType.medium,
-        LayoutMode.desktop || LayoutMode.centered => ScreenType.expanded,
+        LayoutMode.desktop => ScreenType.expanded,
         LayoutMode.auto => ScreenType.expanded, // unreachable
       };
     }
@@ -51,57 +51,18 @@ class ScreenSize {
     }
   }
 
-  static EdgeInsets adaptivePadding(BuildContext context) {
-    final scale = LayoutConfig.instance.paddingScale;
-    final w = width(context);
-    if (w <= compactMax) return EdgeInsets.all(8 * scale);
-    if (w <= mediumMax) return EdgeInsets.all(12 * scale);
-    return EdgeInsets.all(16 * scale);
-  }
+  /// Screen padding: a flat 1px so content spans the full window width.
+  /// Raise [LayoutConfig.paddingScale] in settings to add breathing room.
+  static EdgeInsets adaptivePadding(BuildContext context) =>
+      EdgeInsets.all(LayoutConfig.instance.paddingScale);
 
-  /// Standard card margin, scaled by the `marginScale` layout setting.
-  static EdgeInsets adaptiveMargin(BuildContext context) {
-    final scale = LayoutConfig.instance.marginScale;
-    final w = width(context);
-    final base = w <= compactMax ? 4.0 : (w <= mediumMax ? 8.0 : 12.0);
-    return EdgeInsets.symmetric(vertical: base * scale, horizontal: 4.0);
-  }
+  /// Card margin: a flat 1px, matching [adaptivePadding].
+  static EdgeInsets adaptiveMargin(BuildContext context) =>
+      EdgeInsets.all(LayoutConfig.instance.marginScale);
 
   /// Standard border radius (scaled). Multiplied onto a base radius.
   static double adaptiveRadius(double base) =>
       base * LayoutConfig.instance.borderRadiusScale;
-
-  /// Width cap for scroll content; expanded = up to `maxWidth` centered.
-  /// Also respects LayoutMode.centered.
-  static double contentWidth(BuildContext context, {double maxWidth = 1200}) {
-    final cfg = LayoutConfig.instance;
-    final w = width(context);
-    if (cfg.mode == LayoutMode.centered) {
-      return cfg.contentMaxWidth.clamp(360.0, w);
-    }
-    if (w <= mediumMax) return w;
-    return maxWidth;
-  }
-
-  /// Wrap scroll content into a centered, width-capped surface when the
-  /// layout mode says so.
-  static Widget maybeCenter(
-    BuildContext context,
-    Widget child, {
-    double maxWidth = 1100,
-  }) {
-    final cfg = LayoutConfig.instance;
-    if (cfg.mode != LayoutMode.centered) return child;
-    return Center(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: cfg.contentMaxWidth.clamp(360.0, width(context)),
-          maxHeight: height(context) * cfg.contentHeightFraction,
-        ),
-        child: child,
-      ),
-    );
-  }
 
   static double adaptiveFontSize(BuildContext context, double base) {
     final w = width(context);

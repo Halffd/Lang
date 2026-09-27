@@ -13,9 +13,6 @@ enum LayoutMode {
 
   /// Force expanded layout ("desktop").
   desktop,
-
-  /// Expanded layout with capped content width, horizontally centered.
-  centered,
 }
 
 /// Global layout tuning settings consumed by [ScreenSize]. Populated from
@@ -30,7 +27,8 @@ class LayoutConfig extends ChangeNotifier {
   LayoutMode _mode = LayoutMode.auto;
   LayoutMode get mode => _mode;
 
-  /// Scale for outer screen padding. 1.0 = adaptive default.
+  /// Scale for outer screen padding. 1.0 = the [ScreenSize.adaptivePadding]
+  /// base.
   double _paddingScale = 1.0;
   double get paddingScale => _paddingScale;
 
@@ -46,32 +44,18 @@ class LayoutConfig extends ChangeNotifier {
   double _borderWidthScale = 1.0;
   double get borderWidthScale => _borderWidthScale;
 
-  /// Max width of scrollable content when [mode] is [LayoutMode.centered].
-  double _contentMaxWidth = 1100;
-  double get contentMaxWidth => _contentMaxWidth;
-
-  /// Fraction of physical height reserved for the app on desktop-like
-  /// layouts (1.0 = full height).
-  double _contentHeightFraction = 1.0;
-  double get contentHeightFraction => _contentHeightFraction;
-
   void update({
     LayoutMode? mode,
     double? paddingScale,
     double? marginScale,
     double? borderRadiusScale,
     double? borderWidthScale,
-    double? contentMaxWidth,
-    double? contentHeightFraction,
   }) {
     if (mode != null) _mode = mode;
     if (paddingScale != null) _paddingScale = paddingScale;
     if (marginScale != null) _marginScale = marginScale;
     if (borderRadiusScale != null) _borderRadiusScale = borderRadiusScale;
     if (borderWidthScale != null) _borderWidthScale = borderWidthScale;
-    if (contentMaxWidth != null) _contentMaxWidth = contentMaxWidth;
-    if (contentHeightFraction != null)
-      _contentHeightFraction = contentHeightFraction;
     notifyListeners();
   }
 }

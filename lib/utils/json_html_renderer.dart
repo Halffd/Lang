@@ -26,10 +26,33 @@ import 'package:lang/domain/entities/dictionary_display_options.dart';
 /// tags, notes). [mediaIndex] maps archive-relative paths to
 /// extracted image file paths.
 class JsonHtmlRenderer {
+  /// Renders structured definition JSON.
+  ///
+  /// [fontSize] sets the base text size for the whole tree; ruby readings
+  /// derive from it, so passing the zoomed size keeps furigana in step with
+  /// the surrounding text. Null keeps the ambient [DefaultTextStyle].
   static Widget render(
     dynamic jsonStructure, {
     DictionaryDisplayOptions options = const _DefaultDisplayOptions(),
     Map<String, String> mediaIndex = const {},
+    double? fontSize,
+  }) {
+    final content = _render(
+      jsonStructure,
+      options: options,
+      mediaIndex: mediaIndex,
+    );
+    if (fontSize == null) return content;
+    return DefaultTextStyle(
+      style: TextStyle(fontSize: fontSize),
+      child: content,
+    );
+  }
+
+  static Widget _render(
+    dynamic jsonStructure, {
+    required DictionaryDisplayOptions options,
+    required Map<String, String> mediaIndex,
   }) {
     if (jsonStructure == null) return const SizedBox.shrink();
 
@@ -37,7 +60,7 @@ class JsonHtmlRenderer {
       // may be a JSON-encoded structure or plain text
       final decoded = _tryDecode(jsonStructure);
       if (decoded != null) {
-        return render(decoded, options: options, mediaIndex: mediaIndex);
+        return _render(decoded, options: options, mediaIndex: mediaIndex);
       }
       return _styledText(jsonStructure, null);
     }
@@ -48,7 +71,7 @@ class JsonHtmlRenderer {
         mainAxisSize: MainAxisSize.min,
         children: [
           for (final item in jsonStructure)
-            render(item, options: options, mediaIndex: mediaIndex),
+            _render(item, options: options, mediaIndex: mediaIndex),
         ],
       );
     }
@@ -114,7 +137,7 @@ class JsonHtmlRenderer {
         // ruby renders inline via _rubySpan within parents; a
         // standalone ruby block renders its spans
         return DefaultTextStyle(
-          style: const TextStyle(fontSize: 14, height: 1.45),
+          style: const TextStyle(height: 1.45),
           child: Text.rich(
             TextSpan(children: _inlineSpans([element], options, mediaIndex)),
           ),
@@ -168,7 +191,7 @@ class JsonHtmlRenderer {
   // ============================================================
 
   static TextStyle _parseStyle(dynamic style) {
-    var ts = const TextStyle(fontSize: 14, height: 1.45);
+    var ts = const TextStyle(height: 1.45);
     if (style is Map<String, dynamic>) {
       final fontSize = (style['fontSize'] as num?)?.toDouble();
       if (fontSize != null) ts = ts.copyWith(fontSize: fontSize);
@@ -525,7 +548,7 @@ class JsonHtmlRenderer {
     );
     if (spans.isEmpty) return const SizedBox.shrink();
     return DefaultTextStyle(
-      style: const TextStyle(fontSize: 14, height: 1.45),
+      style: const TextStyle(height: 1.45),
       child: Text.rich(TextSpan(children: spans)),
     );
   }
@@ -567,7 +590,7 @@ class JsonHtmlRenderer {
               children: [
                 Text(
                   ordered ? '${i + 1}. ' : '• ',
-                  style: const TextStyle(fontSize: 14, height: 1.45),
+                  style: const TextStyle(height: 1.45),
                 ),
                 Expanded(
                   child: render(
@@ -846,7 +869,12 @@ class JsonHtmlRenderer {
 // ruby widget: real furigana
 // ============================================================
 
+/// Reading stacked above a base character, sized from the surrounding text
+/// style so it follows the app-wide zoom. The reading is 60% of the base.
 class _Ruby extends StatelessWidget {
+  /// Reading size as a fraction of the base size.
+  static const double readingScale = 0.6;
+
   final String base;
   final String reading;
 
@@ -854,22 +882,22 @@ class _Ruby extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseStyle = const TextStyle(
-      fontSize: 14,
-      height: 1.45,
-      color: Colors.black87,
-    );
-    final rubyStyle = const TextStyle(
-      fontSize: 8,
-      height: 1.0,
-      color: Colors.grey,
-    );
+    final ambient = DefaultTextStyle.of(context).style;
+    final baseSize = ambient.fontSize ?? 14;
+    final color = ambient.color ?? Theme.of(context).colorScheme.onSurface;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(reading, style: rubyStyle),
-        Text(base, style: baseStyle),
+        Text(
+          reading,
+          style: ambient.copyWith(
+            fontSize: baseSize * readingScale,
+            height: 1.1,
+            color: color.withValues(alpha: 0.65),
+          ),
+        ),
+        Text(base, style: ambient.copyWith(height: 1.25)),
       ],
     );
   }

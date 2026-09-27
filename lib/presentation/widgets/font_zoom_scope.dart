@@ -6,9 +6,11 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'package:lang/domain/entities/app_state.dart';
+import 'package:lang/domain/entities/font_zoom.dart';
 
 /// Global text zoom: ctrl+scroll wheel and two-finger pinch adjust the
-/// app-wide [AppState.fontSizeMultiplier] (persisted, clamped 0.8-2.0).
+/// app-wide [AppState.fontSizeMultiplier] (persisted, clamped by
+/// [FontZoom.minMultiplier]..[FontZoom.maxMultiplier]).
 ///
 /// Listener is translucent — gestures still reach the content below; zoom
 /// is additive like browser zoom.
@@ -27,16 +29,19 @@ class _FontZoomScopeState extends State<FontZoomScope> {
   double? _pinchStartDistance;
   double? _pinchStartScale;
 
-  // ctrl+scroll accumulation (applied in 0.05 steps to avoid jitter)
+  // ctrl+scroll accumulation, applied in one step-sized chunk per notch
   double _scrollAccum = 0;
   Timer? _scrollDebounce;
 
-  static const _step = 0.05;
+  static const _debounce = Duration(milliseconds: 60);
 
   void _applyZoom(double delta) {
     final appState = context.read<AppState>();
     final current = appState.fontSizeMultiplier;
-    final next = (current + delta).clamp(0.8, 2.0);
+    final next = (current + delta).clamp(
+      FontZoom.minMultiplier,
+      FontZoom.maxMultiplier,
+    );
     if (next != current) appState.setFontSizeMultiplier(next);
   }
 
@@ -44,14 +49,17 @@ class _FontZoomScopeState extends State<FontZoomScope> {
     if (event is! PointerScrollEvent) return;
     if (!HardwareKeyboard.instance.isControlPressed) return;
 
-    // scroll down = bigger text (natural zoom direction)
-    _scrollAccum += event.scrollDelta.dy > 0 ? _step : -_step;
+    // browser convention: wheel/trackpad up (negative dy) = zoom in
+    final step = context.read<AppState>().fontZoomStep;
+    _scrollAccum += event.scrollDelta.dy < 0 ? step : -step;
     _scrollDebounce?.cancel();
-    _scrollDebounce = Timer(const Duration(milliseconds: 60), () {
-      if (_scrollAccum.abs() >= _step * 0.5) {
-        _applyZoom(_scrollAccum);
-        _scrollAccum = 0;
-      }
+    _scrollDebounce = Timer(_debounce, () {
+      // Always clear the accumulator, even for a sub-threshold flick:
+      // leftover would combine with the next gesture and cause a phantom
+      // zoom jump.
+      final pending = _scrollAccum;
+      _scrollAccum = 0;
+      if (pending.abs() >= step * 0.5) _applyZoom(pending);
     });
   }
 
@@ -76,7 +84,10 @@ class _FontZoomScopeState extends State<FontZoomScope> {
       if (_pinchStartDistance! > 10) {
         final ratio = dist / _pinchStartDistance!;
         final appState = context.read<AppState>();
-        final next = ((_pinchStartScale ?? 1.0) * ratio).clamp(0.8, 2.0);
+        final next = ((_pinchStartScale ?? 1.0) * ratio).clamp(
+          FontZoom.minMultiplier,
+          FontZoom.maxMultiplier,
+        );
         if (next != appState.fontSizeMultiplier) {
           appState.setFontSizeMultiplier(next);
         }

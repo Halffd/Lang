@@ -356,15 +356,13 @@ void _syncLayout(AppState a) {
       'mobile' => LayoutMode.mobile,
       'tablet' => LayoutMode.tablet,
       'desktop' => LayoutMode.desktop,
-      'centered' => LayoutMode.centered,
+      // 'centered' was removed (it capped the content width); fall back to auto
       _ => LayoutMode.auto,
     },
     paddingScale: a.paddingScale,
     marginScale: a.marginScale,
     borderRadiusScale: a.borderRadiusScale,
     borderWidthScale: a.borderWidthScale,
-    contentMaxWidth: a.contentMaxWidth,
-    contentHeightFraction: a.contentHeightFraction,
   );
 }
 
@@ -754,12 +752,11 @@ class LangApp extends StatelessWidget {
             iconTheme: const IconThemeData(size: 22, color: Colors.white70),
           ),
           home: const PopupDictionaryScope(child: MainNavigationShell()),
-          // When layout mode is 'centered', wrap every route's scaffold in
-          // a width/height-capped surface centered on the screen.
-          // Other modes: unchanged.
+          // Global text zoom (ctrl+scroll, pinch) wraps every route.
+          // Layout is deliberately not width-capped: content fills the window.
           builder: (context, child) {
             if (child == null) return const SizedBox.shrink();
-            return FontZoomScope(child: ScreenSize.maybeCenter(context, child));
+            return FontZoomScope(child: child);
           },
         );
       },

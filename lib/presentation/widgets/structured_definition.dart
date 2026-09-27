@@ -60,6 +60,9 @@ class StructuredDefinition extends StatelessWidget {
           jsonContent,
           options: options,
           mediaIndex: DictionaryMediaRegistry.mediaIndex(),
+          // keep structured content (and its ruby readings) on the same
+          // zoomed size as the plain-text fallback
+          fontSize: plainStyle.fontSize,
         );
       }
       return Text(definition, style: plainStyle);

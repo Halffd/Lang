@@ -4,6 +4,7 @@ import 'yomitan_options.dart';
 import 'anki_note_types.dart';
 import 'dictionary_display_options.dart';
 import 'font_settings.dart';
+import 'font_zoom.dart';
 import 'popup_dictionary_config.dart';
 import '../../data/repositories/translation_service.dart';
 import 'translation_model.dart';
@@ -38,6 +39,8 @@ class AppState extends ChangeNotifier {
   bool _autoHideNavigation = true;
   double _zoomLevel = 1.0; // Default zoom level
   double _fontSizeMultiplier = 1.0; // Default font size multiplier
+  double _fontZoomStep =
+      FontZoom.defaultStep; // zoom change per ctrl+scroll notch
   FontSettings _fontSettings = const FontSettings();
   bool _defaultFlexMode = false;
   int _defaultScreenIndex = 0; // Default to 0 (Search screen)
@@ -101,6 +104,9 @@ class AppState extends ChangeNotifier {
   bool get defaultFlexMode => _defaultFlexMode;
   double get zoomLevel => _zoomLevel;
   double get fontSizeMultiplier => _fontSizeMultiplier;
+
+  /// Zoom change applied per ctrl+scroll notch (configurable in settings).
+  double get fontZoomStep => _fontZoomStep;
   FontSettings get fontSettings => _fontSettings;
   String get currentQuery => _currentQuery;
   List<String> get searchHistory => _searchHistory;
@@ -212,13 +218,11 @@ class AppState extends ChangeNotifier {
   List<String> _hoverPopupLanguages = []; // empty = all languages
 
   // Layout settings
-  String _layoutMode = 'auto'; // auto/mobile/tablet/desktop/centered
+  String _layoutMode = 'auto'; // auto/mobile/tablet/desktop
   double _paddingScale = 1.0;
   double _marginScale = 1.0;
   double _borderRadiusScale = 1.0;
   double _borderWidthScale = 1.0;
-  double _contentMaxWidth = 1100.0; // px, used in centered mode
-  double _contentHeightFraction = 1.0; // fraction of available height
 
   // Profile activation
   String _profileActivationScreen =
@@ -332,11 +336,25 @@ class AppState extends ChangeNotifier {
   }
 
   void setFontSizeMultiplier(double multiplier) {
-    // Limit font size between 0.8 and 2.0
-    _fontSizeMultiplier = multiplier.clamp(0.8, 2.0);
+    // Limit font size between 0.8 and 2.5 (covers the 1.75x preset)
+    _fontSizeMultiplier = multiplier.clamp(
+      FontZoom.minMultiplier,
+      FontZoom.maxMultiplier,
+    );
     _storageService.setDouble('font_size_multiplier', _fontSizeMultiplier);
     notifyListeners();
   }
+
+  /// Zoom step per ctrl+scroll notch, clamped to a usable range.
+  void setFontZoomStep(double step) {
+    _fontZoomStep = step.clamp(FontZoom.minStep, FontZoom.maxStep);
+    _storageService.setDouble('font_zoom_step', _fontZoomStep);
+    notifyListeners();
+  }
+
+  /// Snap the global text zoom to one of the presets (0.8/1.0/1.25/1.5/1.75/2.0).
+  void setFontZoomPreset(double multiplier) =>
+      setFontSizeMultiplier(multiplier);
 
   /// Per-item-group font multipliers (headers, sentences,
   /// translations, words, kanji, ui).
@@ -653,14 +671,27 @@ class AppState extends ChangeNotifier {
   double get marginScale => _marginScale;
   double get borderRadiusScale => _borderRadiusScale;
   double get borderWidthScale => _borderWidthScale;
-  double get contentMaxWidth => _contentMaxWidth;
-  double get contentHeightFraction => _contentHeightFraction;
 
   void setLayoutMode(String value) {
     _layoutMode = value;
     _storageService.setString('layout_mode', value);
     notifyListeners();
   }
+
+  /// Layout modes selectable in settings, mirroring [LayoutMode].
+  static const Set<String> validLayoutModes = {
+    'auto',
+    'mobile',
+    'tablet',
+    'desktop',
+  };
+
+  /// Normalizes a persisted layout mode. `centered` was removed when the
+  /// content width cap was dropped, so stored values pointing at it (or any
+  /// value written by an older/corrupt build) fall back to `auto` — the
+  /// settings SegmentedButton asserts its selection is one of its segments.
+  static String _migrateLayoutMode(String? stored) =>
+      (stored != null && validLayoutModes.contains(stored)) ? stored : 'auto';
 
   void setPaddingScale(double value) {
     _paddingScale = value;
@@ -683,18 +714,6 @@ class AppState extends ChangeNotifier {
   void setBorderWidthScale(double value) {
     _borderWidthScale = value;
     _storageService.setDouble('border_width_scale', value);
-    notifyListeners();
-  }
-
-  void setContentMaxWidth(double value) {
-    _contentMaxWidth = value;
-    _storageService.setDouble('content_max_width', value);
-    notifyListeners();
-  }
-
-  void setContentHeightFraction(double value) {
-    _contentHeightFraction = value;
-    _storageService.setDouble('content_height_fraction', value);
     notifyListeners();
   }
 
@@ -859,6 +878,8 @@ class AppState extends ChangeNotifier {
       _zoomLevel = _storageService.getDouble('zoom_level') ?? 1.0;
       _fontSizeMultiplier =
           _storageService.getDouble('font_size_multiplier') ?? 1.0;
+      _fontZoomStep =
+          _storageService.getDouble('font_zoom_step') ?? FontZoom.defaultStep;
       _fontSettings = FontSettings.deserialize(
         _storageService.getStringSync('font_settings'),
       );
@@ -931,17 +952,15 @@ class AppState extends ChangeNotifier {
           _storageService.getBool('show_hover_definitions') ?? true;
       _useLocalTranslation =
           _storageService.getBool('use_local_translation') ?? false;
-      _layoutMode = _storageService.getStringSync('layout_mode') ?? 'auto';
+      _layoutMode = _migrateLayoutMode(
+        _storageService.getStringSync('layout_mode'),
+      );
       _paddingScale = _storageService.getDouble('padding_scale') ?? 1.0;
       _marginScale = _storageService.getDouble('margin_scale') ?? 1.0;
       _borderRadiusScale =
           _storageService.getDouble('border_radius_scale') ?? 1.0;
       _borderWidthScale =
           _storageService.getDouble('border_width_scale') ?? 1.0;
-      _contentMaxWidth =
-          _storageService.getDouble('content_max_width') ?? 1100.0;
-      _contentHeightFraction =
-          _storageService.getDouble('content_height_fraction') ?? 1.0;
       final savedProvider = _storageService.getStringSync(
         'translation_provider',
       );
