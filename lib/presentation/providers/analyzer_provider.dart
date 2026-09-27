@@ -635,7 +635,11 @@ class AnalyzerProvider extends ChangeNotifier {
   }) async {
     final word = AnalyzedWord(
       word: r.entry.word,
-      reading: r.entry.reading,
+      reading: AnalyzedWord.readingFor(
+        language: _currentLanguage,
+        term: r.entry.term,
+        yomichanReading: r.entry.reading,
+      ),
       frequency: r.entry.frequency,
       ichiMoeDefinitions: r.entry.definitions
           .where((d) => d.isNotEmpty)

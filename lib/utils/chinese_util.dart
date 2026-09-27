@@ -135,6 +135,22 @@ class ChineseUtil {
     return _pinyinMap[char] ?? char;
   }
 
+  /// Pinyin for [text] only when every character is covered by the map,
+  /// otherwise null. Partial pinyin is worse than none because
+  /// [toPinyin] echoes unmapped characters back verbatim.
+  static String? toPinyinIfComplete(String text) {
+    if (text.isEmpty) return null;
+    final buffer = StringBuffer();
+    for (int i = 0; i < text.length; i++) {
+      final char = text[i];
+      final pinyin = _pinyinMap[char];
+      if (pinyin == null) return null;
+      if (buffer.isNotEmpty) buffer.write(' ');
+      buffer.write(pinyin);
+    }
+    return buffer.toString();
+  }
+
   static String _removeTone(String pinyin) {
     return pinyin
         .replaceAll('ā', 'a')
@@ -195,6 +211,12 @@ class ChineseUtil {
     return RegExp(r'[\u4E00-\u9FFF]').hasMatch(text);
   }
 
+  /// Hiragana/katakana. Exclusive to Japanese, so a hit here means the text
+  /// is Japanese regardless of any hanzi also present.
+  static bool containsKana(String text) {
+    return RegExp(r'[\u3040-\u309F\u30A0-\u30FF]').hasMatch(text);
+  }
+
   static bool containsJapaneseKanji(String text) {
     return RegExp(r'[\u4E00-\u9FBF]').hasMatch(text);
   }
@@ -223,7 +245,6 @@ class ChineseUtil {
           buffer.write(_toToneNumber(pinyin));
           break;
         case PinyinFormat.withToneMark:
-        default:
           buffer.write(pinyin);
           break;
       }

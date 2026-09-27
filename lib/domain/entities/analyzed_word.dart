@@ -1,4 +1,24 @@
+import 'package:lang/utils/chinese_util.dart';
+
 class AnalyzedWord {
+  /// Picks the reading to display for a word looked up in a Yomichan
+  /// dictionary.
+  ///
+  /// Those dictionaries are Japanese, so [yomichanReading] is kana
+  /// furigana. Showing it for Chinese text is simply wrong, so for `zh` we
+  /// substitute pinyin and fall back to no reading when the term is not
+  /// covered by the pinyin map — a wrong reading is worse than none.
+  static String? readingFor({
+    required String language,
+    required String term,
+    required String yomichanReading,
+  }) {
+    if (language != 'zh') {
+      return yomichanReading.isEmpty ? null : yomichanReading;
+    }
+    return ChineseUtil.toPinyinIfComplete(term);
+  }
+
   final String word;
   final String? reading;
   final int? frequency;

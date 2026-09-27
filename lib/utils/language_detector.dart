@@ -2,9 +2,10 @@ import 'chinese_util.dart';
 
 class LanguageDetector {
   static String detect(String text) {
+    // Kana is exclusive to Japanese — check it before the shared CJK block,
+    // otherwise kanji-bearing Japanese (日本語を勉強する) reads as Chinese.
+    if (ChineseUtil.containsKana(text)) return 'ja'; // Hiragana/Katakana
     if (ChineseUtil.containsChinese(text)) return 'zh';
-    if (RegExp(r'[\u3040-\u309F\u30A0-\u30FF]').hasMatch(text))
-      return 'ja'; // Hiragana/Katakana
     if (RegExp(
       r'[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]',
     ).hasMatch(text))

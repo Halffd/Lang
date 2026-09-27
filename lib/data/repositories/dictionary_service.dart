@@ -998,6 +998,10 @@ class DictionaryService {
     // If it's European text (or any Latin-based script), use Wiktionary as primary source
     if (_isEuropeanText(text)) {
       return await _tokenizeEuropeanText(text);
+    } else if (ChineseUtil.containsKana(text)) {
+      // Kana is exclusive to Japanese and must be checked before the shared
+      // CJK block, otherwise kanji-bearing Japanese is tokenized as Chinese.
+      return await _tokenizeJapaneseText(text);
     } else if (ChineseUtil.containsChinese(text)) {
       return await _tokenizeChineseText(text);
     } else {

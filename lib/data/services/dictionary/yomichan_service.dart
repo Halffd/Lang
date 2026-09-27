@@ -283,7 +283,11 @@ class YomichanService {
     final result = results.first;
     return AnalyzedWord(
       word: result.entry.term,
-      reading: result.entry.reading,
+      reading: AnalyzedWord.readingFor(
+        language: language,
+        term: result.entry.term,
+        yomichanReading: result.entry.reading,
+      ),
       frequency: result.frequencies.isNotEmpty
           ? result.frequencies.first.value.toInt()
           : null,

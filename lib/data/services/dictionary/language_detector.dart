@@ -14,14 +14,17 @@ class LanguageDetector {
   String detect(String text) {
     if (text.isEmpty) return 'en';
 
-    // Check for specific character ranges
-    if (ChineseUtil.containsChinese(text)) {
-      return 'zh';
+    // Kana is decisive: hiragana/katakana are exclusive to Japanese, so this
+    // must be tested before the shared CJK ideograph block below. Otherwise
+    // any sentence containing kanji (e.g. 日本語を勉強する) is misdetected
+    // as Chinese.
+    if (ChineseUtil.containsKana(text)) {
+      return 'ja';
     }
 
-    // Japanese - hiragana, katakana
-    if (RegExp(r'[\u3040-\u309F\u30A0-\u30FF]').hasMatch(text)) {
-      return 'ja';
+    // Chinese - hanzi with no kana present
+    if (ChineseUtil.containsChinese(text)) {
+      return 'zh';
     }
 
     // Korean Hangul
