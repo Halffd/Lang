@@ -72,6 +72,7 @@ dependencies:
   sqlite3: ^2.4.12
   webview_flutter: ^4.10.0
   url_launcher: ^6.3.2
+  desktop_webview_window: ^0.3.0
   flutter_html: ^3.0.0-beta.2
 
   # Desktop IPC packages (Linux/Windows/macOS)

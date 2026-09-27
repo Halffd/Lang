@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
       libsecret-1-dev libsqlite3-dev libmpv-dev libkeybinder-3.0-dev \
       libnotify-dev libayatana-appindicator3-dev file \
+      libwebkit2gtk-4.1-dev \
       appstream wget fuse xz-utils && \
     rm -rf /var/lib/apt/lists/*
 
