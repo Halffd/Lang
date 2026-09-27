@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lang/presentation/widgets/word_action_bar.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -152,7 +153,7 @@ class DictionaryEntryCard extends StatelessWidget {
                                       ? Icons.favorite
                                       : Icons.favorite_border,
                                   color: isFavorite ? Colors.red : null,
-                                  size: 20,
+                                  size: kWordActionIconSize,
                                 ),
                                 onPressed: onFavoriteToggle,
                                 tooltip: isFavorite
@@ -163,7 +164,7 @@ class DictionaryEntryCard extends StatelessWidget {
                                 icon: Icon(
                                   isInAnki ? Icons.book : Icons.book_outlined,
                                   color: isInAnki ? Colors.blue : null,
-                                  size: 20,
+                                  size: kWordActionIconSize,
                                 ),
                                 onPressed: onAnkiToggle,
                                 tooltip: isInAnki
@@ -176,7 +177,7 @@ class DictionaryEntryCard extends StatelessWidget {
                                       ? Icons.school
                                       : Icons.school_outlined,
                                   color: isInSRS ? Colors.green : null,
-                                  size: 20,
+                                  size: kWordActionIconSize,
                                 ),
                                 onPressed: onSRSToggle,
                                 tooltip: isInSRS
@@ -191,7 +192,7 @@ class DictionaryEntryCard extends StatelessWidget {
                                   color: isSaved
                                       ? theme.colorScheme.primary
                                       : null,
-                                  size: 20,
+                                  size: kWordActionIconSize,
                                 ),
                                 onPressed: onSaveToggle,
                                 tooltip: isSaved
@@ -211,7 +212,7 @@ class DictionaryEntryCard extends StatelessWidget {
                                   ? Icons.favorite
                                   : Icons.favorite_border,
                               color: isFavorite ? Colors.red : null,
-                              size: 20,
+                              size: kWordActionIconSize,
                             ),
                             onPressed: onFavoriteToggle,
                             tooltip: isFavorite
@@ -222,7 +223,7 @@ class DictionaryEntryCard extends StatelessWidget {
                             icon: Icon(
                               isInAnki ? Icons.book : Icons.book_outlined,
                               color: isInAnki ? Colors.blue : null,
-                              size: 20,
+                              size: kWordActionIconSize,
                             ),
                             onPressed: onAnkiToggle,
                             tooltip: isInAnki
@@ -233,7 +234,7 @@ class DictionaryEntryCard extends StatelessWidget {
                             icon: Icon(
                               isInSRS ? Icons.school : Icons.school_outlined,
                               color: isInSRS ? Colors.green : null,
-                              size: 20,
+                              size: kWordActionIconSize,
                             ),
                             onPressed: onSRSToggle,
                             tooltip: isInSRS ? 'Remove from SRS' : 'Add to SRS',
@@ -242,7 +243,7 @@ class DictionaryEntryCard extends StatelessWidget {
                             icon: Icon(
                               isSaved ? Icons.bookmark : Icons.bookmark_border,
                               color: isSaved ? theme.colorScheme.primary : null,
-                              size: 20,
+                              size: kWordActionIconSize,
                             ),
                             onPressed: onSaveToggle,
                             tooltip: isSaved

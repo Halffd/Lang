@@ -1,5 +1,6 @@
 import '../../domain/entities/srs_card.dart';
 import 'package:lang/domain/entities/dictionary.dart';
+import 'package:lang/domain/entities/analyzed_word.dart';
 
 /// Utility functions for converting between different data types and SRS cards
 class SRSConversionUtils {
@@ -24,6 +25,35 @@ class SRSConversionUtils {
       id: entry.term + entry.reading,
       word: entry.term,
       reading: entry.reading,
+      meaning: meaning,
+    );
+  }
+
+  /// Convert an analysed word to an SRS card. Uses the same
+  /// `term + reading` id convention as [dictionaryEntryToSRSCard] so a word
+  /// added from the analyse screen is the same card as one added from a
+  /// dictionary entry.
+  static SRSCard analyzedWordToSRSCard(
+    AnalyzedWord word, {
+    int priority = 3,
+    int difficulty = 3,
+  }) {
+    final definitions = word.ichiMoeDefinitions
+        .where((d) => d.isNotEmpty)
+        .toList();
+
+    var meaning = definitions.isNotEmpty
+        ? definitions.first
+        : 'No definition available';
+    if (definitions.length > 1) {
+      meaning = definitions.take(2).join('; ');
+      if (definitions.length > 2) meaning += '...';
+    }
+
+    return SRSCard.newCard(
+      id: word.word + (word.reading ?? ''),
+      word: word.word,
+      reading: word.reading ?? '',
       meaning: meaning,
     );
   }

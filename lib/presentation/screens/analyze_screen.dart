@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lang/presentation/widgets/word_action_bar.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:lang/core/services/history_service.dart';
@@ -199,106 +200,95 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
         appBar: _buildAppBar(context, theme, provider, l10n),
         body: FadeTransition(
           opacity: _fadeController,
-          // centered responsive column: min 700, max 1200 wide so
-          // the analysis does not hug the left edge on 1080p+
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 700, maxWidth: 1200),
-              child: CustomScrollView(
-                controller: _scrollController,
-                slivers: [
-                  // 1. SEARCH BAR (pinned, height follows input size)
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: _SearchBarDelegate(
-                      child: _buildSearchBar(context, theme, provider, l10n),
-                      theme: theme,
-                      height: _searchBarHeight,
+          // full window width: the analysis column is not width-capped
+          child: CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              // 1. SEARCH BAR (pinned, height follows input size)
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _SearchBarDelegate(
+                  child: _buildSearchBar(context, theme, provider, l10n),
+                  theme: theme,
+                  height: _searchBarHeight,
+                ),
+              ),
+
+              if (hasResults) ...[
+                // 2. FULL SENTENCES (above) - one entry per sentence
+                SliverToBoxAdapter(
+                  child: _buildSentenceListSection(
+                    context,
+                    theme,
+                    provider,
+                    l10n,
+                  ),
+                ),
+
+                if (_showSentenceTranslations)
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+                // 3. WORD DEFINITION CARDS (below, grouped per sentence)
+                SliverToBoxAdapter(
+                  child: _buildWordCardsSection(context, theme, provider, l10n),
+                ),
+
+                // 4. FULL TRANSLATION
+                if (_showFullTranslation)
+                  SliverToBoxAdapter(
+                    child: AnimatedSize(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      child: _buildFullTranslation(
+                        context,
+                        theme,
+                        provider,
+                        l10n,
+                      ),
                     ),
                   ),
 
-                  if (hasResults) ...[
-                    // 2. FULL SENTENCES (above) - one entry per sentence
-                    SliverToBoxAdapter(
-                      child: _buildSentenceListSection(
-                        context,
-                        theme,
-                        provider,
-                        l10n,
-                      ),
+                if (_showFullTranslation)
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+                // 5. PAGE CONTROLS
+                SliverToBoxAdapter(
+                  child: _buildPageControls(context, theme, provider, l10n),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                // 6. TOGGLE DEFINITIONS
+                SliverToBoxAdapter(
+                  child: _buildToggleDefinitionsButton(
+                    context,
+                    theme,
+                    provider,
+                    l10n,
+                  ),
+                ),
+              ] else ...[
+                // Empty state
+                SliverFillRemaining(
+                  child: _buildEmptyState(context, theme, l10n),
+                ),
+              ],
+
+              // 7. FAVORITES / HISTORY (pinned at bottom)
+              if (_showFavorites)
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _FavoritesDelegate(
+                    child: _buildFavoritesSection(
+                      context,
+                      theme,
+                      provider,
+                      l10n,
                     ),
-
-                    if (_showSentenceTranslations)
-                      const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-                    // 3. WORD DEFINITION CARDS (below, grouped per sentence)
-                    SliverToBoxAdapter(
-                      child: _buildWordCardsSection(
-                        context,
-                        theme,
-                        provider,
-                        l10n,
-                      ),
-                    ),
-
-                    // 4. FULL TRANSLATION
-                    if (_showFullTranslation)
-                      SliverToBoxAdapter(
-                        child: AnimatedSize(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                          child: _buildFullTranslation(
-                            context,
-                            theme,
-                            provider,
-                            l10n,
-                          ),
-                        ),
-                      ),
-
-                    if (_showFullTranslation)
-                      const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-                    // 5. PAGE CONTROLS
-                    SliverToBoxAdapter(
-                      child: _buildPageControls(context, theme, provider, l10n),
-                    ),
-
-                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-                    // 6. TOGGLE DEFINITIONS
-                    SliverToBoxAdapter(
-                      child: _buildToggleDefinitionsButton(
-                        context,
-                        theme,
-                        provider,
-                        l10n,
-                      ),
-                    ),
-                  ] else ...[
-                    // Empty state
-                    SliverFillRemaining(
-                      child: _buildEmptyState(context, theme, l10n),
-                    ),
-                  ],
-
-                  // 7. FAVORITES / HISTORY (pinned at bottom)
-                  if (_showFavorites)
-                    SliverPersistentHeader(
-                      pinned: true,
-                      delegate: _FavoritesDelegate(
-                        child: _buildFavoritesSection(
-                          context,
-                          theme,
-                          provider,
-                          l10n,
-                        ),
-                        theme: theme,
-                      ),
-                    ),
-                ],
-              ),
-            ),
+                    theme: theme,
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -1511,6 +1501,12 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                       ],
                     ),
                   ],
+                ),
+                // copy / favorites / Anki / learned. The bookmark above
+                // already covers "save", so it is not repeated here.
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: WordActionBar(word: word, showSave: false),
                 ),
                 const SizedBox(height: 8),
                 if (_showDefinitions && hasDefinition) ...[
