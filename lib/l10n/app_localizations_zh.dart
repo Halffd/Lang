@@ -936,6 +936,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get browserClose => 'Close browser';
 
   @override
+  String get videoNoMedia => 'Pick a video to play with a subtitle track.';
+
+  @override
+  String get videoLoading => 'Loading...';
+
+  @override
+  String get videoPickVideo => 'Pick video';
+
+  @override
+  String get videoShowTranscript => 'Transcript';
+
+  @override
+  String get videoHideTranscript => 'Hide transcript';
+
+  @override
+  String get videoLoadSubs => 'Load subs';
+
+  @override
+  String get videoNoSubs => 'No subtitle track loaded.';
+
+  @override
+  String get readerTabVideo => 'Video';
+
+  @override
   String get openDocument => '打开文档';
 
   @override

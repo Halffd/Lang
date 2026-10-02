@@ -1902,6 +1902,54 @@ abstract class AppLocalizations {
   /// **'Close browser'**
   String get browserClose;
 
+  /// No description provided for @videoNoMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a video to play with a subtitle track.'**
+  String get videoNoMedia;
+
+  /// No description provided for @videoLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get videoLoading;
+
+  /// No description provided for @videoPickVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick video'**
+  String get videoPickVideo;
+
+  /// No description provided for @videoShowTranscript.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcript'**
+  String get videoShowTranscript;
+
+  /// No description provided for @videoHideTranscript.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide transcript'**
+  String get videoHideTranscript;
+
+  /// No description provided for @videoLoadSubs.
+  ///
+  /// In en, this message translates to:
+  /// **'Load subs'**
+  String get videoLoadSubs;
+
+  /// No description provided for @videoNoSubs.
+  ///
+  /// In en, this message translates to:
+  /// **'No subtitle track loaded.'**
+  String get videoNoSubs;
+
+  /// No description provided for @readerTabVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Video'**
+  String get readerTabVideo;
+
   /// No description provided for @openDocument.
   ///
   /// In en, this message translates to:
