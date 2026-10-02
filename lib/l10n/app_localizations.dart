@@ -1722,6 +1722,36 @@ abstract class AppLocalizations {
   /// **'Auto OCR after capture'**
   String get autoOcr;
 
+  /// No description provided for @ocrEngine.
+  ///
+  /// In en, this message translates to:
+  /// **'OCR engine'**
+  String get ocrEngine;
+
+  /// No description provided for @ocrLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'OCR language'**
+  String get ocrLanguage;
+
+  /// No description provided for @ocrLanguageAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto (app language)'**
+  String get ocrLanguageAuto;
+
+  /// No description provided for @autoTranslateOcr.
+  ///
+  /// In en, this message translates to:
+  /// **'Translate OCR text'**
+  String get autoTranslateOcr;
+
+  /// No description provided for @ocrEngineAiUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'unavailable here'**
+  String get ocrEngineAiUnavailable;
+
   /// No description provided for @copyOcrText.
   ///
   /// In en, this message translates to:
@@ -1847,6 +1877,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No browser available'**
   String get browserNoRuntime;
+
+  /// No description provided for @browserBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get browserBack;
+
+  /// No description provided for @browserForward.
+  ///
+  /// In en, this message translates to:
+  /// **'Forward'**
+  String get browserForward;
+
+  /// No description provided for @browserReload.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload'**
+  String get browserReload;
+
+  /// No description provided for @browserClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close browser'**
+  String get browserClose;
 
   /// No description provided for @openDocument.
   ///

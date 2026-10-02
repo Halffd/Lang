@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 
 import 'package:desktop_webview_window/desktop_webview_window.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -24,14 +25,40 @@ String? normalizeBrowserUrl(String raw) {
   return Uri.tryParse(s)?.toString();
 }
 
+/// How a page gets opened on this platform.
+enum BrowserOpenMode {
+  /// Full in-app webview, with address bar and navigation controls.
+  embedded,
+
+  /// A separate native webview window (WebView2 / WKWebView).
+  nativeWindow,
+
+  /// Handed off to the system browser.
+  external,
+}
+
+/// Pick the strongest browser this platform can offer.
+///
+/// Linux has no webkit2gtk binding, so it is the only target that falls back
+/// to the system browser; everything else gets an embedded webview. Kept
+/// public and platform-parameterised so the policy is unit testable without
+/// a device.
+BrowserOpenMode browserOpenModeFor({
+  required bool isLinux,
+  required bool isMobile,
+}) {
+  if (isLinux) return BrowserOpenMode.external;
+  if (isMobile) return BrowserOpenMode.embedded;
+  return BrowserOpenMode.nativeWindow;
+}
+
 /// Web browser tab.
 ///
-/// Windows and macOS open a native webview window (WebView2 / WKWebView,
-/// both part of the OS). Linux has no such OS component: the only Flutter
-/// plugin for it links libwebkit2gtk-4.1 at load time and bundles none of
-/// it, so the app would refuse to start on hosts without webkit2gtk. There
-/// the page is opened in the system browser instead. Keeps a recents list
-/// of visited URLs.
+/// Android and iOS get an embedded webview with an address bar and
+/// navigation controls. Windows and macOS open a native webview window
+/// (WebView2 / WKWebView, both part of the OS). Linux has no webkit2gtk
+/// binding, so the page is handed to the system browser. Keeps a recents
+/// list of visited URLs.
 class BrowserTab extends StatefulWidget {
   const BrowserTab({super.key});
 
@@ -41,9 +68,17 @@ class BrowserTab extends StatefulWidget {
 
 class _BrowserTabState extends State<BrowserTab> {
   final _urlCtrl = TextEditingController();
+  final _addressCtrl = TextEditingController();
+  InAppWebViewController? _webview;
   List<String> _recents = [];
   bool _opening = false;
   String? _error;
+
+  /// The page currently displayed in the embedded webview, if any.
+  String? _embeddedUrl;
+  int _progress = 0;
+  bool _canGoBack = false;
+  bool _canGoForward = false;
 
   static const _kRecentsKey = 'browser_recents';
   static const _maxRecents = 20;
@@ -62,8 +97,14 @@ class _BrowserTabState extends State<BrowserTab> {
   @override
   void dispose() {
     _urlCtrl.dispose();
+    _addressCtrl.dispose();
     super.dispose();
   }
+
+  BrowserOpenMode get _mode => browserOpenModeFor(
+    isLinux: Platform.isLinux,
+    isMobile: Platform.isAndroid || Platform.isIOS,
+  );
 
   Future<void> _loadRecents() async {
     final p = await SharedPreferences.getInstance();
@@ -90,18 +131,39 @@ class _BrowserTabState extends State<BrowserTab> {
       _error = null;
     });
     try {
-      if (Platform.isLinux || !await WebviewWindow.isWebviewAvailable()) {
-        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-      } else {
-        final webview = await WebviewWindow.create(
-          configuration: const CreateConfiguration(
-            title: 'Lang Browser',
-            titleBarHeight: 36,
-          ),
-        );
-        webview.launch(url);
+      switch (_mode) {
+        case BrowserOpenMode.embedded:
+          // same tab: swap the launcher UI for the webview itself
+          setState(() {
+            _embeddedUrl = url;
+            _addressCtrl.text = url;
+            _progress = 0;
+          });
+          await _remember(url);
+          return;
+        case BrowserOpenMode.nativeWindow:
+          if (!await WebviewWindow.isWebviewAvailable()) {
+            await launchUrl(
+              Uri.parse(url),
+              mode: LaunchMode.externalApplication,
+            );
+            await _remember(url);
+            return;
+          }
+          final webview = await WebviewWindow.create(
+            configuration: const CreateConfiguration(
+              title: 'Lang Browser',
+              titleBarHeight: 36,
+            ),
+          );
+          webview.launch(url);
+          await _remember(url);
+          return;
+        case BrowserOpenMode.external:
+          await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+          await _remember(url);
+          return;
       }
-      await _remember(url);
     } catch (e) {
       // no system browser, or the webview runtime failed to come up
       if (mounted) setState(() => _error = '${l10n?.browserNoRuntime}: $e');
@@ -110,10 +172,36 @@ class _BrowserTabState extends State<BrowserTab> {
     }
   }
 
+  void _closeEmbedded() {
+    setState(() {
+      _embeddedUrl = null;
+      _progress = 0;
+      _canGoBack = false;
+      _canGoForward = false;
+    });
+  }
+
+  Future<void> _syncHistoryState() async {
+    final controller = _webview;
+    if (controller == null || !mounted) return;
+    final canBack = await controller.canGoBack();
+    final canForward = await controller.canGoForward();
+    if (!mounted) return;
+    if (canBack == _canGoBack && canForward == _canGoForward) return;
+    setState(() {
+      _canGoBack = canBack;
+      _canGoForward = canForward;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
+    // embedded mode replaces the launcher with the page itself
+    if (_embeddedUrl != null) {
+      return _buildEmbedded(theme, l10n);
+    }
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -226,6 +314,124 @@ class _BrowserTabState extends State<BrowserTab> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Full-screen in-app browser: address bar, back/forward/reload, page.
+  Widget _buildEmbedded(ThemeData theme, AppLocalizations? l10n) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back),
+              tooltip: l10n?.browserBack ?? 'Back',
+              onPressed: _canGoBack
+                  ? () async {
+                      await _webview?.goBack();
+                      _syncHistoryState();
+                    }
+                  : null,
+            ),
+            Expanded(
+              child: TextField(
+                controller: _addressCtrl,
+                keyboardType: TextInputType.url,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.language, size: 18),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  isDense: true,
+                ),
+                onSubmitted: (raw) {
+                  final url = normalizeBrowserUrl(raw);
+                  if (url == null) return;
+                  setState(() {
+                    _embeddedUrl = url;
+                    _addressCtrl.text = url;
+                  });
+                  _webview?.loadUrl(urlRequest: URLRequest(url: WebUri(url)));
+                  _remember(url);
+                },
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: l10n?.browserReload ?? 'Reload',
+              onPressed: () => _webview?.reload(),
+            ),
+            IconButton(
+              icon: const Icon(Icons.arrow_forward),
+              tooltip: l10n?.browserForward ?? 'Forward',
+              onPressed: _canGoForward
+                  ? () async {
+                      await _webview?.goForward();
+                      _syncHistoryState();
+                    }
+                  : null,
+            ),
+            IconButton(
+              icon: const Icon(Icons.close),
+              tooltip: l10n?.browserClose ?? 'Close',
+              onPressed: _closeEmbedded,
+            ),
+          ],
+        ),
+        if (_progress > 0 && _progress < 100)
+          LinearProgressIndicator(value: _progress / 100),
+        Expanded(
+          child: InAppWebView(
+            initialUrlRequest: URLRequest(url: WebUri(_embeddedUrl!)),
+            initialSettings: InAppWebViewSettings(
+              javaScriptEnabled: true,
+              // language learners read sites with a dark reader installed
+              // or a mobile UA, so keep the stock UA and let sites decide
+              useShouldOverrideUrlLoading: true,
+              useOnDownloadStart: true,
+            ),
+            onWebViewCreated: (controller) => _webview = controller,
+            onProgressChanged: (controller, progress) {
+              if (!mounted) return;
+              setState(() => _progress = progress);
+            },
+            onLoadStart: (controller, url) {
+              if (!mounted) return;
+              setState(() {
+                _embeddedUrl = url.toString();
+                _addressCtrl.text = _embeddedUrl!;
+                _progress = 0;
+              });
+            },
+            onLoadStop: (controller, url) {
+              if (!mounted) return;
+              setState(() {
+                _embeddedUrl = url.toString();
+                _addressCtrl.text = _embeddedUrl!;
+                _progress = 100;
+              });
+              _remember(_embeddedUrl!);
+              _syncHistoryState();
+            },
+            onReceivedError: (controller, request, error) {
+              // only surface a failure for the main document, not for an
+              // image or a failed third-party script on the page
+              if (!mounted) return;
+              if (request.isForMainFrame ?? true) {
+                setState(() => _error = error.description);
+              }
+            },
+          ),
+        ),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Text(
+              _error!,
+              style: TextStyle(color: theme.colorScheme.error, fontSize: 12),
+            ),
+          ),
+      ],
     );
   }
 }

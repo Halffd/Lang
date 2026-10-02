@@ -121,6 +121,12 @@ class ScreenshotService extends ChangeNotifier {
   /// `<app docs>`/screenshots).
   Future<Directory> Function() dirProvider = _defaultDirProvider;
 
+  /// Injectable platform probe for tests. Real detection reads
+  /// DISPLAY/WAYLAND_DISPLAY from the process environment, which is
+  /// unobservable from a headless CI box, so tests force the backend they
+  /// exercise instead of getting [ScreenshotPlatform.unsupported].
+  Future<ScreenshotPlatform> Function()? platformOverride;
+
   static Future<Directory> _defaultDirProvider() async {
     final appDir = await getApplicationDocumentsDirectory();
     return Directory('${appDir.path}/screenshots');
@@ -162,10 +168,13 @@ class ScreenshotService extends ChangeNotifier {
     _autoTimer = null;
     runCommand = _realRunner;
     dirProvider = _defaultDirProvider;
+    platformOverride = null;
   }
 
   /// Detect the screenshot backend usable on this machine.
   Future<ScreenshotPlatform> detectPlatform() async {
+    final override = platformOverride;
+    if (override != null) return override();
     if (Platform.isWindows) return ScreenshotPlatform.windows;
     if (Platform.isMacOS) return ScreenshotPlatform.macos;
     if (Platform.isLinux) {
@@ -631,9 +640,11 @@ Add-Type -AssemblyName System.Windows.Forms,System.Drawing
     required bool autoOcr,
     required bool copyOcrText,
     required bool copyImage,
+    bool autoTranslate = false,
     Future<String?> Function(String path)? ocrRunner,
     Future<void> Function(String path)? copyImageRunner,
     Future<void> Function(String text)? copyTextRunner,
+    Future<String?> Function(String text)? translateRunner,
   }) async {
     final item = await capture(kind, monitor: monitor);
     if (item == null) return null;
@@ -643,9 +654,16 @@ Add-Type -AssemblyName System.Windows.Forms,System.Drawing
     }
 
     if (autoOcr && ocrRunner != null) {
-      final text = await ocrRunner(item.path);
-      final trimmed = text?.trim() ?? '';
+      var text = await ocrRunner(item.path);
+      var trimmed = text?.trim() ?? '';
       if (trimmed.isNotEmpty) {
+        if (autoTranslate && translateRunner != null) {
+          final translated = await translateRunner(trimmed);
+          if (translated != null && translated.trim().isNotEmpty) {
+            text = translated;
+            trimmed = translated.trim();
+          }
+        }
         setOcrText(item.id, trimmed);
         if (copyOcrText && copyTextRunner != null) {
           await copyTextRunner(trimmed);

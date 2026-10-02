@@ -859,6 +859,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get autoOcr => 'Auto OCR after capture';
 
   @override
+  String get ocrEngine => 'OCR engine';
+
+  @override
+  String get ocrLanguage => 'OCR language';
+
+  @override
+  String get ocrLanguageAuto => 'Auto (app language)';
+
+  @override
+  String get autoTranslateOcr => 'Translate OCR text';
+
+  @override
+  String get ocrEngineAiUnavailable => 'unavailable here';
+
+  @override
   String get copyOcrText => 'Copy OCR text to clipboard';
 
   @override
@@ -924,6 +939,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get browserNoRuntime => 'No browser available';
+
+  @override
+  String get browserBack => 'Back';
+
+  @override
+  String get browserForward => 'Forward';
+
+  @override
+  String get browserReload => 'Reload';
+
+  @override
+  String get browserClose => 'Close browser';
 
   @override
   String get openDocument => 'Open document';

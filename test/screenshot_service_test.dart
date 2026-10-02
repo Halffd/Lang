@@ -16,6 +16,11 @@ void main() {
     commands = [];
     service = ScreenshotService();
     service.dirProvider = () async => tempDir;
+    // Real detection reads DISPLAY/WAYLAND_DISPLAY from the process env,
+    // which is unset on headless CI, so capture would bail out as
+    // unsupported before ever reaching the fakes below. The dedicated
+    // detectPlatform test clears this to exercise the real probe.
+    service.platformOverride = () async => ScreenshotPlatform.x11;
     service.runCommand = (executable, arguments) async {
       commands.add((executable, arguments));
       // fake environment:
@@ -186,6 +191,63 @@ HDMI-0 disconnected (normal left inverted right x axis y axis)
     expect(item!.ocrText, isNull);
   });
 
+  test('autoTranslate replaces ocr text with the translation', () async {
+    String? translatedInput;
+    String? copiedText;
+    final item = await service.captureWithPipeline(
+      ScreenshotKind.fullscreen,
+      autoOcr: true,
+      copyOcrText: true,
+      copyImage: false,
+      autoTranslate: true,
+      ocrRunner: (path) async => 'raw text',
+      translateRunner: (text) async {
+        translatedInput = text;
+        return 'translated text';
+      },
+      copyTextRunner: (text) async {
+        copiedText = text;
+      },
+    );
+
+    expect(translatedInput, 'raw text');
+    expect(item!.ocrText, 'translated text');
+    expect(copiedText, 'translated text');
+    expect(
+      service.items.firstWhere((i) => i.id == item.id).ocrText,
+      'translated text',
+    );
+  });
+
+  test('autoTranslate off leaves ocr text untouched', () async {
+    final item = await service.captureWithPipeline(
+      ScreenshotKind.fullscreen,
+      autoOcr: true,
+      copyOcrText: false,
+      copyImage: false,
+      ocrRunner: (path) async => 'raw text',
+      translateRunner: (text) async => fail('should not translate'),
+    );
+
+    expect(item!.ocrText, 'raw text');
+  });
+
+  test('a failed or empty translation keeps the original ocr text', () async {
+    for (final response in <String?>[null, '   ']) {
+      final item = await service.captureWithPipeline(
+        ScreenshotKind.fullscreen,
+        autoOcr: true,
+        copyOcrText: false,
+        copyImage: false,
+        autoTranslate: true,
+        ocrRunner: (path) async => 'raw text',
+        translateRunner: (text) async => response,
+      );
+
+      expect(item!.ocrText, 'raw text');
+    }
+  });
+
   test('items roundtrip through json', () async {
     final item = await service.capture(ScreenshotKind.window);
     expect(item, isNotNull);
@@ -229,12 +291,66 @@ HDMI-0 disconnected (normal left inverted right x axis y axis)
     expect(service.items.first.ocrText, 'hello');
   });
 
-  test('detectPlatform returns x11 in test env with display set', () async {
-    // Test env has DISPLAY set (x11 session)
-    final platform = await service.detectPlatform();
-    expect(
-      platform,
-      anyOf(ScreenshotPlatform.x11, ScreenshotPlatform.unsupported),
-    );
+  test(
+    'detectPlatform probes the real environment when not overridden',
+    () async {
+      // Clear the override so this exercises the real DISPLAY/WAYLAND_DISPLAY
+      // probe. The result depends on the host, so assert only that it is a
+      // known backend and that a headless host reports unsupported.
+      service.platformOverride = null;
+      final platform = await service.detectPlatform();
+
+      expect(
+        platform,
+        anyOf(
+          ScreenshotPlatform.x11,
+          ScreenshotPlatform.wayland,
+          ScreenshotPlatform.windows,
+          ScreenshotPlatform.macos,
+          ScreenshotPlatform.unsupported,
+        ),
+      );
+      final hasDisplay =
+          Platform.environment['DISPLAY'] != null ||
+          Platform.environment['WAYLAND_DISPLAY'] != null;
+      if (!hasDisplay) {
+        expect(platform, ScreenshotPlatform.unsupported);
+      }
+    },
+  );
+
+  test('platformOverride forces the backend capture uses', () async {
+    // The override exists so headless CI can exercise capture paths; without
+    // it every capture would return null and the fakes would never run.
+    final plain = ScreenshotService();
+    plain.dirProvider = () async => tempDir;
+    plain.runCommand = (executable, arguments) async {
+      if (executable == 'which') {
+        const tools = {'maim', 'slop', 'xdotool', 'xrandr'};
+        return (tools.contains(arguments.first) ? 0 : 1, '', '');
+      }
+      if (executable == 'xrandr') {
+        return (
+          0,
+          'HDMI-1 connected primary 1920x1080+0+0 (normal left inverted right x axis y axis) 527mm x 296mm\n',
+          '',
+        );
+      }
+      if (executable == 'maim') {
+        File(
+          arguments.last,
+        ).writeAsBytesSync(Uint8List.fromList([0x89, 0x50, 0x4E, 0x47]));
+        return (0, '', '');
+      }
+      return (1, '', 'not found');
+    };
+
+    expect(await plain.detectPlatform(), ScreenshotPlatform.unsupported);
+    expect(await plain.capture(ScreenshotKind.fullscreen), isNull);
+
+    plain.platformOverride = () async => ScreenshotPlatform.x11;
+    final item = await plain.capture(ScreenshotKind.fullscreen);
+    expect(item, isNotNull);
+    expect(File(item!.path).existsSync(), isTrue);
   });
 }

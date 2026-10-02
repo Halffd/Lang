@@ -46,6 +46,34 @@ void main() {
     });
   });
 
+  group('browserOpenModeFor', () {
+    test('linux always uses the system browser', () {
+      // there is no webkit2gtk binding, so the embedded webview must never
+      // be selected on linux or the app fails to start on clean hosts
+      for (final mobile in [true, false]) {
+        expect(
+          browserOpenModeFor(isLinux: true, isMobile: mobile),
+          BrowserOpenMode.external,
+          reason: 'mobile=$mobile',
+        );
+      }
+    });
+
+    test('android and ios get the embedded webview', () {
+      expect(
+        browserOpenModeFor(isLinux: false, isMobile: true),
+        BrowserOpenMode.embedded,
+      );
+    });
+
+    test('windows and macos get a native window', () {
+      expect(
+        browserOpenModeFor(isLinux: false, isMobile: false),
+        BrowserOpenMode.nativeWindow,
+      );
+    });
+  });
+
   // The linux build of this app must never link webkit2gtk: the plugin is
   // registered as windows/macos only, so touching its channel on linux would
   // throw MissingPluginException instead of opening a browser.

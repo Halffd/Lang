@@ -145,6 +145,8 @@ class AppState extends ChangeNotifier {
         _storageService.getStringSync('popup_dictionary_config'),
       );
   bool get screenshotAutoOcr => _screenshotAutoOcr;
+  bool get screenshotAutoTranslate => _screenshotAutoTranslate;
+  String get ocrLanguage => _ocrLanguage;
   bool get screenshotCopyOcrText => _screenshotCopyOcrText;
   bool get screenshotCopyImage => _screenshotCopyImage;
   int get screenshotAutoIntervalMin => _screenshotAutoIntervalMin;
@@ -199,6 +201,9 @@ class AppState extends ChangeNotifier {
   PopupDictionaryConfig? _popupDictionaryConfig;
   // screenshot settings (ocr screen screenshot tab)
   bool _screenshotAutoOcr = false;
+  bool _screenshotAutoTranslate = false;
+  // OCR source language; empty = follow the app learning language
+  String _ocrLanguage = '';
   bool _screenshotCopyOcrText = false;
   bool _screenshotCopyImage = false;
   int _screenshotAutoIntervalMin = 0; // 0 = off, minutes otherwise
@@ -589,6 +594,18 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setScreenshotAutoTranslate(bool value) {
+    _screenshotAutoTranslate = value;
+    _storageService.setBool('screenshot_auto_translate', value);
+    notifyListeners();
+  }
+
+  void setOcrLanguage(String value) {
+    _ocrLanguage = value;
+    _storageService.setString('ocr_language', value);
+    notifyListeners();
+  }
+
   void setScreenshotCopyOcrText(bool value) {
     _screenshotCopyOcrText = value;
     _storageService.setBool('screenshot_copy_ocr_text', value);
@@ -935,6 +952,9 @@ class AppState extends ChangeNotifier {
           _storageService.getStringSync('speech_language') ?? 'auto';
       _screenshotAutoOcr =
           _storageService.getBool('screenshot_auto_ocr') ?? false;
+      _screenshotAutoTranslate =
+          _storageService.getBool('screenshot_auto_translate') ?? false;
+      _ocrLanguage = _storageService.getStringSync('ocr_language') ?? '';
       _screenshotCopyOcrText =
           _storageService.getBool('screenshot_copy_ocr_text') ?? false;
       _screenshotCopyImage =

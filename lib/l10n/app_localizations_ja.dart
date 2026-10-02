@@ -844,6 +844,21 @@ class AppLocalizationsJa extends AppLocalizations {
   String get autoOcr => 'キャプチャ後の自動OCR';
 
   @override
+  String get ocrEngine => 'OCR engine';
+
+  @override
+  String get ocrLanguage => 'OCR language';
+
+  @override
+  String get ocrLanguageAuto => 'Auto (app language)';
+
+  @override
+  String get autoTranslateOcr => 'Translate OCR text';
+
+  @override
+  String get ocrEngineAiUnavailable => 'unavailable here';
+
+  @override
   String get copyOcrText => 'OCRテキストをクリップボードにコピー';
 
   @override
@@ -908,6 +923,18 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get browserNoRuntime => 'ブラウザを利用できません';
+
+  @override
+  String get browserBack => 'Back';
+
+  @override
+  String get browserForward => 'Forward';
+
+  @override
+  String get browserReload => 'Reload';
+
+  @override
+  String get browserClose => 'Close browser';
 
   @override
   String get openDocument => 'ドキュメントを開く';

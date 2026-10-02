@@ -23,6 +23,9 @@ void main() {
     tempDir = await Directory.systemTemp.createTemp('screenshot_tab_test');
     service = ScreenshotService();
     service.dirProvider = () async => tempDir;
+    // headless CI has no DISPLAY, so force the x11 backend or capture bails
+    // out as unsupported before the fakes run
+    service.platformOverride = () async => ScreenshotPlatform.x11;
     service.runCommand = (executable, arguments) async {
       if (executable == 'which') {
         const tools = {'maim', 'slop', 'xdotool', 'xrandr'};

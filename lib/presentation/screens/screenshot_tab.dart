@@ -4,12 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 
 import 'package:lang/core/services/screenshot_service.dart';
 import 'package:lang/core/services/popup_dictionary_controller.dart';
+import 'package:lang/data/datasources/local_translation_service.dart';
+import 'package:lang/data/repositories/translation_service.dart';
 import 'package:lang/data/services/ocr_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
+import 'package:lang/domain/entities/translation_model.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/utils/font_scale.dart';
 
@@ -28,6 +32,27 @@ class ScreenshotTab extends StatefulWidget {
 }
 
 class _ScreenshotTabState extends State<ScreenshotTab> {
+  /// Source languages offered for OCR. Empty in [AppState.ocrLanguage] means
+  /// "follow the app learning language", which is what [_runOcr] passes to
+  /// the recognizer.
+  static const _ocrLanguages = <String>[
+    'auto',
+    'en',
+    'ja',
+    'zh',
+    'ko',
+    'fr',
+    'de',
+    'es',
+  ];
+
+  /// The stored engine name, or the mlKit default when unset/unknown so the
+  /// dropdown always has a valid value.
+  String _engineValue(String stored) =>
+      OcrEngine.values.any((e) => e.name == stored)
+      ? stored
+      : OcrEngine.mlKit.name;
+
   ScreenshotService get _service =>
       widget.service ?? ScreenshotService.instance;
   bool _isCapturing = false;
@@ -60,6 +85,8 @@ class _ScreenshotTabState extends State<ScreenshotTab> {
       copyTextRunner: (text) async {
         await Clipboard.setData(ClipboardData(text: text));
       },
+      autoTranslate: appState.screenshotAutoTranslate,
+      translateRunner: (text) => _translateOcr(text),
     );
 
     if (!mounted) return;
@@ -90,6 +117,11 @@ class _ScreenshotTabState extends State<ScreenshotTab> {
     // ai engine needs the AI provider which lives in the search
     // screen context; use mlKit for screenshot auto-OCR instead
     if (engine == OcrEngine.ai) engine = OcrEngine.mlKit;
+    // 'auto'/empty follows the app learning language
+    final lang = appState.ocrLanguage;
+    final language = (lang.isEmpty || lang == 'auto')
+        ? appState.learningLanguage
+        : lang;
     final ocrService = OcrService();
     try {
       if (appState.ocrApiEndpoint.isNotEmpty) {
@@ -98,7 +130,7 @@ class _ScreenshotTabState extends State<ScreenshotTab> {
       final result = await ocrService.recognizeFromFile(
         path,
         engine: engine,
-        language: appState.learningLanguage,
+        language: language,
         apiKey: appState.ocrApiKey,
       );
       return result.isSuccess ? result.text : null;
@@ -106,6 +138,35 @@ class _ScreenshotTabState extends State<ScreenshotTab> {
       return null;
     } finally {
       ocrService.dispose();
+    }
+  }
+
+  /// Translate recognised text into the app learning language. Returns null
+  /// on any failure so the caller keeps the untranslated OCR text.
+  Future<String?> _translateOcr(String text) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final geminiKey = prefs.getString('geminiApiKey') ?? '';
+      if (!mounted) return null;
+      final appState = context.read<AppState>();
+      final service = TranslationService(
+        localService: LocalTranslationService(),
+        geminiApiKey: geminiKey.isNotEmpty ? geminiKey : null,
+        provider: appState.translationProvider,
+      );
+      final source = appState.ocrLanguage;
+      final result = await service.translate(
+        TranslationRequest(
+          sourceText: text,
+          sourceLanguage: (source.isEmpty || source == 'auto')
+              ? appState.learningLanguage
+              : source,
+          targetLanguage: appState.learningLanguage,
+        ),
+      );
+      return result.fullTranslation;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -235,6 +296,65 @@ class _ScreenshotTabState extends State<ScreenshotTab> {
           ),
           value: appState.screenshotAutoOcr,
           onChanged: (v) => appState.setScreenshotAutoOcr(v),
+        ),
+        ListTile(
+          dense: true,
+          title: Text(
+            l10n.ocrEngine,
+            style: TextStyle(fontSize: fs(context, 13)),
+          ),
+          trailing: DropdownButton<String>(
+            value: _engineValue(appState.ocrEngine),
+            items: [
+              for (final e in OcrEngine.values)
+                DropdownMenuItem(
+                  value: e.name,
+                  child: Text(
+                    // the ai engine needs the search screen's provider, which
+                    // this tab cannot reach; it falls back to mlKit below
+                    e == OcrEngine.ai
+                        ? '${e.name} (${l10n.ocrEngineAiUnavailable})'
+                        : e.name,
+                  ),
+                ),
+            ],
+            onChanged: (v) {
+              if (v == null) return;
+              appState.setOcrEngine(v);
+            },
+          ),
+        ),
+        ListTile(
+          dense: true,
+          title: Text(
+            l10n.ocrLanguage,
+            style: TextStyle(fontSize: fs(context, 13)),
+          ),
+          trailing: DropdownButton<String>(
+            value: _ocrLanguages.contains(appState.ocrLanguage)
+                ? appState.ocrLanguage
+                : '',
+            items: [
+              DropdownMenuItem(value: '', child: Text(l10n.ocrLanguageAuto)),
+              for (final code in _ocrLanguages)
+                DropdownMenuItem(value: code, child: Text(code)),
+            ],
+            onChanged: (v) {
+              if (v == null) return;
+              appState.setOcrLanguage(v);
+            },
+          ),
+        ),
+        SwitchListTile(
+          dense: true,
+          title: Text(
+            l10n.autoTranslateOcr,
+            style: TextStyle(fontSize: fs(context, 13)),
+          ),
+          value: appState.screenshotAutoTranslate,
+          onChanged: appState.screenshotAutoOcr
+              ? (v) => appState.setScreenshotAutoTranslate(v)
+              : null,
         ),
         SwitchListTile(
           dense: true,

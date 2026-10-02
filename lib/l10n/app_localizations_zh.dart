@@ -843,6 +843,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get autoOcr => '截图后自动OCR';
 
   @override
+  String get ocrEngine => 'OCR engine';
+
+  @override
+  String get ocrLanguage => 'OCR language';
+
+  @override
+  String get ocrLanguageAuto => 'Auto (app language)';
+
+  @override
+  String get autoTranslateOcr => 'Translate OCR text';
+
+  @override
+  String get ocrEngineAiUnavailable => 'unavailable here';
+
+  @override
   String get copyOcrText => '复制OCR文本到剪贴板';
 
   @override
@@ -907,6 +922,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get browserNoRuntime => '没有可用的浏览器';
+
+  @override
+  String get browserBack => 'Back';
+
+  @override
+  String get browserForward => 'Forward';
+
+  @override
+  String get browserReload => 'Reload';
+
+  @override
+  String get browserClose => 'Close browser';
 
   @override
   String get openDocument => '打开文档';
