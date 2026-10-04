@@ -1,116 +1,151 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lang/data/datasources/remote/wiktionary_service.dart';
 
+// Live-network service checks: pass --dart-define=WIKTIONARY_LIVE=true
 void main() {
-  group('WiktionaryService Tests', () {
-    late WiktionaryService service;
+  const live = bool.fromEnvironment('WIKTIONARY_LIVE');
 
-    setUp(() {
-      service = WiktionaryService();
-    });
+  group(
+    'WiktionaryService network tests',
+    skip: !live
+        ? 'live network tests: set --dart-define=WIKTIONARY_LIVE=true'
+        : null,
+    () {
+      late WiktionaryService service;
 
-    test('fetchWiktionaryData returns HTML for valid word', () async {
-      try {
-        final result = await service.fetchWiktionaryData('test');
-        expect(result, isA<String>());
-        expect(result.isNotEmpty, isTrue);
-      } catch (e) {
-        expect(true, isTrue);
-      }
-    });
+      setUp(() {
+        service = WiktionaryService();
+      });
 
-    test('fetchWiktionaryData for Japanese word works', () async {
-      try {
-        final result = await service.fetchWiktionaryData('日本', 1);
-        expect(result, isA<String>());
-      } catch (e) {
-        expect(true, isTrue);
-      }
-    });
-
-    test('fetchWiktionaryData for Chinese word works', () async {
-      try {
-        final result = await service.fetchWiktionaryData('中国', 0);
-        expect(result, isA<String>());
-      } catch (e) {
-        expect(true, isTrue);
-      }
-    });
-
-    test('fetchWiktionaryData for Indonesian word works', () async {
-      try {
-        final result = await service.fetchWiktionaryData('test', 2);
-        expect(result, isA<String>());
-      } catch (e) {
-        expect(true, isTrue);
-      }
-    });
-
-    test('fetchKanjipediaData returns HTML for valid character', () async {
-      try {
-        final result = await service.fetchKanjipediaData(
-          'https://www.kanjipedia.jp/search?kt=1&sk=leftHand&k=中',
-          0,
-          '中',
-          true,
-        );
-        expect(result, isA<String>());
-      } catch (e) {
-        expect(true, isTrue);
-      }
-    });
-
-    test('fetchDetailedWordInformation returns list of lists', () async {
-      try {
-        final result = await service.fetchDetailedWordInformation(
-          'test',
-          false,
-        );
-        expect(result, isA<List<List<String>>>());
-        expect(result.length, equals(5));
-      } catch (e) {
-        expect(true, isTrue);
-      }
-    });
-
-    test(
-      'fetchDetailedWordInformation for Chinese character includes Kanjipedia',
-      () async {
+      test('fetchWiktionaryData returns HTML for valid word', () async {
         try {
-          final result = await service.fetchDetailedWordInformation('中', true);
-          expect(result, isA<List<List<String>>>());
+          final result = await service.fetchWiktionaryData('test');
+          expect(result, isA<String>());
+          expect(result.isNotEmpty, isTrue);
         } catch (e) {
           expect(true, isTrue);
         }
-      },
-    );
+      });
 
-    test('fetchWordDetailsForAnyLanguage returns list of strings', () async {
-      try {
-        final result = await service.fetchWordDetailsForAnyLanguage(
-          'test',
-          'en',
-        );
-        expect(result, isA<List<String>>());
-      } catch (e) {
-        expect(true, isTrue);
-      }
-    });
+      test('fetchWiktionaryData for Japanese word works', () async {
+        try {
+          final result = await service.fetchWiktionaryData('日本', 1);
+          expect(result, isA<String>());
+        } catch (e) {
+          expect(true, isTrue);
+        }
+      });
 
-    test(
-      'fetchWordDetailsForAnyLanguage for Chinese character works',
-      () async {
+      test('fetchWiktionaryData for Chinese word works', () async {
+        try {
+          final result = await service.fetchWiktionaryData('中国', 0);
+          expect(result, isA<String>());
+        } catch (e) {
+          expect(true, isTrue);
+        }
+      });
+
+      test('fetchWiktionaryData for Indonesian word works', () async {
+        try {
+          final result = await service.fetchWiktionaryData('test', 2);
+          expect(result, isA<String>());
+        } catch (e) {
+          expect(true, isTrue);
+        }
+      });
+
+      test('fetchKanjipediaData returns HTML for valid character', () async {
+        try {
+          final result = await service.fetchKanjipediaData(
+            'https://www.kanjipedia.jp/search?kt=1&sk=leftHand&k=中',
+            0,
+            '中',
+            true,
+          );
+          expect(result, isA<String>());
+        } catch (e) {
+          expect(true, isTrue);
+        }
+      });
+
+      test('fetchDetailedWordInformation returns list of lists', () async {
+        try {
+          final result = await service.fetchDetailedWordInformation(
+            'test',
+            false,
+          );
+          expect(result, isA<List<List<String>>>());
+          expect(result.length, equals(5));
+        } catch (e) {
+          expect(true, isTrue);
+        }
+      });
+
+      test(
+        'fetchDetailedWordInformation for Chinese character includes Kanjipedia',
+        () async {
+          try {
+            final result = await service.fetchDetailedWordInformation(
+              '中',
+              true,
+            );
+            expect(result, isA<List<List<String>>>());
+          } catch (e) {
+            expect(true, isTrue);
+          }
+        },
+      );
+
+      test('fetchWordDetailsForAnyLanguage returns list of strings', () async {
         try {
           final result = await service.fetchWordDetailsForAnyLanguage(
-            '中',
-            'zh',
+            'test',
+            'en',
           );
           expect(result, isA<List<String>>());
         } catch (e) {
           expect(true, isTrue);
         }
-      },
-    );
+      });
+
+      test(
+        'fetchWordDetailsForAnyLanguage for Chinese character works',
+        () async {
+          try {
+            final result = await service.fetchWordDetailsForAnyLanguage(
+              '中',
+              'zh',
+            );
+            expect(result, isA<List<String>>());
+          } catch (e) {
+            expect(true, isTrue);
+          }
+        },
+      );
+
+      test(
+        'fetchDetailedWordInformation returns empty lists for non-existent word',
+        () async {
+          try {
+            final result = await service.fetchDetailedWordInformation(
+              'xyznonexistent123',
+              false,
+            );
+            expect(result, isA<List<List<String>>>());
+          } catch (e) {
+            expect(true, isTrue);
+          }
+        },
+      );
+    },
+  );
+
+  group('WiktionaryService pure tests', () {
+    late WiktionaryService service;
+
+    setUp(() {
+      service = WiktionaryService();
+    });
 
     test('isSingleChineseCharacter returns true for Chinese character', () {
       expect(service.isSingleChineseCharacter('中'), isTrue);
@@ -122,20 +157,5 @@ void main() {
       expect(service.isSingleChineseCharacter('test'), isFalse);
       expect(service.isSingleChineseCharacter('中日'), isFalse);
     });
-
-    test(
-      'fetchDetailedWordInformation returns empty lists for non-existent word',
-      () async {
-        try {
-          final result = await service.fetchDetailedWordInformation(
-            'xyznonexistent123',
-            false,
-          );
-          expect(result, isA<List<List<String>>>());
-        } catch (e) {
-          expect(true, isTrue);
-        }
-      },
-    );
   });
 }

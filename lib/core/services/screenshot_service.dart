@@ -121,6 +121,12 @@ class ScreenshotService extends ChangeNotifier {
   /// `<app docs>`/screenshots).
   Future<Directory> Function() dirProvider = _defaultDirProvider;
 
+  /// Injectable environment for tests (defaults to
+  /// [Platform.environment]). Real detection reads DISPLAY/WAYLAND_DISPLAY,
+  /// which differs between headless CI boxes and desktop sessions, so tests
+  /// inject an explicit map instead of depending on the host.
+  Map<String, String> Function() envProvider = () => Platform.environment;
+
   /// Injectable platform probe for tests. Real detection reads
   /// DISPLAY/WAYLAND_DISPLAY from the process environment, which is
   /// unobservable from a headless CI box, so tests force the backend they
@@ -168,6 +174,7 @@ class ScreenshotService extends ChangeNotifier {
     _autoTimer = null;
     runCommand = _realRunner;
     dirProvider = _defaultDirProvider;
+    envProvider = () => Platform.environment;
     platformOverride = null;
   }
 
@@ -179,11 +186,11 @@ class ScreenshotService extends ChangeNotifier {
     if (Platform.isMacOS) return ScreenshotPlatform.macos;
     if (Platform.isLinux) {
       // Wayland tools take priority when a Wayland session is active.
-      if (Platform.environment['WAYLAND_DISPLAY'] != null &&
-          (await _which('grim')) != null) {
+      final env = envProvider();
+      if (env['WAYLAND_DISPLAY'] != null && (await _which('grim')) != null) {
         return ScreenshotPlatform.wayland;
       }
-      if (Platform.environment['DISPLAY'] != null &&
+      if (env['DISPLAY'] != null &&
           ((await _which('maim')) != null ||
               (await _which('scrot')) != null ||
               (await _which('gnome-screenshot')) != null ||

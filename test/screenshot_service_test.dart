@@ -324,6 +324,9 @@ HDMI-0 disconnected (normal left inverted right x axis y axis)
     // it every capture would return null and the fakes would never run.
     final plain = ScreenshotService();
     plain.dirProvider = () async => tempDir;
+    // Force a display-less env so the no-override probe returns unsupported
+    // on any host (desktop sessions have DISPLAY set).
+    plain.envProvider = () => {};
     plain.runCommand = (executable, arguments) async {
       if (executable == 'which') {
         const tools = {'maim', 'slop', 'xdotool', 'xrandr'};
