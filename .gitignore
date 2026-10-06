@@ -51,3 +51,6 @@ l10n_untranslated.txt
 # release artifacts
 dist/
 android/build/
+
+# golden failure artifacts (generated beside the test dir on a failed compare)
+/test/failures/
