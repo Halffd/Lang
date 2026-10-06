@@ -17,23 +17,32 @@ void main() {
     final tempDir = await Directory.systemTemp.createTemp('tess_smoke');
     final imagePath = '${tempDir.path}/ocr_test.png';
     try {
-      final gen = await Process.run('convert', [
-        '-size',
-        '400x80',
-        'xc:white',
-        '-font',
-        'DejaVu-Sans',
-        '-pointsize',
-        '28',
-        '-fill',
-        'black',
-        '-annotate',
-        '+10+50',
-        'Hello OCR 123',
-        imagePath,
-      ]);
-      if (gen.exitCode != 0 || !File(imagePath).existsSync()) {
+      // Process.run throws (ENOENT) when the binary is missing rather
+      // than returning a nonzero exit code, so guard both ways: a
+      // machine without ImageMagick skips the smoke test instead of
+      // failing it.
+      ProcessResult gen;
+      try {
+        gen = await Process.run('convert', [
+          '-size',
+          '400x80',
+          'xc:white',
+          '-font',
+          'DejaVu-Sans',
+          '-pointsize',
+          '28',
+          '-fill',
+          'black',
+          '-annotate',
+          '+10+50',
+          'Hello OCR 123',
+          imagePath,
+        ]);
+      } on ProcessException {
         return; // no ImageMagick: skip
+      }
+      if (gen.exitCode != 0 || !File(imagePath).existsSync()) {
+        return; // ImageMagick present but the render failed: skip
       }
 
       final result = await service.recognizeFromFile(
