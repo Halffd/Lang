@@ -21,6 +21,22 @@ enum ClipboardAutoSearchMode {
   off,
 }
 
+/// Maps a raw locale code (e.g. `en_US`, `pt-BR`, `zh-Hant`) to the app
+/// language code we actually support. zh-Hant maps to zh (the only Chinese
+/// translation); anything else we have no UI translation for becomes 'en'
+/// [default] instead of the old hardcoded 'ja'.
+String? normalizeLanguageCode(String? raw) {
+  if (raw == null) return null;
+  final languageCode = raw.split(RegExp('[-_]')).first.toLowerCase();
+  return switch (languageCode) {
+    'ja' => 'ja',
+    'zh' => 'zh',
+    'es' => 'es',
+    'en' => 'en',
+    _ => null,
+  };
+}
+
 class AppState extends ChangeNotifier {
   final StorageService _storageService;
 
@@ -70,6 +86,15 @@ class AppState extends ChangeNotifier {
   bool _ankiConnectEnabled = false;
   String _ankiConnectModel = 'Basic';
   bool _ankiSyncOnSave = false;
+
+  /// The device locale's language component, read directly from the platform
+  /// dispatcher. Only used for the very first launch, when no stored
+  /// preference exists yet — the user can change it in settings afterwards
+  /// and is never overridden again.
+  static String? _systemLocaleCode() {
+    final locale = WidgetsBinding.instance.platformDispatcher.locale;
+    return "${locale.languageCode}${locale.countryCode != null ? '_${locale.countryCode}' : ''}";
+  }
 
   AppState(this._storageService) {
     _loadSettings();
@@ -826,7 +851,15 @@ class AppState extends ChangeNotifier {
   void _loadSettings() {
     try {
       _clipboardMonitor = _storageService.getBool('clipboard_monitor') ?? false;
-      _language = _storageService.getStringSync('language') ?? 'ja';
+      // First run has no stored language. 'ja' was hardcoded as the default,
+      // hiding every other UI language (English included) for anyone not on
+      // a ja locale (issue: first startup always shows Japanese). Follow the
+      // device locale instead when a translation exists, else fall back to
+      // English — ja/zh/es only when the device asks for them.
+      _language =
+          _storageService.getStringSync('language') ??
+          normalizeLanguageCode(_systemLocaleCode()) ??
+          'en';
       _learningLanguage =
           _storageService.getStringSync('learning_language') ?? _language;
       // Ensure language code is valid - fix any legacy data that might have display names instead of codes
