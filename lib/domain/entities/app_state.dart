@@ -1,3 +1,5 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter/material.dart';
 import '../../core/services/storage_service.dart';
 import 'yomitan_options.dart';
@@ -87,12 +89,18 @@ class AppState extends ChangeNotifier {
   String _ankiConnectModel = 'Basic';
   bool _ankiSyncOnSave = false;
 
-  /// The device locale's language component, read directly from the platform
+  /// The device locale's language component, read from the platform
   /// dispatcher. Only used for the very first launch, when no stored
   /// preference exists yet — the user can change it in settings afterwards
   /// and is never overridden again.
+  ///
+  /// Uses [PlatformDispatcher.instance] (dart:ui) rather than
+  /// `WidgetsBinding.instance.platformDispatcher`: it is the same dispatcher
+  /// in a real app, but also works before the framework binding exists
+  /// (headless environments, pure-Dart tests), where `WidgetsBinding.instance`
+  /// throws and would abort the whole settings load.
   static String? _systemLocaleCode() {
-    final locale = WidgetsBinding.instance.platformDispatcher.locale;
+    final locale = PlatformDispatcher.instance.locale;
     return "${locale.languageCode}${locale.countryCode != null ? '_${locale.countryCode}' : ''}";
   }
 
