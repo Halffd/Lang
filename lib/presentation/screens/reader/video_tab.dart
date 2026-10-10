@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
 import 'package:lang/core/services/popup_dictionary_controller.dart';
+import 'package:lang/core/services/youtube_resolver.dart';
 import 'package:lang/core/services/youtube_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/l10n/app_localizations.dart';
@@ -51,7 +52,8 @@ class _VideoTabState extends State<VideoTab> {
   final _transcriptScroll = ScrollController();
   Timer? _ticker;
 
-  static const _youtube = YouTubeService();
+  /// yt-dlp when installed, youtube_explode otherwise.
+  final _youtube = YouTubeResolver();
 
   @override
   void dispose() {
