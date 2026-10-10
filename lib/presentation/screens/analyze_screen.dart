@@ -86,6 +86,7 @@ double measureSearchBarHeight({
   required String text,
   required double screenWidth,
   required double fontSize,
+  bool hasResults = false,
 }) {
   // Horizontal plumbing mirrored from _buildSearchBar: container padding
   // 16+16, gap 12, analyse button min width, prefix icon 48, clear button
@@ -105,7 +106,14 @@ double measureSearchBarHeight({
   // field: contentPadding 14+14, at least a single icon row
   final fieldHeight = (28 + painter.height).clamp(52.0, 260.0);
   // container: padding 16 top + 12 bottom
-  return (28 + fieldHeight).clamp(96.0, 288.0);
+  double height = (28 + fieldHeight).clamp(96.0, 288.0);
+
+  // When results exist, stat chips add ~40px (Wrap with 4 chips, spacing 8,
+  // runSpacing 6, chip height ~32, plus 10px gap above).
+  if (hasResults) {
+    height += 50;
+  }
+  return height.clamp(96.0, 288.0);
 }
 
 class AnalyzeScreen extends StatefulWidget {
@@ -211,11 +219,15 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
   /// both numbers are wrong (chars per line halve, line height doubles),
   /// which is exactly what produced the 35px bottom overflow in the
   /// pinned header. TextPainter does the real word-wrap here.
-  double get _searchBarHeight => measureSearchBarHeight(
-    text: _controller.text,
-    screenWidth: MediaQuery.sizeOf(context).width,
-    fontSize: fs(15, 'sentences'),
-  );
+  double get _searchBarHeight {
+    final provider = Provider.of<AnalyzerProvider>(context, listen: false);
+    return measureSearchBarHeight(
+      text: _controller.text,
+      screenWidth: MediaQuery.sizeOf(context).width,
+      fontSize: fs(15, 'sentences'),
+      hasResults: provider.analyzedWords.isNotEmpty,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

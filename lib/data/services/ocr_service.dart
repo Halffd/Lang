@@ -9,7 +9,7 @@ import 'package:tesseract_ocr/ocr_engine_config.dart';
 
 /// OCR backends available in the OCR screen.
 enum OcrEngine {
-  /// Google ML Kit on-device recognizer.
+  /// Google ML Kit on-device recognizer (not available on Linux).
   mlKit,
 
   /// Native tesseract binary with mogrify preprocessing (desktop),
@@ -60,13 +60,6 @@ class OcrService {
       result.stdout.toString(),
       result.stderr.toString(),
     );
-  }
-
-  /// Resolve a persisted engine name back to an [OcrEngine]
-  /// (unknown/empty falls back to mlKit).
-  static OcrEngine engineFromName(String? name) {
-    return OcrEngine.values.where((e) => e.name == name).firstOrNull ??
-        OcrEngine.mlKit;
   }
 
   /// Map an app language code to a tesseract language code.
@@ -121,7 +114,30 @@ class OcrService {
     return map[appLanguage] ?? 'en';
   }
 
-  TextRecognizer get _recognizer => _mlKitRecognizer ??= TextRecognizer();
+  /// Whether ML Kit text recognition is available on this platform.
+  /// ML Kit does not have a Linux/Windows/macOS implementation.
+  static bool get isMlKitAvailable =>
+      !Platform.isLinux && !Platform.isWindows && !Platform.isMacOS;
+
+  /// Resolve a persisted engine name back to an [OcrEngine]
+  /// (unknown/empty falls back to mlKit on mobile, tesseract on desktop).
+  static OcrEngine engineFromName(String? name) {
+    if (name != null) {
+      final match = OcrEngine.values.where((e) => e.name == name).firstOrNull;
+      if (match != null) return match;
+    }
+    return isMlKitAvailable ? OcrEngine.mlKit : OcrEngine.tesseract;
+  }
+
+  TextRecognizer get _recognizer {
+    if (!isMlKitAvailable) {
+      throw UnsupportedError(
+        'ML Kit text recognition is not available on this platform. '
+        'Use Tesseract, EasyOCR, AI, or API engine instead.',
+      );
+    }
+    return _mlKitRecognizer ??= TextRecognizer();
+  }
 
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -164,13 +180,14 @@ class OcrService {
 
   Future<OcrResult> recognizeFromFile(
     String imagePath, {
-    OcrEngine engine = OcrEngine.mlKit,
+    OcrEngine? engine,
     String? language,
     String? apiKey,
     AiImageTextFetcher? aiFetcher,
     bool preprocess = true,
   }) async {
-    switch (engine) {
+    final effectiveEngine = engine ?? engineFromName(null);
+    switch (effectiveEngine) {
       case OcrEngine.mlKit:
         return _recognizeWithMlKit(File(imagePath));
       case OcrEngine.tesseract:
@@ -190,17 +207,19 @@ class OcrService {
       case OcrEngine.api:
         return _recognizeWithApi(imagePath, apiKey: apiKey);
     }
+    throw AssertionError('Unhandled OcrEngine: $effectiveEngine');
   }
 
   Future<OcrResult> recognizeFromBytes(
     Uint8List bytes, {
-    OcrEngine engine = OcrEngine.mlKit,
+    OcrEngine? engine,
     String? language,
     String? apiKey,
     AiImageTextFetcher? aiFetcher,
     bool preprocess = true,
   }) async {
-    switch (engine) {
+    final effectiveEngine = engine ?? engineFromName(null);
+    switch (effectiveEngine) {
       case OcrEngine.mlKit:
         return _recognizeWithMlKitFromBytes(bytes);
       case OcrEngine.tesseract:
@@ -232,6 +251,7 @@ class OcrService {
           (path) => _recognizeWithApi(path, apiKey: apiKey),
         );
     }
+    throw AssertionError('Unhandled OcrEngine: $effectiveEngine');
   }
 
   /// Write [bytes] to a temp png and delegate to [run].
