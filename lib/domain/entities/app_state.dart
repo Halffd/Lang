@@ -268,6 +268,10 @@ class AppState extends ChangeNotifier {
   double _videoSubtitleScale = 1.0; // 0.5 - 2.5, on top of the UI font scale
   int _videoSubtitleOffsetMs = 0; // shift subs later when positive
 
+  // Reading display (furigana/pinyin above words; coloring)
+  String _readingStyle = 'off'; // off | furigana | pinyin | auto
+  bool _wordColoringEnabled = false;
+
   // Video tab recents (jidoujisho-style watch tracking)
   List<Map<String, dynamic>> _recentVideos = [];
   List<Map<String, dynamic>> _recentSubtitles = [];
@@ -735,6 +739,11 @@ class AppState extends ChangeNotifier {
   double get videoSubtitleScale => _videoSubtitleScale;
   int get videoSubtitleOffsetMs => _videoSubtitleOffsetMs;
 
+  /// Auto reading display above words: `off`, `furigana`, `pinyin` or
+  /// `auto` (picks from the text's language).
+  String get readingStyle => _readingStyle;
+  bool get wordColoringEnabled => _wordColoringEnabled;
+
   /// Playback speed for the video player, clamped to a usable range.
   void setVideoPlaybackSpeed(double value) {
     _videoPlaybackSpeed = value.clamp(0.25, 2.0);
@@ -754,6 +763,22 @@ class AppState extends ChangeNotifier {
   void setVideoSubtitleOffset(int value) {
     _videoSubtitleOffsetMs = value.clamp(-30000, 30000);
     _storageService.setInt('video_subtitle_offset_ms', _videoSubtitleOffsetMs);
+    notifyListeners();
+  }
+
+  /// Which reading to show above words: `off`, `furigana`, `pinyin` or
+  /// `auto`. Anything else collapses to `off`.
+  void setReadingStyle(String value) {
+    const valid = {'off', 'furigana', 'pinyin', 'auto'};
+    _readingStyle = valid.contains(value) ? value : 'off';
+    _storageService.setString('reading_style', _readingStyle);
+    notifyListeners();
+  }
+
+  /// Coloring by word state (learned/favorite/saved) and word type.
+  void setWordColoringEnabled(bool value) {
+    _wordColoringEnabled = value;
+    _storageService.setBool('word_coloring_enabled', value);
     notifyListeners();
   }
 
@@ -1125,6 +1150,13 @@ class AppState extends ChangeNotifier {
       _recentSubtitles = _decodeStoredList(
         _storageService.getStringSync('recent_subtitles'),
       );
+      final savedReadingStyle = _storageService.getStringSync('reading_style');
+      _readingStyle =
+          const {'furigana', 'pinyin', 'auto'}.contains(savedReadingStyle)
+          ? savedReadingStyle!
+          : 'off';
+      _wordColoringEnabled =
+          _storageService.getBool('word_coloring_enabled') ?? false;
       final savedProvider = _storageService.getStringSync(
         'translation_provider',
       );
@@ -1199,6 +1231,9 @@ class AppState extends ChangeNotifier {
       _videoSubtitleOffsetMs = 0;
       _recentVideos = [];
       _recentSubtitles = [];
+      // Reading display defaults
+      _readingStyle = 'off';
+      _wordColoringEnabled = false;
     }
   }
 

@@ -12,6 +12,7 @@ class PinyinHelper {
 
 class ChineseUtil {
   // Basic pinyin mapping for common characters
+  // Basic pinyin mapping for common characters
   static const Map<String, String> _pinyinMap = {
     '中': 'zhōng',
     '文': 'wén',
@@ -206,6 +207,10 @@ class ChineseUtil {
         .replaceAll('ǚ', 'v3')
         .replaceAll('ǜ', 'v4');
   }
+
+  /// CJK Unified Ideographs (Chinese hanzi / Japanese kanji). Single char.
+  static bool isHanzi(String char) =>
+      char.length == 1 && RegExp(r'[\u4E00-\u9FFF]').hasMatch(char);
 
   static bool containsChinese(String text) {
     return RegExp(r'[\u4E00-\u9FFF]').hasMatch(text);
