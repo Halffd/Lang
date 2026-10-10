@@ -1944,6 +1944,60 @@ abstract class AppLocalizations {
   /// **'No subtitle track loaded.'**
   String get videoNoSubs;
 
+  /// No description provided for @videoYouTube.
+  ///
+  /// In en, this message translates to:
+  /// **'YouTube'**
+  String get videoYouTube;
+
+  /// No description provided for @videoYouTubeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste a YouTube URL'**
+  String get videoYouTubeHint;
+
+  /// No description provided for @videoLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Load'**
+  String get videoLoad;
+
+  /// No description provided for @videoInvalidUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a YouTube video.'**
+  String get videoInvalidUrl;
+
+  /// No description provided for @videoCaptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Captions'**
+  String get videoCaptions;
+
+  /// No description provided for @videoNoCaptions.
+  ///
+  /// In en, this message translates to:
+  /// **'No caption tracks available.'**
+  String get videoNoCaptions;
+
+  /// No description provided for @videoSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Playback speed'**
+  String get videoSpeed;
+
+  /// No description provided for @videoSubtitleSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtitle size'**
+  String get videoSubtitleSize;
+
+  /// No description provided for @videoDelay.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtitle delay'**
+  String get videoDelay;
+
   /// No description provided for @readerTabVideo.
   ///
   /// In en, this message translates to:

@@ -262,6 +262,11 @@ class AppState extends ChangeNotifier {
   double _borderRadiusScale = 1.0;
   double _borderWidthScale = 1.0;
 
+  // Video player customization (jidoujisho port)
+  double _videoPlaybackSpeed = 1.0; // 0.25 - 2.0
+  double _videoSubtitleScale = 1.0; // 0.5 - 2.5, on top of the UI font scale
+  int _videoSubtitleOffsetMs = 0; // shift subs later when positive
+
   // Profile activation
   String _profileActivationScreen =
       'all'; // 'all', 'search', 'reader', 'srs', 'browser'
@@ -721,6 +726,31 @@ class AppState extends ChangeNotifier {
   double get marginScale => _marginScale;
   double get borderRadiusScale => _borderRadiusScale;
   double get borderWidthScale => _borderWidthScale;
+  double get videoPlaybackSpeed => _videoPlaybackSpeed;
+  double get videoSubtitleScale => _videoSubtitleScale;
+  int get videoSubtitleOffsetMs => _videoSubtitleOffsetMs;
+
+  /// Playback speed for the video player, clamped to a usable range.
+  void setVideoPlaybackSpeed(double value) {
+    _videoPlaybackSpeed = value.clamp(0.25, 2.0);
+    _storageService.setDouble('video_playback_speed', _videoPlaybackSpeed);
+    notifyListeners();
+  }
+
+  /// Subtitle text scale for the video player, on top of the UI font scale.
+  void setVideoSubtitleScale(double value) {
+    _videoSubtitleScale = value.clamp(0.5, 2.5);
+    _storageService.setDouble('video_subtitle_scale', _videoSubtitleScale);
+    notifyListeners();
+  }
+
+  /// Subtitle delay in milliseconds; positive shifts subs later relative to
+  /// the video, negative earlier.
+  void setVideoSubtitleOffset(int value) {
+    _videoSubtitleOffsetMs = value.clamp(-30000, 30000);
+    _storageService.setInt('video_subtitle_offset_ms', _videoSubtitleOffsetMs);
+    notifyListeners();
+  }
 
   void setLayoutMode(String value) {
     _layoutMode = value;
@@ -1022,6 +1052,12 @@ class AppState extends ChangeNotifier {
           _storageService.getDouble('border_radius_scale') ?? 1.0;
       _borderWidthScale =
           _storageService.getDouble('border_width_scale') ?? 1.0;
+      _videoPlaybackSpeed =
+          _storageService.getDouble('video_playback_speed') ?? 1.0;
+      _videoSubtitleScale =
+          _storageService.getDouble('video_subtitle_scale') ?? 1.0;
+      _videoSubtitleOffsetMs =
+          _storageService.getInt('video_subtitle_offset_ms') ?? 0;
       final savedProvider = _storageService.getStringSync(
         'translation_provider',
       );
@@ -1084,6 +1120,16 @@ class AppState extends ChangeNotifier {
       // Profile activation defaults
       _profileActivationScreen = 'all';
       _profileActivationApp = 'default';
+      // Layout defaults
+      _layoutMode = 'auto';
+      _paddingScale = 1.0;
+      _marginScale = 1.0;
+      _borderRadiusScale = 1.0;
+      _borderWidthScale = 1.0;
+      // Video player defaults
+      _videoPlaybackSpeed = 1.0;
+      _videoSubtitleScale = 1.0;
+      _videoSubtitleOffsetMs = 0;
     }
   }
 

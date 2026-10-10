@@ -5,6 +5,7 @@ import 'package:lang/utils/screen_size.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fvp/fvp.dart' as fvp;
 import 'package:provider/provider.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 import 'l10n/app_localizations.dart';
@@ -54,6 +55,12 @@ import 'presentation/widgets/font_zoom_scope.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // video_player ships no desktop implementation; fvp registers the mdk
+  // engine as its backend so the player tab plays on Linux and Windows.
+  if (!kIsWeb && (Platform.isLinux || Platform.isWindows)) {
+    fvp.registerWith();
+  }
 
   if (!kIsWeb && (Platform.isLinux || Platform.isMacOS || Platform.isWindows)) {
     sqfliteFfiInit();

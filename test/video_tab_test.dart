@@ -58,4 +58,22 @@ void main() {
     expect(find.text('Transcript'), findsNothing);
     expect(find.text('Load subs'), findsNothing);
   });
+
+  testWidgets('offers local and YouTube sources', (tester) async {
+    await pumpTab(tester);
+
+    expect(find.widgetWithText(FilledButton, 'Pick video'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, 'YouTube'), findsOneWidget);
+  });
+
+  testWidgets('offers no customization controls before a video is picked', (
+    tester,
+  ) async {
+    await pumpTab(tester);
+
+    // speed, subtitle size and delay menus belong to the player controls
+    expect(find.byIcon(Icons.speed), findsNothing);
+    expect(find.byIcon(Icons.format_size), findsNothing);
+    expect(find.byIcon(Icons.timer_outlined), findsNothing);
+  });
 }

@@ -957,6 +957,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get videoNoSubs => 'No subtitle track loaded.';
 
   @override
+  String get videoYouTube => 'YouTube';
+
+  @override
+  String get videoYouTubeHint => 'Paste a YouTube URL';
+
+  @override
+  String get videoLoad => 'Load';
+
+  @override
+  String get videoInvalidUrl => 'Not a YouTube video.';
+
+  @override
+  String get videoCaptions => 'Captions';
+
+  @override
+  String get videoNoCaptions => 'No caption tracks available.';
+
+  @override
+  String get videoSpeed => 'Playback speed';
+
+  @override
+  String get videoSubtitleSize => 'Subtitle size';
+
+  @override
+  String get videoDelay => 'Subtitle delay';
+
+  @override
   String get readerTabVideo => 'Video';
 
   @override
