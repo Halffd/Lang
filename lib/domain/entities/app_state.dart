@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/material.dart';
@@ -266,6 +267,10 @@ class AppState extends ChangeNotifier {
   double _videoPlaybackSpeed = 1.0; // 0.25 - 2.0
   double _videoSubtitleScale = 1.0; // 0.5 - 2.5, on top of the UI font scale
   int _videoSubtitleOffsetMs = 0; // shift subs later when positive
+
+  // Video tab recents (jidoujisho-style watch tracking)
+  List<Map<String, dynamic>> _recentVideos = [];
+  List<Map<String, dynamic>> _recentSubtitles = [];
 
   // Profile activation
   String _profileActivationScreen =
@@ -752,6 +757,62 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Video tab recents
+
+  List<Map<String, dynamic>> get recentVideos => _recentVideos;
+  List<Map<String, dynamic>> get recentSubtitles => _recentSubtitles;
+
+  /// Record or update a recently opened video, keyed by [entry]'s
+  /// `source` (file path or canonical YouTube URL). Newest first, capped.
+  void recordRecentVideo(Map<String, dynamic> entry) {
+    final source = entry['source'];
+    _recentVideos.removeWhere((e) => e['source'] == source);
+    _recentVideos.insert(0, entry);
+    if (_recentVideos.length > 20) {
+      _recentVideos.removeRange(20, _recentVideos.length);
+    }
+    _storageService.setString('recent_videos', jsonEncode(_recentVideos));
+    notifyListeners();
+  }
+
+  /// Update watch progress for a source. Silent — progress ticks must
+  /// not rebuild the whole app.
+  void updateRecentVideoProgress(
+    String source,
+    int lastPositionMs,
+    int watchedMs,
+  ) {
+    for (final entry in _recentVideos) {
+      if (entry['source'] == source) {
+        entry['lastPositionMs'] = lastPositionMs;
+        entry['watchedMs'] = watchedMs;
+        entry['lastWatchedAt'] = DateTime.now().millisecondsSinceEpoch;
+        _storageService.setString('recent_videos', jsonEncode(_recentVideos));
+        return;
+      }
+    }
+  }
+
+  /// Record or update a recently used subtitle source, keyed by its
+  /// `key` (file path or a name for pasted content). Newest first.
+  void recordRecentSubtitle(Map<String, dynamic> entry) {
+    final key = entry['key'];
+    _recentSubtitles.removeWhere((e) => e['key'] == key);
+    _recentSubtitles.insert(0, entry);
+    if (_recentSubtitles.length > 10) {
+      _recentSubtitles.removeRange(10, _recentSubtitles.length);
+    }
+    _storageService.setString('recent_subtitles', jsonEncode(_recentSubtitles));
+    notifyListeners();
+  }
+
+  /// Forget a subtitle recent (a file that no longer exists, say).
+  void removeRecentSubtitle(String key) {
+    _recentSubtitles.removeWhere((e) => e['key'] == key);
+    _storageService.setString('recent_subtitles', jsonEncode(_recentSubtitles));
+    notifyListeners();
+  }
+
   void setLayoutMode(String value) {
     _layoutMode = value;
     _storageService.setString('layout_mode', value);
@@ -1058,6 +1119,12 @@ class AppState extends ChangeNotifier {
           _storageService.getDouble('video_subtitle_scale') ?? 1.0;
       _videoSubtitleOffsetMs =
           _storageService.getInt('video_subtitle_offset_ms') ?? 0;
+      _recentVideos = _decodeStoredList(
+        _storageService.getStringSync('recent_videos'),
+      );
+      _recentSubtitles = _decodeStoredList(
+        _storageService.getStringSync('recent_subtitles'),
+      );
       final savedProvider = _storageService.getStringSync(
         'translation_provider',
       );
@@ -1130,7 +1197,27 @@ class AppState extends ChangeNotifier {
       _videoPlaybackSpeed = 1.0;
       _videoSubtitleScale = 1.0;
       _videoSubtitleOffsetMs = 0;
+      _recentVideos = [];
+      _recentSubtitles = [];
     }
+  }
+
+  /// Decode a JSON list previously stored with [jsonEncode]; corrupt or
+  /// non-list payloads fall back to empty rather than killing the load.
+  static List<Map<String, dynamic>> _decodeStoredList(String? raw) {
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        return decoded
+            .whereType<Map>()
+            .map((m) => m.map((k, v) => MapEntry(k.toString(), v)))
+            .toList();
+      }
+    } on Object {
+      // corrupt payload
+    }
+    return [];
   }
 
   void _loadSavedWords() async {

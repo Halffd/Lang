@@ -52,15 +52,44 @@ class _VideoTabState extends State<VideoTab> {
   final _transcriptScroll = ScrollController();
   Timer? _ticker;
 
+  /// What is currently open: a file path or the canonical YouTube URL.
+  String? _currentSource;
+
+  /// Cumulative time actually spent playing the current video.
+  int _watchedMs = 0;
+
+  /// Ticks since the last progress persist (25 ticks = 5s).
+  int _ticksSincePersist = 0;
+
   /// yt-dlp when installed, youtube_explode otherwise.
   final _youtube = YouTubeResolver();
 
+  /// Captured when the current video was adopted; progress persists
+  /// through this reference because [dispose] can no longer look up
+  /// ancestors.
+  AppState? _appState;
+
   @override
   void dispose() {
+    _persistProgress();
     _ticker?.cancel();
     _transcriptScroll.dispose();
     _video?.dispose();
     super.dispose();
+  }
+
+  /// Flush watch progress for the current source into the recents, if one
+  /// is open. Called periodically from the ticker and on dispose.
+  void _persistProgress() {
+    final source = _currentSource;
+    final v = _video;
+    final appState = _appState;
+    if (source == null || v == null || !v.value.isInitialized) return;
+    appState?.updateRecentVideoProgress(
+      source,
+      v.value.position.inMilliseconds,
+      _watchedMs,
+    );
   }
 
   String _fmt(Duration d) {
@@ -71,15 +100,26 @@ class _VideoTabState extends State<VideoTab> {
   }
 
   /// Swap in a fully initialized controller, keeping the customization
-  /// (speed) the user already set.
-  Future<void> _adopt(VideoPlayerController controller) async {
+  /// (speed) the user already set and resuming from [resumeAt] when the
+  /// video was watched before.
+  Future<void> _adopt(
+    VideoPlayerController controller, {
+    Duration resumeAt = Duration.zero,
+  }) async {
     await controller.setLooping(false);
     if (!mounted) {
       await controller.dispose();
       return;
     }
-    final appState = context.read<AppState>();
+    final appState = _appState = context.read<AppState>();
     await controller.setPlaybackSpeed(appState.videoPlaybackSpeed);
+    if (resumeAt > Duration.zero) {
+      final duration = controller.value.duration;
+      // don't "resume" into the last seconds — that reads as finished
+      if (resumeAt < duration - const Duration(seconds: 5)) {
+        await controller.seekTo(resumeAt);
+      }
+    }
     if (!mounted) {
       await controller.dispose();
       return;
@@ -97,8 +137,23 @@ class _VideoTabState extends State<VideoTab> {
     final picked = await FilePicker.platform.pickFiles(type: FileType.video);
     final file = picked?.files.single;
     final path = file?.path;
-    if (file == null || path == null) return;
+    if (file == null || path == null || !mounted) return;
 
+    // resume from where this file was last watched, if it was
+    final appState = context.read<AppState>();
+    final previous = appState.recentVideos
+        .where((e) => e['source'] == path)
+        .toList();
+    final resumeMs = previous.isEmpty
+        ? 0
+        : (previous.first['lastPositionMs'] as int? ?? 0);
+    await _openFileSource(path, file.name, resumeMs);
+  }
+
+  /// Load a local video file: initialize, record in the recents, adopt.
+  Future<void> _openFileSource(String path, String name, int resumeMs) async {
+    if (!mounted) return;
+    final appState = context.read<AppState>();
     setState(() {
       _loading = true;
       _error = null;
@@ -111,13 +166,23 @@ class _VideoTabState extends State<VideoTab> {
         await controller.dispose();
         return;
       }
-      await _adopt(controller);
+      await _adopt(controller, resumeAt: Duration(milliseconds: resumeMs));
       setState(() {
-        _mediaLabel = file.name;
+        _mediaLabel = name;
+        _currentSource = path;
+        _watchedMs = 0;
         _youtubeVideoId = null;
         _cues = const [];
         _subLabel = null;
         _showTranscript = false;
+      });
+      appState.recordRecentVideo({
+        'kind': 'file',
+        'source': path,
+        'label': name,
+        'lastPositionMs': resumeMs,
+        'watchedMs': 0,
+        'lastWatchedAt': DateTime.now().millisecondsSinceEpoch,
       });
     } catch (e) {
       await controller.dispose();
@@ -129,9 +194,11 @@ class _VideoTabState extends State<VideoTab> {
     }
   }
 
-  Future<void> _openYouTube() async {
+  /// Open a YouTube URL (from the prompt or a recents entry), resolve it,
+  /// record it and adopt the stream.
+  Future<void> _openYouTube([String? presetUrl]) async {
     final l10n = AppLocalizations.of(context);
-    final url = await _promptYouTubeUrl();
+    final url = presetUrl ?? await _promptYouTubeUrl();
     if (url == null || url.trim().isEmpty || !mounted) return;
 
     setState(() {
@@ -157,13 +224,32 @@ class _VideoTabState extends State<VideoTab> {
         await controller.dispose();
         return;
       }
-      await _adopt(controller);
+      final canonical = 'https://www.youtube.com/watch?v=${info.videoId}';
+      final appState = context.read<AppState>();
+      final previous = appState.recentVideos
+          .where((e) => e['source'] == canonical)
+          .toList();
+      final resumeMs = previous.isEmpty
+          ? 0
+          : (previous.first['lastPositionMs'] as int? ?? 0);
+      await _adopt(controller, resumeAt: Duration(milliseconds: resumeMs));
       setState(() {
         _mediaLabel = info.displayLabel;
+        _currentSource = canonical;
+        _watchedMs = 0;
         _youtubeVideoId = info.videoId;
         _cues = const [];
         _subLabel = null;
         _showTranscript = false;
+      });
+      appState.recordRecentVideo({
+        'kind': 'youtube',
+        'source': canonical,
+        'label': info.displayLabel,
+        'videoId': info.videoId,
+        'lastPositionMs': resumeMs,
+        'watchedMs': 0,
+        'lastWatchedAt': DateTime.now().millisecondsSinceEpoch,
       });
     } catch (e) {
       if (!mounted) return;
@@ -171,6 +257,33 @@ class _VideoTabState extends State<VideoTab> {
         _loading = false;
         _error = '$e';
       });
+    }
+  }
+
+  /// Reopen a recents entry: local files stream from disk, YouTube from a
+  /// fresh stream resolution (old stream URLs expire within hours).
+  Future<void> _reopenRecent(Map<String, dynamic> entry) async {
+    final source = entry['source']?.toString();
+    if (source == null || source.isEmpty) return;
+    final kind = entry['kind']?.toString();
+    final resumeMs = entry['lastPositionMs'] as int? ?? 0;
+    if (kind == 'file') {
+      if (!File(source).existsSync()) {
+        if (!mounted) return;
+        setState(() {
+          _error =
+              AppLocalizations.of(context)?.videoMissingFile ??
+              'File no longer exists.';
+        });
+        return;
+      }
+      await _openFileSource(
+        source,
+        entry['label']?.toString() ?? source,
+        resumeMs,
+      );
+    } else {
+      await _openYouTube(source);
     }
   }
 
@@ -205,8 +318,56 @@ class _VideoTabState extends State<VideoTab> {
     );
   }
 
+  /// Human watch time: minutes under an hour, `1h 05m` above.
+  String _formatWatched(int ms) {
+    final minutes = ms ~/ 60000;
+    if (minutes < 60) return '$minutes min';
+    return '${minutes ~/ 60}h ${(minutes % 60).toString().padLeft(2, '0')}m';
+  }
+
+  /// Pick a subtitle source: sidecar file, pasted text, or one of the
+  /// recent subtitle files/contents.
   Future<void> _pickSubtitles() async {
     if (_video == null) return;
+    final l10n = AppLocalizations.of(context);
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.folder_open),
+              title: Text(l10n?.videoLoadSubs ?? 'Load subs'),
+              onTap: () => Navigator.pop(context, 'file'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.content_paste),
+              title: Text(l10n?.videoPasteSubs ?? 'Paste subtitles'),
+              onTap: () => Navigator.pop(context, 'paste'),
+            ),
+            if (context.read<AppState>().recentSubtitles.isNotEmpty)
+              ListTile(
+                leading: const Icon(Icons.history),
+                title: Text(l10n?.videoRecent ?? 'Recent'),
+                onTap: () => Navigator.pop(context, 'recent'),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (choice == null || !mounted) return;
+    switch (choice) {
+      case 'file':
+        await _importSubtitleFile();
+      case 'paste':
+        await _importSubtitleText();
+      case 'recent':
+        await _pickRecentSubtitles();
+    }
+  }
+
+  Future<void> _importSubtitleFile() async {
     final picked = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['srt', 'vtt', 'json', 'txt'],
@@ -217,19 +378,131 @@ class _VideoTabState extends State<VideoTab> {
 
     try {
       final raw = await File(path).readAsString();
-      final cues = SubtitleParser.parseAuto(raw, filename: file.name);
       if (!mounted) return;
-      setState(() {
-        _cues = cues;
-        _subLabel = file.name;
-        _showTranscript = cues.isNotEmpty;
-        _activeIndex = -1;
-        _error = cues.isEmpty ? 'no cues found in ${file.name}' : null;
+      final cues = SubtitleParser.parseAuto(raw, filename: file.name);
+      _applySubtitleCues(cues, file.name);
+      context.read<AppState>().recordRecentSubtitle({
+        'key': path,
+        'name': file.name,
+        'path': path,
       });
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = '$e');
     }
+  }
+
+  /// Manual subtitle import: paste the content of an SRT/VTT/JSON export
+  /// into a dialog. Works on every platform, including mobile ones where
+  /// the file picker may be restricted.
+  Future<void> _importSubtitleText() async {
+    final l10n = AppLocalizations.of(context);
+    final field = TextEditingController();
+    final text = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n?.videoPasteSubs ?? 'Paste subtitles'),
+        content: SizedBox(
+          width: 480,
+          child: TextField(
+            controller: field,
+            maxLines: 12,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: '1\n00:00:01,000 --> 00:00:04,000\n…',
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n?.cancel ?? 'Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, field.text),
+            child: Text(l10n?.videoLoad ?? 'Load'),
+          ),
+        ],
+      ),
+    );
+    if (text == null || text.trim().isEmpty || !mounted) return;
+    final cues = SubtitleParser.parseAuto(text, filename: 'pasted.vtt');
+    final label =
+        '${AppLocalizations.of(context)?.videoPastedSubs ?? 'Pasted subtitles'}'
+        ' · ${DateTime.now().toString().substring(5, 16)}';
+    if (_applySubtitleCues(cues, label)) {
+      context.read<AppState>().recordRecentSubtitle({
+        'key': 'pasted:$label',
+        'name': label,
+        'text': text,
+      });
+    }
+  }
+
+  Future<void> _pickRecentSubtitles() async {
+    final appState = context.read<AppState>();
+    final l10n = AppLocalizations.of(context);
+    final key = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(l10n?.videoRecent ?? 'Recent'),
+        children: [
+          if (appState.recentSubtitles.isEmpty)
+            SimpleDialogOption(
+              child: Text(l10n?.videoNoRecent ?? 'Nothing watched yet.'),
+            ),
+          for (final entry in appState.recentSubtitles)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, entry['key']?.toString()),
+              child: Text(
+                entry['name']?.toString() ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+        ],
+      ),
+    );
+    if (key == null || !mounted) return;
+    final entry = appState.recentSubtitles
+        .where((e) => e['key'] == key)
+        .toList()
+        .firstOrNull;
+    if (entry == null) return;
+    final path = entry['path']?.toString();
+    final text = entry['text']?.toString();
+    try {
+      final raw = path != null ? await File(path).readAsString() : (text ?? '');
+      if (!mounted) return;
+      final name = entry['name']?.toString() ?? key;
+      if (!_applySubtitleCues(
+        SubtitleParser.parseAuto(raw, filename: name),
+        name,
+      )) {
+        return;
+      }
+      // a file that vanished since it was recorded is removed from the
+      // list instead of failing on every future open
+      if (path != null && !File(path).existsSync()) {
+        appState.removeRecentSubtitle(key);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      appState.removeRecentSubtitle(key);
+      setState(() => _error = '$e');
+    }
+  }
+
+  /// Swap in loaded cues; returns false (and reports) when nothing parsed.
+  bool _applySubtitleCues(List<SubtitleCue> cues, String label) {
+    setState(() {
+      _cues = cues;
+      _subLabel = label;
+      _showTranscript = cues.isNotEmpty;
+      _activeIndex = -1;
+      _error = cues.isEmpty ? 'no cues found in $label' : null;
+    });
+    return cues.isNotEmpty;
   }
 
   /// Load one of the YouTube video's own caption tracks as the subtitle
@@ -306,12 +579,22 @@ class _VideoTabState extends State<VideoTab> {
 
   /// Poll the playhead for the active cue. video_player has no cue-change
   /// callback, and a listener per frame is wasteful for a list that only
-  /// needs a few checks a second, so this ticks at 200ms.
+  /// needs a few checks a second, so this ticks at 200ms. While playing,
+  /// the tick also accrues watch time and periodically flushes it into
+  /// the recents.
   void _startTicker() {
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(milliseconds: 200), (_) {
       final v = _video;
       if (v == null || !v.value.isInitialized || !mounted) return;
+      if (v.value.isPlaying) {
+        _watchedMs += 200;
+        _ticksSincePersist++;
+        if (_ticksSincePersist >= 25) {
+          _ticksSincePersist = 0;
+          _persistProgress();
+        }
+      }
       final idx = SubtitleParser.indexAtOrBefore(
         _cues,
         _subtitlePosition(context.read<AppState>()),
@@ -336,6 +619,61 @@ class _VideoTabState extends State<VideoTab> {
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeOut,
     );
+  }
+
+  /// Recent videos with their watch time; tapping reopens and resumes.
+  Future<void> _showRecentVideos() async {
+    final appState = context.read<AppState>();
+    final l10n = AppLocalizations.of(context);
+    final source = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(l10n?.videoRecent ?? 'Recent'),
+        children: [
+          if (appState.recentVideos.isEmpty)
+            SimpleDialogOption(
+              child: Text(l10n?.videoNoRecent ?? 'Nothing watched yet.'),
+            ),
+          for (final entry in appState.recentVideos)
+            SimpleDialogOption(
+              onPressed: () =>
+                  Navigator.pop(context, entry['source']?.toString()),
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                leading: Icon(
+                  entry['kind'] == 'youtube'
+                      ? Icons.ondemand_video
+                      : Icons.movie_outlined,
+                  size: 20,
+                ),
+                title: Text(
+                  entry['label']?.toString() ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Builder(
+                  builder: (context) {
+                    final watched = _formatWatched(
+                      entry['watchedMs'] as int? ?? 0,
+                    );
+                    return Text(
+                      l10n?.videoWatchedFor(watched) ?? '$watched watched',
+                      style: const TextStyle(fontSize: 12),
+                    );
+                  },
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+    if (source == null || !mounted) return;
+    final entry = appState.recentVideos
+        .where((e) => e['source'] == source)
+        .toList()
+        .firstOrNull;
+    if (entry != null) await _reopenRecent(entry);
   }
 
   Future<void> _seekTo(SubtitleCue cue) async {
@@ -453,6 +791,11 @@ class _VideoTabState extends State<VideoTab> {
                 icon: const Icon(Icons.subtitles_outlined, size: 18),
                 label: Text(_subLabel ?? (l10n?.videoLoadSubs ?? 'Load subs')),
                 onPressed: _pickSubtitles,
+              ),
+              IconButton(
+                icon: const Icon(Icons.history, size: 18),
+                tooltip: l10n?.videoRecent ?? 'Recent',
+                onPressed: _loading ? null : _showRecentVideos,
               ),
               if (_youtubeVideoId != null)
                 TextButton.icon(
@@ -649,6 +992,12 @@ class _VideoTabState extends State<VideoTab> {
                       label: Text(l10n?.videoYouTube ?? 'YouTube'),
                       onPressed: _loading ? null : _openYouTube,
                     ),
+                    if (context.watch<AppState>().recentVideos.isNotEmpty)
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.history, size: 18),
+                        label: Text(l10n?.videoRecent ?? 'Recent'),
+                        onPressed: _loading ? null : _showRecentVideos,
+                      ),
                   ],
                 ),
               ],

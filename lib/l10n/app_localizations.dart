@@ -1998,6 +1998,48 @@ abstract class AppLocalizations {
   /// **'Subtitle delay'**
   String get videoDelay;
 
+  /// No description provided for @videoRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get videoRecent;
+
+  /// No description provided for @videoNoRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing watched yet.'**
+  String get videoNoRecent;
+
+  /// No description provided for @videoWatchedFor.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration} watched'**
+  String videoWatchedFor(String duration);
+
+  /// No description provided for @videoPasteSubs.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste subtitles'**
+  String get videoPasteSubs;
+
+  /// No description provided for @videoPastedSubs.
+  ///
+  /// In en, this message translates to:
+  /// **'Pasted subtitles'**
+  String get videoPastedSubs;
+
+  /// No description provided for @videoMissingFile.
+  ///
+  /// In en, this message translates to:
+  /// **'File no longer exists.'**
+  String get videoMissingFile;
+
+  /// No description provided for @videoPickSubtitleSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtitle source'**
+  String get videoPickSubtitleSource;
+
   /// No description provided for @readerTabVideo.
   ///
   /// In en, this message translates to:

@@ -1003,6 +1003,29 @@ class AppLocalizationsEs extends AppLocalizations {
   String get videoDelay => 'Subtitle delay';
 
   @override
+  String get videoRecent => 'Recent';
+
+  @override
+  String get videoNoRecent => 'Nothing watched yet.';
+
+  @override
+  String videoWatchedFor(String duration) {
+    return '$duration watched';
+  }
+
+  @override
+  String get videoPasteSubs => 'Paste subtitles';
+
+  @override
+  String get videoPastedSubs => 'Pasted subtitles';
+
+  @override
+  String get videoMissingFile => 'File no longer exists.';
+
+  @override
+  String get videoPickSubtitleSource => 'Subtitle source';
+
+  @override
   String get readerTabVideo => 'Video';
 
   @override

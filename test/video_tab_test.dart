@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,10 +15,16 @@ import 'package:lang/presentation/screens/reader/video_tab.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  Future<void> pumpTab(WidgetTester tester) async {
-    SharedPreferences.setMockInitialValues({});
-    final state = AppState(StorageService());
-    await state.storageService.init();
+  Future<void> pumpTabWithPrefs(
+    WidgetTester tester,
+    Map<String, Object> prefs,
+  ) async {
+    SharedPreferences.setMockInitialValues(prefs);
+    // init before AppState: the constructor loads settings synchronously,
+    // so a storage that initializes afterwards reads nothing
+    final storage = StorageService();
+    await storage.init();
+    final state = AppState(storage);
     await tester.pumpWidget(
       ChangeNotifierProvider<AppState>.value(
         value: state,
@@ -40,7 +48,7 @@ void main() {
   // supply, so these cover the no-media state. Playback, cue-following and
   // transcript interaction are covered by the SubtitleParser tests.
   testWidgets('shows a prompt and a pick button with no media', (tester) async {
-    await pumpTab(tester);
+    await pumpTabWithPrefs(tester, {});
 
     expect(
       find.text('Pick a video to play with a subtitle track.'),
@@ -52,7 +60,7 @@ void main() {
   testWidgets('offers no player controls before a video is picked', (
     tester,
   ) async {
-    await pumpTab(tester);
+    await pumpTabWithPrefs(tester, {});
 
     expect(find.byType(VideoPlayer), findsNothing);
     expect(find.text('Transcript'), findsNothing);
@@ -60,7 +68,7 @@ void main() {
   });
 
   testWidgets('offers local and YouTube sources', (tester) async {
-    await pumpTab(tester);
+    await pumpTabWithPrefs(tester, {});
 
     expect(find.widgetWithText(FilledButton, 'Pick video'), findsOneWidget);
     expect(find.widgetWithText(OutlinedButton, 'YouTube'), findsOneWidget);
@@ -69,11 +77,33 @@ void main() {
   testWidgets('offers no customization controls before a video is picked', (
     tester,
   ) async {
-    await pumpTab(tester);
+    await pumpTabWithPrefs(tester, {});
 
     // speed, subtitle size and delay menus belong to the player controls
     expect(find.byIcon(Icons.speed), findsNothing);
     expect(find.byIcon(Icons.format_size), findsNothing);
     expect(find.byIcon(Icons.timer_outlined), findsNothing);
+  });
+
+  testWidgets('offers a recents entry point only when recents exist', (
+    tester,
+  ) async {
+    await pumpTabWithPrefs(tester, {});
+    expect(find.text('Recent'), findsNothing);
+
+    await pumpTabWithPrefs(tester, {
+      'recent_videos': jsonEncode([
+        {
+          'kind': 'youtube',
+          'source': 'https://www.youtube.com/watch?v=abc',
+          'label': 'Some lesson',
+          'videoId': 'abc',
+          'lastPositionMs': 1000,
+          'watchedMs': 60_000,
+          'lastWatchedAt': 1,
+        },
+      ]),
+    });
+    expect(find.text('Recent'), findsOneWidget);
   });
 }

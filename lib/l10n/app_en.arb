@@ -322,6 +322,20 @@
   "videoSpeed": "Playback speed",
   "videoSubtitleSize": "Subtitle size",
   "videoDelay": "Subtitle delay",
+  "videoRecent": "Recent",
+  "videoNoRecent": "Nothing watched yet.",
+  "videoWatchedFor": "{duration} watched",
+  "@videoWatchedFor": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "videoPasteSubs": "Paste subtitles",
+  "videoPastedSubs": "Pasted subtitles",
+  "videoMissingFile": "File no longer exists.",
+  "videoPickSubtitleSource": "Subtitle source",
   "readerTabVideo": "Video",
   "openDocument": "Open document",
   "noDocument": "No document open",
