@@ -1,5 +1,7 @@
 import 'package:lang/utils/chinese_util.dart';
 import 'package:lang/data/services/dictionary/language_detector.dart';
+import 'package:lang/database/database_manager.dart';
+import 'package:lang/domain/entities/dictionary.dart';
 
 /// Service for multi-language text tokenization
 class TokenizerService {
@@ -28,29 +30,93 @@ class TokenizerService {
     }
   }
 
-  /// Tokenize Japanese text (fallback)
+  /// Tokenize Japanese text using the yomichan dictionary database
+  /// for proper MeCab-style word segmentation.
   Future<List<Token>> _tokenizeJapanese(String text) async {
-    return _fallbackJapaneseTokenize(text);
-  }
+    final db = await DatabaseManager().database;
+    final List<Token> tokens = [];
+    int cursor = 0;
 
-  /// Fallback Japanese tokenization (character-based)
-  List<Token> _fallbackJapaneseTokenize(String text) {
-    final tokens = <Token>[];
-    for (int i = 0; i < text.length; i++) {
-      final char = text[i];
-      if (RegExp(r'[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]').hasMatch(char)) {
+    while (cursor < text.length) {
+      // Skip non-Japanese characters (spaces, punctuation, etc.)
+      final char = text[cursor];
+      if (!RegExp(
+        r'[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]',
+      ).hasMatch(char)) {
+        tokens.add(
+          Token(
+            surface: char,
+            reading: '',
+            definition: '',
+            partOfSpeech: 'punctuation',
+            startIndex: cursor,
+            endIndex: cursor + 1,
+          ),
+        );
+        cursor++;
+        continue;
+      }
+
+      bool matchFound = false;
+
+      // Try longest match first (up to 10 characters)
+      int maxLength = 10;
+      if (cursor + maxLength > text.length) {
+        maxLength = text.length - cursor;
+      }
+
+      final candidates = <String>[];
+      for (int i = maxLength; i >= 1; i--) {
+        candidates.add(text.substring(cursor, cursor + i));
+      }
+
+      if (candidates.isNotEmpty) {
+        final placeholders = List.filled(candidates.length, '?').join(',');
+        final results = await db.query(
+          'entries',
+          where: 'term IN ($placeholders)',
+          whereArgs: candidates,
+          orderBy: 'length(term) DESC',
+          limit: 1,
+        );
+
+        if (results.isNotEmpty) {
+          final row = results.first;
+          final entry = DictionaryEntry.fromJson(row);
+          final termLen = entry.term.length;
+          tokens.add(
+            Token(
+              surface: text.substring(cursor, cursor + termLen),
+              reading: entry.reading,
+              definition: entry.definitions.isNotEmpty
+                  ? entry.definitions.first
+                  : '',
+              partOfSpeech: 'word',
+              startIndex: cursor,
+              endIndex: cursor + termLen,
+            ),
+          );
+          cursor += termLen;
+          matchFound = true;
+        }
+      }
+
+      if (!matchFound) {
+        // No dictionary match, fallback to single character
         tokens.add(
           Token(
             surface: char,
             reading: '',
             definition: '',
             partOfSpeech: 'character',
-            startIndex: i,
-            endIndex: i + 1,
+            startIndex: cursor,
+            endIndex: cursor + 1,
           ),
         );
+        cursor++;
       }
     }
+
     return tokens;
   }
 

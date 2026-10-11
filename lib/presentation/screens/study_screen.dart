@@ -46,20 +46,29 @@ class _StudyScreenState extends State<StudyScreen> {
   @override
   Widget build(BuildContext context) {
     final srs = context.watch<SRSService>();
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF1E1E24) : const Color(0xFFF7F7FB);
+    final cardColor = isDark ? const Color(0xFF2A2A32) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7FB),
+      backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text('Study'),
-        backgroundColor: Colors.white,
+        title: Text('Study', style: TextStyle(color: textColor)),
+        backgroundColor: cardColor,
         elevation: 0,
+        iconTheme: IconThemeData(color: textColor),
         actions: [
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardColor,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(
+                color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -68,14 +77,20 @@ class _StudyScreenState extends State<StudyScreen> {
                 const SizedBox(width: 4),
                 Text(
                   '$_xp',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 const Icon(Icons.diamond, color: Colors.cyan, size: 20),
                 const SizedBox(width: 2),
                 Text(
                   '$_gems',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Icon(
@@ -86,7 +101,10 @@ class _StudyScreenState extends State<StudyScreen> {
                 const SizedBox(width: 2),
                 Text(
                   '$_streak',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
                 ),
               ],
             ),
@@ -99,6 +117,9 @@ class _StudyScreenState extends State<StudyScreen> {
 
   Widget _buildTree(SRSService srs) {
     final items = <Widget>[];
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
 
     srs.decks.forEachIndexed((i, deck) {
       final dueCount = srs.getDueCardsByDeck(deck.id).length;
@@ -130,7 +151,7 @@ class _StudyScreenState extends State<StudyScreen> {
                   style: TextStyle(
                     fontSize: fs(context, 18, 'headers'),
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey[800],
+                    color: textColor,
                   ),
                 ),
               ),
@@ -192,6 +213,8 @@ class _StudyScreenState extends State<StudyScreen> {
   }
 
   Widget _buildSpacer() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Center(
@@ -199,7 +222,7 @@ class _StudyScreenState extends State<StudyScreen> {
           width: 4,
           height: 20,
           decoration: BoxDecoration(
-            color: Colors.grey.shade300,
+            color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
@@ -208,6 +231,9 @@ class _StudyScreenState extends State<StudyScreen> {
   }
 
   Widget _buildDeckNode(SrsDeck deck, Color color, bool hasDue) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final subTextColor = isDark ? Colors.grey[400]! : Colors.grey[700]!;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -271,7 +297,7 @@ class _StudyScreenState extends State<StudyScreen> {
           '${deck.name}${hasDue ? ' · $dueCount' : ''}',
           style: TextStyle(
             fontSize: fs(context, 12),
-            color: Colors.grey[700],
+            color: subTextColor,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -319,41 +345,48 @@ class _StudyScreenState extends State<StudyScreen> {
   void _showSettingsSheet() {
     showModalBottomSheet<void>(
       context: context,
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Daily goal',
-              style: TextStyle(
-                fontSize: fs(context, 18, 'headers'),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ...[25, 50, 100, 200].map(
-              (g) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Radio<int>(
-                  value: g,
-                  groupValue: _dailyGoal,
-                  onChanged: (v) async {
-                    if (v == null) return;
-                    final nav = Navigator.of(ctx);
-                    setState(() => _dailyGoal = v);
-                    final p = await SharedPreferences.getInstance();
-                    await p.setInt('study_daily_goal', v);
-                    if (nav.canPop()) nav.pop();
-                  },
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Daily goal',
+                style: TextStyle(
+                  fontSize: fs(ctx, 18, 'headers'),
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
                 ),
-                title: Text('$g XP'),
               ),
-            ),
-          ],
-        ),
-      ),
+              const SizedBox(height: 12),
+              ...[25, 50, 100, 200].map(
+                (g) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Radio<int>(
+                    value: g,
+                    groupValue: _dailyGoal,
+                    onChanged: (v) async {
+                      if (v == null) return;
+                      final nav = Navigator.of(ctx);
+                      setState(() => _dailyGoal = v);
+                      final p = await SharedPreferences.getInstance();
+                      await p.setInt('study_daily_goal', v);
+                      if (nav.canPop()) nav.pop();
+                    },
+                  ),
+                  title: Text(
+                    '$g XP',
+                    style: TextStyle(color: theme.colorScheme.onSurface),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -374,15 +407,19 @@ class _LessonTypeSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = titleOverride ?? deck?.name ?? 'Lesson';
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleLarge),
+          Text(title, style: theme.textTheme.titleLarge),
           const SizedBox(height: 4),
-          Text('$cardCount cards', style: TextStyle(color: Colors.grey[600])),
+          Text(
+            '$cardCount cards',
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+          ),
           const SizedBox(height: 16),
           SizedBox(
             height: 52,

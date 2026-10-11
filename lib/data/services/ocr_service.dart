@@ -19,6 +19,12 @@ enum OcrEngine {
   /// EasyOCR through a local Python runtime.
   easyOcr,
 
+  /// Transformers (Hugging Face) OCR through local Python runtime.
+  transformers,
+
+  /// Hugging Face Inference API (remote).
+  huggingFace,
+
   /// Gemini vision through the AI provider (injected callback).
   ai,
 
@@ -162,6 +168,22 @@ class OcrService {
     }
   }
 
+  /// Whether a python runtime with transformers OCR is usable.
+  Future<bool> hasTransformersOcr() async {
+    if (!Platform.isLinux && !Platform.isMacOS && !Platform.isWindows) {
+      return false;
+    }
+    try {
+      final (code, _, _) = await runCommand(pythonCommand, [
+        '-c',
+        'import transformers; import torch; import PIL',
+      ]);
+      return code == 0;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Whether a python runtime with easyocr is usable.
   Future<bool> hasEasyOcr() async {
     if (!Platform.isLinux && !Platform.isMacOS && !Platform.isWindows) {
@@ -202,6 +224,18 @@ class OcrService {
           language: language,
           preprocess: preprocess,
         );
+      case OcrEngine.transformers:
+        return _recognizeWithTransformers(
+          imagePath,
+          language: language,
+          preprocess: preprocess,
+        );
+      case OcrEngine.huggingFace:
+        return _recognizeWithHuggingFace(
+          imagePath,
+          apiKey: apiKey,
+          preprocess: preprocess,
+        );
       case OcrEngine.ai:
         return _recognizeWithAi(imagePath, aiFetcher);
       case OcrEngine.api:
@@ -237,6 +271,24 @@ class OcrService {
           (path) => _recognizeWithEasyOcr(
             path,
             language: language,
+            preprocess: preprocess,
+          ),
+        );
+      case OcrEngine.transformers:
+        return _bytesViaTempFile(
+          bytes,
+          (path) => _recognizeWithTransformers(
+            path,
+            language: language,
+            preprocess: preprocess,
+          ),
+        );
+      case OcrEngine.huggingFace:
+        return _bytesViaTempFile(
+          bytes,
+          (path) => _recognizeWithHuggingFace(
+            path,
+            apiKey: apiKey,
             preprocess: preprocess,
           ),
         );
@@ -522,6 +574,193 @@ sys.stdout.write(json.dumps(result))
   }
 
   // --------------------------------------------------------------
+  // Transformers (Hugging Face) OCR: local python runtime
+  // Uses TrOCR or Donut models for OCR
+  // --------------------------------------------------------------
+
+  Future<OcrResult> _recognizeWithTransformers(
+    String imagePath, {
+    String? language,
+    bool preprocess = true,
+  }) async {
+    if (!await hasTransformersOcr()) {
+      return OcrResult(
+        text: '',
+        error:
+            'Transformers OCR requires a Python runtime with transformers, torch, and PIL '
+            '(pip install transformers torch pillow). Use ML Kit, Tesseract, or EasyOCR for local OCR.',
+        isEasyOcrUnavailable: true,
+      );
+    }
+
+    final tempDir = await Directory.systemTemp.createTemp('transformers_ocr');
+    try {
+      var workPath = imagePath;
+
+      // same preprocessing as tesseract (helps recognition a lot)
+      if (preprocess) {
+        final preprocessedPath = '${tempDir.path}/input.png';
+        await File(imagePath).copy(preprocessedPath);
+        final (code, _, stderr) = await runCommand('mogrify', [
+          '+repage',
+          '-modulate',
+          '100,0',
+          '-resize',
+          '200%',
+          '-sharpen',
+          '0x1',
+          '-auto-threshold',
+          'Otsu',
+          '-bordercolor',
+          'white',
+          '-border',
+          '20',
+          '+repage',
+          preprocessedPath,
+        ]);
+        if (code == 0) {
+          workPath = preprocessedPath;
+        } else {
+          debugPrint('transformers ocr preprocess failed: $stderr');
+        }
+      }
+
+      // Use TrOCR (Microsoft) for text recognition
+      final script =
+          '''
+import json, sys
+from transformers import TrOCRProcessor, VisionEncoderDecoderModel
+from PIL import Image
+import torch
+
+processor = TrOCRProcessor.from_pretrained('microsoft/trocr-base-printed')
+model = VisionEncoderDecoderModel.from_pretrained('microsoft/trocr-base-printed')
+
+image = Image.open(r'$workPath').convert('RGB')
+pixel_values = processor(images=image, return_tensors='pt').pixel_values
+generated_ids = model.generate(pixel_values)
+generated_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+sys.stdout.write(json.dumps(generated_text))
+''';
+      final (code, stdout_, stderr) = await runCommand(pythonCommand, [
+        '-c',
+        script,
+      ]);
+      if (code != 0) {
+        return OcrResult(text: '', error: 'transformers OCR failed: $stderr');
+      }
+
+      try {
+        final decoded = jsonDecode(stdout_.trim());
+        final text = decoded.toString().trim();
+        return OcrResult(text: text, blocks: [], confidence: 0.9);
+      } catch (e) {
+        return OcrResult(text: '', error: 'transformers output parse: $e');
+      }
+    } catch (e) {
+      return OcrResult(text: '', error: e.toString());
+    } finally {
+      try {
+        await tempDir.delete(recursive: true);
+      } catch (_) {}
+    }
+  }
+
+  // --------------------------------------------------------------
+  // Hugging Face Inference API OCR (remote)
+  // --------------------------------------------------------------
+
+  /// Hugging Face Inference API endpoint for TrOCR
+  String hfInferenceEndpoint =
+      'https://api-inference.huggingface.co/models/microsoft/trocr-base-printed';
+
+  Future<OcrResult> _recognizeWithHuggingFace(
+    String imagePath, {
+    String? apiKey,
+    bool preprocess = true,
+  }) async {
+    final key = apiKey ?? const String.fromEnvironment('HF_API_KEY');
+    if (key.isEmpty) {
+      return OcrResult(
+        text: '',
+        error:
+            'Hugging Face API key not configured. Set HF_API_KEY env var or pass apiKey parameter.',
+      );
+    }
+
+    final tempDir = await Directory.systemTemp.createTemp('hf_ocr');
+    try {
+      var workPath = imagePath;
+
+      if (preprocess) {
+        final preprocessedPath = '${tempDir.path}/input.png';
+        await File(imagePath).copy(preprocessedPath);
+        final (code, _, stderr) = await runCommand('mogrify', [
+          '+repage',
+          '-modulate',
+          '100,0',
+          '-resize',
+          '200%',
+          '-sharpen',
+          '0x1',
+          '-auto-threshold',
+          'Otsu',
+          '-bordercolor',
+          'white',
+          '-border',
+          '20',
+          '+repage',
+          preprocessedPath,
+        ]);
+        if (code == 0) {
+          workPath = preprocessedPath;
+        } else {
+          debugPrint('hf ocr preprocess failed: $stderr');
+        }
+      }
+
+      final bytes = await File(workPath).readAsBytes();
+      final base64Image = base64Encode(bytes);
+
+      final response = await http.post(
+        Uri.parse(hfInferenceEndpoint),
+        headers: {
+          'Authorization': 'Bearer $key',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'inputs': base64Image}),
+      );
+
+      if (response.statusCode != 200) {
+        return OcrResult(
+          text: '',
+          error:
+              'HF Inference API failed (${response.statusCode}): ${response.body}',
+        );
+      }
+
+      final data = jsonDecode(response.body);
+      String text = '';
+      if (data is List && data.isNotEmpty) {
+        text = data[0]['generated_text']?.toString() ?? '';
+      } else if (data is Map) {
+        text =
+            data['generated_text']?.toString() ??
+            data['error']?.toString() ??
+            '';
+      }
+
+      return OcrResult(text: text.trim(), blocks: [], confidence: 0.9);
+    } catch (e) {
+      return OcrResult(text: '', error: e.toString());
+    } finally {
+      try {
+        await tempDir.delete(recursive: true);
+      } catch (_) {}
+    }
+  }
+
+  // --------------------------------------------------------------
   // AI (Gemini vision) through injected fetcher
   // --------------------------------------------------------------
 
@@ -626,6 +865,10 @@ sys.stdout.write(json.dumps(result))
         return 'Tesseract';
       case OcrEngine.easyOcr:
         return 'EasyOCR';
+      case OcrEngine.transformers:
+        return 'Transformers';
+      case OcrEngine.huggingFace:
+        return 'Hugging Face';
       case OcrEngine.ai:
         return 'AI';
       case OcrEngine.api:
@@ -641,6 +884,10 @@ sys.stdout.write(json.dumps(result))
         return 'Tesseract - The open source OCR engine, excellent for documents';
       case OcrEngine.easyOcr:
         return 'EasyOCR - An AI-powered engine, great for complex images (requires backend)';
+      case OcrEngine.transformers:
+        return 'Transformers - Local TrOCR/Donut models via Python (requires transformers, torch)';
+      case OcrEngine.huggingFace:
+        return 'Hugging Face - Remote TrOCR inference API (requires HF_API_KEY)';
       case OcrEngine.ai:
         return 'AI - Gemini vision extraction through the configured AI provider';
       case OcrEngine.api:

@@ -6,11 +6,13 @@ import 'package:lang/data/services/ocr_service.dart';
 
 void main() {
   group('OcrEngine', () {
-    test('has five engine options', () {
-      expect(OcrEngine.values.length, 5);
+    test('has seven engine options', () {
+      expect(OcrEngine.values.length, 7);
       expect(OcrEngine.values, contains(OcrEngine.mlKit));
       expect(OcrEngine.values, contains(OcrEngine.tesseract));
       expect(OcrEngine.values, contains(OcrEngine.easyOcr));
+      expect(OcrEngine.values, contains(OcrEngine.transformers));
+      expect(OcrEngine.values, contains(OcrEngine.huggingFace));
       expect(OcrEngine.values, contains(OcrEngine.ai));
       expect(OcrEngine.values, contains(OcrEngine.api));
     });
@@ -31,6 +33,8 @@ void main() {
       expect(ocrService.getEngineName(OcrEngine.mlKit), 'ML Kit');
       expect(ocrService.getEngineName(OcrEngine.tesseract), 'Tesseract');
       expect(ocrService.getEngineName(OcrEngine.easyOcr), 'EasyOCR');
+      expect(ocrService.getEngineName(OcrEngine.transformers), 'Transformers');
+      expect(ocrService.getEngineName(OcrEngine.huggingFace), 'Hugging Face');
       expect(ocrService.getEngineName(OcrEngine.ai), 'AI');
       expect(ocrService.getEngineName(OcrEngine.api), 'API');
     });
@@ -41,6 +45,10 @@ void main() {
         OcrEngine.tesseract,
       );
       final easyOcrDesc = ocrService.getEngineDescription(OcrEngine.easyOcr);
+      final transformersDesc = ocrService.getEngineDescription(
+        OcrEngine.transformers,
+      );
+      final hfDesc = ocrService.getEngineDescription(OcrEngine.huggingFace);
       final aiDesc = ocrService.getEngineDescription(OcrEngine.ai);
       final apiDesc = ocrService.getEngineDescription(OcrEngine.api);
 
@@ -50,6 +58,8 @@ void main() {
       expect(tesseractDesc, contains('open source'));
       expect(easyOcrDesc, contains('EasyOCR'));
       expect(easyOcrDesc, contains('AI-powered'));
+      expect(transformersDesc, contains('Transformers'));
+      expect(hfDesc, contains('Hugging Face'));
       expect(aiDesc, contains('Gemini'));
       expect(apiDesc, contains('OCR.space'));
     });
