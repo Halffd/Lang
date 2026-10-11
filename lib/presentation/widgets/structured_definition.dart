@@ -63,6 +63,7 @@ class StructuredDefinition extends StatelessWidget {
           // keep structured content (and its ruby readings) on the same
           // zoomed size as the plain-text fallback
           fontSize: plainStyle.fontSize,
+          theme: theme,
         );
       }
       return Text(definition, style: plainStyle);

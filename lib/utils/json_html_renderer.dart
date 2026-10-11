@@ -24,23 +24,29 @@ import 'package:lang/domain/entities/dictionary_display_options.dart';
 ///
 /// [options] toggles which parts render at all (sentences, images,
 /// tags, notes). [mediaIndex] maps archive-relative paths to
-/// extracted image file paths.
+/// extracted image file paths. [theme] enables theme-aware container
+/// colors (tables, note boxes, example sentences) — when null the
+/// current ambient theme is resolved lazily where a context exists.
 class JsonHtmlRenderer {
   /// Renders structured definition JSON.
   ///
   /// [fontSize] sets the base text size for the whole tree; ruby readings
   /// derive from it, so passing the zoomed size keeps furigana in step with
   /// the surrounding text. Null keeps the ambient [DefaultTextStyle].
+  /// [theme] threads the active theme through block containers; null
+  /// falls back to light-mode greys (legacy behaviour).
   static Widget render(
     dynamic jsonStructure, {
     DictionaryDisplayOptions options = const _DefaultDisplayOptions(),
     Map<String, String> mediaIndex = const {},
     double? fontSize,
+    ThemeData? theme,
   }) {
     final content = _render(
       jsonStructure,
       options: options,
       mediaIndex: mediaIndex,
+      theme: theme,
     );
     if (fontSize == null) return content;
     return DefaultTextStyle(
@@ -53,6 +59,7 @@ class JsonHtmlRenderer {
     dynamic jsonStructure, {
     required DictionaryDisplayOptions options,
     required Map<String, String> mediaIndex,
+    ThemeData? theme,
   }) {
     if (jsonStructure == null) return const SizedBox.shrink();
 
@@ -60,9 +67,14 @@ class JsonHtmlRenderer {
       // may be a JSON-encoded structure or plain text
       final decoded = _tryDecode(jsonStructure);
       if (decoded != null) {
-        return _render(decoded, options: options, mediaIndex: mediaIndex);
+        return _render(
+          decoded,
+          options: options,
+          mediaIndex: mediaIndex,
+          theme: theme,
+        );
       }
-      return _styledText(jsonStructure, null);
+      return _styledText(jsonStructure, null, options, theme);
     }
 
     if (jsonStructure is List) {
@@ -71,13 +83,18 @@ class JsonHtmlRenderer {
         mainAxisSize: MainAxisSize.min,
         children: [
           for (final item in jsonStructure)
-            _render(item, options: options, mediaIndex: mediaIndex),
+            _render(
+              item,
+              options: options,
+              mediaIndex: mediaIndex,
+              theme: theme,
+            ),
         ],
       );
     }
 
     if (jsonStructure is Map<String, dynamic>) {
-      return _renderElement(jsonStructure, options, mediaIndex);
+      return _renderElement(jsonStructure, options, mediaIndex, theme);
     }
 
     if (jsonStructure is Map) {
@@ -85,10 +102,11 @@ class JsonHtmlRenderer {
         jsonStructure.map((k, v) => MapEntry(k.toString(), v)),
         options,
         mediaIndex,
+        theme,
       );
     }
 
-    return _styledText(jsonStructure.toString(), null);
+    return _styledText(jsonStructure.toString(), null, options, theme);
   }
 
   static dynamic _tryDecode(String raw) {
@@ -110,6 +128,7 @@ class JsonHtmlRenderer {
     Map<String, dynamic> element,
     DictionaryDisplayOptions options,
     Map<String, String> mediaIndex,
+    ThemeData? theme,
   ) {
     // legacy wrapper: {type: 'image', data: {...}}
     final legacyType = element['type'] as String?;
@@ -121,6 +140,7 @@ class JsonHtmlRenderer {
           img.map((k, v) => MapEntry(k.toString(), v)),
           options,
           mediaIndex,
+          theme,
         );
       }
       return const SizedBox.shrink();
@@ -145,15 +165,16 @@ class JsonHtmlRenderer {
       case 'rt':
         return const SizedBox.shrink(); // handled inside ruby
       case 'span':
-        return _buildSpan(element, content, options, mediaIndex);
+        return _buildSpan(element, content, options, mediaIndex, theme);
       case 'div':
-        return _buildDiv(element, content, options, mediaIndex);
+        return _buildDiv(element, content, options, mediaIndex, theme);
       case 'ul':
         return _buildList(
           content,
           ordered: false,
           options: options,
           mediaIndex: mediaIndex,
+          theme: theme,
         );
       case 'ol':
         return _buildList(
@@ -161,28 +182,44 @@ class JsonHtmlRenderer {
           ordered: true,
           options: options,
           mediaIndex: mediaIndex,
+          theme: theme,
         );
       case 'li':
         return Padding(
           padding: const EdgeInsets.only(bottom: 2),
-          child: render(content, options: options, mediaIndex: mediaIndex),
+          child: render(
+            content,
+            options: options,
+            mediaIndex: mediaIndex,
+            theme: theme,
+          ),
         );
       case 'table':
-        return _buildTable(element, options, mediaIndex);
+        return _buildTable(element, options, mediaIndex, theme);
       case 'img':
       case 'image':
         return _buildImage(element, options, mediaIndex);
       case 'a':
-        return _buildLink(element, content, options, mediaIndex);
+        return _buildLink(element, content, options, mediaIndex, theme);
       case 'details':
-        return _buildDetails(element, content, options, mediaIndex);
+        return _buildDetails(element, content, options, mediaIndex, theme);
       case 'summary':
-        return render(content, options: options, mediaIndex: mediaIndex);
+        return render(
+          content,
+          options: options,
+          mediaIndex: mediaIndex,
+          theme: theme,
+        );
       case 'line':
-        return _buildLine(element);
+        return _buildLine(element, theme);
       default:
         // unknown tag: render children inline
-        return render(content, options: options, mediaIndex: mediaIndex);
+        return render(
+          content,
+          options: options,
+          mediaIndex: mediaIndex,
+          theme: theme,
+        );
     }
   }
 
@@ -274,8 +311,22 @@ class JsonHtmlRenderer {
     return style;
   }
 
-  static Widget _styledText(String text, dynamic style) {
-    return Text(text, style: _parseStyle(style).copyWith());
+  static Widget _styledText(
+    String text,
+    dynamic style,
+    DictionaryDisplayOptions options,
+    ThemeData? theme,
+  ) {
+    // respectContentColors=false: dictionary accent colors must not
+    // paint text red/blue; inherit the theme color instead
+    final effective = options.respectContentColors ? style : _stripColor(style);
+    final base = _parseStyle(effective);
+    final ts = (theme != null && base.color == null)
+        ? base.copyWith(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
+          )
+        : base;
+    return Text(text, style: ts);
   }
 
   // ============================================================
@@ -416,25 +467,22 @@ class JsonHtmlRenderer {
 
   static Widget _buildTag(String label, ThemeData? theme) {
     final scheme = theme?.colorScheme;
+    // theme-aware tag chips; the legacy light-blue fallbacks only apply
+    // when no theme is threaded through
+    final bg =
+        scheme?.primary.withValues(alpha: 0.12) ?? const Color(0x1A2196F3);
+    final border =
+        scheme?.primary.withValues(alpha: 0.4) ?? const Color(0x662196F3);
+    final fg = scheme?.primary ?? const Color(0xFF90CAF9);
     return Container(
       margin: const EdgeInsets.only(right: 4),
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
       decoration: BoxDecoration(
-        color:
-            scheme?.primary.withValues(alpha: 0.12) ?? const Color(0xFFBBDEFB),
+        color: bg,
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(
-          color:
-              scheme?.primary.withValues(alpha: 0.4) ?? const Color(0xFF90CAF9),
-        ),
+        border: Border.all(color: border),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          color: scheme?.primary ?? const Color(0xFF1565C0),
-        ),
-      ),
+      child: Text(label, style: TextStyle(fontSize: 11, color: fg)),
     );
   }
 
@@ -447,6 +495,7 @@ class JsonHtmlRenderer {
     dynamic content,
     DictionaryDisplayOptions options,
     Map<String, String> mediaIndex,
+    ThemeData? theme,
   ) {
     final data = element['data'];
     final dataMap = data is Map
@@ -454,19 +503,30 @@ class JsonHtmlRenderer {
         : <String, dynamic>{};
     final className = (dataMap['class'] as String?) ?? '';
     final contentKind = dataMap['content'] as String?;
+    final scheme = theme?.colorScheme;
 
-    // example sentences gated by toggle
+    // example sentences gated by toggle — theme-aware surface tint
     if (className.contains('example-sentence') || contentKind == 'sentence') {
       if (!options.showSentences) return const SizedBox.shrink();
       return Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.blue.shade50,
+          color:
+              scheme?.tertiary.withValues(alpha: 0.10) ?? Colors.blue.shade50,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: Colors.blue.shade100),
+          border: Border.all(
+            color:
+                scheme?.tertiary.withValues(alpha: 0.25) ??
+                Colors.blue.shade100,
+          ),
         ),
-        child: render(content, options: options, mediaIndex: mediaIndex),
+        child: render(
+          content,
+          options: options,
+          mediaIndex: mediaIndex,
+          theme: theme,
+        ),
       );
     }
 
@@ -477,17 +537,29 @@ class JsonHtmlRenderer {
         margin: const EdgeInsets.only(top: 6),
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: Colors.grey.shade100,
+          color:
+              scheme?.surfaceContainerHighest.withValues(alpha: 0.5) ??
+              Colors.grey.shade100,
           borderRadius: BorderRadius.circular(4),
         ),
-        child: render(content, options: options, mediaIndex: mediaIndex),
+        child: render(
+          content,
+          options: options,
+          mediaIndex: mediaIndex,
+          theme: theme,
+        ),
       );
     }
 
     if (contentKind == 'sense-group' || contentKind == 'sense') {
       return Padding(
         padding: const EdgeInsets.only(bottom: 6),
-        child: render(content, options: options, mediaIndex: mediaIndex),
+        child: render(
+          content,
+          options: options,
+          mediaIndex: mediaIndex,
+          theme: theme,
+        ),
       );
     }
 
@@ -501,7 +573,12 @@ class JsonHtmlRenderer {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
-      child: render(content, options: options, mediaIndex: mediaIndex),
+      child: render(
+        content,
+        options: options,
+        mediaIndex: mediaIndex,
+        theme: theme,
+      ),
     );
   }
 
@@ -510,19 +587,21 @@ class JsonHtmlRenderer {
     dynamic content,
     DictionaryDisplayOptions options,
     Map<String, String> mediaIndex,
+    ThemeData? theme,
   ) {
     final data = element['data'];
     final dataMap = data is Map
         ? data.map((k, v) => MapEntry(k.toString(), v))
         : <String, dynamic>{};
     final className = (dataMap['class'] as String?) ?? '';
+    final scheme = theme?.colorScheme;
 
     if (className.contains('tag')) {
       if (!options.showTags) return const SizedBox.shrink();
       final label =
           (element['title'] as String?) ?? (content is String ? content : '');
       if (label.isEmpty) return const SizedBox.shrink();
-      return _buildTag(label, null);
+      return _buildTag(label, theme);
     }
 
     if (className.contains('extra-box')) {
@@ -531,11 +610,21 @@ class JsonHtmlRenderer {
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.grey.shade50,
+          color:
+              scheme?.surfaceContainerHighest.withValues(alpha: 0.5) ??
+              Colors.grey.shade50,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(
+            color:
+                scheme?.outline.withValues(alpha: 0.2) ?? Colors.grey.shade300,
+          ),
         ),
-        child: render(content, options: options, mediaIndex: mediaIndex),
+        child: render(
+          content,
+          options: options,
+          mediaIndex: mediaIndex,
+          theme: theme,
+        ),
       );
     }
 
@@ -558,6 +647,7 @@ class JsonHtmlRenderer {
     required bool ordered,
     required DictionaryDisplayOptions options,
     required Map<String, String> mediaIndex,
+    ThemeData? theme,
   }) {
     if (options.compactGlossaries) {
       // compact: join with separators, no bullets
@@ -565,7 +655,9 @@ class JsonHtmlRenderer {
       var first = true;
       for (final item in content is List ? content : const []) {
         if (!first) parts.add(const Text(' | '));
-        parts.add(render(item, options: options, mediaIndex: mediaIndex));
+        parts.add(
+          render(item, options: options, mediaIndex: mediaIndex, theme: theme),
+        );
         first = false;
       }
       return Wrap(
@@ -575,7 +667,12 @@ class JsonHtmlRenderer {
     }
 
     if (content is! List) {
-      return render(content, options: options, mediaIndex: mediaIndex);
+      return render(
+        content,
+        options: options,
+        mediaIndex: mediaIndex,
+        theme: theme,
+      );
     }
 
     return Column(
@@ -597,6 +694,7 @@ class JsonHtmlRenderer {
                     content[i],
                     options: options,
                     mediaIndex: mediaIndex,
+                    theme: theme,
                   ),
                 ),
               ],
@@ -610,11 +708,23 @@ class JsonHtmlRenderer {
     Map<String, dynamic> element,
     DictionaryDisplayOptions options,
     Map<String, String> mediaIndex,
+    ThemeData? theme,
   ) {
     final content = element['content'];
     if (content is! List) {
-      return render(content, options: options, mediaIndex: mediaIndex);
+      return render(
+        content,
+        options: options,
+        mediaIndex: mediaIndex,
+        theme: theme,
+      );
     }
+    final scheme = theme?.colorScheme;
+    final borderColor =
+        scheme?.outline.withValues(alpha: 0.3) ?? Colors.grey.shade300;
+    final insideColor =
+        scheme?.outline.withValues(alpha: 0.15) ?? Colors.grey.shade200;
+    final onSurface = scheme?.onSurface;
 
     final rows = <TableRow>[];
     for (final row in content) {
@@ -644,6 +754,7 @@ class JsonHtmlRenderer {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
+                color: onSurface,
               ),
             ),
           ),
@@ -657,13 +768,11 @@ class JsonHtmlRenderer {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: borderColor),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Table(
-        border: TableBorder.symmetric(
-          inside: BorderSide(color: Colors.grey.shade200),
-        ),
+        border: TableBorder.symmetric(inside: BorderSide(color: insideColor)),
         defaultVerticalAlignment: TableCellVerticalAlignment.middle,
         children: rows,
       ),
@@ -788,8 +897,10 @@ class JsonHtmlRenderer {
     dynamic content,
     DictionaryDisplayOptions options,
     Map<String, String> mediaIndex,
+    ThemeData? theme,
   ) {
     final href = element['href'] as String?;
+    final linkColor = theme?.colorScheme.primary ?? const Color(0xFF90CAF9);
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
@@ -802,8 +913,8 @@ class JsonHtmlRenderer {
               mediaIndex,
               style: element['style'],
             ),
-            style: const TextStyle(
-              color: Color(0xFF1565C0),
+            style: TextStyle(
+              color: linkColor,
               decoration: TextDecoration.underline,
             ),
           ),
@@ -823,9 +934,15 @@ class JsonHtmlRenderer {
     dynamic content,
     DictionaryDisplayOptions options,
     Map<String, String> mediaIndex,
+    ThemeData? theme,
   ) {
     if (content is! List) {
-      return render(content, options: options, mediaIndex: mediaIndex);
+      return render(
+        content,
+        options: options,
+        mediaIndex: mediaIndex,
+        theme: theme,
+      );
     }
     // first summary-like child is the header, rest is the body
     Widget header = const Text(
@@ -840,6 +957,7 @@ class JsonHtmlRenderer {
           child['content'],
           options: options,
           mediaIndex: mediaIndex,
+          theme: theme,
         );
       } else {
         body.add(child);
@@ -849,17 +967,22 @@ class JsonHtmlRenderer {
       dense: true,
       tilePadding: EdgeInsets.zero,
       title: header,
-      children: [render(body, options: options, mediaIndex: mediaIndex)],
+      children: [
+        render(body, options: options, mediaIndex: mediaIndex, theme: theme),
+      ],
     );
   }
 
-  static Widget _buildLine(Map<String, dynamic> element) {
+  static Widget _buildLine(Map<String, dynamic> element, ThemeData? theme) {
     final collapsed = element['collapsed'] == true;
+    final dividerColor =
+        theme?.colorScheme.outline.withValues(alpha: 0.3) ??
+        Colors.grey.shade300;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Divider(
         height: 1,
-        color: collapsed ? Colors.transparent : Colors.grey.shade300,
+        color: collapsed ? Colors.transparent : dividerColor,
       ),
     );
   }

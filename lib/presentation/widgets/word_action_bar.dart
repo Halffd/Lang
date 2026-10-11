@@ -21,7 +21,8 @@ const Size kWordActionTapTarget = Size(32, 32);
 ///
 /// Self-wiring: reads [AppState] and [SRSService] from the context so every
 /// screen shows the same behaviour and the same sizing instead of each
-/// screen re-implementing the toggles.
+/// screen re-implementing the toggles. Every action shows a snackbar so
+/// taps always give visible feedback.
 class WordActionBar extends StatelessWidget {
   final AnalyzedWord word;
   final bool showSave;
@@ -33,6 +34,12 @@ class WordActionBar extends StatelessWidget {
     this.showSave = true,
     this.showCopy = true,
   });
+
+  void _toast(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), duration: const Duration(seconds: 1)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,12 +69,7 @@ class WordActionBar extends StatelessWidget {
                 ),
               );
               if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Copied'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
+              _toast(context, 'Copied');
             },
           ),
         _Action(
@@ -79,30 +81,49 @@ class WordActionBar extends StatelessWidget {
                 ? appState.removeFavoriteWord(term)
                 : appState.addFavoriteWord(term);
             _record('favorite', term);
+            _toast(
+              context,
+              isFavorite ? 'Removed from favorites' : 'Added to favorites',
+            );
           },
         ),
         _Action(
           icon: isInAnki ? Icons.book : Icons.book_outlined,
           color: isInAnki ? Colors.blue : null,
-          tooltip: isInAnki ? 'Remove from Anki' : 'Add to Anki',
+          tooltip: isInAnki ? 'Remove from Anki deck' : 'Add to Anki deck',
           onPressed: () {
             isInAnki
                 ? appState.removeAnkiWord(term)
                 : appState.addAnkiWord(term);
             _record('anki', term);
+            _toast(
+              context,
+              isInAnki ? 'Removed from Anki words' : 'Added to Anki words',
+            );
           },
         ),
         _Action(
           icon: isInSrs ? Icons.school : Icons.school_outlined,
           color: isInSrs ? Colors.green : null,
-          tooltip: isInSrs ? 'Remove from learned' : 'Add to learned',
-          onPressed: () {
-            if (isInSrs) {
-              srs.removeCard(term + reading);
-              _record('srs_remove', term);
-            } else {
-              srs.addCard(SRSConversionUtils.analyzedWordToSRSCard(word));
-              _record('srs_add', term);
+          tooltip: isInSrs
+              ? 'Remove from study cards'
+              : 'Add to study cards (SRS)',
+          onPressed: () async {
+            try {
+              if (isInSrs) {
+                await srs.removeCard(term + reading);
+                _record('srs_remove', term);
+                if (context.mounted)
+                  _toast(context, 'Removed from study cards');
+              } else {
+                await srs.addCard(
+                  SRSConversionUtils.analyzedWordToSRSCard(word),
+                );
+                _record('srs_add', term);
+                if (context.mounted) _toast(context, 'Added to study cards');
+              }
+            } catch (e) {
+              if (context.mounted) _toast(context, 'Study card failed: $e');
             }
           },
         ),

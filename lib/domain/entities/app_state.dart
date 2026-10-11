@@ -272,6 +272,22 @@ class AppState extends ChangeNotifier {
   String _readingStyle = 'off'; // off | furigana | pinyin | auto
   bool _wordColoringEnabled = false;
 
+  // Textbox height cap as a fraction of viewport height (0.1–1.0).
+  double _inputMaxHeightFraction = 0.5;
+
+  // Analyse tab: words per page before pagination. 0 = unlimited.
+  int _analysisPageLines = 100;
+
+  // Analyse tab word-card display mode:
+  // compact | normal | full | onlyWord | onlyReading | onlyWordReading |
+  // onlyWordDefinition
+  String _cardDisplayMode = 'compact';
+
+  // Analyse tab card filters (word-class / state based).
+  bool _filterHideParticles = false;
+  bool _filterHideKnownWords = false;
+  bool _filterHideKana = false;
+
   // Video tab recents (jidoujisho-style watch tracking)
   List<Map<String, dynamic>> _recentVideos = [];
   List<Map<String, dynamic>> _recentSubtitles = [];
@@ -744,6 +760,18 @@ class AppState extends ChangeNotifier {
   String get readingStyle => _readingStyle;
   bool get wordColoringEnabled => _wordColoringEnabled;
 
+  /// Textbox height cap as a fraction of viewport height.
+  double get inputMaxHeightFraction => _inputMaxHeightFraction;
+
+  /// Analyse-tab words per page; 0 means unlimited.
+  int get analysisPageLines => _analysisPageLines;
+
+  /// Word-card display mode (compact/normal/full/single-element modes).
+  String get cardDisplayMode => _cardDisplayMode;
+  bool get filterHideParticles => _filterHideParticles;
+  bool get filterHideKnownWords => _filterHideKnownWords;
+  bool get filterHideKana => _filterHideKana;
+
   /// Playback speed for the video player, clamped to a usable range.
   void setVideoPlaybackSpeed(double value) {
     _videoPlaybackSpeed = value.clamp(0.25, 2.0);
@@ -779,6 +807,58 @@ class AppState extends ChangeNotifier {
   void setWordColoringEnabled(bool value) {
     _wordColoringEnabled = value;
     _storageService.setBool('word_coloring_enabled', value);
+    notifyListeners();
+  }
+
+  /// Textbox height cap as a fraction of viewport height (0.1–1.0).
+  void setInputMaxHeightFraction(double value) {
+    _inputMaxHeightFraction = value.clamp(0.1, 1.0);
+    _storageService.setDouble(
+      'input_max_height_fraction',
+      _inputMaxHeightFraction,
+    );
+    notifyListeners();
+  }
+
+  /// Analyse-tab words per page; 0 = unlimited.
+  void setAnalysisPageLines(int value) {
+    _analysisPageLines = value.clamp(0, 10000);
+    _storageService.setInt('analysis_page_lines', _analysisPageLines);
+    // provider reads this on next build; notification via analyzerProvider
+    notifyListeners();
+  }
+
+  /// Word-card display mode.
+  void setCardDisplayMode(String value) {
+    const valid = {
+      'compact',
+      'normal',
+      'full',
+      'onlyWord',
+      'onlyReading',
+      'onlyWordReading',
+      'onlyWordDefinition',
+    };
+    _cardDisplayMode = valid.contains(value) ? value : 'compact';
+    _storageService.setString('card_display_mode', _cardDisplayMode);
+    notifyListeners();
+  }
+
+  void setFilterHideParticles(bool value) {
+    _filterHideParticles = value;
+    _storageService.setBool('filter_hide_particles', value);
+    notifyListeners();
+  }
+
+  void setFilterHideKnownWords(bool value) {
+    _filterHideKnownWords = value;
+    _storageService.setBool('filter_hide_known_words', value);
+    notifyListeners();
+  }
+
+  void setFilterHideKana(bool value) {
+    _filterHideKana = value;
+    _storageService.setBool('filter_hide_kana', value);
     notifyListeners();
   }
 
@@ -1157,6 +1237,34 @@ class AppState extends ChangeNotifier {
           : 'off';
       _wordColoringEnabled =
           _storageService.getBool('word_coloring_enabled') ?? false;
+      _inputMaxHeightFraction =
+          (_storageService.getDouble('input_max_height_fraction') ?? 0.5).clamp(
+            0.1,
+            1.0,
+          );
+      _analysisPageLines =
+          (_storageService.getInt('analysis_page_lines') ?? 100).clamp(
+            0,
+            10000,
+          );
+      final savedCardMode = _storageService.getStringSync('card_display_mode');
+      _cardDisplayMode =
+          const {
+            'compact',
+            'normal',
+            'full',
+            'onlyWord',
+            'onlyReading',
+            'onlyWordReading',
+            'onlyWordDefinition',
+          }.contains(savedCardMode)
+          ? savedCardMode!
+          : 'compact';
+      _filterHideParticles =
+          _storageService.getBool('filter_hide_particles') ?? false;
+      _filterHideKnownWords =
+          _storageService.getBool('filter_hide_known_words') ?? false;
+      _filterHideKana = _storageService.getBool('filter_hide_kana') ?? false;
       final savedProvider = _storageService.getStringSync(
         'translation_provider',
       );
@@ -1234,6 +1342,13 @@ class AppState extends ChangeNotifier {
       // Reading display defaults
       _readingStyle = 'off';
       _wordColoringEnabled = false;
+      // Analyse-tab defaults
+      _inputMaxHeightFraction = 0.5;
+      _analysisPageLines = 100;
+      _cardDisplayMode = 'compact';
+      _filterHideParticles = false;
+      _filterHideKnownWords = false;
+      _filterHideKana = false;
     }
   }
 

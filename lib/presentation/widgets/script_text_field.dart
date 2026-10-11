@@ -146,6 +146,11 @@ class _ScriptTextFieldState extends State<ScriptTextField> {
   }
 
   KeyEventResult _handleKey(FocusNode node, KeyEvent event) {
+    // Enter handling first: submit on Enter, newline on Ctrl+Enter
+    if (event.logicalKey == LogicalKeyboardKey.enter ||
+        event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+      return _handleEnter(node, event);
+    }
     if (!_isJapanese) return KeyEventResult.ignored;
 
     if (event is KeyDownEvent || event is KeyRepeatEvent) {
@@ -194,6 +199,38 @@ class _ScriptTextFieldState extends State<ScriptTextField> {
         },
       ),
     );
+  }
+
+  /// Enter submits ([onSubmitted]); Ctrl+Enter inserts a newline.
+  /// Applies to multiline fields too, where plain Enter would otherwise
+  /// only insert a newline and never fire onSubmitted.
+  KeyEventResult _handleEnter(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    if (event.logicalKey != LogicalKeyboardKey.enter &&
+        event.logicalKey != LogicalKeyboardKey.numpadEnter) {
+      return KeyEventResult.ignored;
+    }
+    final ctrl =
+        HardwareKeyboard.instance.isControlPressed ||
+        HardwareKeyboard.instance.isMetaPressed;
+    if (ctrl) {
+      // Ctrl+Enter: newline at the caret
+      final sel = widget.controller.selection;
+      final text = widget.controller.text;
+      final pos = sel.baseOffset < 0 ? text.length : sel.baseOffset;
+      final newText = text.substring(0, pos) + '\n' + text.substring(pos);
+      widget.controller.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: pos + 1),
+      );
+      widget.onChanged?.call(newText);
+      return KeyEventResult.handled;
+    }
+    // plain Enter: submit
+    widget.onSubmitted?.call(widget.controller.text);
+    return KeyEventResult.handled;
   }
 
   /// For non-Japanese languages, when the user just typed a

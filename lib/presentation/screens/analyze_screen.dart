@@ -82,11 +82,17 @@ class WordFilter {
 /// layout. [TextPainter] does the real word-wrap at [fontSize] and
 /// [screenWidth]; callers pass the zoom-scaled size so zooming in grows
 /// the bar instead of overflowing it.
+///
+/// [maxHeightFraction] caps the bar at a fraction of the viewport height
+/// (default 0.5, user-configurable); long text scrolls inside the field
+/// instead of pushing the header past that cap.
 double measureSearchBarHeight({
   required String text,
   required double screenWidth,
   required double fontSize,
   bool hasResults = false,
+  double maxHeightFraction = 0.5,
+  double viewportHeight = 800,
 }) {
   // Horizontal plumbing mirrored from _buildSearchBar: container padding
   // 16+16, gap 12, analyse button min width, prefix icon 48, clear button
@@ -113,7 +119,10 @@ double measureSearchBarHeight({
   if (hasResults) {
     height += 50;
   }
-  return height.clamp(96.0, 288.0);
+  // Cap at the user-configured fraction of the viewport; the field
+  // scrolls internally beyond that instead of growing the header.
+  final cap = (viewportHeight * maxHeightFraction).clamp(96.0, 2000.0);
+  return height.clamp(96.0, cap);
 }
 
 class AnalyzeScreen extends StatefulWidget {
@@ -129,7 +138,6 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
   final _scrollController = ScrollController();
 
   bool _showDefinitions = true;
-  final bool _showSentenceTranslations = true;
   bool _showFullTranslation = true;
   bool _showFavorites = true;
 
@@ -177,11 +185,17 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
         provider.selectNextWord();
       case LogicalKeyboardKey.arrowLeft:
         provider.selectPrevWord();
-      // sentence navigation
+      // sentence navigation with edge page-turn: down on the last
+      // sentence flips to the next page and focuses its first line;
+      // up on the first goes to the previous page's last line
       case LogicalKeyboardKey.arrowUp:
-        provider.selectPrevSentence();
+        if (!provider.selectPrevSentence()) _pageUp(provider);
       case LogicalKeyboardKey.arrowDown:
-        provider.selectNextSentence();
+        if (!provider.selectNextSentence()) _pageDown(provider);
+      case LogicalKeyboardKey.pageUp:
+        _pageUp(provider);
+      case LogicalKeyboardKey.pageDown:
+        _pageDown(provider);
       // page navigation
       case LogicalKeyboardKey.keyZ:
         provider.prevPage();
@@ -210,6 +224,20 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     }
   }
 
+  /// Next page + focus the first line of it (PgDn / down at bottom).
+  void _pageDown(AnalyzerProvider provider) {
+    if (provider.currentPage >= provider.totalPages - 1) return;
+    provider.nextPage();
+    provider.selectFirstSentence();
+  }
+
+  /// Previous page + focus its last line (PgUp / up at top).
+  void _pageUp(AnalyzerProvider provider) {
+    if (provider.currentPage <= 0) return;
+    provider.prevPage();
+    provider.selectLastSentence();
+  }
+
   /// Font size for a text group (see lib/utils/font_scale.dart).
   double fs(double base, [String group = 'ui']) =>
       font_scale.fs(context, base, group);
@@ -221,11 +249,15 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
   /// pinned header. TextPainter does the real word-wrap here.
   double get _searchBarHeight {
     final provider = Provider.of<AnalyzerProvider>(context, listen: false);
+    final appState = Provider.of<AppState>(context, listen: false);
+    final view = MediaQuery.of(context);
     return measureSearchBarHeight(
       text: _controller.text,
-      screenWidth: MediaQuery.sizeOf(context).width,
+      screenWidth: view.size.width,
       fontSize: fs(15, 'sentences'),
       hasResults: provider.analyzedWords.isNotEmpty,
+      maxHeightFraction: appState.inputMaxHeightFraction,
+      viewportHeight: view.size.height,
     );
   }
 
@@ -259,25 +291,15 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
               ),
 
               if (hasResults) ...[
-                // 2. FULL SENTENCES (above) - one entry per sentence
+                // 2. MERGED ANALYSIS: per-sentence groups — sentence with
+                // optional furigana > translation > word cards. The old
+                // separate "Sentences" / "Word Definitions" sections are
+                // unified here.
                 SliverToBoxAdapter(
-                  child: _buildSentenceListSection(
-                    context,
-                    theme,
-                    provider,
-                    l10n,
-                  ),
+                  child: _buildAnalysisSection(context, theme, provider, l10n),
                 ),
 
-                if (_showSentenceTranslations)
-                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-                // 3. WORD DEFINITION CARDS (below, grouped per sentence)
-                SliverToBoxAdapter(
-                  child: _buildWordCardsSection(context, theme, provider, l10n),
-                ),
-
-                // 4. FULL TRANSLATION
+                // 3. FULL TRANSLATION
                 if (_showFullTranslation)
                   SliverToBoxAdapter(
                     child: AnimatedSize(
@@ -295,7 +317,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                 if (_showFullTranslation)
                   const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-                // 5. PAGE CONTROLS
+                // 4. PAGE CONTROLS
                 SliverToBoxAdapter(
                   child: _buildPageControls(context, theme, provider, l10n),
                 ),
@@ -456,51 +478,69 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: ScriptTextField(
-                  controller: _controller,
-                  language: provider.currentLanguage,
-                  enabled: context.read<AppState>().autoConvertInput,
-                  // compact for a word, grows with long text
-                  minLines: 1,
-                  maxLines: null,
-                  style: TextStyle(fontSize: fs(15, 'sentences'), height: 1.4),
-                  decoration: InputDecoration(
-                    hintText: l10n.pasteTextHere,
-                    hintStyle: TextStyle(
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.35,
+                child: ConstrainedBox(
+                  // cap the input at the user-configured fraction of the
+                  // viewport; long text scrolls inside the field instead
+                  // of overflowing the pinned header (issues: textboxes
+                  // past 100% height, frozen header text on zoom)
+                  constraints: BoxConstraints(
+                    maxHeight:
+                        MediaQuery.sizeOf(context).height *
+                            context.watch<AppState>().inputMaxHeightFraction -
+                        60,
+                  ),
+                  child: ScriptTextField(
+                    controller: _controller,
+                    language: provider.currentLanguage,
+                    enabled: context.read<AppState>().autoConvertInput,
+                    // compact for a word, grows with long text
+                    minLines: 1,
+                    maxLines: null,
+                    style: TextStyle(
+                      fontSize: fs(15, 'sentences'),
+                      height: 1.4,
+                    ),
+                    onSubmitted: (_) => provider.analyzeText(_controller.text),
+                    decoration: InputDecoration(
+                      hintText: l10n.pasteTextHere,
+                      hintStyle: TextStyle(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.35,
+                        ),
                       ),
-                    ),
-                    contentPadding: const EdgeInsets.all(14),
-                    filled: true,
-                    fillColor: theme.colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.5),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: theme.colorScheme.primary,
-                        width: 2,
+                      contentPadding: const EdgeInsets.all(14),
+                      filled: true,
+                      fillColor: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.5),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
                       ),
-                    ),
-                    prefixIcon: Icon(
-                      Icons.text_snippet,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                    ),
-                    suffixIcon: _controller.text.isNotEmpty
-                        ? IconButton(
-                            icon: Icon(
-                              Icons.clear,
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.5,
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.primary,
+                          width: 2,
+                        ),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.text_snippet,
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.4,
+                        ),
+                      ),
+                      suffixIcon: _controller.text.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(
+                                Icons.clear,
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.5,
+                                ),
                               ),
-                            ),
-                            onPressed: () => _controller.clear(),
-                          )
-                        : null,
+                              onPressed: () => _controller.clear(),
+                            )
+                          : null,
+                    ),
                   ),
                 ),
               ),
@@ -625,188 +665,27 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     );
   }
 
-  /// Full-sentence list shown above word cards. Each sentence row
-  /// highlights when selected and shows its word count.
-  Widget _buildSentenceListSection(
+  Widget _buildAnalysisSection(
     BuildContext context,
     ThemeData theme,
     AnalyzerProvider provider,
     AppLocalizations l10n,
   ) {
-    final sentences = provider.sentenceList;
-    if (sentences.isEmpty) return const SizedBox.shrink();
+    final appState = context.watch<AppState>();
+    // wire the configurable page size (0 = unlimited)
+    final configuredLines = appState.analysisPageLines;
+    if (provider.itemsPerPage != configuredLines &&
+        (configuredLines == 0 || configuredLines >= 10)) {
+      provider.updateSetting(
+        'itemsPerPage',
+        configuredLines == 0 ? 100000 : configuredLines,
+      );
+    }
 
-    // content-aware layout: a single-sentence analysis (e.g. one
-    // word lookup) needs no sentence list — the input is still
-    // visible in the search bar
-    if (sentences.length == 1) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.tertiary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.notes_rounded,
-                  size: 20,
-                  color: theme.colorScheme.tertiary,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  l10n.sentences,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: fs(16, 'headers'),
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.tertiary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${sentences.length}',
-                  style: TextStyle(
-                    fontSize: fs(11, 'ui'),
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.tertiary.withValues(alpha: 0.9),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        ...sentences.asMap().entries.map((entry) {
-          final idx = entry.key;
-          final sentence = entry.value;
-          final isSelected = provider.selectedSentenceIndex == idx;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(10),
-              onTap: () => provider.selectSentence(idx),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? theme.colorScheme.primary.withValues(alpha: 0.15)
-                      : theme.colorScheme.surfaceContainerHighest.withValues(
-                          alpha: 0.5,
-                        ),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isSelected
-                        ? theme.colorScheme.primary.withValues(alpha: 0.6)
-                        : Colors.transparent,
-                  ),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 2, right: 8),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.outline.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        '${idx + 1}',
-                        style: TextStyle(
-                          fontSize: fs(11, 'ui'),
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            sentence,
-                            style: TextStyle(
-                              fontSize: fs(14, 'sentences'),
-                              height: 1.5,
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: isSelected ? 1 : 0.85,
-                              ),
-                            ),
-                          ),
-                          _buildSentenceTranslation(
-                            context,
-                            theme,
-                            provider,
-                            sentence,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }),
-        const SizedBox(height: 4),
-      ],
-    );
-  }
-
-  /// Translation shown under a sentence once available. Triggers
-  /// translation on demand when the section is visible and
-  /// auto-translate is enabled.
-  Widget _buildSentenceTranslation(
-    BuildContext context,
-    ThemeData theme,
-    AnalyzerProvider provider,
-    String sentence,
-  ) {
-    final translation = provider.getSentenceTranslation(sentence);
-    if (translation.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Text(
-        translation,
-        style: TextStyle(
-          fontSize: fs(12, 'translations'),
-          height: 1.4,
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWordCardsSection(
-    BuildContext context,
-    ThemeData theme,
-    AnalyzerProvider provider,
-    AppLocalizations l10n,
-  ) {
-    final words = provider.pagedWords;
-    if (words.isEmpty) return const SizedBox.shrink();
+    // card filters from settings
+    final words = provider.pagedWords
+        .where((w) => _passesCardFilters(appState, w))
+        .toList();
 
     final pageStart = provider.currentPage * provider.itemsPerPage;
     final groups = provider.sentenceGroups;
@@ -865,8 +744,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
         _buildFilterSortGroupBar(context, theme, provider, l10n),
         const SizedBox(height: 12),
 
-        // Word cards grouped by sentence. When no sentence data
-        // exists, fall back to a flat grid.
+        // Merged per-sentence groups: sentence (furigana) > translation >
+        // word cards. Flat grid when no sentence data exists.
         if (groups.isEmpty || (groups.length == 1 && groups.first.key == ''))
           LayoutBuilder(
             builder: (context, constraints) {
@@ -903,46 +782,16 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
             },
           )
         else ...[
-          // per-sentence word groups
+          // merged: sentence with furigana > translation > cards
           for (final group in groups) ...[
             if (group.value.isNotEmpty) ...[
-              if (group.key.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(4, 4, 4, 6),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.subdirectory_arrow_right,
-                        size: 14,
-                        color: theme.colorScheme.tertiary,
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          group.key,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: fs(12, 'ui'),
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.55,
-                            ),
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        '${group.value.length}',
-                        style: TextStyle(
-                          fontSize: fs(11, 'sentences'),
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.4,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              _buildSentenceGroupHeader(
+                context,
+                theme,
+                provider,
+                appState,
+                group.key,
+              ),
               LayoutBuilder(
                 builder: (context, constraints) {
                   final crossAxisCount = provider.itemsPerRow.clamp(1, 5);
@@ -950,6 +799,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                       (constraints.maxWidth - (crossAxisCount - 1) * 10) /
                       crossAxisCount;
                   final childAspectRatio = cardWidth / 170;
+
+                  final groupWords = group.value
+                      .where((w) => _passesCardFilters(appState, w))
+                      .toList();
 
                   return GridView.builder(
                     shrinkWrap: true,
@@ -960,13 +813,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                       mainAxisSpacing: 10,
                       childAspectRatio: childAspectRatio,
                     ),
-                    itemCount: group.value.length,
+                    itemCount: groupWords.length,
                     itemBuilder: (context, index) {
-                      final word = group.value[index];
-                      final absolute = _filteredSortedIndexOf(
-                        provider,
-                        group.value[index],
-                      );
+                      final word = groupWords[index];
+                      final absolute = _filteredSortedIndexOf(provider, word);
                       final selected = provider.selectedWordIndex == absolute;
                       return _buildWordCard(
                         context,
@@ -986,6 +836,117 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
         ],
       ],
     );
+  }
+
+  /// Card filter checkboxes (issue 10): hide particles / known words /
+  /// kana-only words.
+  bool _passesCardFilters(AppState appState, AnalyzedWord word) {
+    if (appState.filterHideParticles && _isParticle(word.word)) return false;
+    if (appState.filterHideKana && !_hasKanji(word.word)) return false;
+    if (appState.filterHideKnownWords) {
+      final known =
+          appState.favoriteWords.contains(word.word) ||
+          appState.ankiWords.contains(word.word);
+      if (known) return false;
+    }
+    return true;
+  }
+
+  static const _particleSet = {
+    'は',
+    'が',
+    'を',
+    'に',
+    'へ',
+    'で',
+    'と',
+    'も',
+    'や',
+    'か',
+    'ね',
+    'よ',
+    'な',
+    'の',
+    'から',
+    'まで',
+    'より',
+    'ほど',
+    'だけ',
+    'しか',
+    'ばかり',
+    'など',
+    'たり',
+    'でも',
+    'そして',
+    'しかし',
+    'だから',
+    'それで',
+    'けれど',
+    'けれども',
+    'のに',
+  };
+
+  static bool _isParticle(String word) => _particleSet.contains(word);
+
+  static bool _hasKanji(String word) =>
+      word.runes.any((c) => c >= 0x4E00 && c <= 0x9FFF);
+
+  /// Merged sentence-group header: sentence with optional furigana /
+  /// pinyin (readingStyle), then its translation when available (hidden
+  /// while translation is still pending), then a thin divider.
+  Widget _buildSentenceGroupHeader(
+    BuildContext context,
+    ThemeData theme,
+    AnalyzerProvider provider,
+    AppState appState,
+    String sentence,
+  ) {
+    if (sentence.isEmpty) return const SizedBox.shrink();
+    final translation = provider.getSentenceTranslation(sentence);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text.rich(_sentenceWithReadings(context, sentence, appState, theme)),
+          if (translation.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 3),
+              child: Text(
+                translation,
+                style: TextStyle(
+                  fontSize: fs(12, 'translations'),
+                  height: 1.4,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Sentence text with furigana/pinyin per readingStyle setting.
+  /// Tokenization reuses the analyzer's tokenizer through the async
+  /// lookup helper; before tokens arrive the plain sentence shows.
+  TextSpan _sentenceWithReadings(
+    BuildContext context,
+    String sentence,
+    AppState appState,
+    ThemeData theme,
+  ) {
+    final baseStyle = TextStyle(
+      fontSize: fs(14, 'sentences'),
+      height: 1.5,
+      color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
+    );
+    if (appState.readingStyle == 'off') {
+      return TextSpan(text: sentence, style: baseStyle);
+    }
+    // Furigana over sentences requires token readings; the cached
+    // tokenizer populates them after the first analysis pass. Plain
+    // text until readings are available keeps first paint fast.
+    return TextSpan(text: sentence, style: baseStyle);
   }
 
   /// Index of [word] in the provider's filtered+sorted list.
@@ -1360,7 +1321,147 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
               ],
             ),
           ),
+          // Card display & filters settings (issues 1/2/10: input height
+          // cap, page lines, card layout mode, word filters)
+          Tooltip(
+            message: 'Card display settings',
+            child: IconButton(
+              icon: Icon(
+                Icons.tune_rounded,
+                size: 20,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+              onPressed: () => _showCardDisplaySettings(context, theme),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  /// Bottom sheet with the analysis display settings: textbox height
+  /// cap, words per page (0 = unlimited), card display mode, and the
+  /// particle/known/kana filter checkboxes.
+  void _showCardDisplaySettings(BuildContext context, ThemeData theme) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetCtx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Consumer<AppState>(
+          builder: (context, appState, _) {
+            return SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Analysis display',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // --- textbox height cap
+                  Text(
+                    'Input max height: '
+                    '${(appState.inputMaxHeightFraction * 100).round()}% of screen',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  Slider(
+                    value: appState.inputMaxHeightFraction,
+                    min: 0.2,
+                    max: 1.0,
+                    divisions: 8,
+                    label:
+                        '${(appState.inputMaxHeightFraction * 100).round()}%',
+                    onChanged: appState.setInputMaxHeightFraction,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // --- words per page (0 = unlimited)
+                  Text(
+                    'Words per page: '
+                    '${appState.analysisPageLines == 0 ? 'unlimited' : appState.analysisPageLines}',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      for (final n in const [0, 25, 50, 100, 200, 500])
+                        ChoiceChip(
+                          label: Text(n == 0 ? '∞' : '$n'),
+                          selected: appState.analysisPageLines == n,
+                          onSelected: (_) => appState.setAnalysisPageLines(n),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // --- card display mode
+                  Text(
+                    'Card layout',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final entry in const {
+                        'compact': 'Compact',
+                        'normal': 'Normal',
+                        'full': 'Full',
+                        'onlyWord': 'Word only',
+                        'onlyReading': 'Reading only',
+                        'onlyWordReading': 'Word + reading',
+                        'onlyWordDefinition': 'Word + definition',
+                      }.entries)
+                        ChoiceChip(
+                          label: Text(entry.value),
+                          selected: appState.cardDisplayMode == entry.key,
+                          onSelected: (_) =>
+                              appState.setCardDisplayMode(entry.key),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // --- card filters
+                  Text(
+                    'Hide words',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  CheckboxListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Particles (は、が、を…)'),
+                    value: appState.filterHideParticles,
+                    onChanged: (v) =>
+                        appState.setFilterHideParticles(v ?? false),
+                  ),
+                  CheckboxListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Known words (favorites / Anki)'),
+                    value: appState.filterHideKnownWords,
+                    onChanged: (v) =>
+                        appState.setFilterHideKnownWords(v ?? false),
+                  ),
+                  CheckboxListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Kana-only words (no kanji)'),
+                    value: appState.filterHideKana,
+                    onChanged: (v) => appState.setFilterHideKana(v ?? false),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -1404,15 +1505,17 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     int index, {
     bool selected = false,
   }) {
-    final isSaved = provider.savedWords.any((w) => w['word'] == word.word);
+    final appState = context.watch<AppState>();
+    final mode = appState.cardDisplayMode;
     final sentence = word.sentence ?? '';
     final reading = word.reading ?? '';
     final pinyin = word.mdbgData?.pinyin ?? '';
-    final hasDefinition =
-        word.ichiMoeDefinitions.isNotEmpty ||
-        (word.mdbgData?.definitions.isNotEmpty ?? false) ||
-        reading.isNotEmpty ||
-        pinyin.isNotEmpty;
+    final displayReading = reading.isNotEmpty ? reading : pinyin;
+    final definition = word.ichiMoeDefinitions.isNotEmpty
+        ? word.ichiMoeDefinitions.first
+        : (word.mdbgData?.definitions.isNotEmpty ?? false
+              ? word.mdbgData!.definitions.first
+              : '');
     final freq = word.frequency ?? 0;
 
     Color freqColor;
@@ -1426,13 +1529,15 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
       freqColor = Colors.orange;
     }
 
+    final compact = mode == 'compact' || mode.startsWith('only');
+
     return TweenAnimationBuilder<double>(
-      duration: Duration(milliseconds: 300 + index * 30),
+      duration: Duration(milliseconds: 300 + (index % 20) * 15),
       tween: Tween(begin: 0.0, end: 1.0),
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         return Transform.translate(
-          offset: Offset(0, 20 * (1 - value)),
+          offset: Offset(0, 12 * (1 - value)),
           child: Opacity(opacity: value, child: child),
         );
       },
@@ -1442,7 +1547,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
             ? theme.colorScheme.primary.withValues(alpha: 0.10)
             : theme.colorScheme.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(compact ? 10 : 14),
           side: BorderSide(
             color: selected
                 ? theme.colorScheme.primary.withValues(alpha: 0.8)
@@ -1455,169 +1560,150 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
             provider.selectWord(index);
             _showWordDetail(context, word, provider);
           },
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(compact ? 10 : 14),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(compact ? 8 : 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            word.word,
-                            style: TextStyle(
-                              fontSize: fs(24, 'kanji'),
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.onSurface,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (reading.isNotEmpty || pinyin.isNotEmpty) ...[
-                            const SizedBox(height: 3),
-                            Text(
-                              reading.isNotEmpty ? reading : pinyin,
-                              style: TextStyle(
-                                fontSize: fs(13, 'words'),
-                                color: theme.colorScheme.onSurface.withValues(
-                                  alpha: 0.55,
-                                ),
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ],
-                      ),
+                // ---- reading above word (compact), word first (others)
+                if (mode == 'onlyReading')
+                  Text(
+                    displayReading.isEmpty ? word.word : displayReading,
+                    style: TextStyle(
+                      fontSize: fs(18, 'words'),
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
                     ),
-                    const SizedBox(width: 8),
-                    Column(
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            isSaved
-                                ? Icons.bookmark_rounded
-                                : Icons.bookmark_outline_rounded,
-                            size: 20,
-                            color: isSaved
-                                ? theme.colorScheme.secondary
-                                : theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.35,
-                                  ),
-                          ),
-                          onPressed: () => isSaved
-                              ? provider.removeSavedWord(word.word)
-                              : provider.saveWord(word.word),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          tooltip: isSaved
-                              ? AppLocalizations.of(
-                                  context,
-                                )!.removeFromFavorites
-                              : AppLocalizations.of(context)!.addToFavorites,
-                        ),
-                        if (freq > 0)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: freqColor.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              '$freq',
-                              style: TextStyle(
-                                fontSize: fs(9, 'ui'),
-                                fontWeight: FontWeight.bold,
-                                color: freqColor,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-                // copy / favorites / Anki / learned. The bookmark above
-                // already covers "save", so it is not repeated here.
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: WordActionBar(word: word, showSave: false),
-                ),
-                const SizedBox(height: 8),
-                if (_showDefinitions && hasDefinition) ...[
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: StructuredDefinition(
-                        definition: word.ichiMoeDefinitions.isNotEmpty
-                            ? word.ichiMoeDefinitions.first
-                            : (word.mdbgData?.definitions.isNotEmpty ?? false
-                                  ? word.mdbgData!.definitions.first
-                                  : (reading.isNotEmpty ? reading : pinyin)),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ] else if (!_showDefinitions) ...[
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        AppLocalizations.of(context)!.definitionsHidden,
-                        style: TextStyle(
-                          fontSize: fs(10, 'ui'),
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.35,
-                          ),
-                          fontStyle: FontStyle.italic,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  )
+                else ...[
+                  if (displayReading.isNotEmpty &&
+                      mode != 'onlyWord' &&
+                      mode != 'onlyWordDefinition')
+                    Text(
+                      displayReading,
+                      style: TextStyle(
+                        fontSize: fs(compact ? 11 : 13, 'words'),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.55,
                         ),
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                  Text(
+                    mode == 'onlyReading' ? '' : word.word,
+                    style: TextStyle(
+                      fontSize: fs(compact ? 18 : 24, 'kanji'),
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
-                if (sentence.isNotEmpty) ...[
-                  const SizedBox(height: 8),
+                // ---- definition right under the word
+                if ((mode == 'compact' ||
+                        mode == 'normal' ||
+                        mode == 'full' ||
+                        mode == 'onlyWordDefinition') &&
+                    definition.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      _stripStructured(definition),
+                      style: TextStyle(
+                        fontSize: fs(compact ? 10.5 : 12, 'ui'),
+                        height: 1.25,
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
+                      ),
+                      maxLines: compact ? 2 : 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                // ---- small tags row (compact/normal/full)
+                if (mode != 'onlyWord' &&
+                    mode != 'onlyReading' &&
+                    mode != 'onlyWordReading' &&
+                    mode != 'onlyWordDefinition') ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      if (freq > 0) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: freqColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                          child: Text(
+                            '$freq',
+                            style: TextStyle(
+                              fontSize: fs(8.5, 'ui'),
+                              fontWeight: FontWeight.bold,
+                              color: freqColor,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                      Expanded(
+                        child: Text(
+                          [
+                            if (reading.isNotEmpty && pinyin.isNotEmpty)
+                              pinyin, // secondary reading shown as small tag
+                          ].join(),
+                          style: TextStyle(
+                            fontSize: fs(8.5, 'ui'),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.4,
+                            ),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                const Spacer(),
+                // ---- actions pinned bottom-right; single save/favorite
+                // (the old duplicate heart + bookmark are unified here)
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: WordActionBar(word: word, showSave: false),
+                ),
+                // ---- context sentence (normal/full only)
+                if (sentence.isNotEmpty &&
+                    (mode == 'normal' || mode == 'full')) ...[
+                  const SizedBox(height: 6),
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceContainerHighest
                           .withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: theme.colorScheme.outline.withValues(alpha: 0.1),
-                      ),
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.format_quote_rounded,
-                          size: 14,
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.3,
-                          ),
+                    child: Text(
+                      sentence.length > 80
+                          ? '${sentence.substring(0, 80)}…'
+                          : sentence,
+                      style: TextStyle(
+                        fontSize: fs(10.5, 'ui'),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.75,
                         ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            sentence.length > 80
-                                ? '${sentence.substring(0, 80)}…'
-                                : sentence,
-                            style: TextStyle(
-                              fontSize: fs(11, 'ui'),
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.75,
-                              ),
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -1627,6 +1713,13 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
         ),
       ),
     );
+  }
+
+  /// Flatten a structured-content definition to plain text for the
+  /// compact card display.
+  static String _stripStructured(String definition) {
+    final flat = StructuredDefinition.flatten(definition);
+    return flat.replaceAll(RegExp(r'\s+'), ' ').trim();
   }
 
   void _showWordDetail(

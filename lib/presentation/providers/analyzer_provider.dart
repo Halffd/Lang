@@ -742,7 +742,9 @@ class AnalyzerProvider extends ChangeNotifier {
 
       _analyzedWords = [];
 
-      const chunkSize = 5;
+      // larger chunks keep the enrichment pipeline saturating the
+      // event loop without starving the UI between notifyListeners
+      const chunkSize = 12;
       for (var i = 0; i < uniqueTokens.length; i += chunkSize) {
         final chunk = uniqueTokens.sublist(
           i,
