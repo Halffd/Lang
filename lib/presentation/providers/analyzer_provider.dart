@@ -84,8 +84,19 @@ class AnalyzerProvider extends ChangeNotifier {
   bool get sortAscending => _sortAscending;
   WordGroupBy get groupBy => _groupBy;
 
-  // Computed: filtered, sorted, grouped words
+  // Computed: filtered, sorted, grouped words. Cached: the getter is
+  // hit several times per frame (pagedWords, totalPages, sentenceGroups,
+  // selection maths), and the full filter+sort pass is O(n log n) over
+  // every analyzed word. Invalidated whenever any input changes.
+  List<AnalyzedWord>? _filteredCache;
+
+  void _invalidateFilteredCache() {
+    _filteredCache = null;
+  }
+
   List<AnalyzedWord> get _filteredSortedWords {
+    final cached = _filteredCache;
+    if (cached != null) return cached;
     var words = List<AnalyzedWord>.from(_analyzedWords);
 
     // Apply filters
@@ -221,6 +232,7 @@ class AnalyzerProvider extends ChangeNotifier {
       return _sortAscending ? cmp : -cmp;
     });
 
+    _filteredCache = words;
     return words;
   }
 
@@ -481,12 +493,14 @@ class AnalyzerProvider extends ChangeNotifier {
   void setFilter(WordFilter filter) {
     _filter = filter;
     _currentPage = 0;
+    _invalidateFilteredCache();
     notifyListeners();
   }
 
   void clearFilters() {
     _filter = WordFilter();
     _currentPage = 0;
+    _invalidateFilteredCache();
     notifyListeners();
   }
 
@@ -497,11 +511,13 @@ class AnalyzerProvider extends ChangeNotifier {
       _sortBy = sortBy;
       if (ascending != null) _sortAscending = ascending;
     }
+    _invalidateFilteredCache();
     notifyListeners();
   }
 
   void setGroupBy(WordGroupBy groupBy) {
     _groupBy = groupBy;
+    _invalidateFilteredCache();
     notifyListeners();
   }
 
@@ -741,6 +757,7 @@ class AnalyzerProvider extends ChangeNotifier {
           .toList();
 
       _analyzedWords = [];
+      _invalidateFilteredCache();
 
       // larger chunks keep the enrichment pipeline saturating the
       // event loop without starving the UI between notifyListeners
@@ -768,6 +785,7 @@ class AnalyzerProvider extends ChangeNotifier {
         );
 
         _analyzedWords.addAll(chunkResults.whereType<AnalyzedWord>());
+        _invalidateFilteredCache();
         notifyListeners();
       }
 
@@ -837,6 +855,7 @@ class AnalyzerProvider extends ChangeNotifier {
   Future<void> refreshUserData() async {
     _savedWords = await _yomichanService.getSavedWords();
     _history = await _yomichanService.getHistory();
+    _invalidateFilteredCache();
     notifyListeners();
   }
 

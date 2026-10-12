@@ -56,6 +56,13 @@ import 'presentation/widgets/font_zoom_scope.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Cap the global image cache: the default (100 MiB / 1000 entries)
+  // lets full-resolution screenshots and manga pages pile up. 64 MiB of
+  // decoded pixels is plenty for thumbnails + a few live views, and the
+  // readers decode-on-demand with their own bounded caches.
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 64 << 20;
+  PaintingBinding.instance.imageCache.maximumSize = 200;
+
   // video_player ships no desktop implementation; fvp registers the mdk
   // engine as its backend so the player tab plays on Linux and Windows.
   if (!kIsWeb && (Platform.isLinux || Platform.isWindows)) {

@@ -538,9 +538,13 @@ class _ScreenshotTabState extends State<ScreenshotTab> {
         final item = items[index];
         return InkWell(
           onTap: () => _showItem(item),
+          // cacheWidth decodes at thumbnail size: a 4K screenshot decoded
+          // at full resolution is ~33 MB of pixels; at 320px it is ~0.4 MB.
+          // Without this, a grid of screenshots consumes GBs of RAM.
           child: Image.file(
             File(item.path),
             fit: BoxFit.cover,
+            cacheWidth: 320,
             errorBuilder: (_, _, _) => const ColoredBox(
               color: Colors.black12,
               child: Center(child: Icon(Icons.broken_image)),

@@ -61,6 +61,14 @@ class ClipboardMonitorService {
   // Check clipboard every 500ms
   static const Duration _checkInterval = Duration(milliseconds: 500);
 
+  /// Image clipboard is polled on a slower cadence: reading image bytes
+  /// is expensive (a 4K clipboard screenshot is ~33 MB of allocation per
+  /// poll, which at 500 ms would churn hundreds of MB/s through GC).
+  /// Text polling stays at 500 ms because it is a small string read.
+  static const Duration _imageCheckInterval = Duration(seconds: 4);
+  Timer? _imageTimer;
+  bool _imagePollBusy = false;
+
   /// Simple content hash to detect image changes (super_clipboard
   /// has no change notification, so compare bytes length + sample).
   static String _hashBytes(Uint8List bytes) {
@@ -87,6 +95,26 @@ class ClipboardMonitorService {
         // ignore clipboard read failures (e.g. platform channel issues)
       }
     });
+    // slower image cadence, and skip entirely while a poll is in flight
+    _imageTimer = Timer.periodic(_imageCheckInterval, (_) async {
+      if (!_isMonitoring || _imagePollBusy) return;
+      _imagePollBusy = true;
+      try {
+        await _pollImage(appState);
+      } catch (_) {
+        // ignore clipboard read failures
+      } finally {
+        _imagePollBusy = false;
+      }
+    });
+  }
+
+  void stopMonitoring() {
+    _isMonitoring = false;
+    _timer?.cancel();
+    _timer = null;
+    _imageTimer?.cancel();
+    _imageTimer = null;
   }
 
   Future<void> _poll(AppState appState) async {
@@ -225,12 +253,6 @@ class ClipboardMonitorService {
   void restartMonitoring(AppState appState) {
     stopMonitoring();
     startMonitoring(appState);
-  }
-
-  void stopMonitoring() {
-    _isMonitoring = false;
-    _timer?.cancel();
-    _timer = null;
   }
 
   bool get isMonitoring => _isMonitoring;

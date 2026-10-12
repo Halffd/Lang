@@ -216,7 +216,10 @@ class _AiScreenState extends State<AiScreen> {
                             padding: const EdgeInsets.only(bottom: 8.0),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: Image.memory(base64Decode(msg.imageUrl!)),
+                              child: Image.memory(
+                                base64Decode(msg.imageUrl!),
+                                cacheWidth: 800,
+                              ),
                             ),
                           ),
                         Text(

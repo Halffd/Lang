@@ -33,11 +33,41 @@ class DocumentReaderState extends State<DocumentReader> {
   int _totalPages = 0;
   PdfViewerController? _pdfViewerController;
 
-  List<Uint8List> _mangaPages = [];
+  // Lazy-load manga pages: only keep current ±2 pages in memory
+  final Map<int, Uint8List> _mangaPageCache = {};
+  List<String> _mangaPagePaths = [];
+  final int _mangaCacheWindow = 2;
   bool _mangaLoading = true;
   String? _mangaError;
   final PageController _mangaPageController = PageController();
   bool _isVerticalScroll = false;
+
+  /// Evict pages outside the cache window
+  void _evictCache() {
+    final keysToRemove = _mangaPageCache.keys
+        .where((k) => (k - _currentPage).abs() > _mangaCacheWindow)
+        .toList();
+    for (final k in keysToRemove) {
+      _mangaPageCache.remove(k);
+    }
+  }
+
+  /// Load page on demand
+  Future<Uint8List?> _loadPage(int pageIndex) async {
+    if (pageIndex < 1 || pageIndex > _totalPages) return null;
+    if (_mangaPageCache.containsKey(pageIndex)) {
+      _evictCache();
+      return _mangaPageCache[pageIndex]!;
+    }
+    try {
+      final bytes = await File(_mangaPagePaths[pageIndex - 1]).readAsBytes();
+      _mangaPageCache[pageIndex] = bytes;
+      _evictCache();
+      return bytes;
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   void initState() {
@@ -55,6 +85,7 @@ class DocumentReaderState extends State<DocumentReader> {
 
   @override
   void dispose() {
+    _mangaPageCache.clear();
     _mangaPageController.dispose();
     super.dispose();
   }
@@ -89,7 +120,8 @@ class DocumentReaderState extends State<DocumentReader> {
     });
 
     try {
-      List<Uint8List> pages = [];
+      // Store paths instead of loading all images into memory
+      final List<String> paths = [];
 
       if (_documentType == DocumentType.folder) {
         final dir = Directory(widget.filePath);
@@ -115,7 +147,7 @@ class DocumentReaderState extends State<DocumentReader> {
                 ..sort((a, b) => a.path.compareTo(b.path));
 
           for (final file in imageFiles) {
-            pages.add(await file.readAsBytes());
+            paths.add(file.path);
           }
         }
       } else {
@@ -144,20 +176,25 @@ class DocumentReaderState extends State<DocumentReader> {
                   .toList()
                 ..sort((a, b) => a.name.compareTo(b.name));
 
+          // Extract archive entries to temp files and store paths
+          final tempDir = await Directory.systemTemp.createTemp('manga_');
           for (final archiveFile in imageFiles) {
             if (archiveFile.isFile) {
-              pages.add(Uint8List.fromList(archiveFile.content as List<int>));
+              final tempFile = File('${tempDir.path}/${archiveFile.name}');
+              await tempFile.writeAsBytes(archiveFile.content as List<int>);
+              paths.add(tempFile.path);
             }
           }
         }
       }
 
       setState(() {
-        _mangaPages = pages;
-        _totalPages = pages.length;
+        _mangaPagePaths = paths;
+        _totalPages = paths.length;
         _mangaLoading = false;
         if (_totalPages > 0) {
           _currentPage = 1;
+          _precachePages();
         }
       });
 
@@ -172,6 +209,22 @@ class DocumentReaderState extends State<DocumentReader> {
     }
   }
 
+  /// Precache current page and neighbors
+  Future<void> _precachePages() async {
+    final start = (_currentPage - _mangaCacheWindow).clamp(1, _totalPages);
+    final end = (_currentPage + _mangaCacheWindow).clamp(1, _totalPages);
+    for (int i = start; i <= end; i++) {
+      if (!_mangaPageCache.containsKey(i)) {
+        try {
+          final bytes = await File(_mangaPagePaths[i - 1]).readAsBytes();
+          _mangaPageCache[i] = bytes;
+        } catch (_) {}
+      }
+    }
+    _evictCache();
+  }
+
+  /// Load page on demand
   @override
   Widget build(BuildContext context) {
     switch (_documentType) {
@@ -288,7 +341,7 @@ class DocumentReaderState extends State<DocumentReader> {
       );
     }
 
-    if (_mangaPages.isEmpty) {
+    if (_mangaPagePaths.isEmpty) {
       return const Center(child: Text('No images found'));
     }
 
@@ -305,7 +358,7 @@ class DocumentReaderState extends State<DocumentReader> {
         PageView.builder(
           controller: _mangaPageController,
           reverse: widget.isMangaMode,
-          itemCount: _mangaPages.length,
+          itemCount: _totalPages,
           onPageChanged: (index) {
             setState(() {
               _currentPage = index + 1;
@@ -315,15 +368,23 @@ class DocumentReaderState extends State<DocumentReader> {
             }
           },
           itemBuilder: (context, index) {
-            return InteractiveViewer(
-              minScale: 1.0,
-              maxScale: 4.0,
-              child: widgets.Image.memory(
-                _mangaPages[index],
-                fit: BoxFit.contain,
-                width: double.infinity,
-                height: double.infinity,
-              ),
+            return FutureBuilder<Uint8List?>(
+              future: _loadPage(index + 1),
+              builder: (context, snapshot) {
+                if (snapshot.hasData && snapshot.data != null) {
+                  return InteractiveViewer(
+                    minScale: 1.0,
+                    maxScale: 4.0,
+                    child: widgets.Image.memory(
+                      snapshot.data!,
+                      fit: BoxFit.contain,
+                      width: double.infinity,
+                      height: double.infinity,
+                    ),
+                  );
+                }
+                return const Center(child: CircularProgressIndicator());
+              },
             );
           },
         ),
@@ -373,16 +434,24 @@ class DocumentReaderState extends State<DocumentReader> {
         ),
         Expanded(
           child: ListView.builder(
-            itemCount: _mangaPages.length,
+            itemCount: _totalPages,
             itemBuilder: (context, index) {
-              return InteractiveViewer(
-                minScale: 1.0,
-                maxScale: 4.0,
-                child: widgets.Image.memory(
-                  _mangaPages[index],
-                  fit: BoxFit.fitWidth,
-                  width: double.infinity,
-                ),
+              return FutureBuilder<Uint8List?>(
+                future: _loadPage(index + 1),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData && snapshot.data != null) {
+                    return InteractiveViewer(
+                      minScale: 1.0,
+                      maxScale: 4.0,
+                      child: widgets.Image.memory(
+                        snapshot.data!,
+                        fit: BoxFit.fitWidth,
+                        width: double.infinity,
+                      ),
+                    );
+                  }
+                  return const Center(child: CircularProgressIndicator());
+                },
               );
             },
           ),
