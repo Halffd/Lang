@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lang/core/services/app_storage.dart';
 
 /// Categories tracked by [HistoryService].
 enum HistoryCategory {
@@ -93,8 +93,12 @@ class HistoryService extends ChangeNotifier {
   Future<void> load() async {
     if (_loaded) return;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_prefsKey);
+      // SQLite or local files per the storage backend setting; imports
+      // the legacy SharedPreferences payload on first access.
+      final raw = await AppStorage.readWithMigration(
+        _prefsKey,
+        legacyPrefsKey: _prefsKey,
+      );
       if (raw != null && raw.isNotEmpty) {
         final decoded = jsonDecode(raw) as List;
         _items = decoded
@@ -171,8 +175,7 @@ class HistoryService extends ChangeNotifier {
 
   Future<void> _persist() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_prefsKey, jsonEncode(_items));
+      await AppStorage.instance.write(_prefsKey, jsonEncode(_items));
     } catch (e) {
       debugPrint('HistoryService persist error: $e');
     }

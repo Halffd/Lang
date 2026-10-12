@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:lang/core/services/app_storage.dart';
 import 'package:lang/core/services/script_assets.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -205,11 +206,21 @@ class ScreenshotService extends ChangeNotifier {
   Future<void> load() async {
     if (_loaded) return;
     try {
-      final dir = await _shotsDir();
-      final file = File('${dir.path}/$_prefsFile');
-      if (file.existsSync()) {
-        final decoded =
-            jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+      // registry document follows the storage backend setting (SQLite or
+      // local files); the PNGs stay on disk either way. Legacy registry
+      // file next to the images imports on first access.
+      var raw = await AppStorage.readWithMigration(_prefsFile);
+      if (raw == null) {
+        // legacy: JSON file in the shots dir
+        final dir = await _shotsDir();
+        final file = File('${dir.path}/$_prefsFile');
+        if (file.existsSync()) {
+          raw = file.readAsStringSync();
+          await AppStorage.instance.write(_prefsFile, raw);
+        }
+      }
+      if (raw != null && raw.isNotEmpty) {
+        final decoded = jsonDecode(raw) as Map<String, dynamic>;
         final rawItems = decoded['items'] as List? ?? [];
         _items = rawItems
             .map((e) => ScreenshotItem.fromJson(Map<String, dynamic>.from(e)))
@@ -225,9 +236,10 @@ class ScreenshotService extends ChangeNotifier {
 
   Future<void> _persist() async {
     try {
-      final dir = await _shotsDir();
-      final file = File('${dir.path}/$_prefsFile');
-      file.writeAsStringSync(jsonEncode({'items': _items}));
+      await AppStorage.instance.write(
+        _prefsFile,
+        jsonEncode({'items': _items}),
+      );
     } catch (e) {
       debugPrint('ScreenshotService persist error: $e');
     }

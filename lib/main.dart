@@ -13,6 +13,7 @@ import 'presentation/widgets/structured_definition.dart';
 import 'utils/font_scale.dart';
 import 'utils/japanese_grammar.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'core/services/app_storage.dart';
 import 'core/services/clipboard_manager_service.dart';
 import 'presentation/screens/clipboard_manager_screen.dart';
 import 'core/services/clipboard_monitor_service.dart';
@@ -116,6 +117,9 @@ void main() async {
   );
 
   final appState = AppState(storageService);
+  // document-store backend (SQLite vs local files) must be chosen before
+  // any service loads its payloads
+  await AppStorage.init(storageBackendFromName(appState.storageBackend));
 
   final analyzerProvider = AnalyzerProvider();
   await analyzerProvider.init();

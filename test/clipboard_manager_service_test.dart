@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lang/core/services/app_storage.dart';
 import 'package:lang/core/services/clipboard_manager_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -7,6 +8,10 @@ void main() {
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    // fresh storage per test: without this the shared in-memory
+    // fallback (used because path_provider has no mock here) leaks
+    // entries between tests
+    AppStorage.resetForTest();
     ClipboardSetText.override = null;
   });
 

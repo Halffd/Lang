@@ -1,6 +1,12 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:lang/core/services/app_storage.dart';
+
+/// Saved words / history data source.
+///
+/// Payloads route through [AppStorage] (SQLite or local files per the
+/// storage backend setting); the legacy SharedPreferences copies are
+/// imported on first access and remain as a downgrade path.
 class NoteLocalDataSource {
   static const String _wordsKey = 'words';
   static const String _saveKey = 'save';
@@ -10,17 +16,38 @@ class NoteLocalDataSource {
   List<String>? _wordsCache;
 
   Future<void> init() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (!prefs.containsKey(_wordsKey)) await prefs.setString(_wordsKey, '');
-    if (!prefs.containsKey(_saveKey)) await prefs.setString(_saveKey, '{}');
-    if (!prefs.containsKey(_historyKey))
-      await prefs.setStringList(_historyKey, []);
+    // ensure keys exist in the chosen backend (empty defaults)
+    final existing = await AppStorage.readWithMigration(
+      _wordsKey,
+      legacyPrefsKey: _wordsKey,
+    );
+    if (existing == null) {
+      await AppStorage.instance.write(_wordsKey, '');
+    }
+    final save = await AppStorage.readWithMigration(
+      _saveKey,
+      legacyPrefsKey: _saveKey,
+    );
+    if (save == null) {
+      await AppStorage.instance.write(_saveKey, '{}');
+    }
+    final history = await AppStorage.readWithMigration(
+      _historyKey,
+      legacyPrefsKey: _historyKey,
+    );
+    if (history == null) {
+      await AppStorage.instance.write(_historyKey, '[]');
+    }
   }
 
   Future<Map<String, dynamic>> getSave() async {
     if (_saveCache != null) return _saveCache!;
-    final prefs = await SharedPreferences.getInstance();
-    final data = prefs.getString(_saveKey) ?? '{}';
+    final data =
+        await AppStorage.readWithMigration(
+          _saveKey,
+          legacyPrefsKey: _saveKey,
+        ) ??
+        '{}';
     try {
       _saveCache = json.decode(data);
       return _saveCache!;
@@ -41,20 +68,22 @@ class NoteLocalDataSource {
 
   Future<List<String>> getWords() async {
     if (_wordsCache != null) return _wordsCache!;
-    final prefs = await SharedPreferences.getInstance();
-    final data = prefs.getString(_wordsKey) ?? '';
+    final data =
+        await AppStorage.readWithMigration(
+          _wordsKey,
+          legacyPrefsKey: _wordsKey,
+        ) ??
+        '';
     _wordsCache = data.split(' ').where((w) => w.isNotEmpty).toList();
     return _wordsCache!;
   }
 
   Future<void> addWord(String word, {String? sentence}) async {
-    final prefs = await SharedPreferences.getInstance();
-
     // Update words list
     List<String> words = await getWords();
     if (!words.contains(word)) {
       words.add(word);
-      await prefs.setString(_wordsKey, words.join(' '));
+      await AppStorage.instance.write(_wordsKey, words.join(' '));
       _wordsCache = words;
     }
 
@@ -66,18 +95,16 @@ class NoteLocalDataSource {
     final entry = {'word': word, 'sentence': sentence ?? '', 'id': timestamp};
 
     save[timestamp] = entry;
-    await prefs.setString(_saveKey, json.encode(save));
+    await AppStorage.instance.write(_saveKey, json.encode(save));
     _saveCache = save;
   }
 
   Future<void> removeWord(String word) async {
-    final prefs = await SharedPreferences.getInstance();
-
     // Update words list
     List<String> words = await getWords();
     if (words.contains(word)) {
       words.remove(word);
-      await prefs.setString(_wordsKey, words.join(' '));
+      await AppStorage.instance.write(_wordsKey, words.join(' '));
       _wordsCache = words;
     }
 
@@ -90,7 +117,7 @@ class NoteLocalDataSource {
 
     if (keyToRemove.isNotEmpty) {
       save.remove(keyToRemove);
-      await prefs.setString(_saveKey, json.encode(save));
+      await AppStorage.instance.write(_saveKey, json.encode(save));
       _saveCache = save;
     }
   }
@@ -103,18 +130,26 @@ class NoteLocalDataSource {
   // --- History ---
 
   Future<List<String>> getHistory() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getStringList(_historyKey) ?? [];
+    final raw =
+        await AppStorage.readWithMigration(
+          _historyKey,
+          legacyPrefsKey: _historyKey,
+        ) ??
+        '[]';
+    try {
+      final decoded = json.decode(raw);
+      if (decoded is List) return decoded.map((e) => e.toString()).toList();
+    } catch (_) {}
+    return [];
   }
 
   Future<void> addToHistory(String word) async {
-    final prefs = await SharedPreferences.getInstance();
     List<String> history = await getHistory();
     history.remove(word); // Remove if exists to move to top
     history.insert(0, word);
     if (history.length > 100) {
       history = history.sublist(0, 100);
     }
-    await prefs.setStringList(_historyKey, history);
+    await AppStorage.instance.write(_historyKey, json.encode(history));
   }
 }

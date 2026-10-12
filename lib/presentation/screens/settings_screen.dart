@@ -120,6 +120,60 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: ScreenSize.adaptivePadding(context),
         children: [
+          // ---- Storage backend (SQLite vs local files)
+          Card(
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.storage_rounded),
+                  title: const Text('Storage backend'),
+                  subtitle: Text(
+                    appState.storageBackend == 'files'
+                        ? 'Local files (JSON per store, human-readable)'
+                        : 'SQLite database (single file, faster queries)',
+                  ),
+                ),
+                RadioListTile<String>(
+                  dense: true,
+                  title: const Text('SQLite'),
+                  subtitle: const Text(
+                    'lang_storage.db — one table per document key',
+                  ),
+                  value: 'sqlite',
+                  groupValue: appState.storageBackend,
+                  onChanged: (v) {
+                    if (v != null) appState.setStorageBackend(v);
+                  },
+                ),
+                RadioListTile<String>(
+                  dense: true,
+                  title: const Text('Local files'),
+                  subtitle: const Text(
+                    'lang_storage/ — one JSON file per store',
+                  ),
+                  value: 'files',
+                  groupValue: appState.storageBackend,
+                  onChanged: (v) {
+                    if (v != null) appState.setStorageBackend(v);
+                  },
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                  child: Text(
+                    'Applies to clipboard manager, history, saved words and '
+                    'the screenshot registry. Existing data imports '
+                    'automatically on next start; dictionary databases are '
+                    'always SQLite.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           // Profile card at top
           Card(
             child: ListTile(

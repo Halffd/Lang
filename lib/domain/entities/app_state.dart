@@ -278,6 +278,13 @@ class AppState extends ChangeNotifier {
   // Analyse tab: words per page before pagination. 0 = unlimited.
   int _analysisPageLines = 100;
 
+  // Document-store backend: 'sqlite' | 'files'. Applies to the clipboard
+  // manager, history, saved words and screenshot registry payloads; the
+  // dictionary databases are always SQLite. The setting itself stays in
+  // SharedPreferences so the backend choice is readable before any
+  // store loads.
+  String _storageBackend = 'sqlite';
+
   // Analyse tab word-card display mode:
   // compact | normal | full | onlyWord | onlyReading | onlyWordReading |
   // onlyWordDefinition
@@ -766,6 +773,9 @@ class AppState extends ChangeNotifier {
   /// Analyse-tab words per page; 0 means unlimited.
   int get analysisPageLines => _analysisPageLines;
 
+  /// Document-store backend: 'sqlite' | 'files'.
+  String get storageBackend => _storageBackend;
+
   /// Word-card display mode (compact/normal/full/single-element modes).
   String get cardDisplayMode => _cardDisplayMode;
   bool get filterHideParticles => _filterHideParticles;
@@ -807,6 +817,15 @@ class AppState extends ChangeNotifier {
   void setWordColoringEnabled(bool value) {
     _wordColoringEnabled = value;
     _storageService.setBool('word_coloring_enabled', value);
+    notifyListeners();
+  }
+
+  /// Document-store backend; takes effect on next app start (each
+  /// store imports its legacy data on first access, so switching is
+  /// seamless).
+  void setStorageBackend(String value) {
+    _storageBackend = value == 'files' ? 'files' : 'sqlite';
+    _storageService.setString('storage_backend', _storageBackend);
     notifyListeners();
   }
 
@@ -1242,6 +1261,10 @@ class AppState extends ChangeNotifier {
             0.1,
             1.0,
           );
+      _storageBackend =
+          _storageService.getStringSync('storage_backend') == 'files'
+          ? 'files'
+          : 'sqlite';
       _analysisPageLines =
           (_storageService.getInt('analysis_page_lines') ?? 100).clamp(
             0,

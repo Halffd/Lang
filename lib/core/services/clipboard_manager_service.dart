@@ -3,8 +3,8 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+import 'package:lang/core/services/app_storage.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 /// One clipboard-manager entry: text or image, plus metadata.
 class ClipboardItem {
@@ -172,8 +172,13 @@ class ClipboardManagerService extends ChangeNotifier {
     if (_loaded) return;
     _loaded = true;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final rawItems = prefs.getString(_kItemsKey);
+      // reads through AppStorage (SQLite or local files per the user's
+      // backend setting), importing the legacy SharedPreferences payload
+      // on first access
+      final rawItems = await AppStorage.readWithMigration(
+        _kItemsKey,
+        legacyPrefsKey: _kItemsKey,
+      );
       if (rawItems != null && rawItems.isNotEmpty) {
         final decoded = jsonDecode(rawItems);
         if (decoded is List) {
@@ -187,7 +192,7 @@ class ClipboardManagerService extends ChangeNotifier {
               .toList();
         }
       }
-      final rawCfg = prefs.getString(_kConfigKey);
+      final rawCfg = await AppStorage.readWithMigration(_kConfigKey);
       if (rawCfg != null && rawCfg.isNotEmpty) {
         try {
           final decoded = jsonDecode(rawCfg);
@@ -205,16 +210,14 @@ class ClipboardManagerService extends ChangeNotifier {
   }
 
   Future<void> _persist() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
+    await AppStorage.instance.write(
       _kItemsKey,
       jsonEncode([for (final i in _items) i.toJson()]),
     );
   }
 
   Future<void> saveConfig() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_kConfigKey, jsonEncode(_config.toJson()));
+    await AppStorage.instance.write(_kConfigKey, jsonEncode(_config.toJson()));
   }
 
   void updateConfig(ClipboardPollingConfig next) {
