@@ -58,4 +58,19 @@ class YouTubeResolver implements YouTubeBackend {
     if (track.url != null) return _ytDlp.fetchCaptions(track);
     return _explode.fetchCaptions(track);
   }
+
+  /// Text search: yt-dlp's `ytsearch` when installed (fresher parser),
+  /// otherwise youtube_explode's search client. Empty on failure.
+  @override
+  Future<List<YouTubeSearchHit>> search(String query, {int limit = 10}) async {
+    if (await _ytDlp.isAvailable()) {
+      try {
+        final hits = await _ytDlp.search(query, limit: limit);
+        if (hits.isNotEmpty) return hits;
+      } on Object {
+        // fall through
+      }
+    }
+    return _explode.search(query, limit: limit);
+  }
 }

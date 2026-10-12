@@ -18,6 +18,42 @@ abstract interface class YouTubeBackend {
   Future<List<YouTubeCaptionTrack>> captionTracks(String videoId);
 
   Future<List<SubtitleCue>> fetchCaptions(YouTubeCaptionTrack track);
+
+  /// Text search over YouTube; ids of hits feed straight into
+  /// [resolve] (the resolver rebuilds the canonical watch URL).
+  Future<List<YouTubeSearchHit>> search(String query, {int limit = 10});
+}
+
+/// One search result row.
+class YouTubeSearchHit {
+  const YouTubeSearchHit({
+    required this.videoId,
+    required this.title,
+    this.author = '',
+    this.duration,
+  });
+
+  final String videoId;
+  final String title;
+  final String author;
+
+  /// Seconds; null when the backend did not report it.
+  final int? duration;
+
+  /// Canonical watch URL — resolvable by every backend.
+  String get watchUrl => 'https://www.youtube.com/watch?v=$videoId';
+
+  /// `mm:ss` or `h:mm:ss`, when known.
+  String get durationLabel {
+    final d = duration;
+    if (d == null) return '';
+    final h = d ~/ 3600;
+    final m = (d % 3600) ~/ 60;
+    final s = d % 60;
+    return h > 0
+        ? '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}'
+        : '$m:${s.toString().padLeft(2, '0')}';
+  }
 }
 
 /// One playable quality from the manifest.
@@ -238,6 +274,29 @@ class YouTubeService implements YouTubeBackend {
       ];
       cues.sort((a, b) => a.start.compareTo(b.start));
       return cues;
+    } finally {
+      yt.close();
+    }
+  }
+
+  /// Text search through youtube_explode's search client. The stream
+  /// client is not touched, so this stays light.
+  @override
+  Future<List<YouTubeSearchHit>> search(String query, {int limit = 10}) async {
+    final q = query.trim();
+    if (q.isEmpty) return const [];
+    final yt = YoutubeExplode();
+    try {
+      final results = await yt.search.search(q);
+      return results.take(limit.clamp(1, 20)).map((video) {
+        return YouTubeSearchHit(
+          videoId: video.id.value,
+          title: video.title,
+          author: video.author,
+        );
+      }).toList();
+    } on Object {
+      return const [];
     } finally {
       yt.close();
     }

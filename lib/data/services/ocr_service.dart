@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:http/http.dart' as http;
+import 'package:lang/core/services/script_assets.dart';
 import 'package:tesseract_ocr/tesseract_ocr.dart';
 import 'package:tesseract_ocr/ocr_engine_config.dart';
 
@@ -241,7 +242,6 @@ class OcrService {
       case OcrEngine.api:
         return _recognizeWithApi(imagePath, apiKey: apiKey);
     }
-    throw AssertionError('Unhandled OcrEngine: $effectiveEngine');
   }
 
   Future<OcrResult> recognizeFromBytes(
@@ -303,7 +303,6 @@ class OcrService {
           (path) => _recognizeWithApi(path, apiKey: apiKey),
         );
     }
-    throw AssertionError('Unhandled OcrEngine: $effectiveEngine');
   }
 
   /// Write [bytes] to a temp png and delegate to [run].
@@ -537,18 +536,12 @@ class OcrService {
         }
       }
 
-      // reader.recognize prints JSON lines; we parse the text field
-      final script =
-          '''
-import json, sys
-import easyocr
-reader = easyocr.Reader(['$easyLang'], gpu=False, verbose=False)
-result = reader.recognize(r'$workPath', detail=0, paragraph=True)
-sys.stdout.write(json.dumps(result))
-''';
+      // standalone script: python3 easyocr_recognize.py <lang> <image>
+      final script = await ScriptAssets.load(ScriptAssets.easyOcrRecognize);
       final (code, stdout_, stderr) = await runCommand(pythonCommand, [
-        '-c',
         script,
+        easyLang,
+        workPath,
       ]);
       if (code != 0) {
         return OcrResult(text: '', error: 'easyocr failed: $stderr');
@@ -625,26 +618,11 @@ sys.stdout.write(json.dumps(result))
         }
       }
 
-      // Use TrOCR (Microsoft) for text recognition
-      final script =
-          '''
-import json, sys
-from transformers import TrOCRProcessor, VisionEncoderDecoderModel
-from PIL import Image
-import torch
-
-processor = TrOCRProcessor.from_pretrained('microsoft/trocr-base-printed')
-model = VisionEncoderDecoderModel.from_pretrained('microsoft/trocr-base-printed')
-
-image = Image.open(r'$workPath').convert('RGB')
-pixel_values = processor(images=image, return_tensors='pt').pixel_values
-generated_ids = model.generate(pixel_values)
-generated_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
-sys.stdout.write(json.dumps(generated_text))
-''';
+      // standalone script: python3 trocr_recognize.py <image>
+      final script = await ScriptAssets.load(ScriptAssets.trocrRecognize);
       final (code, stdout_, stderr) = await runCommand(pythonCommand, [
-        '-c',
         script,
+        workPath,
       ]);
       if (code != 0) {
         return OcrResult(text: '', error: 'transformers OCR failed: $stderr');

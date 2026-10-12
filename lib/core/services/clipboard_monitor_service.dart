@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:lang/core/services/clipboard_manager_service.dart';
 import 'package:lang/core/services/history_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:super_clipboard/super_clipboard.dart';
@@ -58,16 +59,13 @@ class ClipboardMonitorService {
   @visibleForTesting
   static String hashBytesForTest(Uint8List bytes) => _hashBytes(bytes);
 
-  // Check clipboard every 500ms
-  static const Duration _checkInterval = Duration(milliseconds: 500);
-
-  /// Image clipboard is polled on a slower cadence: reading image bytes
-  /// is expensive (a 4K clipboard screenshot is ~33 MB of allocation per
-  /// poll, which at 500 ms would churn hundreds of MB/s through GC).
-  /// Text polling stays at 500 ms because it is a small string read.
-  static const Duration _imageCheckInterval = Duration(seconds: 4);
   Timer? _imageTimer;
   bool _imagePollBusy = false;
+
+  Duration _textInterval(ClipboardPollingConfig cfg) =>
+      Duration(milliseconds: cfg.textIntervalMs.clamp(100, 60000));
+  Duration _imageInterval(ClipboardPollingConfig cfg) =>
+      Duration(milliseconds: cfg.imageIntervalMs.clamp(250, 120000));
 
   /// Simple content hash to detect image changes (super_clipboard
   /// has no change notification, so compare bytes length + sample).
@@ -87,7 +85,8 @@ class ClipboardMonitorService {
     }
 
     _isMonitoring = true;
-    _timer = Timer.periodic(_checkInterval, (timer) async {
+    final cfg = ClipboardManagerService.instance.config;
+    _timer = Timer.periodic(_textInterval(cfg), (timer) async {
       if (!_isMonitoring) return;
       try {
         await _poll(appState);
@@ -95,18 +94,21 @@ class ClipboardMonitorService {
         // ignore clipboard read failures (e.g. platform channel issues)
       }
     });
-    // slower image cadence, and skip entirely while a poll is in flight
-    _imageTimer = Timer.periodic(_imageCheckInterval, (_) async {
-      if (!_isMonitoring || _imagePollBusy) return;
-      _imagePollBusy = true;
-      try {
-        await _pollImage(appState);
-      } catch (_) {
-        // ignore clipboard read failures
-      } finally {
-        _imagePollBusy = false;
-      }
-    });
+    // image polling only when the config allows it; skip while a poll is
+    // still in flight so slow reads cannot stack up
+    if (cfg.imagePollingEnabled) {
+      _imageTimer = Timer.periodic(_imageInterval(cfg), (_) async {
+        if (!_isMonitoring || _imagePollBusy) return;
+        _imagePollBusy = true;
+        try {
+          await _pollImage(appState);
+        } catch (_) {
+          // ignore clipboard read failures
+        } finally {
+          _imagePollBusy = false;
+        }
+      });
+    }
   }
 
   void stopMonitoring() {

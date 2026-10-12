@@ -8,7 +8,6 @@ import 'package:video_player/video_player.dart';
 
 import 'package:lang/core/services/popup_dictionary_controller.dart';
 import 'package:lang/data/repositories/dictionary_service.dart';
-import 'package:lang/utils/chinese_util.dart';
 import 'package:lang/utils/pinyin_util.dart';
 import 'package:lang/core/services/youtube_resolver.dart';
 import 'package:lang/core/services/youtube_service.dart';
@@ -302,13 +301,22 @@ class _VideoTabState extends State<VideoTab> {
         content: TextField(
           controller: field,
           autofocus: true,
-          keyboardType: TextInputType.url,
           decoration: InputDecoration(
-            hintText: l10n?.videoYouTubeHint ?? 'Paste a YouTube URL',
+            hintText:
+                l10n?.videoYouTubeHint ?? 'Paste a YouTube URL or search…',
           ),
           onSubmitted: (value) => Navigator.of(context).pop(value),
         ),
         actions: [
+          TextButton(
+            onPressed: () async {
+              // search mode: pick a result, return its canonical URL
+              Navigator.of(context).pop();
+              final picked = await _searchYouTube();
+              if (picked != null && mounted) await _openYouTube(picked);
+            },
+            child: const Text('Search…'),
+          ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(l10n?.cancel ?? 'Cancel'),
@@ -318,6 +326,128 @@ class _VideoTabState extends State<VideoTab> {
             child: Text(l10n?.videoLoad ?? 'Load'),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Search YouTube (yt-dlp `ytsearch` / explode fallback) and let the
+  /// user pick a result. Returns the canonical watch URL of the pick.
+  Future<String?> _searchYouTube() async {
+    final field = TextEditingController();
+    List<YouTubeSearchHit>? hits;
+    String? error;
+    var searching = false;
+
+    return showDialog<String>(
+      context: context,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (ctx, setDialog) {
+          Future<void> runSearch() async {
+            final q = field.text.trim();
+            if (q.isEmpty) return;
+            setDialog(() {
+              searching = true;
+              error = null;
+              hits = null;
+            });
+            try {
+              final results = await _youtube.search(q, limit: 12);
+              if (!ctx.mounted) return;
+              setDialog(() {
+                hits = results;
+                searching = false;
+                if (results.isEmpty) error = 'No results for "$q"';
+              });
+            } catch (e) {
+              if (!ctx.mounted) return;
+              setDialog(() {
+                searching = false;
+                error = '$e';
+              });
+            }
+          }
+
+          return AlertDialog(
+            title: const Text('Search YouTube'),
+            content: SizedBox(
+              width: 440,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: field,
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      hintText: 'Search query or URL',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onSubmitted: (_) => runSearch(),
+                  ),
+                  const SizedBox(height: 8),
+                  if (searching)
+                    const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else if (error != null)
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Text(
+                        error!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(ctx).colorScheme.error,
+                        ),
+                      ),
+                    )
+                  else if (hits != null)
+                    Flexible(
+                      child: SizedBox(
+                        height: 300,
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: hits!.length,
+                          itemBuilder: (context, i) {
+                            final hit = hits![i];
+                            return ListTile(
+                              dense: true,
+                              leading: const Icon(Icons.play_circle_outline),
+                              title: Text(
+                                hit.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                [
+                                  if (hit.author.isNotEmpty) hit.author,
+                                  if (hit.durationLabel.isNotEmpty)
+                                    hit.durationLabel,
+                                ].join(' · '),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              onTap: () => Navigator.of(ctx).pop(hit.watchUrl),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Cancel'),
+              ),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.search, size: 18),
+                label: const Text('Search'),
+                onPressed: searching ? null : runSearch,
+              ),
+            ],
+          );
+        },
       ),
     );
   }

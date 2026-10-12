@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:lang/utils/layout_config.dart';
-import 'package:lang/utils/screen_size.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:fvp/fvp.dart' as fvp;
 import 'package:provider/provider.dart';
 import 'package:super_clipboard/super_clipboard.dart';
@@ -13,6 +13,8 @@ import 'presentation/widgets/structured_definition.dart';
 import 'utils/font_scale.dart';
 import 'utils/japanese_grammar.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'core/services/clipboard_manager_service.dart';
+import 'presentation/screens/clipboard_manager_screen.dart';
 import 'core/services/clipboard_monitor_service.dart';
 import 'core/services/history_service.dart';
 import 'core/services/popup_dictionary_controller.dart';
@@ -128,15 +130,19 @@ void main() async {
 
   // Clipboard history: record copied text in the activity feed
   await HistoryService.instance.load();
+  // clipboard manager (CopyQ-style store): the monitor pushes every
+  // captured text/image into it, then the auto-search hooks run.
+  await ClipboardManagerService.instance.load();
   final clipboardMonitor = ClipboardMonitorService.instance;
-  // auto search mode: search copied text automatically
   clipboardMonitor.onClipboardChanged = (text) {
+    ClipboardManagerService.instance.addText(text);
     analyzerProvider.searchWord(text);
   };
-  // auto OCR for clipboard images: recognize then search
+  // auto OCR for clipboard images: store, recognize, then search
   final ocrService = OcrService();
   await ocrService.initialize();
   clipboardMonitor.onClipboardImage = (imageBytes) async {
+    await ClipboardManagerService.instance.addImage(imageBytes);
     try {
       final result = await ocrService.recognizeFromBytes(
         imageBytes,
@@ -821,7 +827,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     final saved = context.read<AppState>().defaultScreenIndex;
     if (saved >= 0 && saved < _screens.length) _currentIndex = saved;
     _syncPopupRoute(_currentIndex);
-    _setupDesktopIPC();
+    unawaited(_setupDesktopIPC());
   }
 
   void _syncPopupRoute(int index) {
@@ -833,7 +839,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         : '';
   }
 
-  void _setupDesktopIPC() {
+  Future<void> _setupDesktopIPC() async {
     final desktopIPC = DesktopIPCService();
     if (!desktopIPC.isSupported) return;
 
@@ -863,6 +869,21 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         desktopIPC.toggleWindow();
       },
     );
+
+    // Ctrl+Shift+V = clipboard manager popup (CopyQ-style)
+    if (desktopIPC.isSupported) {
+      await desktopIPC.registerHotkey(
+        'clipboard_manager',
+        HotKey(
+          key: PhysicalKeyboardKey.keyV,
+          modifiers: const [HotKeyModifier.control, HotKeyModifier.shift],
+        ),
+        () {
+          final ctx = context;
+          if (ctx.mounted) showClipboardManagerPopup(ctx);
+        },
+      );
+    }
   }
 
   @override

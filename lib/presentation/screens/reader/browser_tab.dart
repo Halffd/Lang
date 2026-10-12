@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:io' show Platform;
 
 import 'package:desktop_webview_window/desktop_webview_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:lang/core/services/scraper_service.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -39,17 +41,18 @@ enum BrowserOpenMode {
 
 /// Pick the strongest browser this platform can offer.
 ///
-/// Linux has no webkit2gtk binding, so it is the only target that falls back
-/// to the system browser; everything else gets an embedded webview. Kept
-/// public and platform-parameterised so the policy is unit testable without
-/// a device.
+/// Every desktop and mobile target gets an embedded webview:
+/// flutter_inappwebview 6.2.0-beta.3 endorses flutter_inappwebview_linux
+/// (webkit2gtk-4.1), so Linux is no longer the system-browser fallback.
+/// [BrowserOpenMode.external] remains available as an explicit user
+/// action (open-in-system-browser button). Kept public and
+/// platform-parameterised so the policy is unit testable without a device.
 BrowserOpenMode browserOpenModeFor({
   required bool isLinux,
   required bool isMobile,
 }) {
-  if (isLinux) return BrowserOpenMode.external;
   if (isMobile) return BrowserOpenMode.embedded;
-  return BrowserOpenMode.nativeWindow;
+  return BrowserOpenMode.embedded;
 }
 
 /// Web browser tab.
@@ -80,7 +83,19 @@ class _BrowserTabState extends State<BrowserTab> {
   bool _canGoBack = false;
   bool _canGoForward = false;
 
+  // ---- scraping (issue 3) ----
+  final ScraperService _scraper = ScraperService();
+  ScraperConfig _scraperConfig = ScraperConfig();
+  List<MethodAvailability> _availability = const [];
+  bool _scraping = false;
+
+  /// Open scraped-page tabs; clicking a link inside a scraped page
+  /// scrapes the target into a NEW tab here.
+  final List<_ScrapeTab> _scrapeTabs = [];
+  int _activeScrapeTab = -1;
+
   static const _kRecentsKey = 'browser_recents';
+  static const _kScraperConfigKey = 'scraper_config';
   static const _maxRecents = 20;
   static const _quickLinks = [
     ('NHK Easy News', 'https://www3.nhk.or.jp/news/easy/'),
@@ -92,6 +107,8 @@ class _BrowserTabState extends State<BrowserTab> {
   void initState() {
     super.initState();
     _loadRecents();
+    _loadScraperConfig();
+    _probeAvailability();
   }
 
   @override
@@ -99,6 +116,32 @@ class _BrowserTabState extends State<BrowserTab> {
     _urlCtrl.dispose();
     _addressCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadScraperConfig() async {
+    final p = await SharedPreferences.getInstance();
+    final raw = p.getString(_kScraperConfigKey);
+    if (!mounted) return;
+    if (raw == null || raw.isEmpty) return;
+    try {
+      final json = Map<String, dynamic>.from(
+        const JsonDecoder().convert(raw) as Map,
+      );
+      setState(() => _scraperConfig = ScraperConfig.fromJson(json));
+    } catch (_) {
+      // corrupt config: keep defaults
+    }
+  }
+
+  Future<void> _saveScraperConfig() async {
+    final p = await SharedPreferences.getInstance();
+    await p.setString(_kScraperConfigKey, jsonEncode(_scraperConfig.toJson()));
+  }
+
+  Future<void> _probeAvailability() async {
+    final list = await _scraper.probeAvailability();
+    if (!mounted) return;
+    setState(() => _availability = list);
   }
 
   BrowserOpenMode get _mode => browserOpenModeFor(
@@ -181,6 +224,485 @@ class _BrowserTabState extends State<BrowserTab> {
     });
   }
 
+  // ------------------------------------------------------------
+  // scraping (issue 3)
+  // ------------------------------------------------------------
+
+  /// Scrape the address-bar URL into a new scrape tab.
+  Future<void> _scrape() async {
+    final url = normalizeBrowserUrl(_embeddedUrl ?? _urlCtrl.text);
+    if (url == null) return;
+    setState(() => _scraping = true);
+    try {
+      final result = await _scraper.scrape(url, _scraperConfig);
+      if (!mounted) return;
+      setState(() {
+        _scrapeTabs.add(_ScrapeTab(url: url, result: result));
+        _activeScrapeTab = _scrapeTabs.length - 1;
+      });
+    } finally {
+      if (mounted) setState(() => _scraping = false);
+    }
+  }
+
+  /// Scrape [url] into its own tab (link click inside a scraped page).
+  Future<void> _scrapeIntoNewTab(String url) async {
+    final base = _activeScrapeTab >= 0
+        ? _scrapeTabs[_activeScrapeTab].url
+        : (_embeddedUrl ?? _urlCtrl.text);
+    final absolute = _absoluteUrl(base, url);
+    if (absolute == null) return;
+    final result = await _scraper.scrape(absolute, _scraperConfig);
+    if (!mounted) return;
+    setState(() {
+      _scrapeTabs.add(_ScrapeTab(url: absolute, result: result));
+      _activeScrapeTab = _scrapeTabs.length - 1;
+    });
+  }
+
+  /// Resolve [href] against [base] (relative link support).
+  static String? _absoluteUrl(String base, String href) {
+    final trimmed = href.trim();
+    if (trimmed.isEmpty) return null;
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    try {
+      return Uri.parse(base).resolve(trimmed).toString();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _closeScrapeTab(int index) {
+    setState(() {
+      _scrapeTabs.removeAt(index);
+      if (_scrapeTabs.isEmpty) {
+        _activeScrapeTab = -1;
+      } else {
+        _activeScrapeTab = (_activeScrapeTab - 1).clamp(
+          0,
+          _scrapeTabs.length - 1,
+        );
+      }
+    });
+  }
+
+  static String _methodLabel(ScraperMethod m) => switch (m) {
+    ScraperMethod.dartHttp => 'Dart HTTP',
+    ScraperMethod.curl => 'curl',
+    ScraperMethod.pythonRequests => 'Python requests',
+    ScraperMethod.selenium => 'Selenium',
+    ScraperMethod.puppeteer => 'Puppeteer',
+  };
+
+  /// Settings sheet: method availability + headers/retry/proxy/
+  /// max-size/format/filters (issue 1+3).
+  void _showScraperSettings() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetCtx) {
+        var cfg = _scraperConfig.copy();
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: const EdgeInsets.all(20),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Scraper settings',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Methods (green = available)',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final a in _availability)
+                          Tooltip(
+                            message: a.detail.isEmpty
+                                ? (a.available ? 'available' : 'not found')
+                                : a.detail,
+                            child: ChoiceChip(
+                              label: Text(
+                                _methodLabel(a.method),
+                                style: TextStyle(
+                                  color: a.available
+                                      ? null
+                                      : Theme.of(context).disabledColor,
+                                ),
+                              ),
+                              selected: cfg.method == a.method,
+                              avatar: Icon(
+                                a.available ? Icons.check_circle : Icons.cancel,
+                                size: 16,
+                                color: a.available
+                                    ? Colors.green
+                                    : Theme.of(context).disabledColor,
+                              ),
+                              onSelected: a.available
+                                  ? (_) => setSheetState(
+                                      () => cfg.method = a.method,
+                                    )
+                                  : null,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Output format',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        for (final f in ScraperOutputFormat.values)
+                          ChoiceChip(
+                            label: Text(f.name),
+                            selected: cfg.format == f,
+                            onSelected: (_) =>
+                                setSheetState(() => cfg.format = f),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Retries: ${cfg.retries}',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    Slider(
+                      value: cfg.retries.toDouble(),
+                      min: 0,
+                      max: 5,
+                      divisions: 5,
+                      label: '${cfg.retries}',
+                      onChanged: (v) =>
+                          setSheetState(() => cfg.retries = v.round()),
+                    ),
+                    Text(
+                      'Timeout: ${cfg.timeout.inSeconds}s',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    Slider(
+                      value: cfg.timeout.inSeconds.clamp(5, 120).toDouble(),
+                      min: 5,
+                      max: 120,
+                      divisions: 23,
+                      label: '${cfg.timeout.inSeconds}s',
+                      onChanged: (v) => setSheetState(
+                        () => cfg.timeout = Duration(seconds: v.round()),
+                      ),
+                    ),
+                    Text(
+                      'Max size: ${(cfg.maxBytes / 1024 / 1024).toStringAsFixed(1)} MB',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    Slider(
+                      value: cfg.maxBytes
+                          .clamp(65536, 20 * 1024 * 1024)
+                          .toDouble(),
+                      min: 65536,
+                      max: 20 * 1024 * 1024,
+                      divisions: 19,
+                      label:
+                          '${(cfg.maxBytes / 1024 / 1024).toStringAsFixed(1)} MB',
+                      onChanged: (v) =>
+                          setSheetState(() => cfg.maxBytes = v.round()),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Proxy (http://host:port, blank = none)',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      controller: TextEditingController(text: cfg.proxy ?? ''),
+                      onChanged: (v) => cfg.proxy = v.isEmpty ? null : v,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Headers',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    for (final entry in cfg.headers.entries)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${entry.key}: ${entry.value}',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 16),
+                            onPressed: () => setSheetState(
+                              () => cfg.headers.remove(entry.key),
+                            ),
+                          ),
+                        ],
+                      ),
+                    _HeaderAddRow(
+                      onAdd: (k, v) => setSheetState(() => cfg.headers[k] = v),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Element filter (table, div.class, #id)',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      controller: TextEditingController(
+                        text: cfg.elementFilter,
+                      ),
+                      onChanged: (v) => cfg.elementFilter = v,
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Text filter (regex per line)',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      controller: TextEditingController(text: cfg.textFilter),
+                      onChanged: (v) => cfg.textFilter = v,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(sheetCtx),
+                          child: const Text('Cancel'),
+                        ),
+                        const SizedBox(width: 8),
+                        FilledButton(
+                          onPressed: () {
+                            setState(() => _scraperConfig = cfg);
+                            _saveScraperConfig();
+                            Navigator.pop(sheetCtx);
+                          },
+                          child: const Text('Save'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// Scrape-result tab strip + content with clickable links.
+  Widget _buildScrapeArea(ThemeData theme) {
+    final tab = _scrapeTabs[_activeScrapeTab];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 36,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              for (var i = 0; i < _scrapeTabs.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: InputChip(
+                    label: Text(
+                      Uri.tryParse(_scrapeTabs[i].url)?.host ?? '?',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: i == _activeScrapeTab
+                            ? theme.colorScheme.onPrimaryContainer
+                            : null,
+                      ),
+                    ),
+                    selected: i == _activeScrapeTab,
+                    onSelected: (_) => setState(() => _activeScrapeTab = i),
+                    onDeleted: () => _closeScrapeTab(i),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        Expanded(child: _buildScrapeContent(theme, tab)),
+      ],
+    );
+  }
+
+  Widget _buildScrapeContent(ThemeData theme, _ScrapeTab tab) {
+    final result = tab.result;
+    if (!result.success) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 32),
+            const SizedBox(height: 8),
+            Text('Scrape failed', style: theme.textTheme.titleSmall),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: SelectableText(
+                result.error ?? 'unknown error',
+                style: TextStyle(fontSize: 11, color: theme.colorScheme.error),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // extract links; clicking one scrapes the target into a NEW tab
+    final linkRe = RegExp(
+      r'''<a[^>]*href=["']([^"'#]+)["']''',
+      caseSensitive: false,
+    );
+    final links = <(String, String)>[];
+    for (final m in linkRe.allMatches(result.content)) {
+      final href = m.group(1)!;
+      if (href.startsWith('javascript:') || href.startsWith('mailto:')) {
+        continue;
+      }
+      final absolute = _absoluteUrl(result.url, href);
+      if (absolute == null) continue;
+      if (links.any((l) => l.$1 == absolute)) continue;
+      links.add((absolute, _linkText(result.content, m.end)));
+      if (links.length >= 100) break;
+    }
+
+    final bodyText = result.format == ScraperOutputFormat.html
+        ? ScraperService.htmlToText(result.content)
+        : result.content;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          child: Wrap(
+            spacing: 10,
+            runSpacing: 4,
+            children: [
+              _metaChip(theme, Icons.link, '${links.length} links'),
+              _metaChip(theme, Icons.data_object, result.format.name),
+              _metaChip(
+                theme,
+                Icons.save,
+                '${(result.bytes / 1024).toStringAsFixed(0)} KB',
+              ),
+              _metaChip(theme, Icons.timer, '${result.elapsedMs} ms'),
+              _metaChip(theme, Icons.build, _methodLabel(result.method)),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 3,
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.3,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: SingleChildScrollView(
+                    child: SelectableText(
+                      bodyText,
+                      style: const TextStyle(fontSize: 12, height: 1.5),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 1,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.15),
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: ListView.builder(
+                    itemCount: links.length,
+                    itemBuilder: (context, i) {
+                      final (url, text) = links[i];
+                      return ListTile(
+                        dense: true,
+                        visualDensity: VisualDensity.compact,
+                        title: Text(
+                          text.isEmpty ? url : text,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: theme.colorScheme.primary,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                        onTap: () => _scrapeIntoNewTab(url),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Grab the anchor's inner text (up to the closing tag, tags stripped).
+  static String _linkText(String html, int from) {
+    final end = html.indexOf('</a>', from);
+    if (end < 0) return '';
+    final inner = html.substring(from, end).replaceAll(RegExp(r'<[^>]+>'), '');
+    final t = inner.trim();
+    return t.length > 60 ? '${t.substring(0, 60)}…' : t;
+  }
+
+  Widget _metaChip(ThemeData theme, IconData icon, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 12,
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+        ),
+        const SizedBox(width: 3),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10.5,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+          ),
+        ),
+      ],
+    );
+  }
+
   Future<void> _syncHistoryState() async {
     final controller = _webview;
     if (controller == null || !mounted) return;
@@ -234,6 +756,23 @@ class _BrowserTabState extends State<BrowserTab> {
                 label: Text(l10n?.browserOpen ?? 'Open'),
                 onPressed: _opening ? null : _open,
               ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                icon: _scraping
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.download_for_offline_outlined),
+                label: const Text('Scrape'),
+                onPressed: _scraping ? null : _scrape,
+              ),
+              IconButton(
+                icon: const Icon(Icons.tune),
+                tooltip: 'Scraper settings',
+                onPressed: _showScraperSettings,
+              ),
             ],
           ),
           if (_error != null)
@@ -245,73 +784,95 @@ class _BrowserTabState extends State<BrowserTab> {
               ),
             ),
           const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Wrap(
-              spacing: 8,
-              children: [
-                for (final (label, url) in _quickLinks)
-                  ActionChip(
-                    label: Text(label),
-                    onPressed: () {
-                      _urlCtrl.text = url;
-                      _open();
-                    },
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (_recents.isNotEmpty)
+          // scraped-page tabs: clicking a link inside a scraped page
+          // opens the target as another tab here (issue 3)
+          if (_scrapeTabs.isNotEmpty)
+            Expanded(child: _buildScrapeArea(theme))
+          else ...[
             Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                l10n?.browserRecents ?? 'Recent',
-                style: theme.textTheme.titleSmall,
+              child: Wrap(
+                spacing: 8,
+                children: [
+                  for (final (label, url) in _quickLinks)
+                    ActionChip(
+                      label: Text(label),
+                      onPressed: () {
+                        _urlCtrl.text = url;
+                        _open();
+                      },
+                    ),
+                ],
               ),
             ),
-          Expanded(
-            child: _recents.isEmpty
-                ? Center(
-                    child: Text(
-                      l10n?.browserEmpty ??
-                          'Open a page and it opens in your browser.\n'
-                              'Visited URLs show up here.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.5,
+            const SizedBox(height: 16),
+            if (_recents.isNotEmpty)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  l10n?.browserRecents ?? 'Recent',
+                  style: theme.textTheme.titleSmall,
+                ),
+              ),
+            Expanded(
+              child: _recents.isEmpty
+                  ? Center(
+                      child: Text(
+                        l10n?.browserEmpty ??
+                            'Open a page, or Scrape it into a tab here.\n'
+                                'Visited URLs show up below.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                       ),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: _recents.length,
-                    itemBuilder: (context, i) {
-                      final url = _recents[i];
-                      return ListTile(
-                        dense: true,
-                        leading: const Icon(Icons.history, size: 20),
-                        title: Text(
-                          url,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.close, size: 16),
-                          onPressed: () {
-                            _saveRecents([..._recents]..removeAt(i));
+                    )
+                  : ListView.builder(
+                      itemCount: _recents.length,
+                      itemBuilder: (context, i) {
+                        final url = _recents[i];
+                        return ListTile(
+                          dense: true,
+                          leading: const Icon(Icons.history, size: 20),
+                          title: Text(
+                            url,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.download_for_offline_outlined,
+                                  size: 16,
+                                ),
+                                tooltip: 'Scrape into tab',
+                                onPressed: () {
+                                  _urlCtrl.text = url;
+                                  _scrape();
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close, size: 16),
+                                onPressed: () {
+                                  _saveRecents([..._recents]..removeAt(i));
+                                },
+                              ),
+                            ],
+                          ),
+                          onTap: () {
+                            _urlCtrl.text = url;
+                            _open();
                           },
-                        ),
-                        onTap: () {
-                          _urlCtrl.text = url;
-                          _open();
-                        },
-                      );
-                    },
-                  ),
-          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
         ],
       ),
     );
@@ -431,6 +992,78 @@ class _BrowserTabState extends State<BrowserTab> {
               style: TextStyle(color: theme.colorScheme.error, fontSize: 12),
             ),
           ),
+      ],
+    );
+  }
+}
+
+/// One open scraped page in the scrape-tab strip.
+class _ScrapeTab {
+  final String url;
+  final ScrapeResult result;
+
+  const _ScrapeTab({required this.url, required this.result});
+}
+
+/// One-row key/value editor for adding an HTTP header in the settings
+/// sheet.
+class _HeaderAddRow extends StatefulWidget {
+  final void Function(String key, String value) onAdd;
+
+  const _HeaderAddRow({required this.onAdd});
+
+  @override
+  State<_HeaderAddRow> createState() => _HeaderAddRowState();
+}
+
+class _HeaderAddRowState extends State<_HeaderAddRow> {
+  final _keyCtrl = TextEditingController();
+  final _valueCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _keyCtrl.dispose();
+    _valueCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: _keyCtrl,
+            decoration: const InputDecoration(
+              hintText: 'Header name',
+              border: OutlineInputBorder(),
+              isDense: true,
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: TextField(
+            controller: _valueCtrl,
+            decoration: const InputDecoration(
+              hintText: 'Value',
+              border: OutlineInputBorder(),
+              isDense: true,
+            ),
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.add, size: 18),
+          tooltip: 'Add header',
+          onPressed: () {
+            final k = _keyCtrl.text.trim();
+            final v = _valueCtrl.text.trim();
+            if (k.isEmpty || v.isEmpty) return;
+            widget.onAdd(k, v);
+            _keyCtrl.clear();
+            _valueCtrl.clear();
+          },
+        ),
       ],
     );
   }

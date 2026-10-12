@@ -257,4 +257,8 @@ class _FakeBackend implements YouTubeBackend {
   @override
   Future<List<SubtitleCue>> fetchCaptions(YouTubeCaptionTrack track) async =>
       [];
+
+  @override
+  Future<List<YouTubeSearchHit>> search(String query, {int limit = 10}) async =>
+      const [];
 }

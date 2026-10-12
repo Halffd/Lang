@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:lang/core/services/script_assets.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// How a screenshot was taken.
@@ -536,21 +537,14 @@ class ScreenshotService extends ChangeNotifier {
       // interactive region selection is not supported on windows yet
       return false;
     }
-    final script =
-        '''
-Add-Type -AssemblyName System.Windows.Forms,System.Drawing
-\$b = [System.Windows.Forms.SystemInformation]::VirtualScreen
-\$bmp = New-Object System.Drawing.Bitmap \$b.Width, \$b.Height
-\$g = [System.Drawing.Graphics]::FromImage(\$bmp)
-\$g.CopyFromScreen(\$b.X, \$b.Y, 0, 0, \$bmp.Size)
-\$g.Dispose()
-\$bmp.Save("$path", [System.Drawing.Imaging.ImageFormat]::Png)
-''';
+    final script = await ScriptAssets.load(ScriptAssets.screenshotWindows);
     try {
       final (code, _, _) = await runCommand('powershell', [
         '-NoProfile',
-        '-Command',
+        '-File',
         script,
+        '-Path',
+        path,
       ]);
       return code == 0;
     } catch (_) {

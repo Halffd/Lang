@@ -63,6 +63,41 @@ class YtDlpService implements YouTubeBackend {
     return videoInfoFromJson(json);
   }
 
+  /// Text search via yt-dlp's `ytsearch<N>:<query>` pseudo-URL with
+  /// `--flat-playlist` (metadata only, no per-video extraction, so it
+  /// stays fast). Fails soft: empty list on any problem.
+  @override
+  Future<List<YouTubeSearchHit>> search(String query, {int limit = 10}) async {
+    if (!await isAvailable()) return const [];
+    final q = query.trim();
+    if (q.isEmpty) return const [];
+    try {
+      final result = await _runProcess(_command, [
+        '-J',
+        '--flat-playlist',
+        '--no-warnings',
+        'ytsearch${limit.clamp(1, 20)}:$q',
+      ]).timeout(_timeout);
+      if (result.exitCode != 0) return const [];
+      final decoded = jsonDecode(result.stdout.toString());
+      if (decoded is! Map) return const [];
+      final entries = decoded['entries'];
+      if (entries is! List) return const [];
+      return [
+        for (final e in entries)
+          if (e is Map)
+            YouTubeSearchHit(
+              videoId: (e['id'] ?? '').toString(),
+              title: (e['title'] ?? '').toString(),
+              author: (e['uploader'] ?? e['channel'] ?? '').toString(),
+              duration: (e['duration'] as num?)?.toInt(),
+            ),
+      ].where((h) => h.videoId.isNotEmpty).toList();
+    } on Object {
+      return const [];
+    }
+  }
+
   /// Caption tracks for a video, manual tracks first. yt-dlp accepts a
   /// bare video ID only as a search query, so the watch URL is rebuilt.
   @override

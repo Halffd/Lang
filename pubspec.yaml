@@ -74,10 +74,10 @@ dependencies:
   url_launcher: ^6.3.2
   desktop_webview_window: ^0.3.0
   flutter_html: ^3.0.0-beta.2
-  # In-app browser. No linux implementation exists, so the browser tab falls
-  # back to the system browser on Linux. Pinned: the pub cache in this
-  # environment is read-only, so 6.1.5 is the only version resolvable here.
-  flutter_inappwebview: 6.1.5
+  # In-app browser. 6.2.0-beta.3 is the first release endorsing
+  # flutter_inappwebview_linux (webkit2gtk-4.1, installed 2.54.1 here), so
+  # the browser tab renders an embedded webview on Linux as well.
+  flutter_inappwebview: 6.2.0-beta.3
 
   # Desktop IPC packages (Linux/Windows/macOS)
   tray_manager: ^0.2.3
@@ -116,6 +116,7 @@ flutter:
 
   assets:
     - assets/
+    - assets/scripts/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
