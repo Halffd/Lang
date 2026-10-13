@@ -7,8 +7,10 @@ import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
 import 'package:lang/core/services/popup_dictionary_controller.dart';
+import 'package:lang/core/services/whisper_subs_service.dart';
 import 'package:lang/data/repositories/dictionary_service.dart';
 import 'package:lang/utils/pinyin_util.dart';
+import 'package:lang/core/services/mobile_listening_service.dart';
 import 'package:lang/core/services/youtube_resolver.dart';
 import 'package:lang/core/services/youtube_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
@@ -58,6 +60,14 @@ class _VideoTabState extends State<VideoTab> {
   /// What is currently open: a file path or the canonical YouTube URL.
   String? _currentSource;
 
+  /// Directly playable URL for the current media: local file path or
+  /// the last resolved muxed stream (expires after hours — only good
+  /// for this session). Handed to the mobile listening player.
+  String? _activeStreamUrl;
+
+  /// Mobile listening mode active (background audio, screen off).
+  bool _listeningMode = false;
+
   /// Cumulative time actually spent playing the current video.
   int _watchedMs = 0;
 
@@ -77,6 +87,11 @@ class _VideoTabState extends State<VideoTab> {
     _persistProgress();
     _ticker?.cancel();
     _transcriptScroll.dispose();
+    if (_listeningMode) {
+      // leaving the tab ends the listening session (the notification
+      // goes away with it; a proper background queue is out of scope)
+      unawaited(MobileListeningService.instance.stop());
+    }
     _video?.dispose();
     super.dispose();
   }
@@ -109,6 +124,10 @@ class _VideoTabState extends State<VideoTab> {
     VideoPlayerController controller, {
     Duration resumeAt = Duration.zero,
   }) async {
+    // a new video takes the playhead back from the background player
+    if (_listeningMode) {
+      await _exitListeningMode();
+    }
     await controller.setLooping(false);
     if (!mounted) {
       await controller.dispose();
@@ -173,6 +192,7 @@ class _VideoTabState extends State<VideoTab> {
       setState(() {
         _mediaLabel = name;
         _currentSource = path;
+        _activeStreamUrl = path;
         _watchedMs = 0;
         _youtubeVideoId = null;
         _cues = const [];
@@ -239,6 +259,7 @@ class _VideoTabState extends State<VideoTab> {
       setState(() {
         _mediaLabel = info.displayLabel;
         _currentSource = canonical;
+        _activeStreamUrl = info.best.url;
         _watchedMs = 0;
         _youtubeVideoId = info.videoId;
         _cues = const [];
@@ -639,6 +660,66 @@ class _VideoTabState extends State<VideoTab> {
     return cues.isNotEmpty;
   }
 
+  /// Ask the configured whisper-subs server to transcribe the loaded
+  /// YouTube video and use the produced SRT as the subtitle track —
+  /// the same API the WhisperSubs Android app talks to. Only offered for
+  /// YouTube sources: the server downloads the video with yt-dlp, and it
+  /// cannot see files picked on this device.
+  Future<void> _transcribeWithServer() async {
+    if (_loading || _currentSource == null) return;
+    final appState = context.read<AppState>();
+    final url = appState.whisperSubsUrl.trim();
+    if (url.isEmpty) {
+      setState(
+        () => _error = 'Set the WhisperSubs server URL in Settings first.',
+      );
+      return;
+    }
+    final service = WhisperSubsService(
+      baseUrl: url,
+      apiKey: appState.whisperSubsApiKey,
+    );
+    final status = ValueNotifier<String>('submitting…');
+    final dialog = showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => ValueListenableBuilder<String>(
+        valueListenable: status,
+        builder: (ctx, line, _) => AlertDialog(
+          title: const Text('WhisperSubs'),
+          content: Row(
+            children: [
+              const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2.5),
+              ),
+              const SizedBox(width: 16),
+              Expanded(child: Text(line)),
+            ],
+          ),
+        ),
+      ),
+    );
+    try {
+      final srt = await service.transcribeForSrt(
+        _currentSource!,
+        onStatus: (line) => status.value = line,
+      );
+      final cues = SubtitleParser.parseSrt(srt);
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      _applySubtitleCues(cues, 'WhisperSubs');
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      setState(() => _error = 'WhisperSubs: $e');
+    } finally {
+      status.dispose();
+      dialog.ignore();
+    }
+  }
+
   /// Load one of the YouTube video's own caption tracks as the subtitle
   /// source. Only offered for YouTube media.
   Future<void> _pickCaptions() async {
@@ -707,9 +788,16 @@ class _VideoTabState extends State<VideoTab> {
 
   /// The playhead position the transcript should match: the video position
   /// shifted by the persisted subtitle delay (positive = subs later).
-  Duration _subtitlePosition(AppState appState) =>
-      _video!.value.position -
-      Duration(milliseconds: appState.videoSubtitleOffsetMs);
+  Duration _subtitlePosition(AppState appState) {
+    // listening mode: the background audio owns the playhead (the video
+    // is paused underneath)
+    if (_listeningMode) {
+      return MobileListeningService.instance.lastPosition -
+          Duration(milliseconds: appState.videoSubtitleOffsetMs);
+    }
+    return _video!.value.position -
+        Duration(milliseconds: appState.videoSubtitleOffsetMs);
+  }
 
   /// Poll the playhead for the active cue. video_player has no cue-change
   /// callback, and a listener per frame is wasteful for a list that only
@@ -721,6 +809,30 @@ class _VideoTabState extends State<VideoTab> {
     _ticker = Timer.periodic(const Duration(milliseconds: 200), (_) {
       final v = _video;
       if (v == null || !v.value.isInitialized || !mounted) return;
+      if (_listeningMode) {
+        // audio owns the playhead; accrue watch time from the audio
+        // position delta and keep the transcript tracking
+        final listening = MobileListeningService.instance;
+        final audioPos = listening.lastPosition;
+        _watchedMs += 200;
+        _ticksSincePersist++;
+        if (_ticksSincePersist >= 25) {
+          _ticksSincePersist = 0;
+          _persistProgress();
+        }
+        final idx = SubtitleParser.indexAtOrBefore(
+          _cues,
+          audioPos -
+              Duration(
+                milliseconds: context.read<AppState>().videoSubtitleOffsetMs,
+              ),
+        );
+        if (idx == _activeIndex) return;
+        final wasHidden = _activeIndex < 0 && idx >= 0;
+        setState(() => _activeIndex = idx);
+        if (wasHidden) _scrollTranscriptTo(idx);
+        return;
+      }
       if (v.value.isPlaying) {
         _watchedMs += 200;
         _ticksSincePersist++;
@@ -738,6 +850,51 @@ class _VideoTabState extends State<VideoTab> {
       setState(() => _activeIndex = idx);
       if (wasHidden) _scrollTranscriptTo(idx);
     });
+  }
+
+  // ------------------------------------------------------------
+  // mobile listening mode (background audio, screen off)
+  // ------------------------------------------------------------
+
+  /// Enter listening mode: hand the current media to the background
+  /// player at the video's current position, pause the video. The
+  /// transcript ticker keeps tracking via the audio position.
+  Future<void> _enterListeningMode() async {
+    final url = _activeStreamUrl;
+    if (url == null || !MobileListeningService.isSupported) return;
+    final video = _video;
+    final videoPos = video?.value.position ?? Duration.zero;
+    final listening = MobileListeningService.instance;
+    await listening.start(
+      url: url,
+      videoPosition: videoPos,
+      title: _mediaLabel,
+    );
+    await video?.pause();
+    if (mounted) setState(() => _listeningMode = true);
+  }
+
+  /// Leave listening mode: resume the video at the audio's last
+  /// position.
+  Future<void> _exitListeningMode() async {
+    final listening = MobileListeningService.instance;
+    final resumeAt = await listening.stop();
+    final video = _video;
+    if (video != null) {
+      await video.seekTo(resumeAt);
+      await video.play();
+    }
+    if (mounted) setState(() => _listeningMode = false);
+  }
+
+  /// Toggle listening mode; a no-op on desktop.
+  Future<void> _toggleListeningMode() async {
+    if (!MobileListeningService.isSupported) return;
+    if (_listeningMode) {
+      await _exitListeningMode();
+    } else {
+      await _enterListeningMode();
+    }
   }
 
   void _scrollTranscriptTo(int index) {
@@ -931,12 +1088,34 @@ class _VideoTabState extends State<VideoTab> {
                 tooltip: l10n?.videoRecent ?? 'Recent',
                 onPressed: _loading ? null : _showRecentVideos,
               ),
-              if (_youtubeVideoId != null)
+              // mobile listening mode: background audio, screen off
+              if (MobileListeningService.isSupported &&
+                  _activeStreamUrl != null)
+                IconButton(
+                  icon: Icon(
+                    _listeningMode
+                        ? Icons.headphones
+                        : Icons.headphones_outlined,
+                    size: 18,
+                    color: _listeningMode ? theme.colorScheme.primary : null,
+                  ),
+                  tooltip: _listeningMode
+                      ? 'Leave listening mode (back to video)'
+                      : 'Listening mode (audio only, screen off)',
+                  onPressed: _toggleListeningMode,
+                ),
+              if (_youtubeVideoId != null) ...[
                 TextButton.icon(
                   icon: const Icon(Icons.closed_caption, size: 18),
                   label: Text(l10n?.videoCaptions ?? 'Captions'),
                   onPressed: _loading ? null : _pickCaptions,
                 ),
+                TextButton.icon(
+                  icon: const Icon(Icons.graphic_eq, size: 18),
+                  label: const Text('WhisperSubs'),
+                  onPressed: _loading ? null : _transcribeWithServer,
+                ),
+              ],
             ],
           ),
         ),

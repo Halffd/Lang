@@ -90,6 +90,10 @@ class AppState extends ChangeNotifier {
   String _ankiConnectModel = 'Basic';
   bool _ankiSyncOnSave = false;
 
+  // WhisperSubs transcription server (video tab "WhisperSubs" action)
+  String _whisperSubsUrl = '';
+  String _whisperSubsApiKey = '';
+
   /// The device locale's language component, read from the platform
   /// dispatcher. Only used for the very first launch, when no stored
   /// preference exists yet — the user can change it in settings afterwards
@@ -150,6 +154,8 @@ class AppState extends ChangeNotifier {
   List<String> get favoriteWords => _favoriteWords;
   List<String> get ankiWords => _ankiWords;
   String get ankiConnectUrl => _ankiConnectUrl;
+  String get whisperSubsUrl => _whisperSubsUrl;
+  String get whisperSubsApiKey => _whisperSubsApiKey;
   bool get ankiConnectEnabled => _ankiConnectEnabled;
   String get ankiConnectModel => _ankiConnectModel;
   bool get ankiSyncOnSave => _ankiSyncOnSave;
@@ -512,6 +518,18 @@ class AppState extends ChangeNotifier {
   void setAnkiConnectUrl(String value) {
     _ankiConnectUrl = value;
     _storageService.setString('anki_connect_url', value);
+    notifyListeners();
+  }
+
+  void setWhisperSubsUrl(String value) {
+    _whisperSubsUrl = value;
+    _storageService.setString('whisper_subs_url', value);
+    notifyListeners();
+  }
+
+  void setWhisperSubsApiKey(String value) {
+    _whisperSubsApiKey = value;
+    _storageService.setString('whisper_subs_api_key', value);
     notifyListeners();
   }
 
@@ -1169,6 +1187,9 @@ class AppState extends ChangeNotifier {
       _ankiConnectUrl =
           _storageService.getStringSync('anki_connect_url') ??
           'http://127.0.0.1:8765';
+      _whisperSubsUrl = _storageService.getStringSync('whisper_subs_url') ?? '';
+      _whisperSubsApiKey =
+          _storageService.getStringSync('whisper_subs_api_key') ?? '';
       _ankiConnectEnabled =
           _storageService.getBool('anki_connect_enabled') ?? false;
       _ankiConnectModel =
@@ -1330,6 +1351,8 @@ class AppState extends ChangeNotifier {
       _currentAnkiDeck = 'Default';
       _ankiConnectUrl = 'http://127.0.0.1:8765';
       _ankiConnectEnabled = false;
+      _whisperSubsUrl = '';
+      _whisperSubsApiKey = '';
       _ankiConnectModel = 'Basic';
       _ankiSyncOnSave = false;
       _profiles = ['Default'];

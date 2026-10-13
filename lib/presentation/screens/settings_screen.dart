@@ -3,6 +3,7 @@ import 'package:lang/presentation/widgets/user_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lang/data/services/anki_connect_service.dart';
+import 'package:lang/core/services/whisper_subs_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/domain/entities/font_zoom.dart';
 import 'package:lang/domain/entities/translation_model.dart';
@@ -1174,6 +1175,106 @@ class SettingsScreen extends StatelessWidget {
                       dense: true,
                     ),
                   ],
+                ],
+              ),
+            ),
+          ),
+
+          // WhisperSubs transcription server (video tab)
+          Card(
+            elevation: 1,
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'WhisperSubs',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'On-demand subtitles for the video tab: the server '
+                    'transcribes the loaded YouTube video and the SRT '
+                    'becomes a subtitle track.',
+                    style: TextStyle(
+                      fontSize: fs(context, 12),
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Server URL',
+                    style: TextStyle(fontSize: fs(context, 13)),
+                  ),
+                  const SizedBox(height: 4),
+                  TextField(
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'http://192.168.1.10:8000',
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      isDense: true,
+                    ),
+                    controller: TextEditingController(
+                      text: appState.whisperSubsUrl,
+                    ),
+                    onChanged: (v) => appState.setWhisperSubsUrl(v),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('API key', style: TextStyle(fontSize: fs(context, 13))),
+                  const SizedBox(height: 4),
+                  TextField(
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'created on the server: POST /auth/api-keys',
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      isDense: true,
+                    ),
+                    obscureText: true,
+                    controller: TextEditingController(
+                      text: appState.whisperSubsApiKey,
+                    ),
+                    onChanged: (v) => appState.setWhisperSubsApiKey(v),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final service = WhisperSubsService(
+                        baseUrl: appState.whisperSubsUrl,
+                        apiKey: appState.whisperSubsApiKey,
+                      );
+                      try {
+                        final me = await service.authMe();
+                        final name = me['username'] ?? '?';
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Connected as $name'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('$e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.wifi_find, size: 18),
+                    label: const Text('Test Connection'),
+                  ),
                 ],
               ),
             ),
