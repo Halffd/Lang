@@ -160,8 +160,9 @@ class SettingsScreen extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
                   child: Text(
-                    'Applies to clipboard manager, history, saved words and '
-                    'the screenshot registry. Existing data imports '
+                    'Applies to the clipboard and screenshot managers '
+                    '(including image payloads: SQLite BLOBs vs files on '
+                    'disk), history and saved words. Existing data imports '
                     'automatically on next start; dictionary databases are '
                     'always SQLite.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(

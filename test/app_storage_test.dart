@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lang/core/services/app_storage.dart';
@@ -167,5 +168,56 @@ void main() {
       AppStorage.resetForTest();
       expect(AppStorage.kind, StorageBackendKind.sqlite);
     });
+
+    test(
+      'writeMedia/readMedia/deleteMedia roundtrip (files backend)',
+      () async {
+        AppStorage.resetForTest();
+        final temp = await Directory.systemTemp.createTemp('media_files_test');
+        addTearDown(() => temp.delete(recursive: true));
+        await AppStorage.init(StorageBackendKind.files, filesBaseDir: temp);
+        addTearDown(AppStorage.resetForTest);
+
+        final bytes = Uint8List.fromList([1, 2, 3, 4, 5]);
+        final ref = await AppStorage.writeMedia(bytes);
+        expect(MediaRef.isFile(ref), isTrue);
+
+        final out = await AppStorage.readMedia(ref);
+        expect(out, bytes);
+
+        await AppStorage.deleteMedia(ref);
+        expect(await AppStorage.readMedia(ref), isNull);
+      },
+    );
+
+    test(
+      'writeMedia/readMedia/deleteMedia roundtrip (sqlite backend)',
+      () async {
+        AppStorage.resetForTest();
+        final temp = await Directory.systemTemp.createTemp('media_sql_test');
+        addTearDown(() => temp.delete(recursive: true));
+
+        final db = await databaseFactory.openDatabase('${temp.path}/m.db');
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS media (
+              id TEXT PRIMARY KEY,
+              data BLOB NOT NULL,
+              updated_at INTEGER NOT NULL
+            )
+          ''');
+        await AppStorage.init(StorageBackendKind.sqlite, sqliteDb: db);
+        addTearDown(AppStorage.resetForTest);
+
+        final bytes = Uint8List.fromList([7, 8, 9]);
+        final ref = await AppStorage.writeMedia(bytes);
+        expect(MediaRef.isBlob(ref), isTrue);
+
+        final out = await AppStorage.readMedia(ref);
+        expect(out, bytes);
+
+        await AppStorage.deleteMedia(ref);
+        expect(await AppStorage.readMedia(ref), isNull);
+      },
+    );
   });
 }

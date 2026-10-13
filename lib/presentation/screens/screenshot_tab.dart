@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 
+import 'package:lang/core/services/app_storage.dart';
 import 'package:lang/core/services/screenshot_service.dart';
 import 'package:lang/core/services/popup_dictionary_controller.dart';
 import 'package:lang/data/datasources/local_translation_service.dart';
@@ -541,14 +542,10 @@ class _ScreenshotTabState extends State<ScreenshotTab> {
           // cacheWidth decodes at thumbnail size: a 4K screenshot decoded
           // at full resolution is ~33 MB of pixels; at 320px it is ~0.4 MB.
           // Without this, a grid of screenshots consumes GBs of RAM.
-          child: Image.file(
-            File(item.path),
+          child: ScreenshotRefImage(
+            ref: item.path,
             fit: BoxFit.cover,
             cacheWidth: 320,
-            errorBuilder: (_, _, _) => const ColoredBox(
-              color: Colors.black12,
-              child: Center(child: Icon(Icons.broken_image)),
-            ),
           ),
         );
       },
@@ -588,7 +585,9 @@ class _ScreenshotTabState extends State<ScreenshotTab> {
       onCaptured: (item) async {
         // auto captures follow the same options as manual ones
         if (appState.screenshotAutoOcr) {
-          final text = await _runOcr(item.path);
+          final ocrPath =
+              await widget.service?.materializePath(item) ?? item.path;
+          final text = await _runOcr(ocrPath);
           if (text != null && text.trim().isNotEmpty) {
             _service.setOcrText(item.id, text.trim());
             await _ocrAutoPopup(text);
@@ -628,12 +627,7 @@ class _ItemSheet extends StatelessWidget {
         children: [
           AspectRatio(
             aspectRatio: 16 / 9,
-            child: Image.file(
-              File(item.path),
-              fit: BoxFit.contain,
-              errorBuilder: (_, _, _) =>
-                  const Center(child: Icon(Icons.broken_image, size: 48)),
-            ),
+            child: ScreenshotRefImage(ref: item.path, fit: BoxFit.contain),
           ),
           Padding(
             padding: const EdgeInsets.all(12),
@@ -681,6 +675,59 @@ class _ItemSheet extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Renders a screenshot image from a storage ref — file path or SQLite
+/// blob — via [AppStorage.readMedia]. Decode size is capped so grids do
+/// not blow up RAM.
+class ScreenshotRefImage extends StatelessWidget {
+  final String ref;
+  final BoxFit fit;
+  final int? cacheWidth;
+
+  const ScreenshotRefImage({
+    super.key,
+    required this.ref,
+    this.fit = BoxFit.cover,
+    this.cacheWidth,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Uint8List?>(
+      future: AppStorage.readMedia(ref),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const ColoredBox(
+            color: Colors.black12,
+            child: Center(
+              child: SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          );
+        }
+        final bytes = snapshot.data;
+        if (bytes == null) {
+          return const ColoredBox(
+            color: Colors.black12,
+            child: Center(child: Icon(Icons.broken_image)),
+          );
+        }
+        return Image.memory(
+          bytes,
+          fit: fit,
+          cacheWidth: cacheWidth,
+          errorBuilder: (_, _, _) => const ColoredBox(
+            color: Colors.black12,
+            child: Center(child: Icon(Icons.broken_image)),
+          ),
+        );
+      },
     );
   }
 }

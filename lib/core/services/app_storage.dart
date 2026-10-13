@@ -113,6 +113,13 @@ class SqliteKvStorage implements KvStorage {
             updated_at INTEGER NOT NULL
           )
         ''');
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS media (
+            id TEXT PRIMARY KEY,
+            data BLOB NOT NULL,
+            updated_at INTEGER NOT NULL
+          )
+        ''');
       },
       onConfigure: (db) async {
         await db.execute('PRAGMA journal_mode = WAL');
@@ -173,12 +180,15 @@ class AppStorage {
   static Future<void> init(
     StorageBackendKind kind, {
     Directory? filesBaseDir,
+    Database? sqliteDb,
   }) async {
     _kind = kind;
     if (_backend != null) return;
     if (kind == StorageBackendKind.sqlite) {
       try {
-        _backend = await SqliteKvStorage.create();
+        _backend = sqliteDb != null
+            ? SqliteKvStorage.forDb(sqliteDb)
+            : await SqliteKvStorage.create();
         return;
       } catch (e) {
         debugPrint(
@@ -256,6 +266,103 @@ class AppStorage {
     _migrated.clear();
   }
 
+  // ----------------------------------------------------------
+  // media (image bytes)
+  //
+  // Binary payloads follow the active backend: SQLite stores them in a
+  // `media` BLOB table; the files backend writes into
+  // `lang_storage/media/`. References are self-describing (`db:<id>` /
+  // `file:<path>`) so entries created under one backend stay readable
+  // after switching.
+  // ----------------------------------------------------------
+
+  static const String _blobPrefix = 'db:';
+  static const String _filePrefix = 'file:';
+
+  static int _mediaSeq = 0;
+
+  /// Store [bytes]; returns an opaque ref for [readMedia]/[deleteMedia].
+  static Future<String> writeMedia(Uint8List bytes) async {
+    if (kind == StorageBackendKind.sqlite && _backend is SqliteKvStorage) {
+      final id =
+          'm_${DateTime.now().millisecondsSinceEpoch}_'
+          '${bytes.length}_${_mediaSeq++}';
+      final db = (_backend as SqliteKvStorage)._db;
+      await db.insert('media', {
+        'id': id,
+        'data': bytes,
+        'updated_at': DateTime.now().millisecondsSinceEpoch,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      return '$_blobPrefix$id';
+    }
+    final dir = await _mediaDir();
+    final name =
+        'img_${DateTime.now().millisecondsSinceEpoch}_${_mediaSeq++}.png';
+    final f = File(p.join(dir.path, name));
+    await f.writeAsBytes(bytes, flush: true);
+    return '$_filePrefix${f.path}';
+  }
+
+  static Future<Directory> _mediaDir() async {
+    if (_backend is FileKvStorage) {
+      return Directory(p.join((_backend as FileKvStorage)._base.path, 'media'))
+        ..createSync(recursive: true);
+    }
+    final support = await getApplicationSupportDirectory();
+    return Directory(p.join(support.path, 'lang_storage_media'))
+      ..createSync(recursive: true);
+  }
+
+  /// Read bytes for a media ref (null when missing/unreadable).
+  static Future<Uint8List?> readMedia(String ref) async {
+    try {
+      if (ref.startsWith(_blobPrefix)) {
+        if (_backend is! SqliteKvStorage) return null;
+        final id = ref.substring(_blobPrefix.length);
+        final db = (_backend as SqliteKvStorage)._db;
+        final rows = await db.query(
+          'media',
+          columns: ['data'],
+          where: 'id = ?',
+          whereArgs: [id],
+          limit: 1,
+        );
+        if (rows.isEmpty) return null;
+        final data = rows.first['data'];
+        if (data is Uint8List) return data;
+        if (data is List<int>) return Uint8List.fromList(data);
+        return null;
+      }
+      final path = ref.startsWith(_filePrefix)
+          ? ref.substring(_filePrefix.length)
+          : ref;
+      final f = File(path);
+      if (!f.existsSync()) return null;
+      return await f.readAsBytes();
+    } catch (e) {
+      debugPrint('AppStorage.readMedia failed: $e');
+      return null;
+    }
+  }
+
+  /// Delete the payload behind [ref]; missing payloads are ignored.
+  static Future<void> deleteMedia(String ref) async {
+    try {
+      if (ref.startsWith(_blobPrefix)) {
+        if (_backend is! SqliteKvStorage) return;
+        final id = ref.substring(_blobPrefix.length);
+        final db = (_backend as SqliteKvStorage)._db;
+        await db.delete('media', where: 'id = ?', whereArgs: [id]);
+        return;
+      }
+      final path = ref.startsWith(_filePrefix)
+          ? ref.substring(_filePrefix.length)
+          : ref;
+      final f = File(path);
+      if (f.existsSync()) f.deleteSync();
+    } catch (_) {}
+  }
+
   /// Export every stored document (both backends) as a JSON map — used
   /// by the backup service and by backend switching.
   static Future<Map<String, String>> exportAll() async {
@@ -305,4 +412,13 @@ class InMemoryKvStorage implements KvStorage {
 
   @override
   Future<void> delete(String key) async => _data.remove(key);
+}
+
+/// Typed media ref helpers so call sites do not parse prefixes.
+class MediaRef {
+  /// True when [ref] points at SQLite blob storage.
+  static bool isBlob(String ref) => ref.startsWith('db:');
+
+  /// True when [ref] points at a file on disk (or a legacy bare path).
+  static bool isFile(String ref) => !isBlob(ref);
 }

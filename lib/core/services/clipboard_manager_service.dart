@@ -1,10 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:lang/core/services/app_storage.dart';
-import 'package:path_provider/path_provider.dart';
 
 /// One clipboard-manager entry: text or image, plus metadata.
 class ClipboardItem {
@@ -147,7 +145,6 @@ class ClipboardManagerService extends ChangeNotifier {
   List<ClipboardItem> _items = [];
   ClipboardPollingConfig _config = const ClipboardPollingConfig();
   bool _loaded = false;
-  Directory? _imageDir;
 
   List<ClipboardItem> get items => List.unmodifiable(_items);
   ClipboardPollingConfig get config => _config;
@@ -158,14 +155,6 @@ class ClipboardManagerService extends ChangeNotifier {
     final pinned = _items.where((i) => i.pinned).toList();
     final rest = _items.where((i) => !i.pinned).toList();
     return [...pinned, ...rest];
-  }
-
-  Future<Directory> _imagesDir() async {
-    if (_imageDir != null) return _imageDir!;
-    final base = await getApplicationSupportDirectory();
-    _imageDir = Directory('${base.path}/clipboard_images')
-      ..createSync(recursive: true);
-    return _imageDir!;
   }
 
   Future<void> load() async {
@@ -258,8 +247,10 @@ class ClipboardManagerService extends ChangeNotifier {
     return item;
   }
 
-  /// Add an image entry; bytes are written to the image dir. Oversized
-  /// payloads beyond [config.maxItemBytes] are rejected (return null).
+  /// Add an image entry; bytes go through [AppStorage.writeMedia] — a
+  /// SQLite BLOB row or a file under lang_storage/media depending on the
+  /// storage backend. Oversized payloads beyond [config.maxItemBytes]
+  /// are rejected (return null).
   Future<ClipboardItem?> addImage(
     Uint8List bytes, {
     String source = 'monitor',
@@ -267,14 +258,11 @@ class ClipboardManagerService extends ChangeNotifier {
   }) async {
     await load();
     if (bytes.length > _config.maxItemBytes) return null;
-    final dir = await _imagesDir();
+    final ref = await AppStorage.writeMedia(bytes);
     final now = DateTime.now();
-    final path =
-        '${dir.path}/img_${now.millisecondsSinceEpoch}.${extension.isEmpty ? 'png' : extension}';
-    await File(path).writeAsBytes(bytes);
     final item = ClipboardItem(
       id: 'cbi_${now.millisecondsSinceEpoch}_${_items.length}',
-      imagePath: path,
+      imagePath: ref,
       timestamp: now.millisecondsSinceEpoch,
       source: source,
     );
@@ -285,6 +273,13 @@ class ClipboardManagerService extends ChangeNotifier {
     return item;
   }
 
+  /// Bytes for an image entry (null when missing/unreadable).
+  Future<Uint8List?> readImageBytes(ClipboardItem item) async {
+    final ref = item.imagePath;
+    if (ref == null) return null;
+    return AppStorage.readMedia(ref);
+  }
+
   Future<void> _enforceLimit() async {
     // drop oldest unpinned beyond maxItems; delete orphaned image files
     while (_items.length > _config.maxItems) {
@@ -292,10 +287,7 @@ class ClipboardManagerService extends ChangeNotifier {
       if (idx < 0) break;
       final removed = _items.removeAt(idx);
       if (removed.imagePath != null) {
-        try {
-          final f = File(removed.imagePath!);
-          if (f.existsSync()) f.deleteSync();
-        } catch (_) {}
+        await AppStorage.deleteMedia(removed.imagePath!);
       }
     }
   }
@@ -316,8 +308,9 @@ class ClipboardManagerService extends ChangeNotifier {
       return true;
     }
     if (item.isImage && copyImageBytes != null) {
+      final bytes = await readImageBytes(item);
+      if (bytes == null) return false;
       try {
-        final bytes = await File(item.imagePath!).readAsBytes();
         await copyImageBytes(bytes);
         return true;
       } catch (_) {
@@ -344,10 +337,7 @@ class ClipboardManagerService extends ChangeNotifier {
     if (idx < 0) return;
     final removed = _items.removeAt(idx);
     if (removed.imagePath != null) {
-      try {
-        final f = File(removed.imagePath!);
-        if (f.existsSync()) f.deleteSync();
-      } catch (_) {}
+      await AppStorage.deleteMedia(removed.imagePath!);
     }
     await _persist();
     notifyListeners();
@@ -360,10 +350,7 @@ class ClipboardManagerService extends ChangeNotifier {
     _items.removeWhere((i) => !i.pinned);
     for (final r in removed) {
       if (r.imagePath != null) {
-        try {
-          final f = File(r.imagePath!);
-          if (f.existsSync()) f.deleteSync();
-        } catch (_) {}
+        await AppStorage.deleteMedia(r.imagePath!);
       }
     }
     await _persist();

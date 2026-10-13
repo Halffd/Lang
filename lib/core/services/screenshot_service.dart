@@ -276,9 +276,27 @@ class ScreenshotService extends ChangeNotifier {
       geometry = await _lastRegionGeometry();
     }
 
+    // image payload follows the storage backend: SQLite stores the PNG
+    // as a BLOB ref (temp capture file removed), the files backend keeps
+    // the file on disk. readMedia understands both ref forms and bare
+    // legacy paths.
+    var storedPath = path;
+    if (AppStorage.kind == StorageBackendKind.sqlite) {
+      try {
+        final bytes = await File(path).readAsBytes();
+        storedPath = await AppStorage.writeMedia(bytes);
+        final tmp = File(path);
+        if (tmp.existsSync() && path.contains(Directory.systemTemp.path)) {
+          tmp.deleteSync();
+        }
+      } catch (e) {
+        debugPrint('ScreenshotService: blob store failed, keeping file: $e');
+      }
+    }
+
     final item = ScreenshotItem(
       id: id,
-      path: path,
+      path: storedPath,
       kind: kind,
       timestamp: now.millisecondsSinceEpoch,
       geometry: geometry,
@@ -662,12 +680,16 @@ class ScreenshotService extends ChangeNotifier {
     final item = await capture(kind, monitor: monitor);
     if (item == null) return null;
 
-    if (copyImage && copyImageRunner != null) {
-      await copyImageRunner(item.path);
+    // runners take a file path; blob-stored payloads materialize to a
+    // temp png for the duration of the call
+    final toolPath = await materializePath(item);
+
+    if (copyImage && copyImageRunner != null && toolPath != null) {
+      await copyImageRunner(toolPath);
     }
 
-    if (autoOcr && ocrRunner != null) {
-      var text = await ocrRunner(item.path);
+    if (autoOcr && ocrRunner != null && toolPath != null) {
+      var text = await ocrRunner(toolPath);
       var trimmed = text?.trim() ?? '';
       if (trimmed.isNotEmpty) {
         if (autoTranslate && translateRunner != null) {
@@ -726,10 +748,7 @@ class ScreenshotService extends ChangeNotifier {
     final item = _items.where((i) => i.id == id).firstOrNull;
     _items.removeWhere((i) => i.id == id);
     if (item != null) {
-      try {
-        final f = File(item.path);
-        if (f.existsSync()) f.deleteSync();
-      } catch (_) {}
+      unawaited(AppStorage.deleteMedia(item.path));
     }
     notifyListeners();
     _persist();
@@ -737,14 +756,24 @@ class ScreenshotService extends ChangeNotifier {
 
   void clear() {
     for (final item in _items) {
-      try {
-        final f = File(item.path);
-        if (f.existsSync()) f.deleteSync();
-      } catch (_) {}
+      unawaited(AppStorage.deleteMedia(item.path));
     }
     _items = [];
     notifyListeners();
     _persist();
+  }
+
+  /// Materialize [item]'s image as a real file path for tools that need
+  /// one (OCR runners, external copy helpers). Blob refs are written to
+  /// a temp png; file refs return their path unchanged.
+  Future<String?> materializePath(ScreenshotItem item) async {
+    if (MediaRef.isFile(item.path)) return item.path;
+    final bytes = await AppStorage.readMedia(item.path);
+    if (bytes == null) return null;
+    final dir = await Directory.systemTemp.createTemp('shot_ref');
+    final f = File('${dir.path}/${item.id}.png');
+    await f.writeAsBytes(bytes, flush: true);
+    return f.path;
   }
 
   /// Monitor count for the settings UI.
@@ -777,14 +806,10 @@ class ScreenshotService extends ChangeNotifier {
     return 1;
   }
 
-  /// Raw image bytes of a stored screenshot.
+  /// Raw image bytes of a stored screenshot (blob or file ref).
   Future<Uint8List?> readImage(String id) async {
     final item = _items.where((i) => i.id == id).firstOrNull;
     if (item == null) return null;
-    try {
-      return await File(item.path).readAsBytes();
-    } catch (_) {
-      return null;
-    }
+    return AppStorage.readMedia(item.path);
   }
 }
