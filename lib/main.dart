@@ -15,6 +15,7 @@ import 'utils/japanese_grammar.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'core/services/app_storage.dart';
 import 'core/services/clipboard_manager_service.dart';
+import 'core/services/mobile_listening_service.dart';
 import 'presentation/screens/clipboard_manager_screen.dart';
 import 'core/services/clipboard_monitor_service.dart';
 import 'core/services/history_service.dart';
@@ -70,6 +71,11 @@ void main() async {
   // engine as its backend so the player tab plays on Linux and Windows.
   if (!kIsWeb && (Platform.isLinux || Platform.isWindows)) {
     fvp.registerWith();
+  }
+  // mobile listening mode: background-audio stack for the video tab
+  // (media notification, screen-off playback)
+  if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+    await MobileListeningService.instance.init();
   }
 
   if (!kIsWeb && (Platform.isLinux || Platform.isMacOS || Platform.isWindows)) {
