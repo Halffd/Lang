@@ -281,7 +281,7 @@ class ScreenshotService extends ChangeNotifier {
     // the file on disk. readMedia understands both ref forms and bare
     // legacy paths.
     var storedPath = path;
-    if (AppStorage.kind == StorageBackendKind.sqlite) {
+    if (AppStorage.isSqliteBackend) {
       try {
         final bytes = await File(path).readAsBytes();
         storedPath = await AppStorage.writeMedia(bytes);

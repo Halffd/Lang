@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lang/core/services/app_storage.dart';
 import 'package:lang/core/services/history_service.dart';
 
 void main() {
@@ -59,9 +60,11 @@ void main() {
       expect(service.items.first.title, 'example.com');
       expect(service.items.last.title, '猫');
 
-      // persisted: fresh instance reads same storage
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('activity_history'), isNotNull);
+      // persisted: fresh instance reads same storage (AppStorage backend —
+      // SQLite or local files per the storage setting; the legacy
+      // SharedPreferences key is only a migration source)
+      final stored = await AppStorage.instance.read('activity_history');
+      expect(stored, isNotNull);
     });
 
     test('record same category idempotent ids do not collapse', () async {

@@ -82,11 +82,15 @@ class HistoryService extends ChangeNotifier {
   bool get isLoaded => _loaded;
 
   /// Drop cached state so the next [load] re-reads storage.
+  /// Also resets the AppStorage layer: its in-memory fallback (used when
+  /// init has not run, as in most test suites) would otherwise leak this
+  /// singleton's entries across tests that mock SharedPreferences fresh.
   /// Only for tests.
   @visibleForTesting
   void resetForTest() {
     _items = [];
     _loaded = false;
+    AppStorage.resetForTest();
   }
 
   /// Load persisted history. Safe to call multiple times.

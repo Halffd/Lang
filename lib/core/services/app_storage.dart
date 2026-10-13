@@ -219,6 +219,12 @@ class AppStorage {
     return StorageBackendKind.sqlite;
   }
 
+  /// True only when the active backend is the real SQLite store. Callers
+  /// deciding between blob and file payloads must check this, not
+  /// [kind]: [kind] reports the configured intent, which can differ from
+  /// the active backend after a fallback (or before init in tests).
+  static bool get isSqliteBackend => _backend is SqliteKvStorage;
+
   /// Read [key] with one-time import from the legacy SharedPreferences
   /// payload [legacyPrefsKey] when the backend has no value yet.
   static Future<String?> readWithMigration(
@@ -283,7 +289,7 @@ class AppStorage {
 
   /// Store [bytes]; returns an opaque ref for [readMedia]/[deleteMedia].
   static Future<String> writeMedia(Uint8List bytes) async {
-    if (kind == StorageBackendKind.sqlite && _backend is SqliteKvStorage) {
+    if (isSqliteBackend) {
       final id =
           'm_${DateTime.now().millisecondsSinceEpoch}_'
           '${bytes.length}_${_mediaSeq++}';
@@ -308,9 +314,9 @@ class AppStorage {
       return Directory(p.join((_backend as FileKvStorage)._base.path, 'media'))
         ..createSync(recursive: true);
     }
-    final support = await getApplicationSupportDirectory();
-    return Directory(p.join(support.path, 'lang_storage_media'))
-      ..createSync(recursive: true);
+    // in-memory fallback backend: park payloads in the system temp dir
+    // (no path_provider channel available there)
+    return Directory.systemTemp.createTemp('lang_media_fallback');
   }
 
   /// Read bytes for a media ref (null when missing/unreadable).
