@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'clip_cmd.dart';
+
 Future<void> main(List<String> args) async {
   if (args.isEmpty) {
     printUsage();
@@ -14,6 +16,9 @@ Future<void> main(List<String> args) async {
       break;
     case 'search':
       await handleSearch(args.sublist(1));
+      break;
+    case 'clip':
+      await handleClip(args.sublist(1));
       break;
     case 'help':
       printUsage();
@@ -33,6 +38,7 @@ Usage:
   lang <command> [options]
 
 Commands:
+  clip <subcommand>          Clipboard manager explorer (see: lang clip help)
   translate <text>           Translate text
     --from=<lang>            Source language (default: auto)
     --to=<lang>              Target language (default: en)
