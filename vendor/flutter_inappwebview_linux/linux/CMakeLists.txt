@@ -68,7 +68,7 @@ if(NOT WPE_WEBKIT_FOUND)
   message(WARNING "flutter_inappwebview_linux: WPE WebKit not found — "
                   "building a stub plugin. The in-app webview will be "
                   "unavailable; use the system browser instead.")
-  add_library(${PLUGIN_NAME} SHARED "src/stub_empty.cc")
+  add_library(${PLUGIN_NAME} SHARED "stub_empty.cc")
   set_target_properties(${PLUGIN_NAME} PROPERTIES OUTPUT_NAME
       "flutter_inappwebview_linux_plugin")
   target_include_directories(${PLUGIN_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../src")
