@@ -252,6 +252,26 @@ class ClipboardMonitorService {
   }
 
   /// Restart monitoring after settings changed.
+  /// One-shot immediate poll: called when the app returns to the
+  /// foreground so text copied in *other* apps is picked up right away.
+  ///
+  /// Platform reality: since Android 10, background apps cannot read the
+  /// clipboard — only the focused app can. So "background clipboard
+  /// listening" on mobile means: read at the moment the app becomes
+  /// focused again (this method), plus the foreground timers. iOS
+  /// additionally shows a system paste banner; that's unavoidable.
+  Future<void> pollNow(AppState appState) async {
+    if (!_isMonitoring) return;
+    try {
+      await _poll(appState);
+    } catch (_) {}
+    if (ClipboardManagerService.instance.config.imagePollingEnabled) {
+      try {
+        await _pollImage(appState);
+      } catch (_) {}
+    }
+  }
+
   void restartMonitoring(AppState appState) {
     stopMonitoring();
     startMonitoring(appState);

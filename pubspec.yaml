@@ -67,6 +67,9 @@ dependencies:
   just_audio: ^0.10.6
   just_audio_background: ^0.0.1-beta.17
   audio_session: ^0.1.21
+  # PiP + popup caption windows
+  desktop_multi_window: ^0.3.1
+  floating: ^6.0.0
   record: ^5.1.2
   epubx: ^4.0.0
   syncfusion_flutter_pdfviewer: ^31.1.21

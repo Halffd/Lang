@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:lang/utils/layout_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:fvp/fvp.dart' as fvp;
 import 'package:provider/provider.dart';
@@ -53,12 +55,38 @@ import 'presentation/providers/srs_provider.dart';
 import 'presentation/providers/supabase_provider.dart';
 import 'presentation/providers/user_profile_provider.dart';
 import 'presentation/providers/user_data_provider.dart';
+import 'presentation/screens/reader/pip_windows.dart';
 import 'presentation/screens/settings_screen.dart';
 import 'presentation/widgets/user_badge.dart';
 import 'presentation/widgets/font_zoom_scope.dart';
 
-void main() async {
+Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Secondary windows (desktop PiP mini-player, popup captions) run a
+  // dedicated app instead of the main shell. Their role arrives in the
+  // window arguments (JSON with a "mode" key).
+  try {
+    final controller = await WindowController.fromCurrentEngine();
+    final args0 = controller.arguments;
+    if (args0.isNotEmpty && args0.trim().startsWith('{')) {
+      final cfg = (jsonDecode(args0) as Map).map(
+        (k, v) => MapEntry(k.toString(), v),
+      );
+      final mode = cfg['mode']?.toString() ?? '';
+      if (mode == 'pip') {
+        final session = PipSession.fromJson(cfg);
+        runApp(PipPlayerApp(session: session));
+        return;
+      }
+      if (mode == 'captions') {
+        runApp(const CaptionsWindowApp());
+        return;
+      }
+    }
+  } catch (_) {
+    // main window (no window definition registered) — fall through
+  }
 
   // Cap the global image cache: the default (100 MiB / 1000 entries)
   // lets full-resolution screenshots and manga pages pile up. 64 MiB of
@@ -166,6 +194,11 @@ void main() async {
   };
   // popup dictionary: global yomichan-style lookup on any screen
   _setupPopupDictionary(appState, analyzerProvider);
+
+  // clipboard resume catch-up (mobile background listening)
+  WidgetsBinding.instance.addObserver(
+    _ClipboardResumeObserver(monitor: clipboardMonitor, appState: appState),
+  );
 
   clipboardMonitor.startMonitoring(appState);
   // restart monitor when clipboard settings change
@@ -966,5 +999,30 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         ],
       ),
     );
+  }
+}
+
+/// Reads the clipboard as soon as the app returns to the foreground:
+/// the closest a clipboard manager can get to background listening on
+/// Android 10+ (only the focused app may read the clipboard).
+class _ClipboardResumeObserver with WidgetsBindingObserver {
+  _ClipboardResumeObserver({
+    required ClipboardMonitorService monitor,
+    required AppState appState,
+  }) : _monitor = monitor,
+       _appState = appState;
+
+  final ClipboardMonitorService _monitor;
+  final AppState _appState;
+  DateTime _lastCatchUp = DateTime.now().subtract(const Duration(hours: 1));
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    // debounce: resumed can fire repeatedly on window focus changes
+    final now = DateTime.now();
+    if (now.difference(_lastCatchUp) < const Duration(seconds: 2)) return;
+    _lastCatchUp = now;
+    unawaited(_monitor.pollNow(_appState));
   }
 }

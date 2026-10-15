@@ -1,13 +1,18 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:floating/floating.dart';
 import 'package:video_player/video_player.dart';
 
 import 'package:lang/core/services/popup_dictionary_controller.dart';
 import 'package:lang/core/services/whisper_subs_service.dart';
+import 'package:lang/presentation/screens/reader/pip_windows.dart';
 import 'package:lang/data/repositories/dictionary_service.dart';
 import 'package:lang/utils/pinyin_util.dart';
 import 'package:lang/core/services/mobile_listening_service.dart';
@@ -67,6 +72,17 @@ class _VideoTabState extends State<VideoTab> {
 
   /// Mobile listening mode active (background audio, screen off).
   bool _listeningMode = false;
+
+  /// Desktop popup windows: PiP mini-player and captions.
+  WindowController? _pipWindow;
+  WindowController? _captionWindow;
+  int? _captionPushedIndex;
+
+  /// Android PiP controller (floating package).
+  final Floating _floating = Floating();
+
+  /// In-app draggable caption overlay visibility.
+  bool _showCaptionOverlay = false;
 
   /// Cumulative time actually spent playing the current video.
   int _watchedMs = 0;
@@ -830,6 +846,7 @@ class _VideoTabState extends State<VideoTab> {
         if (idx == _activeIndex) return;
         final wasHidden = _activeIndex < 0 && idx >= 0;
         setState(() => _activeIndex = idx);
+        _pushCaptionToWindow();
         if (wasHidden) _scrollTranscriptTo(idx);
         return;
       }
@@ -849,6 +866,7 @@ class _VideoTabState extends State<VideoTab> {
       final wasHidden = _activeIndex < 0 && idx >= 0;
       setState(() => _activeIndex = idx);
       if (wasHidden) _scrollTranscriptTo(idx);
+      _pushCaptionToWindow();
     });
   }
 
@@ -895,6 +913,109 @@ class _VideoTabState extends State<VideoTab> {
     } else {
       await _enterListeningMode();
     }
+  }
+
+  // ------------------------------------------------------------
+  // picture-in-picture (desktop mini window / Android native PiP)
+  // ------------------------------------------------------------
+
+  /// Desktop: detach playback into an always-on-top mini window. The
+  /// main video pauses; the mini window owns the playhead and writes
+  /// its position to the shared session file, which the main window
+  /// reads back when the user presses play.
+  Future<void> _enterDesktopPip() async {
+    final v = _video;
+    final url = _activeStreamUrl;
+    if (v == null || url == null) return;
+    final session = PipSession(
+      url: url,
+      isFile: _youtubeVideoId == null,
+      position: v.value.position,
+      title: _mediaLabel ?? 'Lang',
+      speed: v.value.playbackSpeed,
+    );
+    // pause the main video; the PiP window takes over
+    await v.pause();
+    final controller = await WindowController.create(
+      WindowConfiguration(
+        arguments: jsonEncode({'mode': 'pip', ...session.toJson()}),
+      ),
+    );
+    await controller.show();
+    if (mounted) setState(() => _pipWindow = controller);
+  }
+
+  /// Mobile (Android): native picture-in-picture via the floating
+  /// package. The video keeps playing in the system PiP window.
+  Future<void> _enterMobilePip() async {
+    try {
+      final available = await _floating.isPipAvailable;
+      if (!available) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('PiP unavailable on this device')),
+          );
+        }
+        return;
+      }
+      await _floating.enable(ImmediatePiP());
+    } catch (_) {
+      // PiP entry is best-effort
+    }
+  }
+
+  Future<void> _togglePip() async {
+    if (_isDesktopTarget) {
+      await _enterDesktopPip();
+    } else if (Platform.isAndroid) {
+      await _enterMobilePip();
+    }
+  }
+
+  static bool get _isDesktopTarget =>
+      !kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS);
+
+  // ------------------------------------------------------------
+  // popup captions (desktop popup window / in-app draggable overlay)
+  // ------------------------------------------------------------
+
+  /// Open the desktop captions popup window (current cue pushed live).
+  Future<void> _openCaptionsWindow() async {
+    if (_captionWindow != null) {
+      await _captionWindow!.show();
+      return;
+    }
+    final controller = await WindowController.create(
+      const WindowConfiguration(
+        arguments: '{"mode":"captions"}',
+        hiddenAtLaunch: false,
+      ),
+    );
+    await controller.show();
+    if (mounted) {
+      setState(() => _captionWindow = controller);
+      // push the current cue immediately
+      await _pushCaptionToWindow();
+    }
+  }
+
+  /// Push the active cue to the captions popup window (if open).
+  Future<void> _pushCaptionToWindow() async {
+    final win = _captionWindow;
+    if (win == null) return;
+    final text = _cues.isNotEmpty && _activeIndex >= 0
+        ? _cues[_activeIndex.clamp(0, _cues.length - 1)].plainText
+        : '';
+    try {
+      await win.invokeMethod('updateCaption', {'text': text});
+    } catch (_) {
+      // window closed
+    }
+  }
+
+  /// Toggle the in-app draggable caption overlay (mobile + desktop).
+  void _toggleCaptionOverlay() {
+    setState(() => _showCaptionOverlay = !_showCaptionOverlay);
   }
 
   void _scrollTranscriptTo(int index) {
@@ -1011,36 +1132,50 @@ class _VideoTabState extends State<VideoTab> {
 
     return Column(
       children: [
+        if (_showCaptionOverlay && _cues.isNotEmpty)
+          DraggableCaptionOverlay(
+            text: _activeIndex >= 0
+                ? _cues[_activeIndex.clamp(0, _cues.length - 1)].plainText
+                : '',
+            fontSize: fs(context, 13) * subScale * 1.4,
+            onDismiss: () => setState(() => _showCaptionOverlay = false),
+          ),
         AspectRatio(
           aspectRatio: v.value.aspectRatio == 0 ? 16 / 9 : v.value.aspectRatio,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              VideoPlayer(v),
-              if (_cues.isNotEmpty)
-                Positioned(
-                  left: 12,
-                  right: 12,
-                  bottom: 12,
-                  child: _ActiveSubtitle(
-                    cue: _cues.isNotEmpty && _activeIndex >= 0
-                        ? _cues[_activeIndex.clamp(0, _cues.length - 1)]
-                        : null,
-                    scale: fs(context, 13) * subScale,
+          // Android PiP: when the system enters PiP, drop the controls and
+          // show only the video surface (native PiP window shows it).
+          child: PiPSwitcher(
+            childWhenDisabled: Stack(
+              alignment: Alignment.center,
+              children: [
+                VideoPlayer(v),
+                if (_cues.isNotEmpty)
+                  Positioned(
+                    left: 12,
+                    right: 12,
+                    bottom: 12,
+                    child: _ActiveSubtitle(
+                      cue: _cues.isNotEmpty && _activeIndex >= 0
+                          ? _cues[_activeIndex.clamp(0, _cues.length - 1)]
+                          : null,
+                      scale: fs(context, 13) * subScale,
+                    ),
                   ),
+                ValueListenableBuilder<VideoPlayerValue>(
+                  valueListenable: v,
+                  builder: (context, state, _) => state.isPlaying
+                      ? const SizedBox.shrink()
+                      : IconButton(
+                          iconSize: 64,
+                          color: Colors.white70,
+                          icon: const Icon(Icons.play_circle_fill),
+                          onPressed: () => v.play(),
+                        ),
                 ),
-              ValueListenableBuilder<VideoPlayerValue>(
-                valueListenable: v,
-                builder: (context, state, _) => state.isPlaying
-                    ? const SizedBox.shrink()
-                    : IconButton(
-                        iconSize: 64,
-                        color: Colors.white70,
-                        icon: const Icon(Icons.play_circle_fill),
-                        onPressed: () => v.play(),
-                      ),
-              ),
-            ],
+              ],
+            ),
+            // PiP: video only, no controls (system window owns it)
+            childWhenEnabled: VideoPlayer(v),
           ),
         ),
         VideoProgressIndicator(v, allowScrubbing: true),
@@ -1087,6 +1222,32 @@ class _VideoTabState extends State<VideoTab> {
                 icon: const Icon(Icons.history, size: 18),
                 tooltip: l10n?.videoRecent ?? 'Recent',
                 onPressed: _loading ? null : _showRecentVideos,
+              ),
+              // picture-in-picture: desktop mini window / Android native
+              IconButton(
+                icon: const Icon(Icons.picture_in_picture_alt, size: 18),
+                tooltip: _isDesktopTarget
+                    ? 'Pop out mini player'
+                    : 'Picture-in-picture',
+                onPressed: _togglePip,
+              ),
+              // popup captions: desktop popup window / in-app overlay
+              IconButton(
+                icon: Icon(
+                  Icons.closed_caption,
+                  size: 18,
+                  color: (_showCaptionOverlay || _captionWindow != null)
+                      ? theme.colorScheme.primary
+                      : null,
+                ),
+                tooltip: 'Popup captions',
+                onPressed: () {
+                  if (_isDesktopTarget) {
+                    _openCaptionsWindow();
+                  } else {
+                    _toggleCaptionOverlay();
+                  }
+                },
               ),
               // mobile listening mode: background audio, screen off
               if (MobileListeningService.isSupported &&
@@ -1600,6 +1761,62 @@ class _ActiveSubtitle extends StatelessWidget {
         text,
         textAlign: TextAlign.center,
         style: TextStyle(color: Colors.white, fontSize: scale),
+      ),
+    );
+  }
+}
+
+/// Draggable floating caption bubble (in-app overlay for mobile and
+/// desktop): shows the current subtitle/STT cue text above everything
+/// else in the tab. Drag to reposition; double-tap to dismiss.
+class DraggableCaptionOverlay extends StatefulWidget {
+  final String text;
+  final double fontSize;
+  final VoidCallback? onDismiss;
+
+  const DraggableCaptionOverlay({
+    super.key,
+    required this.text,
+    required this.fontSize,
+    this.onDismiss,
+  });
+
+  @override
+  State<DraggableCaptionOverlay> createState() =>
+      _DraggableCaptionOverlayState();
+}
+
+class _DraggableCaptionOverlayState extends State<DraggableCaptionOverlay> {
+  Offset _offset = const Offset(16, 16);
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.text.isEmpty) return const SizedBox.shrink();
+    return Positioned(
+      left: _offset.dx,
+      top: _offset.dy,
+      child: GestureDetector(
+        onPanUpdate: (d) =>
+            setState(() => _offset += Offset(d.delta.dx, d.delta.dy)),
+        onDoubleTap: () => widget.onDismiss?.call(),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 420),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.82),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+          ),
+          child: Text(
+            widget.text,
+            style: TextStyle(
+              fontSize: widget.fontSize,
+              height: 1.4,
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
       ),
     );
   }
