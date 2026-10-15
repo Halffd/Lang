@@ -71,7 +71,7 @@ if(NOT WPE_WEBKIT_FOUND)
   add_library(${PLUGIN_NAME} SHARED "stub_empty.cc")
   set_target_properties(${PLUGIN_NAME} PROPERTIES OUTPUT_NAME
       "flutter_inappwebview_linux_plugin")
-  target_include_directories(${PLUGIN_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../src")
+  target_link_libraries(${PLUGIN_NAME} PRIVATE flutter)
   set(flutter_inappwebview_linux_bundled_libraries
       ""
       PARENT_SCOPE)
