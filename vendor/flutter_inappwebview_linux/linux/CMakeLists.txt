@@ -72,6 +72,9 @@ if(NOT WPE_WEBKIT_FOUND)
   set_target_properties(${PLUGIN_NAME} PROPERTIES OUTPUT_NAME
       "flutter_inappwebview_linux_plugin")
   target_link_libraries(${PLUGIN_NAME} PRIVATE flutter)
+  # the generated plugin registrant includes this header
+  target_include_directories(${PLUGIN_NAME} PUBLIC
+      "${CMAKE_CURRENT_SOURCE_DIR}/include")
   set(flutter_inappwebview_linux_bundled_libraries
       ""
       PARENT_SCOPE)
