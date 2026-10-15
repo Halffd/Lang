@@ -33,25 +33,27 @@ class _ReaderScreenState extends State<ReaderScreen>
     _tabController = TabController(length: 7, vsync: this);
     HistoryService.instance.load();
     // Other tabs (WhisperSubs browse) can ask the reader to switch to
-    // a tab, e.g. handing a video to the video tab.
+    // a tab, e.g. handing a video to the video tab. The AppState
+    // reference is saved because dispose() can no longer look up
+    // ancestors.
+    _appState = context.read<AppState>();
     _tabRequestListener = () {
-      final index = context.read<AppState>().readerTabRequest.value;
+      final index = _appState!.readerTabRequest.value;
       if (index != null && index >= 0 && index < _tabController.length) {
-        context.read<AppState>().readerTabRequest.value = null;
+        _appState!.readerTabRequest.value = null;
         _tabController.animateTo(index);
       }
     };
-    context.read<AppState>().readerTabRequest.addListener(_tabRequestListener!);
+    _appState!.readerTabRequest.addListener(_tabRequestListener!);
   }
 
+  AppState? _appState;
   void Function()? _tabRequestListener;
 
   @override
   void dispose() {
     if (_tabRequestListener != null) {
-      context.read<AppState>().readerTabRequest.removeListener(
-        _tabRequestListener!,
-      );
+      _appState?.readerTabRequest.removeListener(_tabRequestListener!);
     }
     _tabController.dispose();
     super.dispose();

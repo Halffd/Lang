@@ -171,7 +171,7 @@ void main() {
         ],
       },
       '/api/v1/live': {
-        'tasks': [
+        'live': [
           {
             'task_id': 't',
             'status': 'processing',

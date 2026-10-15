@@ -205,13 +205,15 @@ class WhisperSubsService {
         .cast<Map<String, dynamic>>();
   }
 
-  /// GET /api/v1/live — {tasks: [...]} of active/live transcription tasks.
+  /// GET /api/v1/live — {live: [...]} of active/live transcription
+  /// tasks ("tasks" accepted as a legacy alias).
   Future<List<Map<String, dynamic>>> liveTasks() async {
     final response = await _client
         .get(_uri('/api/v1/live'), headers: _headers)
         .timeout(_timeout);
     final decoded = await _decodeOk(response);
-    return (decoded['tasks'] as List? ?? const []).cast<Map<String, dynamic>>();
+    final list = decoded['live'] ?? decoded['tasks'];
+    return (list as List? ?? const []).cast<Map<String, dynamic>>();
   }
 
   /// Turn a server-relative link ("/api/v1/subs/file?path=chan/Video.srt")
