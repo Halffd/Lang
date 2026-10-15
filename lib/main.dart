@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:flutter_inappwebview_linux/flutter_inappwebview_linux.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:fvp/fvp.dart' as fvp;
 import 'package:provider/provider.dart';
@@ -104,6 +105,25 @@ Future<void> main(List<String> args) async {
   // (media notification, screen-off playback)
   if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
     await MobileListeningService.instance.init();
+  }
+  // Linux in-app webview: register the platform implementation only when
+  // WPE WebKit is actually present — the vendored plugin builds a stub on
+  // hosts without it (CI), where the browser tab falls back to the
+  // system browser instead of a dead embedded webview.
+  if (!kIsWeb && Platform.isLinux) {
+    var wpeAvailable = false;
+    for (final pkg in ['wpe-webkit-2.0', 'wpe-webkit-1.1', 'wpe-webkit-1.0']) {
+      final r = Process.runSync('pkg-config', ['--exists', pkg]);
+      if (r.exitCode == 0) {
+        wpeAvailable = true;
+        break;
+      }
+    }
+    if (wpeAvailable) {
+      LinuxInAppWebViewPlatform.registerWith();
+    } else {
+      debugPrint('WPE WebKit not found — browser tab uses the system browser');
+    }
   }
 
   if (!kIsWeb && (Platform.isLinux || Platform.isMacOS || Platform.isWindows)) {

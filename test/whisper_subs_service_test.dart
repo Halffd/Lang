@@ -147,6 +147,75 @@ void main() {
     );
   });
 
+  test('library, channels, channel videos and live decode shapes', () async {
+    final routes = <String, Object>{
+      '/api/v1/library': {
+        'library': [
+          {
+            'title': 'a',
+            'urls': {'srt': '/api/v1/subs/file?path=x.srt'},
+          },
+        ],
+        'count': 1,
+      },
+      '/api/v1/channels': {
+        'channels': [
+          {'name': 'chan', 'transcribed': 2},
+        ],
+        'count': 1,
+      },
+      '/api/v1/channels/bero%20o%20dev/videos': {
+        'channel': 'bero o dev',
+        'videos': [
+          {'title': 'v', 'transcribed': true},
+        ],
+      },
+      '/api/v1/live': {
+        'tasks': [
+          {
+            'task_id': 't',
+            'status': 'processing',
+            'source': 's',
+            'model_name': 'tiny',
+            'is_live': true,
+          },
+        ],
+      },
+    };
+    final client = _FakeClient(
+      (req) async => _jsonResponse(routes[req.url.path]!),
+    );
+    final service = WhisperSubsService(
+      baseUrl: 'http://ws.test',
+      apiKey: 'key1',
+      client: client,
+    );
+
+    expect((await service.library()).first['title'], 'a');
+    expect((await service.channels()).first['name'], 'chan');
+    final videos = await service.channelVideos('bero o dev');
+    expect(videos.first['transcribed'], true);
+    // channel name was encoded into the path
+    expect(
+      client.requests[2].url.path,
+      '/api/v1/channels/bero%20o%20dev/videos',
+    );
+    expect((await service.liveTasks()).first['is_live'], true);
+  });
+
+  test('resolveUrl encodes raw query values and trims the base', () {
+    final service = WhisperSubsService(baseUrl: 'http://ws.test/x/');
+    final url = service.resolveUrl(
+      '/api/v1/subs/file?path=chan/My Video [x].srt',
+    );
+    expect(
+      url,
+      'http://ws.test/x/api/v1/subs/file?path=chan%2FMy+Video+%5Bx%5D.srt',
+    );
+    // plain relative paths pass through with the base trimmed
+    expect(service.resolveUrl('api/v1/media'), 'http://ws.test/x/api/v1/media');
+  });
+
   test('unauthorized surfaces a clear message', () async {
     final client = _FakeClient(
       (req) async => _jsonResponse({'detail': 'nope'}, status: 401),

@@ -7,6 +7,7 @@ import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/presentation/screens/document_reader_screen.dart';
 import 'package:lang/presentation/screens/reader/browser_tab.dart';
 import 'package:lang/presentation/screens/reader/video_tab.dart';
+import 'package:lang/presentation/screens/reader/whisper_subs_tab.dart';
 import 'package:lang/presentation/screens/screenshot_tab.dart';
 import 'package:lang/presentation/screens/speech_tab.dart';
 import 'package:lang/presentation/widgets/clipboard_settings.dart';
@@ -29,12 +30,29 @@ class _ReaderScreenState extends State<ReaderScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 6, vsync: this);
+    _tabController = TabController(length: 7, vsync: this);
     HistoryService.instance.load();
+    // Other tabs (WhisperSubs browse) can ask the reader to switch to
+    // a tab, e.g. handing a video to the video tab.
+    _tabRequestListener = () {
+      final index = context.read<AppState>().readerTabRequest.value;
+      if (index != null && index >= 0 && index < _tabController.length) {
+        context.read<AppState>().readerTabRequest.value = null;
+        _tabController.animateTo(index);
+      }
+    };
+    context.read<AppState>().readerTabRequest.addListener(_tabRequestListener!);
   }
+
+  void Function()? _tabRequestListener;
 
   @override
   void dispose() {
+    if (_tabRequestListener != null) {
+      context.read<AppState>().readerTabRequest.removeListener(
+        _tabRequestListener!,
+      );
+    }
     _tabController.dispose();
     super.dispose();
   }
@@ -70,6 +88,10 @@ class _ReaderScreenState extends State<ReaderScreen>
               text: l10n.readerTabVideo,
             ),
             Tab(icon: const Icon(Icons.mic, size: 18), text: l10n.speechTab),
+            Tab(
+              icon: const Icon(Icons.graphic_eq, size: 18),
+              text: 'WhisperSubs',
+            ),
           ],
         ),
       ),
@@ -82,6 +104,7 @@ class _ReaderScreenState extends State<ReaderScreen>
           _ClipboardTab(),
           VideoTab(),
           SpeechTab(),
+          WhisperSubsTab(),
         ],
       ),
     );

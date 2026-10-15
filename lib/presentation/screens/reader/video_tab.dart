@@ -99,7 +99,16 @@ class _VideoTabState extends State<VideoTab> {
   AppState? _appState;
 
   @override
+  void initState() {
+    super.initState();
+    // The WhisperSubs browse tab hands videos over through AppState.
+    _appState = context.read<AppState>();
+    _appState!.videoLoadRequest.addListener(_onVideoLoadRequest);
+  }
+
+  @override
   void dispose() {
+    _appState?.videoLoadRequest.removeListener(_onVideoLoadRequest);
     _persistProgress();
     _ticker?.cancel();
     _transcriptScroll.dispose();
@@ -235,6 +244,73 @@ class _VideoTabState extends State<VideoTab> {
 
   /// Open a YouTube URL (from the prompt or a recents entry), resolve it,
   /// record it and adopt the stream.
+  /// A video handed over by the WhisperSubs browse tab: either a
+  /// YouTube URL (resolved through the usual flow) or server-hosted
+  /// media with a side-loaded SRT.
+  void _onVideoLoadRequest() {
+    final appState = _appState;
+    final request = appState?.videoLoadRequest.value;
+    if (request == null) return;
+    appState!.videoLoadRequest.value = null; // consume
+    if (_loading) return;
+    switch (request['kind']) {
+      case 'youtube':
+        final url = request['url'] as String?;
+        if (url != null && url.isNotEmpty) _openYouTube(url);
+      case 'direct':
+        _openServerMedia(request);
+    }
+  }
+
+  /// Load server-hosted media and side-load its SRT so the transcript
+  /// doubles as the dictionary surface like every other source.
+  Future<void> _openServerMedia(Map<String, dynamic> request) async {
+    final mediaUrl = request['mediaUrl'] as String?;
+    if (mediaUrl == null || mediaUrl.isEmpty) return;
+    final appState = _appState;
+    if (appState == null) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final controller = VideoPlayerController.networkUrl(Uri.parse(mediaUrl));
+      await controller.initialize();
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+      await _adopt(controller);
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _mediaLabel = (request['title'] as String?) ?? 'server media';
+        _currentSource = mediaUrl;
+        _watchedMs = 0;
+        _youtubeVideoId = null;
+        _cues = const [];
+        _subLabel = null;
+        _showTranscript = false;
+      });
+      final srtUrl = request['srtUrl'] as String?;
+      if (srtUrl != null && srtUrl.isNotEmpty) {
+        final service = WhisperSubsService(
+          baseUrl: appState.whisperSubsUrl.trim(),
+          apiKey: appState.whisperSubsApiKey,
+        );
+        final text = await service.fetchText(srtUrl);
+        if (!mounted) return;
+        _applySubtitleCues(SubtitleParser.parseSrt(text), 'WhisperSubs');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = '$e';
+      });
+    }
+  }
+
   Future<void> _openYouTube([String? presetUrl]) async {
     final l10n = AppLocalizations.of(context);
     final url = presetUrl ?? await _promptYouTubeUrl();

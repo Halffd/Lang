@@ -1,6 +1,5 @@
 import 'dart:convert';
-import 'dart:ui' show PlatformDispatcher;
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../core/services/storage_service.dart';
 import 'yomitan_options.dart';
@@ -93,6 +92,12 @@ class AppState extends ChangeNotifier {
   // WhisperSubs transcription server (video tab "WhisperSubs" action)
   String _whisperSubsUrl = '';
   String _whisperSubsApiKey = '';
+
+  // Cross-tab handoff (ephemeral, never persisted): the WhisperSubs
+  // browse tab asks the reader to switch to the video tab and hands
+  // the video tab a source to load.
+  final readerTabRequest = ValueNotifier<int?>(null);
+  final videoLoadRequest = ValueNotifier<Map<String, dynamic>?>(null);
 
   /// The device locale's language component, read from the platform
   /// dispatcher. Only used for the very first launch, when no stored

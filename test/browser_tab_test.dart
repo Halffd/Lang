@@ -1,6 +1,8 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_inappwebview_platform_interface/flutter_inappwebview_platform_interface.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lang/presentation/screens/reader/browser_tab.dart';
@@ -47,6 +49,13 @@ void main() {
   });
 
   group('browserOpenModeFor', () {
+    setUpAll(() {
+      // full/stub builds without registration leave instance null and
+      // browserOpenModeFor falls back to the system browser; a fake
+      // instance stands in for the real registered plugin here
+      InAppWebViewPlatform.instance = _FakeInAppWebViewPlatform();
+    });
+
     test('linux uses embedded webview', () {
       // flutter_inappwebview_linux 0.1.0-beta.3 (via flutter_inappwebview 6.2.0-beta.3)
       // endorses flutter_inappwebview_linux which uses WPE WebKit (wpe-webkit-2.0),
@@ -112,3 +121,7 @@ class _RecordingLauncher extends UrlLauncherPlatform {
     return true;
   }
 }
+
+class _FakeInAppWebViewPlatform extends Fake
+    with MockPlatformInterfaceMixin
+    implements InAppWebViewPlatform {}

@@ -27,13 +27,17 @@ class WhisperSubsService {
 
   static const _timeout = Duration(seconds: 30);
 
-  Uri _uri(String path, [Map<String, String>? query]) {
+  String get trimmedBase {
     var root = baseUrl.trim();
     while (root.endsWith('/')) {
       root = root.substring(0, root.length - 1);
     }
+    return root;
+  }
+
+  Uri _uri(String path, [Map<String, String>? query]) {
     return Uri.parse(
-      '$root$path',
+      '$trimmedBase$path',
     ).replace(queryParameters: query == null || query.isEmpty ? null : query);
   }
 
@@ -154,6 +158,90 @@ class WhisperSubsService {
         .timeout(_timeout);
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw WhisperSubsException('HTTP ${response.statusCode} fetching $path');
+    }
+    return response.body;
+  }
+
+  /// GET /api/v1/library — {library: [...], count}: every finished
+  /// transcription on the server, each item carrying urls.srt /
+  /// urls.media / urls.thumbnail (server-relative paths) and
+  /// source_url when the origin is a YouTube video.
+  Future<List<Map<String, dynamic>>> library() async {
+    final response = await _client
+        .get(_uri('/api/v1/library'), headers: _headers)
+        .timeout(_timeout);
+    final decoded = await _decodeOk(response);
+    return (decoded['library'] as List? ?? const [])
+        .cast<Map<String, dynamic>>();
+  }
+
+  /// GET /api/v1/channels — {channels: [...], count}.
+  Future<List<Map<String, dynamic>>> channels() async {
+    final response = await _client
+        .get(_uri('/api/v1/channels'), headers: _headers)
+        .timeout(_timeout);
+    final decoded = await _decodeOk(response);
+    return (decoded['channels'] as List? ?? const [])
+        .cast<Map<String, dynamic>>();
+  }
+
+  /// GET /api/v1/channels/{channel}/videos — {channel, videos: [...]}
+  /// merged transcribed + untranscribed entries.
+  Future<List<Map<String, dynamic>>> channelVideos(
+    String channel, {
+    bool refresh = false,
+  }) async {
+    final response = await _client
+        .get(
+          _uri(
+            '/api/v1/channels/${Uri.encodeComponent(channel)}/videos',
+            refresh ? {'refresh': 'true'} : null,
+          ),
+          headers: _headers,
+        )
+        .timeout(_timeout);
+    final decoded = await _decodeOk(response);
+    return (decoded['videos'] as List? ?? const [])
+        .cast<Map<String, dynamic>>();
+  }
+
+  /// GET /api/v1/live — {tasks: [...]} of active/live transcription tasks.
+  Future<List<Map<String, dynamic>>> liveTasks() async {
+    final response = await _client
+        .get(_uri('/api/v1/live'), headers: _headers)
+        .timeout(_timeout);
+    final decoded = await _decodeOk(response);
+    return (decoded['tasks'] as List? ?? const []).cast<Map<String, dynamic>>();
+  }
+
+  /// Turn a server-relative link ("/api/v1/subs/file?path=chan/Video.srt")
+  /// into an absolute, properly encoded URL. The server emits raw path
+  /// values in its query strings; spaces and brackets in video titles
+  /// would break the request if appended verbatim.
+  String resolveUrl(String rel) {
+    var path = rel;
+    if (!path.startsWith('/')) path = '/$path';
+    final q = path.indexOf('?');
+    if (q == -1) return '$trimmedBase$path';
+    final params = <String, String>{};
+    for (final pair in path.substring(q + 1).split('&')) {
+      final eq = pair.indexOf('=');
+      if (eq == -1) continue;
+      params[pair.substring(0, eq)] = pair.substring(eq + 1);
+    }
+    return Uri.parse(
+      '$trimmedBase${path.substring(0, q)}',
+    ).replace(queryParameters: params).toString();
+  }
+
+  /// GET an absolute URL and return the body as text (used for the
+  /// media-relative SRT links a library item carries).
+  Future<String> fetchText(String url) async {
+    final response = await _client
+        .get(Uri.parse(url), headers: {..._headers, 'Accept': 'text/plain'})
+        .timeout(_timeout);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw WhisperSubsException('HTTP ${response.statusCode}: $url');
     }
     return response.body;
   }

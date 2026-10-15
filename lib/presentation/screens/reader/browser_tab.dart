@@ -52,6 +52,14 @@ BrowserOpenMode browserOpenModeFor({
   required bool isMobile,
 }) {
   if (isMobile) return BrowserOpenMode.embedded;
+  // Linux builds made without WPE WebKit (e.g. CI) ship a stub plugin:
+  // the Dart platform implementation never registers, so the embedded
+  // webview would throw at runtime. Fall back to the system browser.
+  if (isLinux &&
+      // no registered platform implementation => stub build without WPE
+      InAppWebViewPlatform.instance == null) {
+    return BrowserOpenMode.external;
+  }
   return BrowserOpenMode.embedded;
 }
 
