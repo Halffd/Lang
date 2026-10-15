@@ -114,7 +114,7 @@ void main() {
               : {'status': 'completed'},
         );
       }
-      if (path == '/subtitles/chan%2Fnew.srt') {
+      if (path == '/subtitles/chan/new.srt') {
         return _textResponse('1\n00:00:01,000 --> 00:00:02,000\nhello\n');
       }
       fail('unexpected request: ${req.method} $path');

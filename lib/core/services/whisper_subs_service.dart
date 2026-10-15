@@ -142,9 +142,13 @@ class WhisperSubsService {
 
   /// GET /subtitles/{path} — the raw SRT text.
   Future<String> fetchSubtitle(String path) async {
+    // Encode each segment, not the whole path: %2F inside a path
+    // parameter is not decoded back into a separator by the server, but
+    // spaces/brackets in titles still need encoding.
+    final encoded = path.split('/').map(Uri.encodeComponent).join('/');
     final response = await _client
         .get(
-          _uri('/subtitles/${Uri.encodeComponent(path)}'),
+          _uri('/subtitles/$encoded'),
           headers: {..._headers, 'Accept': 'text/plain'},
         )
         .timeout(_timeout);
