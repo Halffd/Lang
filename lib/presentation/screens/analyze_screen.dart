@@ -1456,6 +1456,53 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                     value: appState.filterHideKana,
                     onChanged: (v) => appState.setFilterHideKana(v ?? false),
                   ),
+                  const Divider(),
+                  Text(
+                    'Wiktionary language',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Used for space-separated languages (European scripts '
+                    'and friends). Auto follows the detected text language.',
+                    style: TextStyle(
+                      fontSize: fs(11),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      for (final entry in const {
+                        'auto': 'Auto',
+                        'en': 'English',
+                        'ru': 'Русский',
+                        'el': 'Ελληνικά',
+                        'uk': 'Українська',
+                        'de': 'Deutsch',
+                        'fr': 'Français',
+                        'es': 'Español',
+                        'it': 'Italiano',
+                        'pt': 'Português',
+                        'nl': 'Nederlands',
+                        'pl': 'Polski',
+                        'tr': 'Türkçe',
+                        'sv': 'Svenska',
+                        'he': 'עברית',
+                        'ar': 'العربية',
+                        'hi': 'हिन्दी',
+                        'th': 'ไทย',
+                      }.entries)
+                        ChoiceChip(
+                          label: Text(entry.value),
+                          selected: appState.wiktionaryLanguage == entry.key,
+                          onSelected: (_) =>
+                              appState.setWiktionaryLanguage(entry.key),
+                        ),
+                    ],
+                  ),
                   const SizedBox(height: 8),
                 ],
               ),
@@ -1515,7 +1562,9 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
         ? word.ichiMoeDefinitions.first
         : (word.mdbgData?.definitions.isNotEmpty ?? false
               ? word.mdbgData!.definitions.first
-              : '');
+              : (word.wiktionaryDefinitions.isNotEmpty
+                    ? word.wiktionaryDefinitions.first
+                    : ''));
     final freq = word.frequency ?? 0;
 
     Color freqColor;

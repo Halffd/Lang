@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lang/core/services/history_service.dart';
 import 'package:lang/data/datasources/local_translation_service.dart';
+import 'package:lang/data/datasources/remote/wiktionary_lookup_service.dart';
 import 'package:lang/data/repositories/translation_service.dart';
 import 'package:lang/data/services/dictionary/yomichan_service.dart';
 import 'package:lang/data/services/dictionary/tokenizer_service.dart';
@@ -19,6 +20,11 @@ class AnalyzerProvider extends ChangeNotifier {
 
   final YomichanService _yomichanService = YomichanService();
   final TokenizerService _tokenizerService = TokenizerService();
+  final WiktionaryLookupService _wiktionaryService = WiktionaryLookupService();
+
+  /// Languages routed through Yomichan (CJK dictionaries). Everything
+  /// else goes to Wiktionary.
+  static const _yomichanLanguages = {'ja', 'zh', 'ko'};
 
   // Translations (sentence-level and full-text)
   TranslationService? _translationService;
@@ -457,7 +463,8 @@ class AnalyzerProvider extends ChangeNotifier {
               word.ichiMoeDefinitions.isNotEmpty ||
               word.localDefinitions.isNotEmpty ||
               (word.mdbgData?.definitions.isNotEmpty ?? false) ||
-              word.wiktionaryHtml != null;
+              word.wiktionaryHtml != null ||
+              word.wiktionaryDefinitions.isNotEmpty;
           key = hasDef ? 'Has Definition' : 'No Definition';
           break;
         default:
@@ -601,6 +608,12 @@ class AnalyzerProvider extends ChangeNotifier {
         query,
         subtitle: _currentLanguage,
       );
+      if (!_yomichanLanguages.contains(_currentLanguage)) {
+        final def = await _enrichViaWiktionary(query, _currentLanguage);
+        _searchResults = def == null ? [] : [def];
+        return;
+      }
+
       final results = await _yomichanService.lookupWord(
         query,
         _currentLanguage,
@@ -739,6 +752,7 @@ class AnalyzerProvider extends ChangeNotifier {
       // selector: pasting Chinese while Japanese is selected used to
       // attach Japanese readings to Chinese words here.
       final textLanguage = _tokenizerService.detectLanguage(text);
+      final useWiktionary = !_yomichanLanguages.contains(textLanguage);
 
       // reset stale translations from a previous analysis
       _sentenceTranslations.clear();
@@ -772,6 +786,14 @@ class AnalyzerProvider extends ChangeNotifier {
 
         final chunkResults = await Future.wait(
           chunk.map((token) async {
+            final sentence = _sentences[token.surface];
+            if (useWiktionary) {
+              return _enrichViaWiktionary(
+                token.surface,
+                textLanguage,
+                sentence: sentence,
+              );
+            }
             final result = await _yomichanService.enrichWord(
               token.surface,
               textLanguage,
@@ -799,6 +821,44 @@ class AnalyzerProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Wiktionary enrichment for space-separated languages: one REST
+  /// definitions call per word, results mapped to AnalyzedWord.
+  Future<AnalyzedWord?> _enrichViaWiktionary(
+    String word,
+    String language, {
+    String? sentence,
+  }) async {
+    final override = appState?.wiktionaryLanguage ?? 'auto';
+    if (!WiktionaryLookupService.isSupported(language, override: override)) {
+      return null;
+    }
+    final defs = await _wiktionaryService.lookup(
+      word,
+      language,
+      override: override,
+    );
+    if (defs.isEmpty) return null;
+
+    // flatten: requested language's groups first, joined into a single
+    // definition list for the card display
+    final flat = <String>[];
+    for (final group in defs) {
+      final prefix = group.partOfSpeech.isEmpty
+          ? ''
+          : '(${group.partOfSpeech}) ';
+      for (final d in group.definitions) {
+        flat.add('$prefix$d');
+      }
+    }
+
+    return AnalyzedWord(
+      word: word,
+      sentence: sentence,
+      wiktionaryDefinitions: flat,
+      sourceDictionary: 'wiktionary',
+    );
   }
 
   // --- Dictionary Management ---

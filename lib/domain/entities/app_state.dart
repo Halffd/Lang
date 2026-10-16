@@ -296,6 +296,11 @@ class AppState extends ChangeNotifier {
   // store loads.
   String _storageBackend = 'sqlite';
 
+  // Wiktionary lookup language for space-separated languages: 'auto'
+  // follows the detected text language, or an explicit subdomain code
+  // ('en', 'ru', 'el', ...).
+  String _wiktionaryLanguage = 'auto';
+
   // Analyse tab word-card display mode:
   // compact | normal | full | onlyWord | onlyReading | onlyWordReading |
   // onlyWordDefinition
@@ -799,6 +804,9 @@ class AppState extends ChangeNotifier {
   /// Document-store backend: 'sqlite' | 'files'.
   String get storageBackend => _storageBackend;
 
+  /// Wiktionary lookup language: 'auto' or an explicit subdomain code.
+  String get wiktionaryLanguage => _wiktionaryLanguage;
+
   /// Word-card display mode (compact/normal/full/single-element modes).
   String get cardDisplayMode => _cardDisplayMode;
   bool get filterHideParticles => _filterHideParticles;
@@ -849,6 +857,13 @@ class AppState extends ChangeNotifier {
   void setStorageBackend(String value) {
     _storageBackend = value == 'files' ? 'files' : 'sqlite';
     _storageService.setString('storage_backend', _storageBackend);
+    notifyListeners();
+  }
+
+  /// Wiktionary lookup language ('auto' or a subdomain code).
+  void setWiktionaryLanguage(String value) {
+    _wiktionaryLanguage = value.isEmpty ? 'auto' : value;
+    _storageService.setString('wiktionary_language', _wiktionaryLanguage);
     notifyListeners();
   }
 
@@ -1287,8 +1302,9 @@ class AppState extends ChangeNotifier {
             0.1,
             1.0,
           );
-      _storageBackend =
-          _storageService.getStringSync('storage_backend') == 'files'
+      _storageBackend = _wiktionaryLanguage =
+          _storageService.getStringSync('wiktionary_language') ?? 'auto';
+      _storageService.getStringSync('storage_backend') == 'files'
           ? 'files'
           : 'sqlite';
       _analysisPageLines =
@@ -1396,6 +1412,7 @@ class AppState extends ChangeNotifier {
       // Analyse-tab defaults
       _inputMaxHeightFraction = 0.5;
       _analysisPageLines = 100;
+      _wiktionaryLanguage = 'auto';
       _cardDisplayMode = 'compact';
       _filterHideParticles = false;
       _filterHideKnownWords = false;

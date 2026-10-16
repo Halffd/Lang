@@ -25,6 +25,10 @@ class AnalyzedWord {
   final String? sentence;
   final List<String> ichiMoeDefinitions;
   final String? wiktionaryHtml;
+
+  /// Plain-text definitions from the Wiktionary REST API (space-separated
+  /// languages the Yomichan dictionary does not cover).
+  final List<String> wiktionaryDefinitions;
   final List<String> kanjiList;
   final Map<String, dynamic> kanjiDetails;
   final Map<String, Map<String, String>> kanjipediaData;
@@ -45,6 +49,7 @@ class AnalyzedWord {
     this.sentence,
     this.ichiMoeDefinitions = const [],
     this.wiktionaryHtml,
+    this.wiktionaryDefinitions = const [],
     this.kanjiList = const [],
     this.kanjiDetails = const {},
     this.kanjipediaData = const {},
@@ -76,6 +81,8 @@ class AnalyzedWord {
       sentence: sentence ?? this.sentence,
       ichiMoeDefinitions: ichiMoeDefinitions ?? this.ichiMoeDefinitions,
       wiktionaryHtml: wiktionaryHtml ?? this.wiktionaryHtml,
+      wiktionaryDefinitions:
+          wiktionaryDefinitions ?? this.wiktionaryDefinitions,
       kanjiList: kanjiList ?? this.kanjiList,
       kanjiDetails: kanjiDetails ?? this.kanjiDetails,
       kanjipediaData: kanjipediaData ?? this.kanjipediaData,
