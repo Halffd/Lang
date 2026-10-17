@@ -57,6 +57,7 @@ import 'presentation/providers/supabase_provider.dart';
 import 'presentation/providers/user_profile_provider.dart';
 import 'presentation/providers/user_data_provider.dart';
 import 'presentation/screens/reader/pip_windows.dart';
+import 'presentation/screens/scanner_screen.dart';
 import 'presentation/screens/settings_screen.dart';
 import 'presentation/widgets/user_badge.dart';
 import 'presentation/widgets/font_zoom_scope.dart';
@@ -859,6 +860,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   final List<Widget> _screens = [
     const AnalyzeScreen(),
     const SearchScreen(),
+    const ScannerScreen(),
     const ReaderScreen(),
     const DictionaryScreen(),
     const WriterScreen(),
@@ -873,6 +875,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   static const _routeNames = [
     'analyze',
     'search',
+    'scanner',
     'reader',
     'dictionary',
     'writer',
@@ -907,12 +910,12 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     if (!desktopIPC.isSupported) return;
 
     desktopIPC.onStudyRequested = () {
-      if (mounted) setState(() => _currentIndex = 7);
-      _syncPopupRoute(7);
+      if (mounted) setState(() => _currentIndex = 8);
+      _syncPopupRoute(8);
     };
     desktopIPC.onReaderRequested = () {
-      if (mounted) setState(() => _currentIndex = 2);
-      _syncPopupRoute(2);
+      if (mounted) setState(() => _currentIndex = 3);
+      _syncPopupRoute(3);
     };
     desktopIPC.onQuitRequested = () {
       desktopIPC.dispose();
@@ -921,12 +924,12 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
     desktopIPC.registerCommonHotkeys(
       onShowStudy: () {
-        if (mounted) setState(() => _currentIndex = 7);
-        _syncPopupRoute(7);
+        if (mounted) setState(() => _currentIndex = 8);
+        _syncPopupRoute(8);
       },
       onShowReader: () {
-        if (mounted) setState(() => _currentIndex = 2);
-        _syncPopupRoute(2);
+        if (mounted) setState(() => _currentIndex = 3);
+        _syncPopupRoute(3);
       },
       onToggleWindow: () {
         desktopIPC.toggleWindow();
@@ -986,6 +989,10 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           NavigationDestination(
             icon: const Icon(Icons.search),
             label: AppLocalizations.of(context)!.search,
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.document_scanner),
+            label: 'Scan',
           ),
           NavigationDestination(
             icon: const Icon(Icons.menu_book),
