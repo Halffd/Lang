@@ -797,6 +797,16 @@ class _VideoTabState extends State<VideoTab> {
       final srt = await service.transcribeForSrt(
         _currentSource!,
         onStatus: (line) => status.value = line,
+        onSrtUpdate: (text) {
+          // Stream the growing subtitles into the transcript/overlay
+          // while the server transcribes; the final parse below
+          // replaces the partial state once the task completes.
+          if (!mounted) return;
+          _applySubtitleCues(
+            SubtitleParser.parseSrt(text),
+            'WhisperSubs (live)',
+          );
+        },
       );
       final cues = SubtitleParser.parseSrt(srt);
       if (!mounted) return;

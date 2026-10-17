@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'dart:io';
+
 import 'package:lang/core/services/whisper_subs_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
+import 'package:lang/presentation/screens/document_reader_screen.dart';
 
 /// Browse a whisper-subs server: Library (finished transcriptions),
 /// Channels (per-channel video lists) and Live (running tasks).
@@ -30,6 +33,11 @@ class _WhisperSubsTabState extends State<WhisperSubsTab> {
   List<Map<String, dynamic>> _channels = const [];
   List<Map<String, dynamic>> _channelVideos = const [];
   List<Map<String, dynamic>> _live = const [];
+  List<Map<String, dynamic>> _subs = const [];
+
+  /// Status strip (the Kotlin app's Home screen equivalent): who the
+  /// key belongs to, how many models the server offers.
+  Map<String, dynamic>? _homeInfo;
 
   WhisperSubsService? _service;
 
@@ -51,6 +59,18 @@ class _WhisperSubsTabState extends State<WhisperSubsTab> {
       apiKey: appState.whisperSubsApiKey,
     );
     _reload();
+    () async {
+      try {
+        final me = await _service!.authMe();
+        final models = await _service!.models();
+        if (!mounted) return;
+        setState(() {
+          _homeInfo = {'username': me['username'], 'models': models.length};
+        });
+      } catch (_) {
+        // the status strip stays hidden when the key is wrong
+      }
+    }();
   }
 
   void _reload() {
@@ -72,8 +92,10 @@ class _WhisperSubsTabState extends State<WhisperSubsTab> {
             } else {
               items = await service.channels();
             }
-          default:
+          case 2:
             items = await service.liveTasks();
+          default:
+            items = await service.subtitleList();
         }
         if (!mounted) return;
         setState(() {
@@ -87,8 +109,10 @@ class _WhisperSubsTabState extends State<WhisperSubsTab> {
               } else {
                 _channels = items;
               }
-            default:
+            case 2:
               _live = items;
+            default:
+              _subs = items;
           }
         });
       } catch (e) {
@@ -108,7 +132,8 @@ class _WhisperSubsTabState extends State<WhisperSubsTab> {
     final cached = switch (index) {
       0 => _library,
       1 => _channels,
-      _ => _live,
+      2 => _live,
+      _ => _subs,
     };
     if (cached.isEmpty) {
       _reload();
@@ -209,6 +234,8 @@ class _WhisperSubsTabState extends State<WhisperSubsTab> {
               _sectionChip(1, 'Channels', Icons.folder),
               const SizedBox(width: 6),
               _sectionChip(2, 'Live', Icons.podcasts),
+              const SizedBox(width: 6),
+              _sectionChip(3, 'Subs', Icons.subtitles),
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.refresh, size: 20),
@@ -218,6 +245,14 @@ class _WhisperSubsTabState extends State<WhisperSubsTab> {
             ],
           ),
         ),
+        if (_homeInfo != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Text(
+              'server ok · ${_homeInfo!['username']} · ${_homeInfo!['models']} models',
+              style: TextStyle(fontSize: 11, color: theme.colorScheme.outline),
+            ),
+          ),
         if (_error != null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -248,11 +283,12 @@ class _WhisperSubsTabState extends State<WhisperSubsTab> {
           const Expanded(child: Center(child: CircularProgressIndicator())),
         if (!_loading)
           Expanded(
-            child: _section == 0
-                ? _buildLibrary()
-                : _section == 1
-                ? _buildChannels()
-                : _buildLive(),
+            child: switch (_section) {
+              0 => _buildLibrary(),
+              1 => _buildChannels(),
+              2 => _buildLive(),
+              _ => _buildSubs(),
+            },
           ),
       ],
     );
@@ -416,6 +452,63 @@ class _WhisperSubsTabState extends State<WhisperSubsTab> {
         },
       ),
     );
+  }
+
+  /// Every subtitle file the server kept, browsable like a directory.
+  /// Opening one downloads it and hands it to the document reader, so
+  /// dictionary lookups work on the transcript text.
+  Widget _buildSubs() {
+    if (_subs.isEmpty) return _empty('No subtitle files on the server');
+    return RefreshIndicator(
+      onRefresh: () async => _reload(),
+      child: ListView.builder(
+        itemCount: _subs.length,
+        itemBuilder: (context, i) {
+          final s = _subs[i];
+          return ListTile(
+            leading: const Icon(Icons.subtitles_outlined),
+            title: Text(
+              '${s['filename'] ?? s['path'] ?? '?'}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text(
+              '${s['created'] ?? ''}',
+              style: TextStyle(color: Theme.of(context).colorScheme.outline),
+            ),
+            onTap: () => _openSubsEntry(s),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _openSubsEntry(Map<String, dynamic> entry) async {
+    final service = _service;
+    final path = entry['path'];
+    if (service == null || path is! String || path.isEmpty) return;
+    setState(() => _loading = true);
+    try {
+      final text = await service.fetchSubtitle(path);
+      final file = File(
+        '${Directory.systemTemp.path}/whispersubs-${DateTime.now().millisecondsSinceEpoch}.txt',
+      );
+      await file.writeAsString(text, flush: true);
+      if (!mounted) return;
+      setState(() => _loading = false);
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) =>
+              DocumentReaderScreen(filePath: file.path, fileType: 'txt'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = '$e';
+      });
+    }
   }
 
   Widget _empty(String message) => LayoutBuilder(

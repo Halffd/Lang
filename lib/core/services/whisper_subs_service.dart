@@ -248,17 +248,39 @@ class WhisperSubsService {
     return response.body;
   }
 
+  /// GET /api/v1/tasks/{id}/subtitles — the SRT content as it exists
+  /// right now (grows while the task runs). Null while the server has
+  /// not registered the subtitle path yet (404 at the start of a run).
+  Future<String?> taskSubtitles(String taskId) async {
+    final response = await _client
+        .get(_uri('/api/v1/tasks/$taskId/subtitles'), headers: _headers)
+        .timeout(_timeout);
+    if (response.statusCode == 404) return null;
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw WhisperSubsException(
+        'HTTP ${response.statusCode}: ${response.body}',
+      );
+    }
+    return response.body;
+  }
+
   /// Full flow: submit the source, poll until done, return the SRT text
   /// the run produced.
   ///
   /// [onStatus] receives a one-line progress string suitable for a
   /// waiting dialog ("processing · 42%").
+  ///
+  /// [onSrtUpdate] receives the growing SRT content once per poll while
+  /// the task runs, so callers can render live subtitles as the server
+  /// transcribes; null updates (subtitle path not yet registered) are
+  /// not forwarded.
   Future<String> transcribeForSrt(
     String source, {
     String model = 'large-v3',
     Duration pollInterval = const Duration(seconds: 3),
     Duration maxWait = const Duration(minutes: 60),
     void Function(String line)? onStatus,
+    void Function(String srtText)? onSrtUpdate,
   }) async {
     final before = await subtitleList();
     final beforePaths = before.map((e) => e['path']).toSet();
@@ -274,6 +296,10 @@ class WhisperSubsService {
       onStatus?.call(
         progress == null || '$progress'.isEmpty ? state : '$state · $progress',
       );
+      if (onSrtUpdate != null) {
+        final growing = await taskSubtitles(taskId);
+        if (growing != null) onSrtUpdate(growing);
+      }
       if (state == 'completed') break;
       if (state == 'failed') {
         throw WhisperSubsException(

@@ -216,6 +216,100 @@ void main() {
     expect(service.resolveUrl('api/v1/media'), 'http://ws.test/x/api/v1/media');
   });
 
+  test(
+    'taskSubtitles returns growing text, null before registration',
+    () async {
+      var calls = 0;
+      final client = _FakeClient((req) async {
+        if (req.url.path == '/api/v1/tasks/task_9/subtitles') {
+          calls++;
+          if (calls == 1) {
+            return _jsonResponse({'detail': 'not registered'}, status: 404);
+          }
+          return _textResponse('1\n00:00:01,000 --> 00:00:02,000\nfirst\n');
+        }
+        fail('unexpected request: ${req.url.path}');
+      });
+      final service = WhisperSubsService(
+        baseUrl: 'http://ws.test',
+        apiKey: 'key1',
+        client: client,
+      );
+      expect(await service.taskSubtitles('task_9'), isNull);
+      expect(await service.taskSubtitles('task_9'), contains('first'));
+    },
+  );
+
+  test('transcribeForSrt streams growing subtitles while polling', () async {
+    var listCalls = 0;
+    var polls = 0;
+    var subCalls = 0;
+    final updates = <String>[];
+    final client = _FakeClient((req) async {
+      final path = req.url.path;
+      if (path == '/subtitles/list') {
+        listCalls++;
+        if (listCalls == 1) return _jsonResponse([]);
+        return _jsonResponse([
+          {
+            'filename': 'new.srt',
+            'path': 'chan/new.srt',
+            'created': '2026-10-17T00:00:00',
+          },
+        ]);
+      }
+      if (path == '/transcribe') {
+        return _jsonResponse({
+          'task_id': 'task_s',
+          'status': 'pending',
+          'source': '',
+          'model_name': 'tiny',
+          'created_at': 'now',
+        });
+      }
+      if (path == '/tasks/task_s') {
+        polls++;
+        return _jsonResponse(
+          polls < 3 ? {'status': 'processing'} : {'status': 'completed'},
+        );
+      }
+      if (path == '/api/v1/tasks/task_s/subtitles') {
+        subCalls++;
+        if (subCalls == 1) {
+          // subtitle path not registered yet at the first poll
+          return _jsonResponse({'detail': 'no'}, status: 404);
+        }
+        return _textResponse(
+          '1\n00:00:01,000 --> 00:00:02,000\nline one\n\n' +
+              (subCalls >= 3
+                  ? '2\n00:00:03,000 --> 00:00:04,000\nline two\n\n'
+                  : ''),
+        );
+      }
+      if (path == '/subtitles/chan/new.srt') {
+        return _textResponse('1\n00:00:01,000 --> 00:00:02,000\nfinal\n');
+      }
+      fail('unexpected request: $path');
+    });
+    final service = WhisperSubsService(
+      baseUrl: 'http://ws.test',
+      apiKey: 'key1',
+      client: client,
+    );
+    final srt = await service.transcribeForSrt(
+      'https://youtu.be/x',
+      pollInterval: Duration.zero,
+      onSrtUpdate: updates.add,
+    );
+    // two poll updates forwarded (the 404 was not)
+    expect(updates, hasLength(2));
+    expect(updates.first, contains('line one'));
+    expect(updates.first, isNot(contains('line two')));
+    expect(updates.last, contains('line two'));
+    // final result still comes from the produced file
+    expect(srt, contains('final'));
+  });
+
   test('unauthorized surfaces a clear message', () async {
     final client = _FakeClient(
       (req) async => _jsonResponse({'detail': 'nope'}, status: 401),

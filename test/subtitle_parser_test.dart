@@ -22,6 +22,15 @@ I am fine, thank you.
       expect(cues[1].end, 7250);
     });
 
+    test('tolerates a truncated trailing block from a live stream', () {
+      const raw =
+          '1\n00:00:01,000 --> 00:00:02,000\ncomplete\n\n'
+          '2\n00:00:03,000 --> ';
+      final cues = SubtitleParser.parseSrt(raw);
+      expect(cues, hasLength(1));
+      expect(cues[0].text, 'complete');
+    });
+
     test('parses WebVTT headers and dot separators', () {
       const raw = '''WEBVTT
 
