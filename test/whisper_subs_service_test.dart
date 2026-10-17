@@ -280,10 +280,8 @@ void main() {
           return _jsonResponse({'detail': 'no'}, status: 404);
         }
         return _textResponse(
-          '1\n00:00:01,000 --> 00:00:02,000\nline one\n\n' +
-              (subCalls >= 3
-                  ? '2\n00:00:03,000 --> 00:00:04,000\nline two\n\n'
-                  : ''),
+          '1\n00:00:01,000 --> 00:00:02,000\nline one\n\n'
+          '${subCalls >= 3 ? '2\n00:00:03,000 --> 00:00:04,000\nline two\n\n' : ''}',
         );
       }
       if (path == '/subtitles/chan/new.srt') {
