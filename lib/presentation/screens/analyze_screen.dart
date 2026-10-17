@@ -12,6 +12,7 @@ import 'package:lang/presentation/widgets/word_detail_sheet.dart';
 import 'package:lang/presentation/widgets/structured_definition.dart';
 import 'package:lang/presentation/widgets/script_text_field.dart';
 import 'package:lang/presentation/widgets/anki_export_dialog.dart';
+import 'package:lang/presentation/screens/search_screen.dart';
 import 'package:lang/presentation/screens/settings_screen.dart';
 import 'package:lang/domain/entities/analyzed_word.dart';
 
@@ -382,7 +383,27 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
         ),
         tooltip: 'Settings',
       ),
-      actions: [_buildLanguageSelector(context, provider, l10n)],
+      actions: [
+        // search word/sentence on the search screen (provider handoff)
+        IconButton(
+          icon: const Icon(Icons.travel_explore),
+          tooltip: 'Search on search screen',
+          onPressed: () {
+            final selected = provider.selectedWord;
+            final query = selected?.word ?? _controller.text.trim();
+            if (query.isEmpty) return;
+            SearchScreen.pendingQuery = query;
+            AnalyzerProvider.pendingSearchQuery = query;
+            Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (context) => const SearchScreen(),
+              ),
+            );
+          },
+        ),
+        _buildLanguageSelector(context, provider, l10n),
+      ],
       elevation: 0,
       scrolledUnderElevation: 1,
     );

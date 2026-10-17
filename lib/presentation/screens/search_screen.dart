@@ -21,6 +21,10 @@ enum OcrTab { text, screenshot }
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
+  /// Query handed over from another screen (e.g. the analyze tab's
+  /// search button). Consumed by [State.initState] once.
+  static String? pendingQuery;
+
   @override
   State<SearchScreen> createState() => _SearchScreenState();
 }
@@ -41,6 +45,18 @@ class _SearchScreenState extends State<SearchScreen> {
   void initState() {
     super.initState();
     _focusNode.addListener(_onFocusChange);
+    // consume a query handed over from another screen
+    final pending =
+        SearchScreen.pendingQuery ?? AnalyzerProvider.pendingSearchQuery;
+    SearchScreen.pendingQuery = null;
+    AnalyzerProvider.pendingSearchQuery = null;
+    if (pending != null && pending.trim().isNotEmpty) {
+      _searchController.text = pending.trim();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<AnalyzerProvider>().searchWord(pending.trim());
+      });
+    }
     // restore persisted OCR engine choice
     final saved = context.read<AppState>().ocrEngine;
     if (saved.isNotEmpty) {

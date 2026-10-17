@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:lang/core/services/audio_service.dart';
 import 'package:lang/core/services/history_service.dart';
 import 'package:lang/core/services/speech_service.dart';
+import 'package:lang/presentation/widgets/annotated_line.dart';
 import 'package:lang/data/repositories/translation_service.dart';
 import 'package:lang/domain/entities/translation_model.dart';
 import 'package:lang/domain/entities/app_state.dart';
@@ -55,6 +59,10 @@ class _SpeechTabState extends State<SpeechTab> {
   final Map<int, Timer> _fadeTimers = {};
   final Set<int> _fadedSegments = {};
 
+  // named transcription sessions (mimiuchi log export)
+  String _sessionName = '';
+  List<String> _savedSessions = [];
+
   // TTS readback
   dynamic _tts; // AudioService lazily created
 
@@ -80,6 +88,7 @@ class _SpeechTabState extends State<SpeechTab> {
   @override
   void initState() {
     super.initState();
+    _loadSessions();
     _resolveEngine();
   }
 
@@ -172,7 +181,7 @@ class _SpeechTabState extends State<SpeechTab> {
         _copyAll();
         return KeyEventResult.handled;
       case LogicalKeyboardKey.keyX:
-        setState(_segments.clear);
+        _clearForNewSession();
         return KeyEventResult.handled;
       case LogicalKeyboardKey.keyT:
         final appState = context.read<AppState>();
@@ -541,15 +550,61 @@ class _SpeechTabState extends State<SpeechTab> {
                 const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.copy, size: 18),
-                  tooltip: l10n.speechCopyAll,
+                  tooltip: '${l10n.speechCopyAll} (Ctrl+C)',
                   onPressed: _segments.isEmpty ? null : _copyAll,
                 ),
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.folder_open, size: 18),
+                  tooltip: 'Sessions',
+                  onSelected: (v) {
+                    if (v == 'save') _saveSession();
+                    if (v == 'backup') _backupTranscript();
+                    if (v.startsWith('load:')) _loadSession(v.substring(5));
+                    if (v.startsWith('delete:')) {
+                      _deleteSession(v.substring(7));
+                    }
+                  },
+                  itemBuilder: (ctx) => [
+                    const PopupMenuItem(
+                      value: 'save',
+                      child: Text('Save session'),
+                    ),
+                    const PopupMenuItem(
+                      value: 'backup',
+                      child: Text('Backup transcript…'),
+                    ),
+                    const PopupMenuDivider(),
+                    if (_savedSessions.isEmpty)
+                      const PopupMenuItem(
+                        enabled: false,
+                        child: Text('No saved sessions'),
+                      ),
+                    for (final name in _savedSessions)
+                      PopupMenuItem(
+                        value: 'load:$name',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.folder, size: 16),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                name,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, size: 16),
+                              onPressed: () => _deleteSession(name),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
                 IconButton(
-                  icon: const Icon(Icons.delete_sweep, size: 18),
-                  tooltip: l10n.speechClear,
-                  onPressed: _segments.isEmpty
-                      ? null
-                      : () => setState(() => _segments.clear()),
+                  icon: const Icon(Icons.note_add, size: 18),
+                  tooltip: 'New session (clears current; auto-saves)',
+                  onPressed: _segments.isEmpty ? null : _clearForNewSession,
                 ),
               ],
             ),
@@ -880,15 +935,7 @@ class _SpeechTabState extends State<SpeechTab> {
                       ),
                     ),
                   ),
-                  Expanded(
-                    child: SelectableText(
-                      seg.text,
-                      style: TextStyle(
-                        fontSize: fs(context, 14, 'sentences'),
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
+                  Expanded(child: _annotatedIfEnabled(context, seg)),
                 ],
               ),
             ),
@@ -953,6 +1000,162 @@ class _SpeechTabState extends State<SpeechTab> {
           ],
         );
       },
+    );
+  }
+
+  // ----------------------------------------------------------
+  // transcription sessions (mimiuchi save/export log)
+  // ----------------------------------------------------------
+
+  File get _sessionsFile {
+    final dir = Directory.systemTemp;
+    return File('${dir.path}/lang_speech_sessions.json');
+  }
+
+  Map<String, List<Map<String, dynamic>>> _readSessions() {
+    try {
+      final f = _sessionsFile;
+      if (!f.existsSync()) return {};
+      final decoded = jsonDecode(f.readAsStringSync());
+      if (decoded is! Map) return {};
+      return decoded.map(
+        (k, v) => MapEntry(
+          k.toString(),
+          (v as List)
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList(),
+        ),
+      );
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<void> _writeSessions(
+    Map<String, List<Map<String, dynamic>>> sessions,
+  ) async {
+    await _sessionsFile.writeAsString(jsonEncode(sessions), flush: true);
+    if (mounted) {
+      setState(() => _savedSessions = sessions.keys.toList()..sort());
+    }
+  }
+
+  Future<void> _loadSessions() async {
+    final sessions = _readSessions();
+    if (!mounted) return;
+    setState(() => _savedSessions = sessions.keys.toList()..sort());
+  }
+
+  Future<void> _saveSession() async {
+    if (_segments.isEmpty) return;
+    final name = _sessionName.trim().isEmpty
+        ? 'session ${DateTime.now().toIso8601String().substring(0, 16)}'
+        : _sessionName.trim();
+    final sessions = _readSessions();
+    sessions[name] = [
+      for (final s in _segments)
+        {
+          'text': s.text,
+          'language': s.language,
+          'startMs': s.startMs,
+          'endMs': s.endMs,
+          if (s.translation != null) 'translation': s.translation,
+        },
+    ];
+    await _writeSessions(sessions);
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('saved session "$name"')));
+  }
+
+  Future<void> _loadSession(String name) async {
+    final sessions = _readSessions();
+    final rows = sessions[name];
+    if (rows == null) return;
+    if (!mounted) return;
+    setState(() {
+      _segments
+        ..clear()
+        ..addAll([
+          for (final r in rows)
+            SpeechSegment(
+              text: r['text']?.toString() ?? '',
+              language: r['language']?.toString(),
+              startMs: (r['startMs'] as num?)?.toInt() ?? 0,
+              endMs: (r['endMs'] as num?)?.toInt() ?? 0,
+              translation: r['translation']?.toString(),
+            ),
+        ]);
+    });
+  }
+
+  Future<void> _deleteSession(String name) async {
+    final sessions = _readSessions();
+    sessions.remove(name);
+    await _writeSessions(sessions);
+  }
+
+  /// Export the current transcript to a user-chosen file (backup).
+  Future<void> _backupTranscript() async {
+    if (_segments.isEmpty) return;
+    final picked = await FilePicker.platform.saveFile(
+      fileName:
+          'transcript_${DateTime.now().toIso8601String().substring(0, 10)}.txt',
+      type: FileType.custom,
+      allowedExtensions: ['txt'],
+    );
+    if (picked == null) return;
+    final buf = StringBuffer();
+    for (final s in _segments) {
+      buf.writeln('${_fmtClock(s.startMs)}  ${s.text}');
+      if (s.translation != null) buf.writeln('  → ${s.translation}');
+    }
+    await File(picked).writeAsString(buf.toString(), flush: true);
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('backed up to $picked')));
+  }
+
+  /// Clear makes a NEW session: auto-save the current transcript before
+  /// wiping, so nothing is lost (mimiuchi saveHistory semantics).
+  Future<void> _clearForNewSession() async {
+    if (_segments.isNotEmpty) await _saveSession();
+    if (!mounted) return;
+    _fadeTimers.values.forEach((t) => t.cancel());
+    _fadeTimers.clear();
+    setState(() {
+      _segments.clear();
+      _fadedSegments.clear();
+      _sessionName = '';
+    });
+  }
+
+  /// Furigana/pinyin-annotated transcript row when the global reading
+  /// style is on and the text contains CJK; plain selectable text
+  /// otherwise.
+  Widget _annotatedIfEnabled(BuildContext context, SpeechSegment seg) {
+    final appState = context.read<AppState>();
+    final style = appState.readingStyle;
+    final hasCjk = seg.text.runes.any(
+      (c) =>
+          (c >= 0x4E00 && c <= 0x9FFF) ||
+          (c >= 0x3040 && c <= 0x30FF) ||
+          (c >= 0xAC00 && c <= 0xD7AF),
+    );
+    if (style == 'off' || !hasCjk) {
+      return SelectableText(
+        seg.text,
+        style: TextStyle(fontSize: fs(context, 14, 'sentences'), height: 1.5),
+      );
+    }
+    return AnnotatedLine(
+      text: seg.text,
+      appState: appState,
+      fontSize: fs(context, 14, 'sentences'),
+      weight: FontWeight.normal,
     );
   }
 

@@ -14,6 +14,10 @@ import 'package:lang/domain/entities/app_state.dart';
 
 /// Unified dictionary service that delegates to specialized services
 class AnalyzerProvider extends ChangeNotifier {
+  /// Query handed to the search screen; the search screen's own
+  /// provider (app-scoped, same instance) picks it up in initState.
+  static String? pendingSearchQuery;
+
   /// App state hook, set at startup so profile dictionary settings
   /// (priority/conditions) can gate and order search results.
   AppState? appState;
