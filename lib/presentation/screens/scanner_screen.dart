@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import 'package:lang/core/services/clipboard_manager_service.dart';
 import 'package:lang/core/services/popup_dictionary_controller.dart';
+import 'package:lang/core/services/screenshot_service.dart';
 import 'package:lang/data/services/ocr_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/l10n/app_localizations.dart';
@@ -71,6 +72,28 @@ class _ScannerScreenState extends State<ScannerScreen> {
     await _processFile(photo.path);
   }
 
+  /// System screen capture (desktop, out-of-app): captures the actual
+  /// screen — fullscreen, a monitor, or an interactive region — through
+  /// ScreenshotService's platform tools, then OCRs the result.
+  Future<void> _scanScreen(ScreenshotKind kind, {int monitor = 0}) async {
+    setState(() {
+      _processing = true;
+      _error = null;
+      _selectedBlocks.clear();
+    });
+    final service = ScreenshotService();
+    final item = await service.capture(kind, monitor: monitor);
+    if (item == null) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'screen capture failed (no tool?)';
+        _processing = false;
+      });
+      return;
+    }
+    await _processFile(item.path);
+  }
+
   /// Gallery pick (mobile + desktop) → OCR.
   Future<void> _scanGallery() async {
     final picker = ImagePicker();
@@ -90,6 +113,15 @@ class _ScannerScreenState extends State<ScannerScreen> {
   }
 
   Future<void> _processFile(String path) async {
+    final appState = context.read<AppState>();
+    var engine = OcrService.engineFromName(appState.ocrEngine);
+    if (engine == OcrEngine.ai) engine = OcrEngine.mlKit;
+    final lang = appState.ocrLanguage;
+    final language = (lang.isEmpty || lang == 'auto')
+        ? appState.learningLanguage
+        : lang;
+    final apiEndpoint = appState.ocrApiEndpoint;
+
     setState(() {
       _processing = true;
       _error = null;
@@ -97,16 +129,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
     });
     try {
       final bytes = await File(path).readAsBytes();
-      final appState = context.read<AppState>();
-      var engine = OcrService.engineFromName(appState.ocrEngine);
-      if (engine == OcrEngine.ai) engine = OcrEngine.mlKit;
-      final lang = appState.ocrLanguage;
-      final language = (lang.isEmpty || lang == 'auto')
-          ? appState.learningLanguage
-          : lang;
 
-      if (appState.ocrApiEndpoint.isNotEmpty) {
-        _ocr.apiEndpoint = appState.ocrApiEndpoint;
+      if (apiEndpoint.isNotEmpty) {
+        _ocr.apiEndpoint = apiEndpoint;
       }
       final result = await _ocr.recognizeFromBytes(
         bytes,
@@ -354,6 +379,62 @@ class _ScannerScreenState extends State<ScannerScreen> {
               ),
             ],
           ),
+
+          // out-of-app screen capture (desktop: maim/scrot/powershell)
+          if (!isMobile) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _processing
+                        ? null
+                        : () => _scanScreen(ScreenshotKind.fullscreen),
+                    icon: const Icon(Icons.desktop_windows, size: 16),
+                    label: Text(
+                      'Full screen',
+                      style: TextStyle(fontSize: fs(context, 12)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _processing
+                        ? null
+                        : () => _scanScreen(ScreenshotKind.region),
+                    icon: const Icon(Icons.crop_free, size: 16),
+                    label: Text(
+                      'Region',
+                      style: TextStyle(fontSize: fs(context, 12)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _processing
+                        ? null
+                        : () => _scanScreen(ScreenshotKind.monitor, monitor: 0),
+                    icon: const Icon(Icons.monitor, size: 16),
+                    label: Text(
+                      'Monitor 1',
+                      style: TextStyle(fontSize: fs(context, 12)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Out-of-app scans capture the actual screen contents — text '
+              'in any window, browser or document.',
+              style: TextStyle(
+                fontSize: fs(context, 10.5),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
+          ],
           if (_error != null)
             Padding(
               padding: const EdgeInsets.only(top: 8),
