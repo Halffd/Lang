@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -13,7 +12,11 @@ import 'package:lang/core/services/history_service.dart';
 import 'package:lang/core/services/speech_service.dart';
 import 'package:lang/presentation/widgets/annotated_line.dart';
 import 'package:lang/data/repositories/translation_service.dart';
+import 'package:lang/domain/entities/analyzed_word.dart';
 import 'package:lang/domain/entities/translation_model.dart';
+import 'package:lang/data/services/dictionary/yomichan_service.dart';
+import 'package:lang/data/services/dictionary/tokenizer_service.dart';
+import 'package:lang/data/datasources/remote/wiktionary_lookup_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/utils/font_scale.dart';
@@ -62,6 +65,14 @@ class _SpeechTabState extends State<SpeechTab> {
   // named transcription sessions (mimiuchi log export)
   String _sessionName = '';
   List<String> _savedSessions = [];
+
+  // auto word cards (analyze-screen style)
+  final List<AnalyzedWord> _cards = [];
+  bool _cardsGenerating = false;
+  final YomichanService _yomichan = YomichanService();
+  final TokenizerService _tokenizer = TokenizerService();
+  final WiktionaryLookupService _wiktionary = WiktionaryLookupService();
+  static const _cjkLanguages = {'ja', 'zh', 'ko'};
 
   // TTS readback
   dynamic _tts; // AudioService lazily created
@@ -396,6 +407,11 @@ class _SpeechTabState extends State<SpeechTab> {
     // TTS readback of the finalized segment (mimiuchi tts.enabled)
     if (appState.speechTtsReadback && seg.text.trim().isNotEmpty) {
       _audio.play(seg.text, seg.language ?? appState.speechLanguage);
+    }
+
+    // auto word cards (analyze-screen style)
+    if (appState.speechAutoCards) {
+      unawaited(_generateCards(seg.text, appState.speechLanguage));
     }
 
     // fade out old rows once new ones arrive (mimiuchi text.enable_fade)
@@ -882,6 +898,79 @@ class _SpeechTabState extends State<SpeechTab> {
           ),
           const Divider(height: 1),
 
+          // auto word cards
+          if (_cards.isNotEmpty)
+            Container(
+              height: 150,
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.3,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 6, 10, 0),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.style,
+                          size: 14,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Word cards (${_cards.length})',
+                          style: TextStyle(
+                            fontSize: fs(context, 11),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 14),
+                          tooltip: 'Clear cards',
+                          onPressed: () => setState(() => _cards.clear()),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: GridView.builder(
+                      padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 220,
+                            childAspectRatio: 2.4,
+                            crossAxisSpacing: 6,
+                            mainAxisSpacing: 6,
+                          ),
+                      itemCount: _cards.length,
+                      itemBuilder: (context, index) => _SpeechCard(
+                        word: _cards[index],
+                        onTap: () async {
+                          await Clipboard.setData(
+                            ClipboardData(text: _cards[index].word),
+                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('copied \${_cards[index].word}'),
+                                duration: const Duration(milliseconds: 700),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
           // transcript
           Expanded(
             child: _segments.isEmpty
@@ -1001,6 +1090,77 @@ class _SpeechTabState extends State<SpeechTab> {
         );
       },
     );
+  }
+
+  // ----------------------------------------------------------
+  // auto word cards (analyze-screen enrichment, per segment)
+  // ----------------------------------------------------------
+
+  Future<void> _generateCards(String text, String language) async {
+    if (_cardsGenerating) return;
+    _cardsGenerating = true;
+    try {
+      final isCjk = _cjkLanguages.contains(language);
+      final generated = <AnalyzedWord>[];
+
+      if (isCjk) {
+        final tokens = await _tokenizer.tokenize(text);
+        final seen = <String>{};
+        for (final token in tokens) {
+          final surface = token.surface.trim();
+          if (surface.isEmpty ||
+              seen.contains(surface) ||
+              RegExp(r'^[\d\s]').hasMatch(surface)) {
+            continue;
+          }
+          seen.add(surface);
+          final enriched = await _yomichan.enrichWord(surface, language);
+          if (enriched != null) {
+            generated.add(enriched);
+          }
+        }
+      } else {
+        final words = text
+            .split(RegExp(r'[\s,.;:!?]+'))
+            .where((w) => w.length >= 2)
+            .toSet();
+        for (final word in words) {
+          final defs = await _wiktionary.lookup(word, language);
+          if (defs.isEmpty) continue;
+          final flat = <String>[];
+          for (final group in defs) {
+            final prefix = group.partOfSpeech.isEmpty
+                ? ''
+                : '(${group.partOfSpeech}) ';
+            flat.addAll([for (final d in group.definitions) '$prefix$d']);
+          }
+          if (flat.isNotEmpty) {
+            generated.add(
+              AnalyzedWord(
+                word: word,
+                wiktionaryDefinitions: flat,
+                sourceDictionary: 'wiktionary',
+              ),
+            );
+          }
+        }
+      }
+
+      if (generated.isEmpty) return;
+      if (!mounted) return;
+      setState(() {
+        final known = _cards.map((c) => c.word).toSet();
+        for (final card in generated) {
+          if (!known.contains(card.word)) _cards.add(card);
+        }
+        // cap the deck
+        if (_cards.length > 100) {
+          _cards.removeRange(0, _cards.length - 100);
+        }
+      });
+    } finally {
+      _cardsGenerating = false;
+    }
   }
 
   // ----------------------------------------------------------
@@ -1165,5 +1325,86 @@ class _SpeechTabState extends State<SpeechTab> {
     final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
     final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
     return '$h:$m:$s';
+  }
+}
+
+/// Compact word card for the speech tab's auto-generated deck: word,
+/// reading/definition first line, source tag. Tap copies the word.
+class _SpeechCard extends StatelessWidget {
+  final AnalyzedWord word;
+  final VoidCallback? onTap;
+
+  const _SpeechCard({required this.word, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final reading =
+        word.reading ??
+        (word.mdbgData?.pinyin.isNotEmpty ?? false
+            ? word.mdbgData!.pinyin
+            : null);
+    final definition = word.ichiMoeDefinitions.isNotEmpty
+        ? word.ichiMoeDefinitions.first
+        : (word.mdbgData?.definitions.isNotEmpty ?? false
+              ? word.mdbgData!.definitions.first
+              : (word.wiktionaryDefinitions.isNotEmpty
+                    ? word.wiktionaryDefinitions.first
+                    : ''));
+
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(
+          color: theme.colorScheme.outline.withValues(alpha: 0.15),
+        ),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                word.word,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (reading != null && reading.isNotEmpty)
+                Text(
+                  reading,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              if (definition.isNotEmpty)
+                Text(
+                  definition,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    height: 1.2,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

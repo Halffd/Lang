@@ -191,6 +191,7 @@ class AppState extends ChangeNotifier {
   List<String> get pinnedSpeechLanguages => _pinnedSpeechLanguages;
   bool get speechTtsReadback => _speechTtsReadback;
   bool get speechFadeOut => _speechFadeOut;
+  bool get speechAutoCards => _speechAutoCards;
   PopupDictionaryConfig get popupDictionaryConfig =>
       _popupDictionaryConfig ??= PopupDictionaryConfig.deserialize(
         _storageService.getStringSync('popup_dictionary_config'),
@@ -255,6 +256,7 @@ class AppState extends ChangeNotifier {
   List<String> _pinnedSpeechLanguages = []; // starred language codes
   bool _speechTtsReadback = false; // TTS speaks finalized segments
   bool _speechFadeOut = false; // fade old transcript rows
+  bool _speechAutoCards = true; // auto word-card generation per segment
   PopupDictionaryConfig? _popupDictionaryConfig;
   // screenshot settings (ocr screen screenshot tab)
   bool _screenshotAutoOcr = false;
@@ -744,6 +746,13 @@ class AppState extends ChangeNotifier {
   void setSpeechFadeOut(bool value) {
     _speechFadeOut = value;
     _storageService.setBool('speech_fade_out', value);
+    notifyListeners();
+  }
+
+  /// Auto word-card generation for finalized speech segments.
+  void setSpeechAutoCards(bool value) {
+    _speechAutoCards = value;
+    _storageService.setBool('speech_auto_cards', value);
     notifyListeners();
   }
 
@@ -1318,6 +1327,7 @@ class AppState extends ChangeNotifier {
       _speechTtsReadback =
           _storageService.getBool('speech_tts_readback') ?? false;
       _speechFadeOut = _storageService.getBool('speech_fade_out') ?? false;
+      _speechAutoCards = _storageService.getBool('speech_auto_cards') ?? true;
       _screenshotAutoOcr =
           _storageService.getBool('screenshot_auto_ocr') ?? false;
       _screenshotAutoTranslate =
