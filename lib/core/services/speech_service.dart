@@ -1,12 +1,29 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+
+import 'package:http/http.dart' as http;
 
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
 /// STT engine preference.
-enum SpeechEngine { whisper, parakeet }
+enum SpeechEngine { whisper, parakeet, api }
+
+/// OpenAI-compatible STT API engine: multipart audio POST to
+/// /audio/transcriptions, Bearer key, JSON {text} response.
+class ApiSttConfig {
+  final String url;
+  final String apiKey;
+  final String model;
+
+  const ApiSttConfig({
+    required this.url,
+    required this.apiKey,
+    this.model = 'whisper-1',
+  });
+}
 
 /// Result of one transcription segment.
 class SpeechSegment {
@@ -108,9 +125,11 @@ class SpeechService extends ChangeNotifier {
 
   /// Resolve which binary is available for the preferred engine.
   Future<SpeechEngine?> detectEngine(SpeechEngine preferred) async {
+    if (preferred == SpeechEngine.api) return SpeechEngine.api;
     final binary = switch (preferred) {
       SpeechEngine.whisper => '/usr/bin/whisper-cli',
       SpeechEngine.parakeet => '/usr/bin/parakeet-cli',
+      SpeechEngine.api => '',
     };
     try {
       final (code, _, _) = await runCommand(binary, ['--version']);
@@ -120,6 +139,7 @@ class SpeechService extends ChangeNotifier {
     final fallback = switch (preferred) {
       SpeechEngine.whisper => '/usr/bin/parakeet-cli',
       SpeechEngine.parakeet => '/usr/bin/whisper-cli',
+      SpeechEngine.api => '',
     };
     try {
       final (code, _, _) = await runCommand(fallback, ['--version']);
@@ -138,10 +158,28 @@ class SpeechService extends ChangeNotifier {
     'base': 'ggml-base.bin',
     'small': 'ggml-small.bin',
     'medium': 'ggml-medium.bin',
+    'large-v1': 'ggml-large-v1.bin',
+    'large-v2': 'ggml-large-v2.bin',
     'large-v3': 'ggml-large-v3.bin',
     'tiny.en': 'ggml-tiny.en.bin',
     'base.en': 'ggml-base.en.bin',
     'small.en': 'ggml-small.en.bin',
+    'medium.en': 'ggml-medium.en.bin',
+  };
+
+  /// Model titles for the UI, mimiuchi-style.
+  static const Map<String, String> whisperModelTitles = {
+    'tiny': 'Tiny (Multilingual)',
+    'base': 'Base (Multilingual)',
+    'small': 'Small (Multilingual)',
+    'medium': 'Medium (Multilingual)',
+    'large-v1': 'Large-v1',
+    'large-v2': 'Large-v2',
+    'large-v3': 'Large-v3',
+    'tiny.en': 'Tiny (English only)',
+    'base.en': 'Base (English only)',
+    'small.en': 'Small (English only)',
+    'medium.en': 'Medium (English only)',
   };
 
   /// Local model path for the engine, downloading when missing.
@@ -151,6 +189,8 @@ class SpeechService extends ChangeNotifier {
     String modelSize = 'base',
   }) async {
     switch (engine) {
+      case SpeechEngine.api:
+        return '';
       case SpeechEngine.whisper:
         final file = whisperModels[modelSize] ?? whisperModels['base']!;
         final dir = await modelsDirProvider();
@@ -206,6 +246,7 @@ class SpeechService extends ChangeNotifier {
     final binary = switch (engine) {
       SpeechEngine.whisper => '/usr/bin/whisper-cli',
       SpeechEngine.parakeet => '/usr/bin/parakeet-cli',
+      SpeechEngine.api => '',
     };
     final args = <String>['-m', modelPath, '-f', path, '-t', '4'];
     if (engine == SpeechEngine.whisper) {
@@ -227,6 +268,35 @@ class SpeechService extends ChangeNotifier {
     final text = _parseWhisperOutput(stdout_);
     var lang = language == 'auto' ? _detectLanguageTag(stdout_) : language;
     return (text, lang);
+  }
+
+  /// OpenAI-compatible STT API: multipart audio POST, JSON text back.
+  Future<(String, String?)> transcribeApi(
+    String path, {
+    required String apiUrl,
+    required String apiKey,
+    String language = 'auto',
+  }) async {
+    final request = http.MultipartRequest('POST', Uri.parse(apiUrl))
+      ..headers['Authorization'] = 'Bearer $apiKey'
+      ..files.add(await http.MultipartFile.fromPath('file', path))
+      ..fields['model'] = 'whisper-1'
+      ..fields['response_format'] = 'json';
+    if (language != 'auto') {
+      request.fields['language'] = language;
+    }
+
+    final streamed = await request.send().timeout(const Duration(minutes: 5));
+    final body = await streamed.stream.bytesToString();
+    if (streamed.statusCode != 200) {
+      throw Exception('STT API failed (${streamed.statusCode}): $body');
+    }
+
+    final decoded = jsonDecode(body);
+    if (decoded is! Map) throw Exception('unexpected STT API response');
+    final text = decoded['text']?.toString() ?? '';
+    final lang = decoded['language']?.toString();
+    return (text.trim(), lang?.toLowerCase());
   }
 
   /// whisper-cli prints segments as
@@ -254,6 +324,64 @@ class SpeechService extends ChangeNotifier {
       caseSensitive: false,
     ).firstMatch(out);
     return m?.group(1)?.toLowerCase();
+  }
+
+  // ----------------------------------------------------------
+  // live mic sensitivity meter (RMS level + active device)
+  // ----------------------------------------------------------
+
+  StreamSubscription<Amplitude>? _meterSub;
+  String _meterPath = '';
+
+  /// Start a bare mic stream and report RMS levels through [onLevel].
+  /// Returns false when the mic is unavailable. [onDevice] fires once
+  /// with the active input device label.
+  Future<bool> startMeter(
+    void Function(double level, String device) onLevel,
+  ) async {
+    if (!await _recorder.hasPermission()) return false;
+    try {
+      final dir = await modelsDirProvider();
+      if (!dir.existsSync()) dir.createSync(recursive: true);
+      _meterPath =
+          '${dir.path}/sensitivity_probe_${DateTime.now().millisecondsSinceEpoch}.wav';
+      await _recorder.start(
+        const RecordConfig(encoder: AudioEncoder.wav, sampleRate: 16000),
+        path: _meterPath,
+      );
+
+      try {
+        final devices = await _recorder.listInputDevices();
+        if (devices.isNotEmpty) onLevel(0, devices.first.label);
+      } catch (_) {}
+      onLevel(0, '');
+
+      double last = 0;
+      _meterSub = _recorder
+          .onAmplitudeChanged(const Duration(milliseconds: 100))
+          .listen((amp) {
+            // amp.current is dBFS (-inf..0); map to 0..1
+            final db = amp.current.isNaN ? -60.0 : amp.current;
+            final level = ((db + 60) / 60).clamp(0.0, 1.0);
+            final smoothed = (level + last) / 2;
+            last = smoothed;
+            onLevel(smoothed, '');
+          });
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Stop the sensitivity meter stream and discard the probe file.
+  Future<void> stopMeter() async {
+    await _meterSub?.cancel();
+    _meterSub = null;
+    try {
+      await _recorder.stop();
+      final f = File(_meterPath);
+      if (f.existsSync()) f.deleteSync();
+    } catch (_) {}
   }
 
   // ----------------------------------------------------------

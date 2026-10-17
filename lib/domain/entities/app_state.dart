@@ -185,6 +185,12 @@ class AppState extends ChangeNotifier {
   bool get speechAutoTranslate => _speechAutoTranslate;
   bool get speechSideBySide => _speechSideBySide;
   String get speechLanguage => _speechLanguage;
+  String get sttType => _sttType;
+  String get sttApiUrl => _sttApiUrl;
+  String get sttApiKey => _sttApiKey;
+  List<String> get pinnedSpeechLanguages => _pinnedSpeechLanguages;
+  bool get speechTtsReadback => _speechTtsReadback;
+  bool get speechFadeOut => _speechFadeOut;
   PopupDictionaryConfig get popupDictionaryConfig =>
       _popupDictionaryConfig ??= PopupDictionaryConfig.deserialize(
         _storageService.getStringSync('popup_dictionary_config'),
@@ -243,6 +249,12 @@ class AppState extends ChangeNotifier {
   bool _speechAutoTranslate = false;
   bool _speechSideBySide = false;
   String _speechLanguage = 'auto'; // whisper language code
+  String _sttType = 'local'; // local (whisper/parakeet) | api
+  String _sttApiUrl = '';
+  String _sttApiKey = '';
+  List<String> _pinnedSpeechLanguages = []; // starred language codes
+  bool _speechTtsReadback = false; // TTS speaks finalized segments
+  bool _speechFadeOut = false; // fade old transcript rows
   PopupDictionaryConfig? _popupDictionaryConfig;
   // screenshot settings (ocr screen screenshot tab)
   bool _screenshotAutoOcr = false;
@@ -683,6 +695,55 @@ class AppState extends ChangeNotifier {
   void setSpeechLanguage(String value) {
     _speechLanguage = value.isEmpty ? 'auto' : value;
     _storageService.setString('speech_language', _speechLanguage);
+    notifyListeners();
+  }
+
+  /// STT engine family: 'local' (whisper.cpp / parakeet binary) or
+  /// 'api' (OpenAI-compatible endpoint).
+  void setSttType(String value) {
+    _sttType = value == 'api' ? 'api' : 'local';
+    _storageService.setString('stt_type', _sttType);
+    notifyListeners();
+  }
+
+  void setSttApiUrl(String value) {
+    _sttApiUrl = value;
+    _storageService.setString('stt_api_url', value);
+    notifyListeners();
+  }
+
+  void setSttApiKey(String value) {
+    _sttApiKey = value;
+    _storageService.setString('stt_api_key', value);
+    notifyListeners();
+  }
+
+  /// Pin / unpin a speech language code (starred list, mimiuchi-style).
+  void togglePinnedSpeechLanguage(String code) {
+    final pins = [..._pinnedSpeechLanguages];
+    if (pins.contains(code)) {
+      pins.remove(code);
+    } else {
+      pins.add(code);
+      pins.sort();
+    }
+    _pinnedSpeechLanguages = pins;
+    _storageService.setStringList('pinned_speech_languages', pins);
+    notifyListeners();
+  }
+
+  /// TTS reads finalized transcript segments aloud.
+  void setSpeechTtsReadback(bool value) {
+    _speechTtsReadback = value;
+    _storageService.setBool('speech_tts_readback', value);
+    notifyListeners();
+  }
+
+  /// Fade out old transcript rows after new ones arrive (mimiuchi
+  /// style).
+  void setSpeechFadeOut(bool value) {
+    _speechFadeOut = value;
+    _storageService.setBool('speech_fade_out', value);
     notifyListeners();
   }
 
@@ -1247,6 +1308,16 @@ class AppState extends ChangeNotifier {
           _storageService.getBool('speech_side_by_side') ?? false;
       _speechLanguage =
           _storageService.getStringSync('speech_language') ?? 'auto';
+      _sttType = _storageService.getStringSync('stt_type') == 'api'
+          ? 'api'
+          : 'local';
+      _sttApiUrl = _storageService.getStringSync('stt_api_url') ?? '';
+      _sttApiKey = _storageService.getStringSync('stt_api_key') ?? '';
+      _pinnedSpeechLanguages =
+          _storageService.getStringList('pinned_speech_languages') ?? [];
+      _speechTtsReadback =
+          _storageService.getBool('speech_tts_readback') ?? false;
+      _speechFadeOut = _storageService.getBool('speech_fade_out') ?? false;
       _screenshotAutoOcr =
           _storageService.getBool('screenshot_auto_ocr') ?? false;
       _screenshotAutoTranslate =
