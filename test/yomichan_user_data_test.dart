@@ -6,6 +6,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:lang/core/services/app_storage.dart';
 import 'package:lang/data/services/dictionary/yomichan_service.dart';
 
 void main() {
@@ -15,6 +16,9 @@ void main() {
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    // NoteLocalDataSource now persists through AppStorage; its in-memory
+    // fallback leaks entries across tests unless reset alongside prefs
+    AppStorage.resetForTest();
     service = YomichanService();
   });
 
