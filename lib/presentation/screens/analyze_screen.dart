@@ -3,6 +3,7 @@ import 'package:lang/presentation/widgets/word_action_bar.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:lang/core/services/history_service.dart';
+import 'package:lang/core/services/label_service.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/utils/font_scale.dart' as font_scale;
 
@@ -924,12 +925,41 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
   ) {
     if (sentence.isEmpty) return const SizedBox.shrink();
     final translation = provider.getSentenceTranslation(sentence);
+    final sentenceId = 'sent_${sentence.hashCode}';
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 4, 4, 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text.rich(_sentenceWithReadings(context, sentence, appState, theme)),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text.rich(
+                  _sentenceWithReadings(context, sentence, appState, theme),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.label_outline, size: 16),
+                tooltip: 'Bookmark / rename / tags',
+                onPressed: () => showItemLabelSheet(
+                  context,
+                  LabelService.domainAnalyzeSentence,
+                  sentenceId,
+                  defaultName: sentence.length > 40
+                      ? '${sentence.substring(0, 40)}…'
+                      : sentence,
+                ),
+              ),
+            ],
+          ),
+          AnimatedBuilder(
+            animation: LabelService.instance,
+            builder: (context, _) => ItemLabelBadges(
+              domain: LabelService.domainAnalyzeSentence,
+              id: sentenceId,
+            ),
+          ),
           if (translation.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 3),

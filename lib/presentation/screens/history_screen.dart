@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:lang/core/services/history_service.dart';
+import 'package:lang/core/services/label_service.dart';
 import 'package:lang/utils/font_scale.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/presentation/providers/analyzer_provider.dart';
@@ -215,23 +216,52 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ),
       onDismissed: (_) => HistoryService.instance.remove(item.id),
       child: ListTile(
-        leading: item.hasImage
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: Image.memory(
-                  base64Decode(item.imageThumbnail!),
-                  width: 36,
-                  height: 36,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => Icon(icon, size: 20, color: color),
-                ),
-              )
-            : Icon(icon, size: 20, color: color),
-        title: Text(
-          item.category == HistoryCategory.clipboard && item.hasImage
-              ? AppLocalizations.of(context)!.clipboardImage
-              : item.title,
-          style: TextStyle(fontSize: fs(context, 14, 'sentences')),
+        leading: AnimatedBuilder(
+          animation: LabelService.instance,
+          builder: (context, _) {
+            final label = LabelService.instance.get(
+              LabelService.domainHistory,
+              item.id,
+            );
+            final iconColor = label?.color != null
+                ? Color(label!.color!)
+                : color;
+            return item.hasImage
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Image.memory(
+                      base64Decode(item.imageThumbnail!),
+                      width: 36,
+                      height: 36,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) =>
+                          Icon(icon, size: 20, color: iconColor),
+                    ),
+                  )
+                : Icon(
+                    label?.bookmarked == true ? Icons.bookmark : icon,
+                    size: 20,
+                    color: iconColor,
+                  );
+          },
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              item.category == HistoryCategory.clipboard && item.hasImage
+                  ? AppLocalizations.of(context)!.clipboardImage
+                  : item.title,
+              style: TextStyle(fontSize: fs(context, 14, 'sentences')),
+            ),
+            AnimatedBuilder(
+              animation: LabelService.instance,
+              builder: (context, _) => ItemLabelBadges(
+                domain: LabelService.domainHistory,
+                id: item.id,
+              ),
+            ),
+          ],
         ),
         subtitle: subtitle == null || subtitle.isEmpty
             ? null
@@ -244,9 +274,27 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   color: Colors.white54,
                 ),
               ),
-        trailing: Text(
-          time,
-          style: TextStyle(fontSize: fs(context, 11), color: Colors.white38),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              time,
+              style: TextStyle(
+                fontSize: fs(context, 11),
+                color: Colors.white38,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.label_outline, size: 16),
+              tooltip: 'Bookmark / rename / tags',
+              onPressed: () => showItemLabelSheet(
+                context,
+                LabelService.domainHistory,
+                item.id,
+                defaultName: item.title,
+              ),
+            ),
+          ],
         ),
         onTap: () => _openItem(context, item, actionLabel),
         onLongPress: () => HistoryService.instance.remove(item.id),

@@ -29,6 +29,9 @@ class FileKvStorage implements KvStorage {
 
   final Directory _base;
 
+  /// Resolved file for [key] (used by AppStorage.readFileSync).
+  File fileFor(String key) => _fileFor(key);
+
   static Future<FileKvStorage> create({Directory? baseDir}) async {
     final Directory base;
     if (baseDir != null) {
@@ -62,6 +65,8 @@ class FileKvStorage implements KvStorage {
   @override
   Future<void> write(String key, String value) async {
     final f = _fileFor(key);
+    // nested keys (labels/<domain>) need subdirectories create() didn't make
+    if (!f.parent.existsSync()) f.parent.createSync(recursive: true);
     // atomic-ish: write temp then rename
     final tmp = File('${f.path}.tmp');
     tmp.writeAsStringSync(value, flush: true);
@@ -402,6 +407,26 @@ class AppStorage {
     }
   }
 
+  /// Synchronous read for file-backed documents; returns null when the
+  /// backend is sqlite (use [instance.read] there) or the file is
+  /// missing.
+  static String? readFileSync(String key) {
+    final backend = _backend;
+    if (backend is FileKvStorage) {
+      final f = backend.fileFor(key);
+      if (!f.existsSync()) return null;
+      try {
+        return f.readAsStringSync();
+      } catch (_) {
+        return null;
+      }
+    }
+    if (backend is InMemoryKvStorage) {
+      return backend.readSync(key);
+    }
+    return null;
+  }
+
   /// JSON encode helper so services stop re-encoding inline.
   static String encodeList(List<Map<String, dynamic>> list) => jsonEncode(list);
 }
@@ -418,6 +443,9 @@ class InMemoryKvStorage implements KvStorage {
 
   @override
   Future<void> delete(String key) async => _data.remove(key);
+
+  /// Synchronous read for sync consumers (AppStorage.readFileSync).
+  String? readSync(String key) => _data[key];
 }
 
 /// Typed media ref helpers so call sites do not parse prefixes.

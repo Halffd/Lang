@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 
 import 'package:lang/core/services/audio_service.dart';
 import 'package:lang/core/services/history_service.dart';
+import 'package:lang/core/services/label_service.dart';
 import 'package:lang/core/services/speech_service.dart';
 import 'package:lang/presentation/widgets/annotated_line.dart';
 import 'package:lang/data/repositories/translation_service.dart';
@@ -603,9 +604,35 @@ class _SpeechTabState extends State<SpeechTab> {
                             const Icon(Icons.folder, size: 16),
                             const SizedBox(width: 8),
                             Expanded(
-                              child: Text(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    LabelService.instance
+                                            .get(
+                                              LabelService.domainSpeechSession,
+                                              name,
+                                            )
+                                            ?.name ??
+                                        name,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  ItemLabelBadges(
+                                    domain: LabelService.domainSpeechSession,
+                                    id: name,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.label_outline, size: 16),
+                              tooltip: 'Bookmark / rename / tags',
+                              onPressed: () => showItemLabelSheet(
+                                context,
+                                LabelService.domainSpeechSession,
                                 name,
-                                overflow: TextOverflow.ellipsis,
+                                defaultName: name,
                               ),
                             ),
                             IconButton(
@@ -1203,6 +1230,7 @@ class _SpeechTabState extends State<SpeechTab> {
 
   Future<void> _loadSessions() async {
     final sessions = _readSessions();
+    await LabelService.instance.preload(LabelService.domainSpeechSession);
     if (!mounted) return;
     setState(() => _savedSessions = sessions.keys.toList()..sort());
   }
