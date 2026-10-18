@@ -329,11 +329,15 @@ class _SpeechTabState extends State<SpeechTab> {
 
   Future<void> _toggleRecord() async {
     final appState = context.read<AppState>();
-    final engine = _engine;
-    final model = _modelPath;
-    if (engine == null || model == null) {
+    var engine = _engine;
+    var model = _modelPath;
+    if (engine == null || (model == null && appState.sttType != 'api')) {
+      // prepare on demand: resolve the engine, download the model, then
+      // start recording in the same tap (mimiuchi one-press behavior)
       await _prepareEngine(appState);
-      return;
+      engine = _engine;
+      model = _modelPath;
+      if (engine == null) return; // local engine truly unavailable
     }
     final language = appState.speechLanguage;
 
@@ -341,10 +345,12 @@ class _SpeechTabState extends State<SpeechTab> {
       setState(() => _transcribing = true);
       await _service.stopLive(
         engine: engine,
-        modelPath: model,
+        modelPath: model ?? '',
         language: language,
         onSegment: (seg) =>
             _onSegment(seg, translate: appState.speechAutoTranslate),
+        apiUrl: appState.sttApiUrl,
+        apiKey: appState.sttApiKey,
       );
       if (mounted) setState(() => _transcribing = false);
       return;
@@ -352,10 +358,12 @@ class _SpeechTabState extends State<SpeechTab> {
 
     final ok = await _service.startLive(
       engine: engine,
-      modelPath: model,
+      modelPath: model ?? '',
       language: language,
       onSegment: (seg) =>
           _onSegment(seg, translate: appState.speechAutoTranslate),
+      apiUrl: appState.sttApiUrl,
+      apiKey: appState.sttApiKey,
     );
     if (!ok && mounted) {
       setState(() => _error = 'microphone unavailable');
@@ -534,9 +542,7 @@ class _SpeechTabState extends State<SpeechTab> {
               children: [
                 // record button
                 FilledButton.icon(
-                  onPressed: _engine == null || _modelLoading
-                      ? null
-                      : _toggleRecord,
+                  onPressed: _modelLoading ? null : _toggleRecord,
                   style: FilledButton.styleFrom(
                     backgroundColor: recording
                         ? Colors.green

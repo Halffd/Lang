@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
+import 'package:whisper_ggml/whisper_ggml.dart';
 
 /// STT engine preference.
 enum SpeechEngine { whisper, parakeet, api }
@@ -126,6 +127,11 @@ class SpeechService extends ChangeNotifier {
   /// Resolve which binary is available for the preferred engine.
   Future<SpeechEngine?> detectEngine(SpeechEngine preferred) async {
     if (preferred == SpeechEngine.api) return SpeechEngine.api;
+    // mobile: whisper.cpp runs in-process via the whisper_ggml FFI
+    // plugin — no external binary to probe
+    if (_isMobile && preferred == SpeechEngine.whisper) {
+      return SpeechEngine.whisper;
+    }
     final binary = switch (preferred) {
       SpeechEngine.whisper => '/usr/bin/whisper-cli',
       SpeechEngine.parakeet => '/usr/bin/parakeet-cli',
@@ -192,6 +198,11 @@ class SpeechService extends ChangeNotifier {
       case SpeechEngine.api:
         return '';
       case SpeechEngine.whisper:
+        if (_isMobile) {
+          // whisper_ggml downloads and caches the ggml model itself on
+          // first transcribe; no manual file management needed
+          return modelSize;
+        }
         final file = whisperModels[modelSize] ?? whisperModels['base']!;
         final dir = await modelsDirProvider();
         if (!dir.existsSync()) dir.createSync(recursive: true);
@@ -243,6 +254,21 @@ class SpeechService extends ChangeNotifier {
     required String modelPath,
     String language = 'auto',
   }) async {
+    // Mobile: on-device whisper.cpp via the whisper_ggml FFI plugin —
+    // the desktop whisper-cli binary doesn't exist there. The model
+    // downloads on first use (initModel inside transcribe).
+    if (engine == SpeechEngine.whisper && _isMobile) {
+      final controller = WhisperController();
+      final result = await controller.transcribe(
+        model: _whisperModelEnum(modelPath),
+        audioPath: path,
+        lang: language,
+        keepModelLoaded: true, // chunked live transcription skips reloads
+      );
+      final text = result?.transcription.text.trim() ?? '';
+      return (text, language == 'auto' ? null : language);
+    }
+
     final binary = switch (engine) {
       SpeechEngine.whisper => '/usr/bin/whisper-cli',
       SpeechEngine.parakeet => '/usr/bin/parakeet-cli',
@@ -298,6 +324,37 @@ class SpeechService extends ChangeNotifier {
     final lang = decoded['language']?.toString();
     return (text.trim(), lang?.toLowerCase());
   }
+
+  /// Map a modelSize string (tiny/base/.../large-v3) to the
+  /// whisper_ggml enum. large-v1/v2 fold into large (v3) — the plugin
+  /// only ships v3.
+  static WhisperModel _whisperModelEnum(String modelSize) {
+    switch (modelSize) {
+      case 'tiny':
+        return WhisperModel.tiny;
+      case 'tiny.en':
+        return WhisperModel.tinyEn;
+      case 'base':
+        return WhisperModel.base;
+      case 'base.en':
+        return WhisperModel.baseEn;
+      case 'small':
+        return WhisperModel.small;
+      case 'small.en':
+        return WhisperModel.smallEn;
+      case 'medium':
+        return WhisperModel.medium;
+      case 'medium.en':
+        return WhisperModel.mediumEn;
+      default:
+        return WhisperModel.large; // large-v1/v2/v3
+    }
+  }
+
+  /// True on mobile platforms where the desktop whisper-cli binary
+  /// cannot exist.
+  static bool get _isMobile =>
+      !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
   /// whisper-cli prints segments as
   /// `[start --> end]  text` lines (and a header with detected
@@ -397,6 +454,8 @@ class SpeechService extends ChangeNotifier {
     required String language,
     required void Function(SpeechSegment segment) onSegment,
     void Function(int chunkIndex)? onChunkRecorded,
+    String? apiUrl,
+    String? apiKey,
   }) async {
     if (_recording) return false;
     if (!await _recorder.hasPermission()) return false;
@@ -441,12 +500,19 @@ class SpeechService extends ChangeNotifier {
         onChunkRecorded?.call(chunkIndex - 1);
         // transcribe the finished chunk
         try {
-          final (text, lang) = await transcribeFile(
-            finishedPath!,
-            engine: engine,
-            modelPath: modelPath,
-            language: language,
-          );
+          final (text, lang) = engine == SpeechEngine.api
+              ? await transcribeApi(
+                  finishedPath!,
+                  apiUrl: apiUrl ?? '',
+                  apiKey: apiKey ?? '',
+                  language: language,
+                )
+              : await transcribeFile(
+                  finishedPath!,
+                  engine: engine,
+                  modelPath: modelPath,
+                  language: language,
+                );
           if (text.trim().isNotEmpty) {
             onSegment(
               SpeechSegment(
@@ -481,6 +547,8 @@ class SpeechService extends ChangeNotifier {
     required String modelPath,
     required String language,
     required void Function(SpeechSegment segment) onSegment,
+    String? apiUrl,
+    String? apiKey,
   }) async {
     if (!_recording) return;
     _chunkTimer?.cancel();
@@ -494,12 +562,19 @@ class SpeechService extends ChangeNotifier {
     if (path == null) return;
     try {
       if (File(path).existsSync()) {
-        final (text, lang) = await transcribeFile(
-          path,
-          engine: engine,
-          modelPath: modelPath,
-          language: language,
-        );
+        final (text, lang) = await (engine == SpeechEngine.api
+            ? transcribeApi(
+                path,
+                apiUrl: apiUrl ?? '',
+                apiKey: apiKey ?? '',
+                language: language,
+              )
+            : transcribeFile(
+                path,
+                engine: engine,
+                modelPath: modelPath,
+                language: language,
+              ));
         if (text.trim().isNotEmpty) {
           onSegment(
             SpeechSegment(

@@ -73,6 +73,9 @@ dependencies:
   # Registered directly for the WPE-availability gate in main.dart
   # (vendored via dependency_overrides below)
   flutter_inappwebview_linux: ^0.1.0-beta.1
+  # On-device whisper (mobile + desktop fallback): whisper.cpp v1.9.1 via
+  # FFI, Android/iOS/desktop; models download on first use
+  whisper_ggml: ^2.8.1
   record: ^5.1.2
   epubx: ^4.0.0
   syncfusion_flutter_pdfviewer: ^31.1.21
