@@ -1,6 +1,10 @@
 import 'package:lang/presentation/providers/user_profile_provider.dart';
 import 'package:lang/presentation/widgets/user_badge.dart';
 import 'package:flutter/material.dart';
+import 'package:lang/data/services/dictionary/yomichan_service.dart';
+import 'package:lang/database/database_manager.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 import 'package:provider/provider.dart';
 import 'package:lang/data/services/anki_connect_service.dart';
 import 'package:lang/core/services/whisper_subs_service.dart';
@@ -1521,6 +1525,63 @@ class SettingsScreen extends StatelessWidget {
                         builder: (context) => const ImportScreen(),
                       ),
                     );
+                  },
+                ),
+                // Export an installed dictionary back to a Yomichan zip
+                ListTile(
+                  leading: const Icon(Icons.file_download),
+                  title: const Text('Export dictionary'),
+                  subtitle: const Text(
+                    'Save an installed dictionary back to a Yomichan zip',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () async {
+                    final picked = await FilePicker.platform.saveFile(
+                      dialogTitle: 'Export dictionary',
+                      fileName: 'dictionary_export.zip',
+                      type: FileType.custom,
+                      allowedExtensions: ['zip'],
+                    );
+                    if (picked == null) return;
+                    try {
+                      // pick which dictionary via a dialog
+                      final db = await DatabaseManager().database;
+                      final dicts = await db.query('dictionaries');
+                      if (!context.mounted) return;
+                      final title = await showDialog<String>(
+                        context: context,
+                        builder: (ctx) => SimpleDialog(
+                          title: const Text('Choose dictionary'),
+                          children: [
+                            for (final row in dicts)
+                              SimpleDialogOption(
+                                onPressed: () =>
+                                    Navigator.pop(ctx, row['name'] as String),
+                                child: Text(row['name']?.toString() ?? '?'),
+                              ),
+                          ],
+                        ),
+                      );
+                      if (title == null) return;
+                      final bytes = await YomichanService()
+                          .exportDictionaryArchive(title);
+                      await File(picked).writeAsBytes(bytes, flush: true);
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'exported $title '
+                            '(${bytes.length ~/ 1024} KB)',
+                          ),
+                        ),
+                      );
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('export failed: $e')),
+                        );
+                      }
+                    }
                   },
                 ),
               ],

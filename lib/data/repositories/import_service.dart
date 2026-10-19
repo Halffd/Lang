@@ -51,7 +51,10 @@ class ImportService {
   bool _isCancelled = false;
 
   /// Import Yomichan dictionary from ZIP file
-  Future<Dictionary> importDictionary(File zipFile) async {
+  Future<Dictionary> importDictionary(
+    File zipFile, {
+    bool replace = false,
+  }) async {
     _isCancelled = false;
 
     try {
@@ -86,9 +89,17 @@ class ImportService {
       final db = await _dbManager.database;
       final existing = await _getDictionaryByName(db, metadata.name);
       if (existing != null) {
-        throw Exception(
-          'Dictionary "${metadata.title}" already exists. '
-          'Please delete it first or rename the import.',
+        if (!replace) {
+          throw Exception(
+            'Dictionary "${metadata.title}" already exists. '
+            'Please delete it first or rename the import.',
+          );
+        }
+        // update: drop the old dictionary (cascades to entries/kanji/tags)
+        await db.delete(
+          'dictionaries',
+          where: 'id = ?',
+          whereArgs: [existing.id],
         );
       }
 

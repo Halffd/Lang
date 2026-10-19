@@ -57,7 +57,46 @@ class _ImportScreenState extends State<ImportScreen> {
     try {
       await _importService.importDictionary(file);
     } catch (e) {
-      if (mounted) {
+      final message = e.toString();
+      final isCollision = message.contains('already exists');
+      if (mounted && isCollision) {
+        final update = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Dictionary exists'),
+            content: const Text(
+              'A dictionary with this title is already installed. '
+              'Update it from this archive? (Existing entries will be '
+              'replaced.)',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Update'),
+              ),
+            ],
+          ),
+        );
+        if (update == true) {
+          setState(() => _isImporting = true);
+          try {
+            await _importService.importDictionary(file, replace: true);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('dictionary updated')),
+              );
+            }
+          } catch (retryError) {
+            if (mounted) _showErrorDialog(retryError.toString());
+          }
+        } else {
+          _showErrorDialog(message);
+        }
+      } else if (mounted) {
         _showErrorDialog(e.toString());
       }
     } finally {

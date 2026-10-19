@@ -1,7 +1,12 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lang/domain/entities/dictionary.dart' as model;
 import 'package:lang/data/repositories/dictionary_service.dart';
+import 'package:lang/data/services/dictionary/yomichan_service.dart';
+import 'package:lang/data/repositories/import_service.dart';
 import 'package:lang/presentation/screens/import_screen.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/utils/font_scale.dart';
@@ -15,6 +20,7 @@ class DictionaryListScreen extends StatefulWidget {
 
 class _DictionaryListScreenState extends State<DictionaryListScreen> {
   final DictionaryService _dictionaryService = DictionaryService();
+  final ImportService _importService = ImportService();
   List<model.YomichanDictionary> _dictionaries = [];
   Map<int, model.DictionaryStats> _stats = {};
   bool _isLoading = true;
@@ -52,6 +58,62 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
           SnackBar(content: Text('Error loading dictionaries: $e')),
         );
       }
+    }
+  }
+
+  /// Export a dictionary to a Yomichan-format zip via the file picker.
+  Future<void> _exportDictionary(model.YomichanDictionary dict) async {
+    try {
+      final picked = await FilePicker.platform.saveFile(
+        fileName: '${dict.title}.zip',
+        type: FileType.custom,
+        allowedExtensions: ['zip'],
+      );
+      if (picked == null) return;
+      final bytes = await YomichanService().exportDictionaryArchive(dict.title);
+      await File(picked).writeAsBytes(bytes, flush: true);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('exported ${dict.title} (${bytes.length ~/ 1024} KB)'),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('export failed: $e')));
+      }
+    }
+  }
+
+  /// Update an installed dictionary from a picked Yomichan-format zip —
+  /// replaces the stored entry with the same title, adds otherwise.
+  Future<void> _updateDictionaryFromZip() async {
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['zip'],
+    );
+    final path = picked?.files.single.path;
+    if (path == null) return;
+
+    setState(() => _isLoading = true);
+    try {
+      await _importService.importDictionary(File(path), replace: true);
+      await _loadDictionaries();
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('dictionary updated')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('update failed: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -412,6 +474,11 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
             icon: const Icon(Icons.refresh),
             onPressed: _loadDictionaries,
           ),
+          IconButton(
+            icon: const Icon(Icons.update),
+            tooltip: 'Update dictionary from zip (replaces same title)',
+            onPressed: _isLoading ? null : _updateDictionaryFromZip,
+          ),
         ],
       ),
       body: _isLoading
@@ -564,6 +631,8 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
                           _showDictionaryInfo(dict);
                         } else if (value == 'edit') {
                           _editDictionary(dict);
+                        } else if (value == 'export') {
+                          _exportDictionary(dict);
                         } else if (value == 'delete') {
                           _deleteDictionary(dict);
                         } else if (value == 'favorite') {

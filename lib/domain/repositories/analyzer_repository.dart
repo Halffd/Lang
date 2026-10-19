@@ -26,8 +26,9 @@ abstract class AnalyzerRepository {
 
   // Dictionary Management
   Future<List<Map<String, dynamic>>> getInstalledDictionaries();
-  Future<void> importDictionary(Uint8List bytes);
+  Future<void> importDictionary(Uint8List bytes, {bool replace = false});
   Future<void> deleteDictionary(String title);
+  Future<Uint8List> exportDictionary(String title);
 
   // Saved Words
   Future<void> saveWord(String word, {String? sentence});

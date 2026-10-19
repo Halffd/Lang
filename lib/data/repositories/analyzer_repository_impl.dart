@@ -173,8 +173,17 @@ class AnalyzerRepositoryImpl implements AnalyzerRepository {
   }
 
   @override
-  Future<void> importDictionary(Uint8List bytes) {
-    return dictionaryLocalDataSource.importDictionaryArchive(bytes);
+  @override
+  Future<void> importDictionary(Uint8List bytes, {bool replace = false}) {
+    return dictionaryLocalDataSource.importDictionaryArchive(
+      bytes,
+      replace: replace,
+    );
+  }
+
+  @override
+  Future<Uint8List> exportDictionary(String title) {
+    return dictionaryLocalDataSource.exportDictionaryArchive(title);
   }
 
   @override

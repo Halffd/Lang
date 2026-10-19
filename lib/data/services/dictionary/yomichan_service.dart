@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'dart:async';
 
+import 'dart:convert';
+
+import 'package:archive/archive.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:lang/core/services/audio_service.dart';
 import 'package:lang/data/datasources/note_local_data_source.dart';
@@ -341,6 +344,132 @@ class YomichanService {
       debugPrint('YomichanService init error: $e');
       rethrow;
     }
+  }
+
+  // ----------------------------------------------------------
+  // dictionary export (Yomichan-format zip)
+  // ----------------------------------------------------------
+
+  /// Export an installed dictionary back to a Yomichan-format archive:
+  /// index.json + term_bank_N + kanji_bank_N + tag_bank_N files, ready
+  /// for re-import. Throws when the dictionary does not exist.
+  Future<Uint8List> exportDictionaryArchive(String title) async {
+    final db = await database;
+    final dictRows = await db.query(
+      'dictionaries',
+      where: 'name = ?',
+      whereArgs: [title],
+      limit: 1,
+    );
+    if (dictRows.isEmpty) {
+      throw Exception('dictionary "\$title" not found');
+    }
+    final dictId = dictRows.first['id'] as int;
+
+    final termRows = await db.query(
+      'entries',
+      where: 'dictionary_id = ?',
+      whereArgs: [dictId],
+      orderBy: 'id',
+    );
+    final kanjiRows = await db.query(
+      'kanji',
+      where: 'dictionary_id = ?',
+      whereArgs: [dictId],
+    );
+    final tagRows = await db.query(
+      'tags',
+      where: 'dictionary_id = ?',
+      whereArgs: [dictId],
+    );
+
+    List<List<dynamic>> splitBanks(
+      List<Map<String, Object?>> rows,
+      List<dynamic> Function(Map<String, Object?> row) toEntry,
+    ) {
+      final banks = <List<dynamic>>[];
+      var current = <dynamic>[];
+      for (final row in rows) {
+        current.add(toEntry(row));
+        if (current.length >= 10000) {
+          banks.add(current);
+          current = <dynamic>[];
+        }
+      }
+      if (current.isNotEmpty || banks.isEmpty) banks.add(current);
+      return banks;
+    }
+
+    List<dynamic> decodeJsonColumn(Object? raw) {
+      try {
+        return jsonDecode(raw?.toString() ?? '[]') as List;
+      } catch (_) {
+        return [];
+      }
+    }
+
+    final files = <String, String>{};
+    files['index.json'] = jsonEncode({
+      'title': title,
+      'version': 1,
+      'revision': 'export-\${DateTime.now().millisecondsSinceEpoch}',
+    });
+
+    // Yomichan term entry:
+    // [term, reading, definitionTags, rules, score, glossary, sequence,
+    //  termTags]
+    final termBanks = splitBanks(termRows, (row) {
+      final score = (row['popularity'] as num?)?.toDouble() ?? 0;
+      return [
+        row['term'] ?? '',
+        row['reading'] ?? '',
+        row['definition_tags'] ?? '',
+        row['rules'] ?? '',
+        score.round(),
+        decodeJsonColumn(row['definitions']),
+        (row['sequence'] as num?)?.toInt() ?? 0,
+        row['term_tags'] ?? '',
+      ];
+    });
+    for (var i = 0; i < termBanks.length; i++) {
+      files['term_bank_\${i + 1}.json'] = jsonEncode(termBanks[i]);
+    }
+
+    if (kanjiRows.isNotEmpty) {
+      final kanjiBanks = splitBanks(kanjiRows, (row) {
+        return [
+          row['character'] ?? '',
+          row['onyomi'] ?? '',
+          row['kunyomi'] ?? '',
+          row['tags'] ?? '',
+          decodeJsonColumn(row['meanings']),
+        ];
+      });
+      for (var i = 0; i < kanjiBanks.length; i++) {
+        files['kanji_bank_\${i + 1}.json'] = jsonEncode(kanjiBanks[i]);
+      }
+    }
+
+    if (tagRows.isNotEmpty) {
+      final tagBanks = splitBanks(tagRows, (row) {
+        return [
+          row['name'] ?? '',
+          row['category'] ?? '',
+          (row['sort_order'] as num?)?.toInt() ?? 0,
+          row['notes'] ?? '',
+          ((row['popularity'] as num?)?.toDouble() ?? 0).round(),
+        ];
+      });
+      for (var i = 0; i < tagBanks.length; i++) {
+        files['tag_bank_\${i + 1}.json'] = jsonEncode(tagBanks[i]);
+      }
+    }
+
+    final archive = Archive();
+    for (final e in files.entries) {
+      archive.addFile(ArchiveFile.string(e.key, e.value));
+    }
+    return Uint8List.fromList(ZipEncoder().encode(archive));
   }
 
   /// Play audio for text via the app audio service
