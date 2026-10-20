@@ -121,3 +121,23 @@ Clipboard manager, history, saved words and the screenshot registry
 support **SQLite** (default) or **local files** (one JSON per store).
 Settings → Storage backend. Switching takes effect on next start;
 data imports automatically.
+
+## AI exercise bank
+
+AI-generated practice exercises (Study → AI deck generator) use a
+two-stage pipeline:
+
+| Stage | What it does | Where |
+|---|---|---|
+| Generation | Gemini `responseSchema` structured output — invalid JSON / missing fields are impossible at decode time; the paranoid parser stays as a second gate | `lib/data/services/exercise_schema.dart` |
+| Exercise bank | Local SQLite table keyed by normalized prompt hash (match exercises key on the pair set); duplicate inserts are dropped, flagged rows are never served | `lib/core/services/exercise_bank_service.dart` |
+| Hybrid lessons | `getLesson` serves from the local bank, tops up from the Supabase bank, and live-generates only the gap; live results seed both banks | `lib/presentation/screens/study/ai_lesson_generator.dart` |
+
+Buttons in the deck generator sheet:
+
+- **Pre-generate bank (300)** — batch job, 50 exercises per request,
+  stops early if the model starts repeating itself.
+- **QA bank (grade pending)** — semantic-QA pass: a cheap model grades
+  pending rows for answer correctness, MC distractor sanity, cloze
+  uniqueness and match pairing. Bad exercises are flagged and excluded
+  from lessons; grading failures leave rows pending for the next run.
