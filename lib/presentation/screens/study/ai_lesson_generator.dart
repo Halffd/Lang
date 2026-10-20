@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lang/core/services/exercise_bank_service.dart';
 import 'package:lang/core/services/storage_service.dart';
 import 'package:lang/data/datasources/supabase_data_source.dart';
 import 'package:lang/data/repositories/srs_service.dart';
@@ -151,7 +152,15 @@ or
 Card count: ${template.cardCount}.
 ''';
 
-    final raw = await repo.generateText(userPrompt, provider, apiKey: apiKey);
+    // lever a: API-level structured output where the provider supports it
+    // (Gemini responseSchema); the paranoid parser remains the second gate
+    // for providers without it.
+    final raw = await repo.generateText(
+      userPrompt,
+      provider,
+      apiKey: apiKey,
+      structuredExercises: true,
+    );
     final cards = <SRSCard>[];
     try {
       final parsed = jsonDecode(raw) as List<dynamic>;
@@ -189,46 +198,133 @@ Card count: ${template.cardCount}.
     int limit = 50,
     Set<String> knownWords = const {},
   }) async {
-    // 1) pre-generated bank (main languages = instant, zero cost per user)
-    if (supabaseDs != null) {
+    // 1) local exercise bank (instant, offline, zero cost)
+    final bank = ExerciseBankService.instance;
+    final pregenerated = await bank.fetch(
+      language: language,
+      level: template.name,
+      limit: limit,
+    );
+
+    // 2) remote bank (Supabase, when configured) tops up the local one
+    var exercises = [...pregenerated];
+    if (exercises.length < limit && supabaseDs != null) {
       try {
         final rows = await supabaseDs!.fetchExerciseBank(
           language: language,
           level: template.name,
-          limit: limit,
+          limit: limit - exercises.length,
         );
-        if (rows.length >= limit) {
-          final bank = rows
-              .whereType<Map<String, dynamic>>()
-              .map(_exerciseFromBankRow)
-              .toList();
-          return bank.take(limit).toList();
+        final remote = rows
+            .whereType<Map<String, dynamic>>()
+            .map(_exerciseFromBankRow)
+            .where(
+              (r) => !exercises.any(
+                (e) =>
+                    ExerciseBankService.dedupeKey(e) ==
+                    ExerciseBankService.dedupeKey(r),
+              ),
+            )
+            .toList();
+        exercises.addAll(remote);
+      } catch (_) {
+        /* remote bank absent offline — fall through */
+      }
+    }
+
+    // known-words safety net applies to bank-served exercises too
+    if (knownWords.isNotEmpty) {
+      exercises = exercises.where((e) {
+        if (e.type == 'match') return true;
+        final words = e.prompt.split(RegExp(r'\s+'));
+        return words.any(
+          (w) => !knownWords.contains(
+            w.toLowerCase().trim().replaceAll(RegExp(r'\s+'), ' '),
+          ),
+        );
+      }).toList();
+    }
+
+    // 3) live top-up only for the gap (rare languages / edge levels)
+    if (exercises.length < limit) {
+      final needed = limit - exercises.length;
+      final generated = await generateInteractive(
+        template.systemPrompt,
+        provider,
+        apiKey,
+        limit: needed,
+        knownWords: knownWords,
+      );
+      // seed the local bank: live-generated exercises are deduped on
+      // insert (normalize+hash unique key), so repeated sessions stay
+      // clean without a separate batch job
+      if (generated.isNotEmpty) {
+        await bank.insertMany(
+          generated,
+          language: language,
+          level: template.name,
+          source: 'user_ai',
+        );
+        // keep the remote bank growing for other devices (best-effort)
+        if (supabaseDs != null) {
+          try {
+            await supabaseDs?.insertExerciseBank(
+              generated
+                  .map((e) => _bankRowFor(e, language, template.name))
+                  .toList(),
+            );
+          } catch (_) {
+            /* remote seeding is best-effort */
+          }
         }
-      } catch (_) {
-        /* bank absent offline — fall through */
       }
+      exercises.addAll(generated);
     }
 
-    // 2) full live generation for the whole request (bank short or missing)
-    final raw = await generateInteractive(
-      template.systemPrompt,
-      provider,
-      apiKey,
-      limit: limit,
-      knownWords: knownWords,
-    );
+    return exercises.take(limit).toList();
+  }
 
-    // 3) persist generated exercises into the bank for later reuse.
-    if (supabaseDs != null && raw.isNotEmpty) {
+  /// Batch job: pre-generate a large exercise bank for a language/level.
+  /// Runs the structured-output generation, dedupes on insert, marks
+  /// everything qa_status='pending' for the offline semantic-QA pass.
+  Future<int> pregenerateBank(
+    AiLessonTemplate template,
+    String language,
+    String provider,
+    String? apiKey, {
+    int count = 500,
+    Set<String> knownWords = const {},
+  }) async {
+    var total = 0;
+    // generate in chunks of the limit — one request per 50 keeps
+    // responses inside token limits and lets dedupe run between batches
+    var remaining = count;
+    var round = 0;
+    while (remaining > 0 && round < count) {
+      final batchSize = remaining.clamp(1, 50);
       try {
-        await supabaseDs?.insertExerciseBank(
-          raw.map((e) => _bankRowFor(e, language, template.name)).toList(),
+        final generated = await generateInteractive(
+          template.systemPrompt,
+          provider,
+          apiKey,
+          limit: batchSize,
+          knownWords: knownWords,
         );
+        final inserted = await ExerciseBankService.instance.insertMany(
+          generated,
+          language: language,
+          level: template.name,
+        );
+        total += inserted;
+        // if the model is repeating itself, stop early
+        if (inserted == 0) break;
       } catch (_) {
-        /* seeding the bank is best-effort */
+        break;
       }
+      remaining -= batchSize;
+      round++;
     }
-    return raw.take(limit).toList();
+    return total;
   }
 
   AiExercise _exerciseFromBankRow(Map<String, dynamic> r) {
@@ -412,6 +508,41 @@ class _AiDeckGeneratorSheetState extends State<AiDeckGeneratorSheet> {
     }
   }
 
+  /// Batch pre-generation: fills the local exercise bank so later
+  /// lessons start instantly without live generation.
+  Future<void> _pregenerateBank() async {
+    final t = _selected;
+    if (t == null) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final aiProvider = context.read<AiProvider>();
+      final srs = context.read<SRSService>();
+      final generator = AiLessonGenerator(
+        repo: aiProvider.repository,
+        srs: srs,
+        deckId: AiLessonGenerator.deckIdFor(t.name),
+      );
+      final inserted = await generator.pregenerateBank(
+        t,
+        context.read<AppState>().learningLanguage,
+        _provider,
+        _apiController.text.isEmpty ? null : _apiController.text,
+        count: 300,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Bank +$inserted exercises (${t.name})')),
+      );
+    } catch (e) {
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   /// Generates an interactive typed-exercise lesson and opens [AiLessonPage].
   Future<void> _generateInteractive() async {
     final t = _selected;
@@ -426,8 +557,8 @@ class _AiDeckGeneratorSheetState extends State<AiDeckGeneratorSheet> {
         repo: aiProvider.repository,
         srs: context.read<SRSService>(),
         deckId: AiLessonGenerator.deckIdFor(t.name),
+        supabaseDs: context.read<UserDataProvider>().dataSource,
       );
-      final ds = context.read<UserDataProvider>().dataSource;
       final exercises = await generator.getLesson(
         t,
         context.read<AppState>().learningLanguage,
@@ -597,6 +728,14 @@ class _AiDeckGeneratorSheetState extends State<AiDeckGeneratorSheet> {
               ],
             ),
             const SizedBox(height: 8),
+            // Batch pre-generation into the local exercise bank
+            TextButton.icon(
+              icon: const Icon(Icons.inventory_2, size: 16),
+              label: const Text('Pre-generate bank (300)'),
+              onPressed: _loading || _selected == null
+                  ? null
+                  : _pregenerateBank,
+            ),
             // Raw JSON + breakdown of the last generation
             if (_lastInteractive != null) ...[
               TextButton.icon(

@@ -1,7 +1,12 @@
 import '../entities/ai_message.dart';
 
 abstract class AiRepository {
-  Future<String> generateText(String prompt, String provider, {String? apiKey});
+  Future<String> generateText(
+    String prompt,
+    String provider, {
+    String? apiKey,
+    bool structuredExercises = false,
+  });
   Future<String> generateImage(
     String prompt, {
     String? negativePrompt,

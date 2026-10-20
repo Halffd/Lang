@@ -34,13 +34,18 @@ class AiRepositoryImpl implements AiRepository {
     String prompt,
     String provider, {
     String? apiKey,
+    bool structuredExercises = false,
   }) async {
     if (provider == 'Gemini') {
       final key = _resolveGeminiKey(apiKey);
       if (key.isEmpty) {
         throw AiRepositoryException('Gemini API key not configured');
       }
-      return _remoteDataSource.generateText(prompt, key);
+      return _remoteDataSource.generateText(
+        prompt,
+        key,
+        structuredExercises: structuredExercises,
+      );
     }
     throw AiRepositoryException('Unsupported provider: $provider');
   }
