@@ -1,6 +1,9 @@
 import 'package:lang/presentation/providers/user_profile_provider.dart';
 import 'package:lang/presentation/widgets/user_badge.dart';
 import 'package:flutter/material.dart';
+import 'package:lang/core/services/full_backup_service.dart';
+import 'package:lang/core/services/dictionary_bundle_service.dart';
+import 'package:lang/core/services/cloud_sync_service.dart';
 import 'package:lang/data/services/dictionary/yomichan_service.dart';
 import 'package:lang/database/database_manager.dart';
 import 'package:file_picker/file_picker.dart';
@@ -126,6 +129,178 @@ class SettingsScreen extends StatelessWidget {
         padding: ScreenSize.adaptivePadding(context),
         children: [
           // ---- Storage backend (SQLite vs local files)
+          // ---- Backup & Sync card
+          Card(
+            elevation: 1,
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Backup & Sync',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'All dictionaries, settings and clipboard/history data '
+                    'in one archive',
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.file_download, size: 18),
+                        label: const Text('Export dictionaries'),
+                        onPressed: () async {
+                          final bundle = DictionaryBundleService();
+                          final picked = await FilePicker.platform.saveFile(
+                            fileName: 'lang_dictionaries.zip',
+                            type: FileType.custom,
+                            allowedExtensions: ['zip'],
+                          );
+                          if (picked == null) return;
+                          try {
+                            final bytes = await bundle.exportAll();
+                            await File(picked).writeAsBytes(bytes, flush: true);
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'exported (${bytes.length ~/ 1024} KB)',
+                                ),
+                              ),
+                            );
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('export failed: $e')),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.file_upload, size: 18),
+                        label: const Text('Import dictionaries'),
+                        onPressed: () async {
+                          final bundle = DictionaryBundleService();
+                          final picked = await FilePicker.platform.pickFiles(
+                            type: FileType.custom,
+                            allowedExtensions: ['zip'],
+                          );
+                          final path = picked?.files.single.path;
+                          if (path == null) return;
+                          try {
+                            final n = await bundle.importAll(
+                              await File(path).readAsBytes(),
+                            );
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('imported $n dictionaries'),
+                              ),
+                            );
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('import failed: $e')),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.backup, size: 18),
+                        label: const Text('Backup everything'),
+                        onPressed: () async {
+                          final backup = FullBackupService();
+                          try {
+                            final zip = await backup.buildBackup();
+                            final picked = await FilePicker.platform.saveFile(
+                              fileName: FullBackupService.backupFileName(),
+                              type: FileType.custom,
+                              allowedExtensions: ['zip'],
+                            );
+                            if (picked == null) return;
+                            await File(picked).writeAsBytes(zip, flush: true);
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'backup saved (${zip.length ~/ 1024} KB)',
+                                ),
+                              ),
+                            );
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('backup failed: $e')),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.restore, size: 18),
+                        label: const Text('Restore backup'),
+                        onPressed: () async {
+                          final backup = FullBackupService();
+                          final picked = await FilePicker.platform.pickFiles(
+                            type: FileType.custom,
+                            allowedExtensions: ['zip'],
+                          );
+                          final path = picked?.files.single.path;
+                          if (path == null) return;
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('restoring...'),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                          try {
+                            final zip = await File(path).readAsBytes();
+                            final counts = await backup.restore(zip);
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'restored ${counts.settings} settings, '
+                                  '${counts.docs} documents, '
+                                  '${counts.dictionaries} dictionaries',
+                                ),
+                              ),
+                            );
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('restore failed: $e')),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _cloudSyncSection(context),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child: Text(
+                      'Cloud sync uses a Supabase lang_sync table '
+                      '(user_id, key, payload). Upload replaces the remote '
+                      'copy; download replaces local.',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           Card(
             child: Column(
               children: [
@@ -1885,4 +2060,64 @@ class _FontGroupSlider extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _cloudSyncSection(BuildContext context) {
+  final cloud = CloudSyncService();
+  if (!cloud.isAvailable) {
+    return const Text(
+      'Cloud sync: sign in to Supabase to sync across devices',
+      style: TextStyle(fontSize: 12),
+    );
+  }
+  return Wrap(
+    spacing: 8,
+    runSpacing: 8,
+    children: [
+      OutlinedButton.icon(
+        icon: const Icon(Icons.cloud_upload, size: 18),
+        label: const Text('Upload to cloud'),
+        onPressed: () async {
+          try {
+            final size = await cloud.pushAll();
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('uploaded (${size ~/ 1024} KB)')),
+            );
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('upload failed: $e')));
+            }
+          }
+        },
+      ),
+      OutlinedButton.icon(
+        icon: const Icon(Icons.cloud_download, size: 18),
+        label: const Text('Download from cloud'),
+        onPressed: () async {
+          try {
+            final counts = await cloud.pullAll();
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'restored ${counts.settings} settings, '
+                  '${counts.docs} documents, '
+                  '${counts.dictionaries} dictionaries',
+                ),
+              ),
+            );
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('download failed: $e')));
+            }
+          }
+        },
+      ),
+    ],
+  );
 }
