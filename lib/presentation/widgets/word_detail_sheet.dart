@@ -12,6 +12,47 @@ import 'package:lang/utils/pinyin_util.dart';
 import 'package:lang/utils/font_scale.dart';
 import 'package:lang/presentation/widgets/structured_definition.dart';
 
+/// Full-page word detail route: the same content as the bottom sheet,
+/// for when the user wants the whole screen (deep-linkable as /word/:id).
+class WordDetailScreen extends StatelessWidget {
+  final AnalyzedWord word;
+  final AnalyzerProvider provider;
+
+  const WordDetailScreen({
+    super.key,
+    required this.word,
+    required this.provider,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(word.word),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.volume_up),
+            onPressed: () => provider.playAudio(word.word),
+          ),
+          Consumer<AppState>(
+            builder: (context, appState, _) {
+              if (!appState.ankiConnectEnabled) {
+                return const SizedBox.shrink();
+              }
+              return IconButton(
+                icon: const Icon(Icons.auto_stories),
+                tooltip: 'Send to Anki',
+                onPressed: () => showAnkiExportDialog(context, provider, word),
+              );
+            },
+          ),
+        ],
+      ),
+      body: WordDetailView(word: word, provider: provider),
+    );
+  }
+}
+
 class WordDetailSheet extends StatelessWidget {
   final AnalyzedWord word;
   final AnalyzerProvider provider;
@@ -27,8 +68,9 @@ class WordDetailSheet extends StatelessWidget {
   static void show(
     BuildContext context,
     AnalyzerProvider provider,
-    AnalyzedWord word,
-  ) {
+    AnalyzedWord word, {
+    bool allowFullScreen = true,
+  }) {
     final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
@@ -42,11 +84,50 @@ class WordDetailSheet extends StatelessWidget {
         minChildSize: 0.4,
         maxChildSize: 0.95,
         expand: false,
-        builder: (context, scrollController) =>
+        builder: (context, scrollController) => Stack(
+          children: [
             WordDetailSheet(word: word, provider: provider),
+            // full-page escape hatch: top-right button pushes the route
+            if (allowFullScreen)
+              Positioned(
+                right: 12,
+                top: 8,
+                child: IconButton(
+                  icon: const Icon(Icons.open_in_full, size: 18),
+                  tooltip: 'Open full page',
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            WordDetailScreen(word: word, provider: provider),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return WordDetailView(word: word, provider: provider);
+  }
+}
+
+/// The word-detail content itself — shared by the bottom sheet and the
+/// full-page [WordDetailScreen] route.
+class WordDetailView extends StatelessWidget {
+  final AnalyzedWord word;
+  final AnalyzerProvider provider;
+
+  const WordDetailView({super.key, required this.word, required this.provider});
+
+  String get _currentLanguage => provider.currentLanguage;
 
   @override
   Widget build(BuildContext context) {
