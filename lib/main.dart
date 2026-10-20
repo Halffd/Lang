@@ -642,6 +642,15 @@ class LangApp extends StatelessWidget {
           'es' => const Locale('es'),
           _ => const Locale('en'),
         };
+
+        // UI chrome scale: box paddings, bar heights, icon and label
+        // sizes grow with the same font multiplier the text uses, so
+        // touch targets and boxes keep pace with large font settings
+        // (high-DPI phones, accessibility zoom).
+        final uiScale = (appState.fontSizeMultiplier * appState.fontSettings.ui)
+            .clamp(1.0, 2.5);
+        double ui(double v) => v * uiScale;
+
         return MaterialApp(
           onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -698,9 +707,11 @@ class LangApp extends StatelessWidget {
             inputDecorationTheme: InputDecorationTheme(
               filled: true,
               fillColor: const Color(0xFF2D2B33),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
+              // text boxes grow with the font scale so text never
+              // overflows and tap targets keep pace
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: ui(16),
+                vertical: ui(14),
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -782,19 +793,29 @@ class LangApp extends StatelessWidget {
             ),
             navigationBarTheme: NavigationBarThemeData(
               elevation: 0,
-              height: 70,
+              // taller bar with scaled labels/icons: readable at large
+              // font scales and high-DPI screens
+              height: ui(70),
               backgroundColor: const Color(0xFF1C1B1F),
               indicatorColor: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
+              iconTheme: WidgetStateProperty.resolveWith(
+                (states) => IconThemeData(
+                  size: ui(24),
+                  color: states.contains(WidgetState.selected)
+                      ? const Color(0xFF8B5CF6)
+                      : Colors.white.withValues(alpha: 0.6),
+                ),
+              ),
               labelTextStyle: WidgetStateProperty.resolveWith((states) {
                 if (states.contains(WidgetState.selected)) {
-                  return const TextStyle(
-                    fontSize: 12,
+                  return TextStyle(
+                    fontSize: ui(12),
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF8B5CF6),
+                    color: const Color(0xFF8B5CF6),
                   );
                 }
                 return TextStyle(
-                  fontSize: 12,
+                  fontSize: ui(12),
                   color: Colors.white.withValues(alpha: 0.6),
                 );
               }),
@@ -829,11 +850,14 @@ class LangApp extends StatelessWidget {
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
             ),
-            listTileTheme: const ListTileThemeData(
-              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            listTileTheme: ListTileThemeData(
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: ui(16),
+                vertical: ui(4),
+              ),
               minLeadingWidth: 24,
             ),
-            iconTheme: const IconThemeData(size: 22, color: Colors.white70),
+            iconTheme: IconThemeData(size: ui(22), color: Colors.white70),
           ),
           home: const PopupDictionaryScope(child: MainNavigationShell()),
           // Global text zoom (ctrl+scroll, pinch) wraps every route.
@@ -975,55 +999,73 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         ],
       ),
       body: _screens[_currentIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() => _currentIndex = index);
-          _syncPopupRoute(index);
+      bottomNavigationBar: Builder(
+        builder: (context) {
+          // 11 destinations: labels only fit when the ui font scale is
+          // small enough — beyond that go icon-only (tooltips still name
+          // the tab on long-press) so nothing is clipped or untappable.
+          final scale =
+              (context.read<AppState>().fontSizeMultiplier *
+                      context.read<AppState>().fontSettings.ui)
+                  .clamp(1.0, 2.5);
+          final labelBehavior = scale > 1.35
+              ? NavigationDestinationLabelBehavior.alwaysHide
+              : NavigationDestinationLabelBehavior.alwaysShow;
+          return NavigationBar(
+            labelBehavior: labelBehavior,
+            selectedIndex: _currentIndex,
+            onDestinationSelected: (index) {
+              setState(() => _currentIndex = index);
+              _syncPopupRoute(index);
+            },
+            destinations: [
+              NavigationDestination(
+                icon: const Icon(Icons.analytics),
+                label: AppLocalizations.of(context)!.analyze,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.search),
+                label: AppLocalizations.of(context)!.search,
+              ),
+              const NavigationDestination(
+                icon: Icon(Icons.document_scanner),
+                label: 'Scan',
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.menu_book),
+                label: AppLocalizations.of(context)!.reader,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.sort_by_alpha),
+                label: AppLocalizations.of(context)!.dictionaries,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.edit_note),
+                label: AppLocalizations.of(context)!.writerTitle,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.bookmark),
+                label: AppLocalizations.of(context)!.saved,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.history),
+                label: AppLocalizations.of(context)!.history,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.school),
+                label: 'SRS',
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.auto_awesome),
+                label: AppLocalizations.of(context)!.ai,
+              ),
+              const NavigationDestination(
+                icon: Icon(Icons.local_play),
+                label: 'Study',
+              ),
+            ],
+          );
         },
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.analytics),
-            label: AppLocalizations.of(context)!.analyze,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.search),
-            label: AppLocalizations.of(context)!.search,
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.document_scanner),
-            label: 'Scan',
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.menu_book),
-            label: AppLocalizations.of(context)!.reader,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.sort_by_alpha),
-            label: AppLocalizations.of(context)!.dictionaries,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.edit_note),
-            label: AppLocalizations.of(context)!.writerTitle,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.bookmark),
-            label: AppLocalizations.of(context)!.saved,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.history),
-            label: AppLocalizations.of(context)!.history,
-          ),
-          NavigationDestination(icon: const Icon(Icons.school), label: 'SRS'),
-          NavigationDestination(
-            icon: const Icon(Icons.auto_awesome),
-            label: AppLocalizations.of(context)!.ai,
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.local_play),
-            label: 'Study',
-          ),
-        ],
       ),
     );
   }
