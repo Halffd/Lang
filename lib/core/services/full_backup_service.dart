@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:lang/core/services/app_storage.dart';
-import 'package:lang/data/services/dictionary_bundle_service.dart';
+import 'package:lang/core/services/dictionary_bundle_service.dart';
 
 /// Full backup / restore: settings (SharedPreferences snapshot) + every
 /// AppStorage document (labels, clipboard manager, history, saved words,
