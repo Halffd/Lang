@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
-import 'package:lang/data/services/dictionary/yomichan_service.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:lang/database/database_manager.dart';
 import 'package:lang/presentation/screens/study/ai_exercise_parser.dart';
@@ -111,13 +110,13 @@ class ExerciseBankService {
     final results = await batch.commit(noResult: true);
     inserted = results.length;
     if (inserted > 0 && kDebugMode) {
-      print('exercise bank: inserted $inserted of ${exercises.length}');
+      debugPrint('exercise bank: inserted $inserted of ${exercises.length}');
     }
     return inserted;
   }
 
   /// Fetch up to [limit] exercises for a language/level, preferring
-  /// QA-verified ones.
+  /// QA-verified ones. Flagged rows are never served.
   Future<List<AiExercise>> fetch({
     required String language,
     String level = 'any',
@@ -127,7 +126,8 @@ class ExerciseBankService {
     final db = await _db;
     final rows = await db.query(
       _table,
-      where: 'language = ? AND (level = ? OR level = ?)',
+      where:
+          "language = ? AND (level = ? OR level = ?) AND qa_status != 'flagged'",
       whereArgs: [language, level, 'any'],
       orderBy: "CASE qa_status WHEN 'verified' THEN 0 ELSE 1 END, id",
       limit: limit,
@@ -142,6 +142,41 @@ class ExerciseBankService {
               payload.map((k, v) => MapEntry(k.toString(), v)),
             ),
           );
+        }
+      } catch (_) {
+        continue; // skip malformed rows
+      }
+    }
+    return out;
+  }
+
+  /// Pending rows with their ids, for the semantic-QA grader batch job.
+  Future<List<({int id, AiExercise exercise})>> fetchPending({
+    String language = '',
+    int limit = 100,
+  }) async {
+    await _ensureTable();
+    final db = await _db;
+    final rows = await db.query(
+      _table,
+      where: language.isEmpty
+          ? "qa_status = 'pending'"
+          : "qa_status = 'pending' AND language = ?",
+      whereArgs: language.isEmpty ? null : [language],
+      orderBy: 'id',
+      limit: limit,
+    );
+    final out = <({int id, AiExercise exercise})>[];
+    for (final row in rows) {
+      try {
+        final payload = jsonDecode(row['payload']?.toString() ?? '{}');
+        if (payload is Map) {
+          out.add((
+            id: row['id']! as int,
+            exercise: AiExercise.fromJson(
+              payload.map((k, v) => MapEntry(k.toString(), v)),
+            ),
+          ));
         }
       } catch (_) {
         continue; // skip malformed rows

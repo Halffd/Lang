@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:lang/data/services/exercise_schema.dart';
 import 'package:http/http.dart' as http;
 
 class AiRemoteDataSource {
@@ -11,7 +10,7 @@ class AiRemoteDataSource {
   Future<String> generateText(
     String prompt,
     String apiKey, {
-    bool structuredExercises = false,
+    Map<String, dynamic>? responseSchema,
   }) async {
     final url = Uri.parse(
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey',
@@ -28,10 +27,10 @@ class AiRemoteDataSource {
     // API-level structured output (lever a): constrains token sampling so
     // the model cannot emit invalid JSON or missing required fields —
     // enforced at decode time, not requested in the prompt.
-    if (structuredExercises) {
+    if (responseSchema != null) {
       body['generationConfig'] = {
         'responseMimeType': 'application/json',
-        'responseSchema': ExerciseSchema.gemini(),
+        'responseSchema': responseSchema,
       };
     }
     final response = await _client.post(

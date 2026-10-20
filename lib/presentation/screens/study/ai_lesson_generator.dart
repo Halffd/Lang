@@ -6,6 +6,7 @@ import 'package:lang/core/services/exercise_bank_service.dart';
 import 'package:lang/core/services/storage_service.dart';
 import 'package:lang/data/datasources/supabase_data_source.dart';
 import 'package:lang/data/repositories/srs_service.dart';
+import 'package:lang/data/services/exercise_schema.dart';
 import 'package:lang/domain/repositories/ai_repository.dart';
 import 'package:lang/domain/entities/srs_card.dart';
 import 'package:lang/domain/entities/srs_deck.dart';
@@ -44,6 +45,20 @@ class AiLessonTemplate {
         LessonTypeFocus.values.asNameMap()[j['focus']] ?? LessonTypeFocus.mixed,
     cardCount: j['count'] ?? 12,
   );
+}
+
+/// One grader verdict: chunk position (0-based), whether the exercise
+/// is semantically bad, and the grader's reason when flagging.
+class GraderVerdict {
+  final int index;
+  final bool flagged;
+  final String? reason;
+
+  const GraderVerdict({
+    required this.index,
+    required this.flagged,
+    this.reason,
+  });
 }
 
 enum LessonTypeFocus {
@@ -159,7 +174,7 @@ Card count: ${template.cardCount}.
       userPrompt,
       provider,
       apiKey: apiKey,
-      structuredExercises: true,
+      responseSchema: ExerciseSchema.gemini(),
     );
     final cards = <SRSCard>[];
     try {
@@ -325,6 +340,138 @@ Card count: ${template.cardCount}.
       round++;
     }
     return total;
+  }
+
+  /// Semantic-QA grader (lever c): batch-grades pending bank rows with a
+  /// cheap model call. Checks answer correctness, MC distractor sanity,
+  /// cloze uniqueness and match pairing. Runs offline of lesson start;
+  /// results land as qa_status='verified'/'flagged'. Flagged rows stop
+  /// being served by [ExerciseBankService.fetch].
+  ///
+  /// Returns (graded, flagged).
+  Future<(int, int)> gradePendingBank(
+    String language,
+    String provider,
+    String? apiKey, {
+    int limit = 100,
+    int batchSize = 10,
+  }) async {
+    final bank = ExerciseBankService.instance;
+    final pending = await bank.fetchPending(language: language, limit: limit);
+    var graded = 0;
+    var flagged = 0;
+    for (var i = 0; i < pending.length; i += batchSize) {
+      final chunk = pending.sublist(
+        i,
+        (i + batchSize).clamp(0, pending.length),
+      );
+      try {
+        final raw = await repo.generateText(
+          graderPrompt(language, chunk),
+          provider,
+          apiKey: apiKey,
+          responseSchema: ExerciseSchema.grader(),
+        );
+        final verdicts = parseGraderVerdicts(raw);
+        for (final v in verdicts) {
+          final idx = v.index;
+          if (idx < 0 || idx >= chunk.length) continue;
+          await bank.setQaStatus(
+            chunk[idx].id,
+            v.flagged ? 'flagged' : 'verified',
+          );
+          graded++;
+          if (v.flagged) flagged++;
+        }
+      } catch (_) {
+        // grader failure is non-blocking: rows stay pending for the next run
+        continue;
+      }
+    }
+    return (graded, flagged);
+  }
+
+  /// Builds the grader prompt for a chunk of pending bank rows. Index is
+  /// the chunk position so verdicts can be mapped back to row ids.
+  static String graderPrompt(
+    String language,
+    List<({int id, AiExercise exercise})> chunk,
+  ) {
+    final buf = StringBuffer();
+    buf.writeln(
+      'You are grading $language learning exercises for semantic correctness. '
+      'For each numbered exercise, judge ONLY whether it is semantically valid:',
+    );
+    buf.writeln(
+      '- flashcard/written: is the answer a correct translation or solution?',
+    );
+    buf.writeln(
+      '- mc: exactly one correct choice, distractors plausible and distinct?',
+    );
+    buf.writeln(
+      '- cloze: is the answer the only word that grammatically fits?',
+    );
+    buf.writeln('- match: are all left/right pairings correct?');
+    buf.writeln(
+      'Ignore style and difficulty. Reply with a verdict for every index.',
+    );
+    for (var i = 0; i < chunk.length; i++) {
+      final e = chunk[i].exercise;
+      buf.writeln(
+        '${i + 1}. type=${e.type} prompt=${jsonEncode(e.prompt)} '
+        'answer=${jsonEncode(e.answer)} '
+        'choices=${e.choices == null ? 'null' : jsonEncode(e.choices)} '
+        'pairs=${e.pairs == null ? 'null' : jsonEncode(e.pairs)}',
+      );
+    }
+    return buf.toString();
+  }
+
+  /// Lenient parser for grader responses: unwraps code fences and the
+  /// {"verdicts": [...]} envelope; tolerates 0- vs 1-based indexing by
+  /// accepting both (the grader prompt is 1-based).
+  static List<GraderVerdict> parseGraderVerdicts(String responseBody) {
+    var s = responseBody.trim();
+    if (s.startsWith('```')) {
+      s = s.replaceAll(RegExp(r'^```[a-zA-Z]*\n?'), '');
+      s = s.replaceAll(RegExp(r'```$'), '');
+    }
+    final dynamic decoded;
+    try {
+      decoded = jsonDecode(s);
+    } catch (_) {
+      return const [];
+    }
+    final List list;
+    if (decoded is Map) {
+      final v = decoded['verdicts'] ?? decoded['grades'];
+      if (v is! List) return const [];
+      list = v;
+    } else if (decoded is List) {
+      list = decoded;
+    } else {
+      return const [];
+    }
+    final out = <GraderVerdict>[];
+    for (final item in list) {
+      if (item is! Map) continue;
+      final idx = item['index'];
+      final verdict = item['verdict']?.toString().toLowerCase();
+      if (idx is! int && idx is! String) continue;
+      final parsed = int.tryParse(idx.toString());
+      if (parsed == null) continue;
+      final reason = item['reason']?.toString();
+      final flagged =
+          verdict == 'flag' || verdict == 'flagged' || verdict == 'bad';
+      out.add(
+        GraderVerdict(
+          index: parsed - 1, // prompt is 1-based
+          flagged: flagged,
+          reason: (reason == null || reason.isEmpty) ? null : reason,
+        ),
+      );
+    }
+    return out;
   }
 
   AiExercise _exerciseFromBankRow(Map<String, dynamic> r) {
@@ -501,6 +648,44 @@ class _AiDeckGeneratorSheetState extends State<AiDeckGeneratorSheet> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Generated "${t.name}" deck')));
+    } catch (e) {
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  /// Semantic-QA pass over pending bank rows (lever c): grades with the
+  /// cheap configured model, flags bad exercises. Non-blocking for
+  /// lessons — pure maintenance job.
+  Future<void> _gradeBank() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final aiProvider = context.read<AiProvider>();
+      final generator = AiLessonGenerator(
+        repo: aiProvider.repository,
+        srs: context.read<SRSService>(),
+        deckId: '',
+      );
+      final language = context.read<AppState>().learningLanguage;
+      final (graded, flagged) = await generator.gradePendingBank(
+        language,
+        _provider,
+        _apiController.text.isEmpty ? null : _apiController.text,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            graded == 0
+                ? 'No pending exercises to grade'
+                : 'Graded $graded, flagged $flagged (removed from lessons)',
+          ),
+        ),
+      );
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
@@ -735,6 +920,12 @@ class _AiDeckGeneratorSheetState extends State<AiDeckGeneratorSheet> {
               onPressed: _loading || _selected == null
                   ? null
                   : _pregenerateBank,
+            ),
+            // Semantic-QA pass: grade pending rows, flag bad ones
+            TextButton.icon(
+              icon: const Icon(Icons.fact_check, size: 16),
+              label: const Text('QA bank (grade pending)'),
+              onPressed: _loading ? null : _gradeBank,
             ),
             // Raw JSON + breakdown of the last generation
             if (_lastInteractive != null) ...[

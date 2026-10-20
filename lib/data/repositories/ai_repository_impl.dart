@@ -34,7 +34,7 @@ class AiRepositoryImpl implements AiRepository {
     String prompt,
     String provider, {
     String? apiKey,
-    bool structuredExercises = false,
+    Map<String, dynamic>? responseSchema,
   }) async {
     if (provider == 'Gemini') {
       final key = _resolveGeminiKey(apiKey);
@@ -44,7 +44,7 @@ class AiRepositoryImpl implements AiRepository {
       return _remoteDataSource.generateText(
         prompt,
         key,
-        structuredExercises: structuredExercises,
+        responseSchema: responseSchema,
       );
     }
     throw AiRepositoryException('Unsupported provider: $provider');

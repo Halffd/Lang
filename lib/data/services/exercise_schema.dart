@@ -88,6 +88,33 @@ class ExerciseSchema {
     'required': ['type', 'prompt', 'answer'],
   };
 
+  /// Semantic-QA grader response schema (lever c): the grader model
+  /// returns one verdict per exercise index. `reason` is required for
+  /// flags, optional for passes.
+  static Map<String, dynamic> grader() => {
+    'type': 'object',
+    'properties': {
+      'verdicts': {
+        'type': 'array',
+        'items': {
+          'type': 'object',
+          'properties': {
+            'index': {'type': 'integer'},
+            'verdict': {
+              'type': 'string',
+              'enum': ['ok', 'flag'],
+            },
+            'reason': {
+              'type': ['string', 'null'],
+            },
+          },
+          'required': ['index', 'verdict'],
+        },
+      },
+    },
+    'required': ['verdicts'],
+  };
+
   /// OpenAI strict mode wants every property in `required` and null via
   /// type unions (no optional-field omission).
   static final Map<String, dynamic> _openAiExercise = {

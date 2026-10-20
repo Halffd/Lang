@@ -5,7 +5,7 @@ abstract class AiRepository {
     String prompt,
     String provider, {
     String? apiKey,
-    bool structuredExercises = false,
+    Map<String, dynamic>? responseSchema,
   });
   Future<String> generateImage(
     String prompt, {
