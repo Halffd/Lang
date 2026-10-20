@@ -18,6 +18,13 @@ class ExerciseBankService {
 
   bool _tableEnsured = false;
 
+  /// Test hook: forget the ensure-table flag so a freshly injected test
+  /// database gets the table recreated.
+  @visibleForTesting
+  static void resetForTest() {
+    instance._tableEnsured = false;
+  }
+
   /// Normalize + hash key for dedupe (mimiuchi review lever 2).
   static String normalize(String s) =>
       s.toLowerCase().trim().replaceAll(RegExp(r'\s+'), ' ');
@@ -107,8 +114,10 @@ class ExerciseBankService {
         'created_at': now,
       }, conflictAlgorithm: ConflictAlgorithm.ignore);
     }
-    final results = await batch.commit(noResult: true);
-    inserted = results.length;
+    // noResult: false so skipped (conflict-ignored) inserts come back as
+    // null and successful ones as rowids — this is how we count inserts
+    final results = await batch.commit();
+    inserted = results.whereType<int>().length;
     if (inserted > 0 && kDebugMode) {
       debugPrint('exercise bank: inserted $inserted of ${exercises.length}');
     }

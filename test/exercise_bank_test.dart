@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lang/core/services/exercise_bank_service.dart';
 import 'package:lang/data/services/exercise_schema.dart';
+import 'package:lang/database/database_manager.dart';
 import 'package:lang/presentation/screens/study/ai_exercise_parser.dart';
 import 'package:lang/presentation/screens/study/ai_lesson_generator.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
   setUpAll(() {
@@ -170,6 +172,101 @@ void main() {
       expect(prompt, contains('"sat"'));
       expect(prompt, contains('2. type=mc'));
       expect(prompt, contains('["犬","猫","鳥"]'));
+    });
+  });
+
+  group('ExerciseBankService (sqlite)', () {
+    late Database db;
+
+    setUpAll(() {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    });
+
+    setUp(() async {
+      db = await databaseFactory.openDatabase(inMemoryDatabasePath);
+      DatabaseManager.setTestDatabase(db);
+      ExerciseBankService.resetForTest();
+    });
+
+    tearDown(() async {
+      DatabaseManager.clearTestDatabase();
+      ExerciseBankService.resetForTest();
+      await db.close();
+    });
+
+    AiExercise ex(String type, String prompt, {String? answer}) =>
+        AiExercise(type: type, prompt: prompt, answer: answer ?? 'a');
+
+    test('insertMany dedupes across runs at the DB level', () async {
+      final bank = ExerciseBankService.instance;
+      final first = await bank.insertMany([
+        ex('cloze', 'He ___ home'),
+        ex('mc', 'Pick cat'),
+      ], language: 'ja');
+      expect(first, 2);
+
+      final second = await bank.insertMany([
+        ex('cloze', 'HE  ___ home'), // case/whitespace variant of the first
+        ex('mc', 'pick  cat'), // case/whitespace variant
+        ex('mc', 'new one'),
+      ], language: 'ja');
+      // normalized-key conflict: 2 dropped, 1 new
+      expect(second, 1);
+      expect(await bank.count(language: 'ja'), 3);
+    });
+
+    test('same prompt, different type does not collide', () async {
+      final bank = ExerciseBankService.instance;
+      await bank.insertMany([
+        ex('mc', 'same prompt'),
+        ex('cloze', 'same prompt'),
+      ], language: 'ja');
+      expect(await bank.count(language: 'ja'), 2);
+    });
+
+    test('fetch prefers verified and never serves flagged', () async {
+      final bank = ExerciseBankService.instance;
+      await bank.insertMany([
+        ex('cloze', 'one'),
+        ex('cloze', 'two'),
+        ex('cloze', 'three'),
+      ], language: 'ja');
+      final pending = await bank.fetchPending(language: 'ja');
+      expect(pending, hasLength(3));
+      // row ids are 1-based autoincrement in a fresh table
+      await bank.setQaStatus(pending[2].id, 'verified');
+      await bank.setQaStatus(pending[0].id, 'flagged');
+
+      final served = await bank.fetch(language: 'ja');
+      // verified row ('three') sorts before pending ('two'); flagged
+      // ('one') is never served
+      expect(served.map((e) => e.prompt), ['three', 'two']);
+    });
+
+    test('fetchPending narrows by language', () async {
+      final bank = ExerciseBankService.instance;
+      await bank.insertMany([ex('mc', 'ja one')], language: 'ja');
+      await bank.insertMany([ex('mc', 'es one')], language: 'es');
+      final ja = await bank.fetchPending(language: 'ja');
+      expect(ja, hasLength(1));
+      expect(ja.first.exercise.prompt, 'ja one');
+      final all = await bank.fetchPending();
+      expect(all, hasLength(2));
+    });
+
+    test('purgeFlagged removes flagged rows only', () async {
+      final bank = ExerciseBankService.instance;
+      await bank.insertMany([
+        ex('mc', 'keep'),
+        ex('mc', 'drop'),
+      ], language: 'ja');
+      final pending = await bank.fetchPending(language: 'ja');
+      await bank.setQaStatus(pending[1].id, 'flagged');
+      expect(await bank.purgeFlagged(), 1);
+      expect(await bank.count(language: 'ja'), 1);
+      final remaining = await bank.fetch(language: 'ja');
+      expect(remaining.single.prompt, 'keep');
     });
   });
 }
