@@ -10,14 +10,12 @@ import 'package:provider/provider.dart';
 import 'package:lang/core/services/audio_service.dart';
 import 'package:lang/core/services/history_service.dart';
 import 'package:lang/core/services/label_service.dart';
+import 'package:lang/core/services/lookup_service.dart';
 import 'package:lang/core/services/speech_service.dart';
 import 'package:lang/presentation/widgets/annotated_line.dart';
 import 'package:lang/data/repositories/translation_service.dart';
 import 'package:lang/domain/entities/analyzed_word.dart';
 import 'package:lang/domain/entities/translation_model.dart';
-import 'package:lang/data/services/dictionary/yomichan_service.dart';
-import 'package:lang/data/services/dictionary/tokenizer_service.dart';
-import 'package:lang/data/datasources/remote/wiktionary_lookup_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/utils/font_scale.dart';
@@ -70,10 +68,6 @@ class _SpeechTabState extends State<SpeechTab> {
   // auto word cards (analyze-screen style)
   final List<AnalyzedWord> _cards = [];
   bool _cardsGenerating = false;
-  final YomichanService _yomichan = YomichanService();
-  final TokenizerService _tokenizer = TokenizerService();
-  final WiktionaryLookupService _wiktionary = WiktionaryLookupService();
-  static const _cjkLanguages = {'ja', 'zh', 'ko'};
 
   // TTS readback
   dynamic _tts; // AudioService lazily created
@@ -1133,56 +1127,21 @@ class _SpeechTabState extends State<SpeechTab> {
     if (_cardsGenerating) return;
     _cardsGenerating = true;
     try {
-      final isCjk = _cjkLanguages.contains(language);
-      final generated = <AnalyzedWord>[];
-
-      if (isCjk) {
-        final tokens = await _tokenizer.tokenize(text);
-        final seen = <String>{};
-        for (final token in tokens) {
-          final surface = token.surface.trim();
-          if (surface.isEmpty ||
-              seen.contains(surface) ||
-              RegExp(r'^[\d\s]').hasMatch(surface)) {
-            continue;
-          }
-          seen.add(surface);
-          final enriched = await _yomichan.enrichWord(surface, language);
-          if (enriched != null) {
-            generated.add(enriched);
-          }
-        }
-      } else {
-        final words = text
-            .split(RegExp(r'[\s,.;:!?]+'))
-            .where((w) => w.length >= 2)
-            .toSet();
-        for (final word in words) {
-          final defs = await _wiktionary.lookup(word, language);
-          if (defs.isEmpty) continue;
-          final flat = <String>[];
-          for (final group in defs) {
-            final prefix = group.partOfSpeech.isEmpty
-                ? ''
-                : '(${group.partOfSpeech}) ';
-            flat.addAll([for (final d in group.definitions) '$prefix$d']);
-          }
-          if (flat.isNotEmpty) {
-            generated.add(
-              AnalyzedWord(
-                word: word,
-                wiktionaryDefinitions: flat,
-                sourceDictionary: 'wiktionary',
-              ),
-            );
-          }
-        }
-      }
+      final override = context.read<AppState>().wiktionaryLanguage;
+      final known = _cards.map((c) => c.word).toSet();
+      final generated = await LookupService.instance.generateWordCards(
+        text,
+        language,
+        wiktionaryOverride: override,
+        excludeWords: known,
+        limit: 100 - _cards.length,
+      );
 
       if (generated.isEmpty) return;
       if (!mounted) return;
       setState(() {
-        final known = _cards.map((c) => c.word).toSet();
+        // excludeWords filters surfaces pre-generation, but the dictionary
+        // lemma can differ from the tokenizer surface — keep the check
         for (final card in generated) {
           if (!known.contains(card.word)) _cards.add(card);
         }

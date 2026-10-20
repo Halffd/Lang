@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lang/core/services/history_service.dart';
 import 'package:lang/data/datasources/local_translation_service.dart';
-import 'package:lang/data/datasources/remote/wiktionary_lookup_service.dart';
+import 'package:lang/core/services/lookup_service.dart';
 import 'package:lang/data/repositories/translation_service.dart';
 import 'package:lang/data/services/dictionary/yomichan_service.dart';
 import 'package:lang/data/services/dictionary/tokenizer_service.dart';
@@ -24,7 +24,7 @@ class AnalyzerProvider extends ChangeNotifier {
 
   final YomichanService _yomichanService = YomichanService();
   final TokenizerService _tokenizerService = TokenizerService();
-  final WiktionaryLookupService _wiktionaryService = WiktionaryLookupService();
+  final LookupService _lookup = LookupService.instance;
 
   /// Languages routed through Yomichan (CJK dictionaries). Everything
   /// else goes to Wiktionary.
@@ -833,35 +833,12 @@ class AnalyzerProvider extends ChangeNotifier {
     String word,
     String language, {
     String? sentence,
-  }) async {
-    final override = appState?.wiktionaryLanguage ?? 'auto';
-    if (!WiktionaryLookupService.isSupported(language, override: override)) {
-      return null;
-    }
-    final defs = await _wiktionaryService.lookup(
+  }) {
+    return _lookup.enrichViaWiktionary(
       word,
       language,
-      override: override,
-    );
-    if (defs.isEmpty) return null;
-
-    // flatten: requested language's groups first, joined into a single
-    // definition list for the card display
-    final flat = <String>[];
-    for (final group in defs) {
-      final prefix = group.partOfSpeech.isEmpty
-          ? ''
-          : '(${group.partOfSpeech}) ';
-      for (final d in group.definitions) {
-        flat.add('$prefix$d');
-      }
-    }
-
-    return AnalyzedWord(
-      word: word,
+      override: appState?.wiktionaryLanguage ?? 'auto',
       sentence: sentence,
-      wiktionaryDefinitions: flat,
-      sourceDictionary: 'wiktionary',
     );
   }
 
