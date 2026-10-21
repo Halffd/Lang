@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:lang/presentation/widgets/bounded_input.dart';
+import 'package:lang/presentation/widgets/submit_text_field.dart';
 import 'package:provider/provider.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/utils/screen_size.dart';
@@ -249,12 +251,23 @@ class _AiScreenState extends State<AiScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    maxLines: null,
-                    decoration: InputDecoration(
-                      hintText: AppLocalizations.of(context)!.askAnything,
-                      border: OutlineInputBorder(),
+                  child: BoundedInput(
+                    child: SubmitTextField(
+                      controller: _controller,
+                      maxLines: null,
+                      decoration: InputDecoration(
+                        hintText: AppLocalizations.of(context)!.askAnything,
+                        border: OutlineInputBorder(),
+                      ),
+                      // Enter sends the message; Ctrl+Enter breaks the
+                      // line (chat convention)
+                      onSubmitted: provider.isLoading
+                          ? null
+                          : (text) {
+                              provider.sendMessage(text);
+                              _controller.clear();
+                              _scrollToBottom();
+                            },
                     ),
                   ),
                 ),

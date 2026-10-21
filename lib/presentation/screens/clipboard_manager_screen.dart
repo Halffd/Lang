@@ -10,6 +10,7 @@ import 'package:lang/core/services/screenshot_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/utils/font_scale.dart';
+import 'package:lang/presentation/widgets/submit_text_field.dart';
 
 /// Entry-point for the popup hotkey: hosts [ClipboardManagerScreen] in a
 /// compact CopyQ-style dialog.
@@ -151,11 +152,13 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Edit entry'),
-        content: TextField(
+        content: SubmitTextField(
           controller: ctrl,
           maxLines: 8,
           autofocus: true,
           decoration: const InputDecoration(border: OutlineInputBorder()),
+          // Enter saves the edit; Ctrl+Enter breaks the line
+          onSubmitted: (text) => Navigator.pop(ctx, text),
         ),
         actions: [
           TextButton(

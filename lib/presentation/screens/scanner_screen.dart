@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:lang/presentation/widgets/bounded_input.dart';
+import 'package:lang/presentation/widgets/submit_text_field.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -555,18 +557,23 @@ class _ScannerScreenState extends State<ScannerScreen> {
       padding: const EdgeInsets.all(12),
       child: Column(
         children: [
-          TextField(
-            controller: _textCtrl,
-            maxLines: null,
-            minLines: 6,
-            autofocus: _mode == ScannerMode.text,
-            decoration: InputDecoration(
-              hintText: 'Type or paste text…',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+          BoundedInput(
+            child: SubmitTextField(
+              controller: _textCtrl,
+              maxLines: null,
+              minLines: 6,
+              autofocus: _mode == ScannerMode.text,
+              decoration: InputDecoration(
+                hintText: 'Type or paste text…',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
+              onChanged: (_) => setState(() {}),
+              // Enter sends the text to the clipboard manager;
+              // Ctrl+Enter breaks the line
+              onSubmitted: (_) => _sendToClipboard(),
             ),
-            onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 8),
           Row(

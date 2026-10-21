@@ -41,6 +41,7 @@ class AnalyzerProvider extends ChangeNotifier {
   String _currentLanguage = 'ja';
   int _itemsPerRow = 2;
   int _itemsPerPage = 50;
+  int _pageChars = 0; // 0 = unlimited characters per page
   bool _showIchiMoe = true;
   bool _showWiktionary = true;
   bool _showKanji = true;
@@ -249,18 +250,55 @@ class AnalyzerProvider extends ChangeNotifier {
   List<AnalyzedWord> get pagedWords {
     final words = _filteredSortedWords;
     if (words.isEmpty) return [];
-    final start = _currentPage * _itemsPerPage;
-    final end = (start + _itemsPerPage > words.length)
-        ? words.length
-        : start + _itemsPerPage;
-    if (start >= words.length) return [];
+    final starts = _pageStarts;
+    if (_currentPage < 0 || _currentPage >= starts.length) return [];
+    final start = starts[_currentPage];
+    final end = _currentPage + 1 < starts.length
+        ? starts[_currentPage + 1]
+        : words.length;
     return words.sublist(start, end);
   }
 
   int get totalPages {
     final words = _filteredSortedWords;
     if (words.isEmpty) return 0;
-    return (words.length / _itemsPerPage).ceil();
+    return _pageStarts.length;
+  }
+
+  /// Character budget per page: sum of prompt+answer lengths of the
+  /// words on that page. 0 disables the limit.
+  int get pageChars => _pageChars;
+
+  static int _wordChars(AnalyzedWord w) =>
+      w.word.length +
+      (w.reading?.length ?? 0) +
+      w.ichiMoeDefinitions.fold<int>(0, (a, d) => a + d.length) +
+      w.wiktionaryDefinitions.fold<int>(0, (a, d) => a + d.length);
+
+  /// Page start indices honoring both the word-count limit
+  /// ([itemsPerPage]) and the character limit ([pageChars]). Each page
+  /// always takes at least one word so paging can never stall.
+  List<int> get _pageStarts {
+    final words = _filteredSortedWords;
+    final starts = <int>[];
+    final countLimited = _itemsPerPage > 0 && _itemsPerPage < 100000;
+    var i = 0;
+    while (i < words.length) {
+      starts.add(i);
+      var count = 0;
+      var chars = 0;
+      while (i < words.length) {
+        final w = words[i];
+        if (countLimited && count >= _itemsPerPage) break;
+        final c = _wordChars(w);
+        if (_pageChars > 0 && count > 0 && chars + c > _pageChars) break;
+        chars += c;
+        count++;
+        i++;
+      }
+      if (count == 0) i++; // safety: a single oversized word still pages
+    }
+    return starts;
   }
 
   // ============================================================
@@ -419,7 +457,14 @@ class AnalyzerProvider extends ChangeNotifier {
   /// Page containing the selected word (for auto-scroll sync).
   int get pageOfSelectedWord {
     if (_selectedWordIndex < 0) return _currentPage;
-    return _selectedWordIndex ~/ _itemsPerPage;
+    final starts = _pageStarts;
+    for (var p = 0; p < starts.length; p++) {
+      final end = p + 1 < starts.length ? starts[p + 1] : 1 << 30;
+      if (_selectedWordIndex >= starts[p] && _selectedWordIndex < end) {
+        return p;
+      }
+    }
+    return _currentPage;
   }
 
   void clearSelection() {
@@ -498,6 +543,10 @@ class AnalyzerProvider extends ChangeNotifier {
     if (key == 'showKanji') _showKanji = value;
     if (key == 'showEtymology') _showEtymology = value;
     if (key == 'searchLimit') _searchLimit = value;
+    if (key == 'pageChars') {
+      _pageChars = (value as num).toInt().clamp(0, 1000000);
+      _currentPage = 0;
+    }
     notifyListeners();
   }
 
@@ -1012,6 +1061,13 @@ class AnalyzerProvider extends ChangeNotifier {
   @visibleForTesting
   void testSetSentences(Map<String, String> sentences) {
     _sentences = sentences;
+  }
+
+  /// Test hook: inject analyzed words without running analysis.
+  @visibleForTesting
+  void testSetAnalyzedWords(List<AnalyzedWord> words) {
+    _analyzedWords = words;
+    _invalidateFilteredCache();
   }
 
   // --- Filter, Sort, Group Enums ---

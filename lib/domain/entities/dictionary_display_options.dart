@@ -35,9 +35,9 @@ class DictionaryDisplayOptions {
   bool showDictionaryName = true;
 
   /// Honor color styles embedded in dictionary structured content.
-  /// Off = always use the theme color (popups use theme colors so
-  /// dictionary accent colors don't paint every letter).
-  bool respectContentColors = true;
+  /// Off (default) = always use the theme color, so dictionary accent
+  /// styles never paint text red/blue outside the theme.
+  bool respectContentColors = false;
 
   Map<String, dynamic> toJson() => {
     'showSentences': showSentences,

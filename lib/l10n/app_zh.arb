@@ -401,5 +401,6 @@
   "popupProfileAlternationSubtitle": "配置文件激活时使用其他触发方式",
   "popupAltTrigger": "备用触发方式",
   "popupAltProfileName": "配置文件名称条件",
-  "popupShakeArmed": "摇晃检测已启用"
+  "popupShakeArmed": "摇晃检测已启用",
+  "analysisSection": "分析"
 }

@@ -1975,6 +1975,17 @@ class _DictionaryDisplaySection extends StatelessWidget {
                 save();
               },
             ),
+            _switchTile(
+              context,
+              'Dictionary colors',
+              'Honor color styles embedded in dictionary content; off uses '
+                  'theme colors everywhere (no red accents)',
+              o.respectContentColors,
+              (v) {
+                o.respectContentColors = v;
+                save();
+              },
+            ),
           ],
         );
       },

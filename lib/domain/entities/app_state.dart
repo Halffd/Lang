@@ -302,6 +302,7 @@ class AppState extends ChangeNotifier {
 
   // Analyse tab: words per page before pagination. 0 = unlimited.
   int _analysisPageLines = 100;
+  int _analysisPageChars = 0; // 0 = unlimited chars per page
 
   // Document-store backend: 'sqlite' | 'files'. Applies to the clipboard
   // manager, history, saved words and screenshot registry payloads; the
@@ -870,6 +871,7 @@ class AppState extends ChangeNotifier {
 
   /// Analyse-tab words per page; 0 means unlimited.
   int get analysisPageLines => _analysisPageLines;
+  int get analysisPageChars => _analysisPageChars;
 
   /// Document-store backend: 'sqlite' | 'files'.
   String get storageBackend => _storageBackend;
@@ -952,6 +954,14 @@ class AppState extends ChangeNotifier {
     _analysisPageLines = value.clamp(0, 10000);
     _storageService.setInt('analysis_page_lines', _analysisPageLines);
     // provider reads this on next build; notification via analyzerProvider
+    notifyListeners();
+  }
+
+  /// Analyse-tab characters per page (prompt+answer+reading budget);
+  /// 0 = unlimited.
+  void setAnalysisPageChars(int value) {
+    _analysisPageChars = value.clamp(0, 1000000);
+    _storageService.setInt('analysis_page_chars', _analysisPageChars);
     notifyListeners();
   }
 
@@ -1393,6 +1403,8 @@ class AppState extends ChangeNotifier {
             0,
             10000,
           );
+      _analysisPageChars = (_storageService.getInt('analysis_page_chars') ?? 0)
+          .clamp(0, 1000000);
       final savedCardMode = _storageService.getStringSync('card_display_mode');
       _cardDisplayMode =
           const {

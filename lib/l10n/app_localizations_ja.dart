@@ -1231,4 +1231,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get popupShakeArmed => 'シェイク検出有効';
+
+  @override
+  String get analysisSection => '分析';
 }

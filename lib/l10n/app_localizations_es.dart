@@ -1253,4 +1253,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get popupShakeArmed => 'Detección de sacudida activa';
+
+  @override
+  String get analysisSection => 'Análisis';
 }

@@ -2483,6 +2483,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Shake detection armed'**
   String get popupShakeArmed;
+
+  /// No description provided for @analysisSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Analysis'**
+  String get analysisSection;
 }
 
 class _AppLocalizationsDelegate

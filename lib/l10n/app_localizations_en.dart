@@ -1249,4 +1249,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get popupShakeArmed => 'Shake detection armed';
+
+  @override
+  String get analysisSection => 'Analysis';
 }

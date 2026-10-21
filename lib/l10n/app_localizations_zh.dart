@@ -1229,4 +1229,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get popupShakeArmed => '摇晃检测已启用';
+
+  @override
+  String get analysisSection => '分析';
 }

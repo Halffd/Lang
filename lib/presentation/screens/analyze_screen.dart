@@ -127,6 +127,22 @@ double measureSearchBarHeight({
   return height.clamp(96.0, cap);
 }
 
+/// Max height for the input field inside the pinned search bar, derived
+/// from the same numbers [measureSearchBarHeight] uses so the field cap
+/// and the header cap never disagree (the old hardcoded `- 60` overshot
+/// the header cap whenever stat chips were visible or the font was
+/// scaled up, making the field scroll past its own limit).
+double measureSearchFieldMaxHeight({
+  bool hasResults = false,
+  double maxHeightFraction = 0.5,
+  double viewportHeight = 800,
+}) {
+  final headerCap = (viewportHeight * maxHeightFraction).clamp(96.0, 2000.0);
+  // 28 = container padding (16 top + 12 bottom); 50 = stat-chips block
+  final reserved = 28 + (hasResults ? 50 : 0);
+  return (headerCap - reserved).clamp(52.0, 2000.0);
+}
+
 class AnalyzeScreen extends StatefulWidget {
   const AnalyzeScreen({super.key});
   @override
@@ -501,15 +517,17 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
             children: [
               Expanded(
                 child: ConstrainedBox(
-                  // cap the input at the user-configured fraction of the
-                  // viewport; long text scrolls inside the field instead
-                  // of overflowing the pinned header (issues: textboxes
-                  // past 100% height, frozen header text on zoom)
+                  // cap the input at the same height budget the pinned
+                  // header measurement uses, so the field scrolls inside
+                  // the header instead of past it
                   constraints: BoxConstraints(
-                    maxHeight:
-                        MediaQuery.sizeOf(context).height *
-                            context.watch<AppState>().inputMaxHeightFraction -
-                        60,
+                    maxHeight: measureSearchFieldMaxHeight(
+                      hasResults: provider.analyzedWords.isNotEmpty,
+                      maxHeightFraction: context
+                          .watch<AppState>()
+                          .inputMaxHeightFraction,
+                      viewportHeight: MediaQuery.sizeOf(context).height,
+                    ),
                   ),
                   child: ScriptTextField(
                     controller: _controller,
@@ -703,6 +721,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
         configuredLines == 0 ? 100000 : configuredLines,
       );
     }
+    // wire the configurable character budget per page (0 = unlimited)
+    if (provider.pageChars != appState.analysisPageChars) {
+      provider.updateSetting('pageChars', appState.analysisPageChars);
+    }
 
     // card filters from settings
     final words = provider.pagedWords
@@ -734,7 +756,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  l10n.wordDefinitions,
+                  l10n.analysisSection,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     fontSize: fs(16, 'headers'),
@@ -1445,6 +1467,25 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                           label: Text(n == 0 ? '∞' : '$n'),
                           selected: appState.analysisPageLines == n,
                           onSelected: (_) => appState.setAnalysisPageLines(n),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // --- characters per page (0 = unlimited)
+                  Text(
+                    'Chars per page: '
+                    '${appState.analysisPageChars == 0 ? 'unlimited' : appState.analysisPageChars}',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      for (final n in const [0, 2000, 5000, 10000, 20000])
+                        ChoiceChip(
+                          label: Text(n == 0 ? '∞' : '$n'),
+                          selected: appState.analysisPageChars == n,
+                          onSelected: (_) => appState.setAnalysisPageChars(n),
                         ),
                     ],
                   ),
@@ -2931,8 +2972,11 @@ class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {
-    final old = oldDelegate as _SearchBarDelegate;
-    return old.height != height;
+    // A new delegate instance means the parent rebuilt (zoom, font
+    // settings, theme change). Returning true unconditionally keeps the
+    // pinned header in step with the body — comparing height only froze
+    // the old font sizes whenever a zoom left the measured height equal.
+    return true;
   }
 }
 
@@ -2959,5 +3003,5 @@ class _FavoritesDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>
-      false;
+      true;
 }

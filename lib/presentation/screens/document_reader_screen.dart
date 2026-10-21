@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as path;
 import 'package:lang/core/services/history_service.dart';
+import 'package:lang/presentation/widgets/bounded_input.dart';
 import 'package:lang/presentation/widgets/document_reader.dart';
 
 class DocumentReaderScreen extends StatefulWidget {
@@ -154,17 +155,19 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-          child: TextField(
-            controller: _textController,
-            minLines: 2,
-            maxLines: 6,
-            keyboardType: TextInputType.multiline,
-            textInputAction: TextInputAction.newline,
-            decoration: InputDecoration(
-              isDense: true,
-              hintText: 'Paste or type text to read…',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+          child: BoundedInput(
+            child: TextField(
+              controller: _textController,
+              minLines: 2,
+              maxLines: 6,
+              keyboardType: TextInputType.multiline,
+              textInputAction: TextInputAction.newline,
+              decoration: InputDecoration(
+                isDense: true,
+                hintText: 'Paste or type text to read…',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ),

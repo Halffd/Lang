@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lang/presentation/widgets/bounded_input.dart';
+import 'package:lang/presentation/widgets/submit_text_field.dart';
 import 'package:provider/provider.dart';
 
 import 'package:lang/data/services/dictionary/tokenizer_service.dart';
@@ -96,16 +98,22 @@ class _WriterScreenState extends State<WriterScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // editor
-            TextField(
-              controller: _controller,
-              maxLines: 6,
-              style: TextStyle(
-                fontSize: fs(context, 15, 'sentences'),
-                height: 1.5,
-              ),
-              decoration: InputDecoration(
-                hintText: l10n.writerHint,
-                border: const OutlineInputBorder(),
+            BoundedInput(
+              child: SubmitTextField(
+                controller: _controller,
+                maxLines: 6,
+                style: TextStyle(
+                  fontSize: fs(context, 15, 'sentences'),
+                  height: 1.5,
+                ),
+                decoration: InputDecoration(
+                  hintText: l10n.writerHint,
+                  border: const OutlineInputBorder(),
+                ),
+                // Enter sends the text to analyze; Ctrl+Enter breaks
+                // the line (same contract as the analyze input)
+                onSubmitted: (text) =>
+                    text.trim().isEmpty ? null : _sendToAnalyze(context, text),
               ),
             ),
             const SizedBox(height: 4),

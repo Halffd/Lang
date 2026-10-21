@@ -24,6 +24,7 @@ import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/utils/chinese_util.dart';
 import 'package:lang/utils/font_scale.dart';
 import 'package:lang/utils/subtitle_parser.dart';
+import 'package:lang/presentation/widgets/submit_text_field.dart';
 
 /// Video player tab.
 ///
@@ -652,13 +653,15 @@ class _VideoTabState extends State<VideoTab> {
         title: Text(l10n?.videoPasteSubs ?? 'Paste subtitles'),
         content: SizedBox(
           width: 480,
-          child: TextField(
+          child: SubmitTextField(
             controller: field,
             maxLines: 12,
             autofocus: true,
             decoration: InputDecoration(
               hintText: '1\n00:00:01,000 --> 00:00:04,000\n…',
             ),
+            // Enter loads the subtitles; Ctrl+Enter breaks the line
+            onSubmitted: (text) => Navigator.pop(context, text),
           ),
         ),
         actions: [

@@ -4,10 +4,12 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:provider/provider.dart';
+import 'package:lang/data/services/anki_connect_service.dart';
 import 'package:lang/domain/entities/dictionary.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/utils/font_scale.dart';
 import 'package:lang/domain/entities/dictionary_display_options.dart';
+import 'package:lang/presentation/screens/search_screen.dart';
 import 'package:lang/presentation/widgets/structured_definition.dart';
 import 'package:lang/utils/screen_size.dart';
 import 'package:lang/presentation/widgets/tag_renderer.dart';
@@ -138,120 +140,6 @@ class DictionaryEntryCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Action buttons
-                ScreenSize.isCompact(context)
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Wrap(
-                            spacing: 0,
-                            runSpacing: 0,
-                            children: [
-                              IconButton(
-                                icon: Icon(
-                                  isFavorite
-                                      ? Icons.favorite
-                                      : Icons.favorite_border,
-                                  color: isFavorite ? Colors.red : null,
-                                  size: kWordActionIconSize,
-                                ),
-                                onPressed: onFavoriteToggle,
-                                tooltip: isFavorite
-                                    ? 'Remove from favorites'
-                                    : 'Add to favorites',
-                              ),
-                              IconButton(
-                                icon: Icon(
-                                  isInAnki ? Icons.book : Icons.book_outlined,
-                                  color: isInAnki ? Colors.blue : null,
-                                  size: kWordActionIconSize,
-                                ),
-                                onPressed: onAnkiToggle,
-                                tooltip: isInAnki
-                                    ? 'Remove from Anki'
-                                    : 'Add to Anki',
-                              ),
-                              IconButton(
-                                icon: Icon(
-                                  isInSRS
-                                      ? Icons.school
-                                      : Icons.school_outlined,
-                                  color: isInSRS ? Colors.green : null,
-                                  size: kWordActionIconSize,
-                                ),
-                                onPressed: onSRSToggle,
-                                tooltip: isInSRS
-                                    ? 'Remove from SRS'
-                                    : 'Add to SRS',
-                              ),
-                              IconButton(
-                                icon: Icon(
-                                  isSaved
-                                      ? Icons.bookmark
-                                      : Icons.bookmark_border,
-                                  color: isSaved
-                                      ? theme.colorScheme.primary
-                                      : null,
-                                  size: kWordActionIconSize,
-                                ),
-                                onPressed: onSaveToggle,
-                                tooltip: isSaved
-                                    ? 'Remove from saved'
-                                    : 'Save word',
-                              ),
-                            ],
-                          ),
-                        ],
-                      )
-                    : Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              isFavorite
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color: isFavorite ? Colors.red : null,
-                              size: kWordActionIconSize,
-                            ),
-                            onPressed: onFavoriteToggle,
-                            tooltip: isFavorite
-                                ? 'Remove from favorites'
-                                : 'Add to favorites',
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              isInAnki ? Icons.book : Icons.book_outlined,
-                              color: isInAnki ? Colors.blue : null,
-                              size: kWordActionIconSize,
-                            ),
-                            onPressed: onAnkiToggle,
-                            tooltip: isInAnki
-                                ? 'Remove from Anki'
-                                : 'Add to Anki',
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              isInSRS ? Icons.school : Icons.school_outlined,
-                              color: isInSRS ? Colors.green : null,
-                              size: kWordActionIconSize,
-                            ),
-                            onPressed: onSRSToggle,
-                            tooltip: isInSRS ? 'Remove from SRS' : 'Add to SRS',
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              isSaved ? Icons.bookmark : Icons.bookmark_border,
-                              color: isSaved ? theme.colorScheme.primary : null,
-                              size: kWordActionIconSize,
-                            ),
-                            onPressed: onSaveToggle,
-                            tooltip: isSaved
-                                ? 'Remove from saved'
-                                : 'Save word',
-                          ),
-                        ],
-                      ),
               ],
             ),
 
@@ -428,59 +316,73 @@ class DictionaryEntryCard extends StatelessWidget {
                 ),
               ),
 
-            // Action buttons
+            // Action buttons: all actions pinned to the bottom-right
+            // corner (was a top row next to the term)
             Padding(
               padding: const EdgeInsets.only(top: 16.0),
-              child: ScreenSize.isCompact(context)
-                  ? Wrap(
-                      alignment: WrapAlignment.end,
-                      runSpacing: 4,
-                      children: [
-                        if (entry.hasAudio)
-                          TextButton.icon(
-                            icon: const Icon(Icons.volume_up, size: 18),
-                            label: const Text('Listen'),
-                            onPressed: () => _playAudio(context),
-                          ),
-                        TextButton.icon(
-                          icon: const Icon(Icons.copy, size: 18),
-                          label: const Text('Copy'),
-                          onPressed: () => _copyEntry(context),
-                        ),
-                        TextButton.icon(
-                          icon: const Icon(Icons.more_horiz, size: 18),
-                          label: const Text('More'),
-                          onPressed: () {
-                            _showMoreOptions(context);
-                          },
-                        ),
-                      ],
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        if (entry.hasAudio)
-                          TextButton.icon(
-                            icon: const Icon(Icons.volume_up, size: 18),
-                            label: const Text('Listen'),
-                            onPressed: () => _playAudio(context),
-                          ),
-                        if (entry.hasAudio) const SizedBox(width: 8),
-                        TextButton.icon(
-                          icon: const Icon(Icons.copy, size: 18),
-                          label: const Text('Copy'),
-                          onPressed: () => _copyEntry(context),
-                        ),
-                        const SizedBox(width: 8),
-                        TextButton.icon(
-                          icon: const Icon(Icons.more_horiz, size: 18),
-                          label: const Text('More'),
-                          onPressed: () {
-                            _showMoreOptions(context);
-                          },
-                        ),
-                      ],
+              child: Wrap(
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                runSpacing: 4,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: isFavorite ? Colors.red : null,
+                      size: kWordActionIconSize,
                     ),
+                    onPressed: onFavoriteToggle,
+                    tooltip: isFavorite
+                        ? 'Remove from favorites'
+                        : 'Add to favorites',
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      isInAnki ? Icons.book : Icons.book_outlined,
+                      color: isInAnki ? Colors.blue : null,
+                      size: kWordActionIconSize,
+                    ),
+                    onPressed: onAnkiToggle,
+                    tooltip: isInAnki ? 'Remove from Anki' : 'Add to Anki',
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      isInSRS ? Icons.school : Icons.school_outlined,
+                      color: isInSRS ? Colors.green : null,
+                      size: kWordActionIconSize,
+                    ),
+                    onPressed: onSRSToggle,
+                    tooltip: isInSRS ? 'Remove from SRS' : 'Add to SRS',
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      isSaved ? Icons.bookmark : Icons.bookmark_border,
+                      color: isSaved ? theme.colorScheme.primary : null,
+                      size: kWordActionIconSize,
+                    ),
+                    onPressed: onSaveToggle,
+                    tooltip: isSaved ? 'Remove from saved' : 'Save word',
+                  ),
+                  if (entry.hasAudio)
+                    TextButton.icon(
+                      icon: const Icon(Icons.volume_up, size: 18),
+                      label: const Text('Listen'),
+                      onPressed: () => _playAudio(context),
+                    ),
+                  TextButton.icon(
+                    icon: const Icon(Icons.copy, size: 18),
+                    label: const Text('Copy'),
+                    onPressed: () => _copyEntry(context),
+                  ),
+                  TextButton.icon(
+                    icon: const Icon(Icons.more_horiz, size: 18),
+                    label: const Text('More'),
+                    onPressed: () {
+                      _showMoreOptions(context);
+                    },
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -535,31 +437,41 @@ class DictionaryEntryCard extends StatelessWidget {
                 title: const Text('Translate'),
                 onTap: () {
                   Navigator.pop(context);
-                  // Implement translation functionality
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.search),
-                title: const Text('Search in other dictionaries'),
-                onTap: () {
-                  Navigator.pop(context);
-                  // Implement search in other dictionaries
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.share),
-                title: const Text('Share'),
-                onTap: () {
-                  Navigator.pop(context);
-                  // Implement share functionality
+                  SearchScreen.pendingQuery = entry.term;
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const SearchScreen(),
+                    ),
+                  );
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.edit_note),
                 title: const Text('Add to Anki'),
-                onTap: () {
+                onTap: () async {
                   Navigator.pop(context);
-                  // Implement Anki integration
+                  try {
+                    final anki = AnkiConnectService();
+                    await anki.addNote(
+                      deckName: 'Lang',
+                      modelName: 'Basic',
+                      fields: {
+                        'Front': entry.term,
+                        'Back': entry.definitions.take(3).join('; '),
+                      },
+                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Sent to Anki')),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Anki failed: $e')),
+                      );
+                    }
+                  }
                 },
               ),
             ],

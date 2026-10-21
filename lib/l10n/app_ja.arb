@@ -791,5 +791,6 @@
   "popupProfileAlternationSubtitle": "プロファイル有効時に別のトリガーを使う",
   "popupAltTrigger": "代替トリガー",
   "popupAltProfileName": "プロファイル名条件",
-  "popupShakeArmed": "シェイク検出有効"
+  "popupShakeArmed": "シェイク検出有効",
+  "analysisSection": "分析"
 }

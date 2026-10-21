@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:provider/provider.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/l10n/app_localizations.dart';
@@ -9,6 +8,7 @@ import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/presentation/widgets/anki_export_dialog.dart';
 import 'package:lang/presentation/providers/ai_provider.dart';
 import 'package:lang/utils/pinyin_util.dart';
+import 'package:lang/presentation/widgets/themed_html.dart';
 import 'package:lang/utils/font_scale.dart';
 import 'package:lang/presentation/widgets/structured_definition.dart';
 
@@ -62,8 +62,6 @@ class WordDetailSheet extends StatelessWidget {
     required this.word,
     required this.provider,
   });
-
-  String get _currentLanguage => provider.currentLanguage;
 
   static void show(
     BuildContext context,
@@ -151,15 +149,9 @@ class WordDetailView extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: Colors.white24,
+                color: theme.colorScheme.outline.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(2),
               ),
-            ),
-          ),
-          Text(
-            word.word,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
             ),
           ),
           if (PinyinUtil.isChinese(word.word) &&
@@ -171,7 +163,7 @@ class WordDetailView extends StatelessWidget {
                 PinyinUtil.getPinyin(word.word) ?? '',
                 style: TextStyle(
                   fontSize: fs(context, 14, 'words'),
-                  color: Colors.white70,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -218,7 +210,7 @@ class WordDetailView extends StatelessWidget {
             _SectionHeader(
               icon: Icons.auto_awesome,
               title: AppLocalizations.of(context)!.aiInsights,
-              color: Colors.amberAccent,
+              color: theme.colorScheme.tertiary,
             ),
             ElevatedButton.icon(
               onPressed: () {
@@ -239,7 +231,7 @@ class WordDetailView extends StatelessWidget {
             _SectionHeader(
               icon: Icons.short_text,
               title: AppLocalizations.of(context)!.context,
-              color: Colors.deepPurpleAccent,
+              color: theme.colorScheme.secondary,
             ),
             Text(
               sentence,
@@ -254,7 +246,7 @@ class WordDetailView extends StatelessWidget {
             _SectionHeader(
               icon: Icons.storage,
               title: AppLocalizations.of(context)!.localDictionary,
-              color: Colors.greenAccent,
+              color: theme.colorScheme.primary,
             ),
             ...locals.map((entry) {
               final List glossary = json.decode(entry['glossary']);
@@ -283,7 +275,7 @@ class WordDetailView extends StatelessWidget {
             _SectionHeader(
               icon: Icons.menu_book,
               title: AppLocalizations.of(context)!.ichiMoe,
-              color: Colors.blueAccent,
+              color: theme.colorScheme.primary,
             ),
             ...moeDefs.map(
               (def) => Padding(
@@ -297,7 +289,7 @@ class WordDetailView extends StatelessWidget {
             _SectionHeader(
               icon: Icons.grid_view,
               title: AppLocalizations.of(context)!.kanjiBreakdown,
-              color: Colors.pinkAccent,
+              color: theme.colorScheme.secondary,
             ),
             ...kanjis.map((k) {
               final details = word.kanjiDetails[k];
@@ -324,27 +316,23 @@ class WordDetailView extends StatelessWidget {
                         ),
                         style: TextStyle(
                           fontSize: fs(context, 12, 'kanji'),
-                          color: Colors.white70,
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.7,
+                          ),
                         ),
                       ),
                     ],
                     if (kjp != null) ...[
                       const SizedBox(height: 4),
                       if (kjp['origin'] != null)
-                        HtmlWidget(
+                        ThemedHtml(
                           '<b>${AppLocalizations.of(context)!.origin}:</b> ${kjp['origin']!}',
-                          textStyle: TextStyle(
-                            fontSize: fs(context, 12, 'kanji'),
-                            color: Colors.pinkAccent,
-                          ),
+                          fontSize: 12,
                         ),
                       if (kjp['usage'] != null)
-                        HtmlWidget(
+                        ThemedHtml(
                           '<b>${AppLocalizations.of(context)!.usage}:</b> ${kjp['usage']!}',
-                          textStyle: TextStyle(
-                            fontSize: fs(context, 12, 'kanji'),
-                            color: Colors.white70,
-                          ),
+                          fontSize: 12,
                         ),
                     ],
                   ],
@@ -372,12 +360,9 @@ class WordDetailView extends StatelessWidget {
             _SectionHeader(
               icon: Icons.public,
               title: AppLocalizations.of(context)!.wiktionary,
-              color: Colors.orangeAccent,
+              color: theme.colorScheme.tertiary,
             ),
-            HtmlWidget(
-              wikiHtml,
-              textStyle: TextStyle(fontSize: fs(context, 14, 'translations')),
-            ),
+            ThemedHtml(wikiHtml, fontSize: 14),
           ],
         ],
       ),
@@ -385,10 +370,10 @@ class WordDetailView extends StatelessWidget {
   }
 
   Color _getFreqColor(int freq) {
-    if (freq <= 1000) return Colors.greenAccent;
-    if (freq <= 5000) return Colors.lightGreenAccent;
-    if (freq <= 15000) return Colors.yellowAccent;
-    return Colors.orangeAccent;
+    if (freq <= 1000) return Colors.green;
+    if (freq <= 5000) return Colors.lightGreen;
+    if (freq <= 15000) return Colors.amber;
+    return Colors.orange;
   }
 }
 

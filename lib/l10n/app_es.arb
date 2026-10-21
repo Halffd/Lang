@@ -791,5 +791,6 @@
   "popupProfileAlternationSubtitle": "Usar otro disparador cuando un perfil está activo",
   "popupAltTrigger": "Disparador alternativo",
   "popupAltProfileName": "Condición de nombre de perfil",
-  "popupShakeArmed": "Detección de sacudida activa"
+  "popupShakeArmed": "Detección de sacudida activa",
+  "analysisSection": "Análisis"
 }
