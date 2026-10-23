@@ -41,62 +41,73 @@ class _MemStorage extends StorageService {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('export then import returns the same cards', () async {
-    final storage = _MemStorage();
-    final srs = SRSService(storage);
-    await srs.initialize();
+  test(
+    'export then import returns the same cards',
+    // real sqlite3 + zip round trip: exceeds the 30s default when the
+    // full suite runs in parallel on a loaded machine
+    timeout: Timeout(Duration(minutes: 3)),
+    () async {
+      final storage = _MemStorage();
+      final srs = SRSService(storage);
+      await srs.initialize();
 
-    await srs.addCard(
-      SRSCard.newCard(
-        id: 'rt_1',
-        word: '読む',
-        reading: 'よむ',
-        meaning: 'to read',
-      ),
-    );
-    await srs.addCard(
-      SRSCard.newCard(
-        id: 'rt_2',
-        word: '書く',
-        reading: 'かく',
-        meaning: 'to write',
-      ),
-    );
+      await srs.addCard(
+        SRSCard.newCard(
+          id: 'rt_1',
+          word: '読む',
+          reading: 'よむ',
+          meaning: 'to read',
+        ),
+      );
+      await srs.addCard(
+        SRSCard.newCard(
+          id: 'rt_2',
+          word: '書く',
+          reading: 'かく',
+          meaning: 'to write',
+        ),
+      );
 
-    final service = AnkiPackageService(srsService: srs);
-    final bytes = await service.exportDeck(deckName: 'RoundTrip');
+      final service = AnkiPackageService(srsService: srs);
+      final bytes = await service.exportDeck(deckName: 'RoundTrip');
 
-    final imported = await service.importPackage(bytes);
+      final imported = await service.importPackage(bytes);
 
-    expect(imported.length, 2);
-    final byWord = {for (final c in imported) c.word: c};
-    expect(byWord['読む'], isNotNull);
-    expect(byWord['読む']!.reading, 'よむ');
-    expect(byWord['読む']!.meaning, contains('read'));
-    expect(byWord['書く'], isNotNull);
-    // ids are namespaced by the importer
-    expect(imported.every((c) => c.id.startsWith('anki_')), isTrue);
-  });
+      expect(imported.length, 2);
+      final byWord = {for (final c in imported) c.word: c};
+      expect(byWord['読む'], isNotNull);
+      expect(byWord['読む']!.reading, 'よむ');
+      expect(byWord['読む']!.meaning, contains('read'));
+      expect(byWord['書く'], isNotNull);
+      // ids are namespaced by the importer
+      expect(imported.every((c) => c.id.startsWith('anki_')), isTrue);
+    },
+  );
 
-  test('import merges into the service without duplicates', () async {
-    final storage = _MemStorage();
-    final srs = SRSService(storage);
-    await srs.initialize();
+  test(
+    'import merges into the service without duplicates',
+    // same sqlite3 + zip round trip cost as the export/import test
+    timeout: Timeout(Duration(minutes: 3)),
+    () async {
+      final storage = _MemStorage();
+      final srs = SRSService(storage);
+      await srs.initialize();
 
-    await srs.addCard(
-      SRSCard.newCard(
-        id: 'rt_1',
-        word: '読む',
-        reading: 'よむ',
-        meaning: 'to read',
-      ),
-    );
+      await srs.addCard(
+        SRSCard.newCard(
+          id: 'rt_1',
+          word: '読む',
+          reading: 'よむ',
+          meaning: 'to read',
+        ),
+      );
 
-    final service = AnkiPackageService(srsService: srs);
-    final bytes = await service.exportDeck(deckName: 'Dup');
-    await service.importAndMerge(bytes);
+      final service = AnkiPackageService(srsService: srs);
+      final bytes = await service.exportDeck(deckName: 'Dup');
+      await service.importAndMerge(bytes);
 
-    // same word twice, different ids (namespaced import id)
-    expect(srs.allCards.length, 2);
-  });
+      // same word twice, different ids (namespaced import id)
+      expect(srs.allCards.length, 2);
+    },
+  );
 }

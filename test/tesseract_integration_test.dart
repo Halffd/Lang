@@ -7,57 +7,63 @@ import 'package:lang/data/services/ocr_service.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('native tesseract real smoke', () async {
-    final service = OcrService();
-    if (!await service.hasNativeTesseract()) {
-      return; // no tesseract binary: skip
-    }
+  test(
+    'native tesseract real smoke',
+    // real mogrify + tesseract subprocess runs; slower than the default
+    // under full-suite parallel load
+    timeout: Timeout(Duration(minutes: 3)),
+    () async {
+      final service = OcrService();
+      if (!await service.hasNativeTesseract()) {
+        return; // no tesseract binary: skip
+      }
 
-    // generate a text image with ImageMagick when available
-    final tempDir = await Directory.systemTemp.createTemp('tess_smoke');
-    final imagePath = '${tempDir.path}/ocr_test.png';
-    try {
-      // Process.run throws (ENOENT) when the binary is missing rather
-      // than returning a nonzero exit code, so guard both ways: a
-      // machine without ImageMagick skips the smoke test instead of
-      // failing it.
-      ProcessResult gen;
+      // generate a text image with ImageMagick when available
+      final tempDir = await Directory.systemTemp.createTemp('tess_smoke');
+      final imagePath = '${tempDir.path}/ocr_test.png';
       try {
-        gen = await Process.run('convert', [
-          '-size',
-          '400x80',
-          'xc:white',
-          '-font',
-          'DejaVu-Sans',
-          '-pointsize',
-          '28',
-          '-fill',
-          'black',
-          '-annotate',
-          '+10+50',
-          'Hello OCR 123',
+        // Process.run throws (ENOENT) when the binary is missing rather
+        // than returning a nonzero exit code, so guard both ways: a
+        // machine without ImageMagick skips the smoke test instead of
+        // failing it.
+        ProcessResult gen;
+        try {
+          gen = await Process.run('convert', [
+            '-size',
+            '400x80',
+            'xc:white',
+            '-font',
+            'DejaVu-Sans',
+            '-pointsize',
+            '28',
+            '-fill',
+            'black',
+            '-annotate',
+            '+10+50',
+            'Hello OCR 123',
+            imagePath,
+          ]);
+        } on ProcessException {
+          return; // no ImageMagick: skip
+        }
+        if (gen.exitCode != 0 || !File(imagePath).existsSync()) {
+          return; // ImageMagick present but the render failed: skip
+        }
+
+        final result = await service.recognizeFromFile(
           imagePath,
-        ]);
-      } on ProcessException {
-        return; // no ImageMagick: skip
-      }
-      if (gen.exitCode != 0 || !File(imagePath).existsSync()) {
-        return; // ImageMagick present but the render failed: skip
-      }
+          engine: OcrEngine.tesseract,
+          language: 'en',
+        );
 
-      final result = await service.recognizeFromFile(
-        imagePath,
-        engine: OcrEngine.tesseract,
-        language: 'en',
-      );
-
-      expect(result.isSuccess, isTrue);
-      expect(result.text, contains('Hello'));
-      expect(result.text, contains('123'));
-    } finally {
-      try {
-        await tempDir.delete(recursive: true);
-      } catch (_) {}
-    }
-  });
+        expect(result.isSuccess, isTrue);
+        expect(result.text, contains('Hello'));
+        expect(result.text, contains('123'));
+      } finally {
+        try {
+          await tempDir.delete(recursive: true);
+        } catch (_) {}
+      }
+    },
+  );
 }

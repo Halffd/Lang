@@ -1,10 +1,12 @@
+// encode/decode + subprocess probes exceed the 30s default when
+// the full suite runs in parallel on a loaded machine
+@Timeout(Duration(minutes: 3))
 // Threshold logic of FuzzyGoldenComparator: the part that decides whether a
 // pixel change is a regression or noise.
 //
 // Images are built programmatically so every case is exact: a channel delta
 // inside the tolerance must not count, a diff rate inside the threshold must
 // pass, anything larger must fail and write failure artifacts.
-
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;

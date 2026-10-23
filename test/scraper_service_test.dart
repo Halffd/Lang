@@ -1,3 +1,6 @@
+// encode/decode + subprocess probes exceed the 30s default when
+// the full suite runs in parallel on a loaded machine
+@Timeout(Duration(minutes: 3))
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lang/core/services/scraper_service.dart';
 
