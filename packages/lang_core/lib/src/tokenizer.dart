@@ -9,13 +9,14 @@ import 'token.dart';
 /// [DictionaryDb] for Japanese, script-based segmentation for Chinese
 /// and Korean, whitespace words for Latin-script languages.
 ///
-/// Pure Dart. The host supplies the dictionary surface; everything else
-/// is self-contained.
+/// Pure Dart. The host supplies the dictionary surface and optionally a
+/// [Deconjugator]; everything else is self-contained.
 class Tokenizer {
   final DictionaryDb? db;
   final LanguageDetector detector;
+  final Deconjugator? deconjugator;
 
-  Tokenizer({this.db, LanguageDetector? detector})
+  Tokenizer({this.db, LanguageDetector? detector, this.deconjugator})
       : detector = detector ?? LanguageDetector();
 
   /// ISO 639-1 code for [text] — the same detector [tokenize] uses, so
@@ -83,10 +84,41 @@ class Tokenizer {
             partOfSpeech: 'word',
             startIndex: cursor,
             endIndex: cursor + termLen,
+            tags: match.tags,
           ),
         );
         cursor += termLen;
         matchFound = true;
+      }
+
+      // De-conjugation fallback: no direct match — try base forms of
+      // the longest unmatched candidates (e.g. 食べて → 食べる).
+      if (!matchFound && deconjugator != null && candidates.isNotEmpty) {
+        for (final candidate in candidates) {
+          if (candidate.length < 2) continue;
+          for (final form in deconjugator!.deconjugate(candidate)) {
+            if (form == candidate) continue;
+            final base = await db?.exactMatch(form);
+            if (base != null) {
+              tokens.add(
+                Token(
+                  surface: candidate,
+                  reading: base.reading,
+                  definition: base.definition,
+                  partOfSpeech: 'word',
+                  startIndex: cursor,
+                  endIndex: cursor + candidate.length,
+                  tags: base.tags,
+                  deconjugatedFrom: form,
+                ),
+              );
+              cursor += candidate.length;
+              matchFound = true;
+              break;
+            }
+          }
+          if (matchFound) break;
+        }
       }
 
       if (!matchFound) {
@@ -107,22 +139,59 @@ class Tokenizer {
     return tokens;
   }
 
-  /// Chinese: character-based (no bundled zh segmentation dictionary).
-  List<Token> _tokenizeChinese(String text) {
+  /// Chinese: longest dictionary match up to 3 characters when a
+  /// dictionary is wired, single characters otherwise.
+  Future<List<Token>> _tokenizeChinese(String text) async {
     final tokens = <Token>[];
-    for (var i = 0; i < text.length; i++) {
-      final char = text[i];
-      if (ScriptRanges.containsChinese(char)) {
+    var cursor = 0;
+
+    while (cursor < text.length) {
+      final char = text[cursor];
+      if (!ScriptRanges.containsChinese(char)) {
+        cursor++;
+        continue;
+      }
+
+      var matched = false;
+      if (db != null) {
+        var maxLength = 3; // zh words are typically 1-3 characters
+        if (cursor + maxLength > text.length) {
+          maxLength = text.length - cursor;
+        }
+        final candidates = <String>[
+          for (var i = maxLength; i >= 1; i--)
+            text.substring(cursor, cursor + i),
+        ];
+        final match = await db!.longestMatch(candidates);
+        if (match != null) {
+          tokens.add(
+            Token(
+              surface: match.term,
+              reading: match.reading,
+              definition: match.definition,
+              partOfSpeech: 'word',
+              startIndex: cursor,
+              endIndex: cursor + match.term.length,
+              tags: match.tags,
+            ),
+          );
+          cursor += match.term.length;
+          matched = true;
+        }
+      }
+
+      if (!matched) {
         tokens.add(
           Token(
             surface: char,
             reading: '',
             definition: '',
             partOfSpeech: 'character',
-            startIndex: i,
-            endIndex: i + 1,
+            startIndex: cursor,
+            endIndex: cursor + 1,
           ),
         );
+        cursor++;
       }
     }
     return tokens;

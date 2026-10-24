@@ -7,6 +7,13 @@ class Token {
   final int startIndex;
   final int endIndex;
 
+  /// Dictionary tags carried through from the match (empty for
+  /// unmatched characters and whitespace splits).
+  final List<String> tags;
+
+  /// Base form when this token was matched via de-conjugation.
+  final String? deconjugatedFrom;
+
   const Token({
     required this.surface,
     required this.reading,
@@ -14,6 +21,8 @@ class Token {
     required this.partOfSpeech,
     required this.startIndex,
     required this.endIndex,
+    this.tags = const [],
+    this.deconjugatedFrom,
   });
 
   Map<String, dynamic> toJson() => {
@@ -23,6 +32,8 @@ class Token {
         'partOfSpeech': partOfSpeech,
         'startIndex': startIndex,
         'endIndex': endIndex,
+        'tags': tags,
+        if (deconjugatedFrom != null) 'deconjugatedFrom': deconjugatedFrom,
       };
 
   factory Token.fromJson(Map<String, dynamic> json) => Token(
@@ -32,5 +43,7 @@ class Token {
         partOfSpeech: json['partOfSpeech'] as String? ?? '',
         startIndex: json['startIndex'] as int? ?? 0,
         endIndex: json['endIndex'] as int? ?? 0,
+        tags: (json['tags'] as List?)?.cast<String>() ?? const [],
+        deconjugatedFrom: json['deconjugatedFrom'] as String?,
       );
 }

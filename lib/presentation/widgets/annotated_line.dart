@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:lang/data/repositories/dictionary_service.dart';
+import 'package:lang_core/lang_core.dart' show Token;
 import 'package:lang/data/services/dictionary/tokenizer_service.dart'
     show TokenizerService;
 import 'package:lang/domain/entities/app_state.dart';
@@ -8,7 +8,11 @@ import 'package:lang/utils/chinese_util.dart';
 import 'package:lang/utils/pinyin_util.dart';
 
 /// One diacritized word in the transcript: surface, reading and the
-/// word types the dictionary gave it.
+/// word types the dictionary gave it. Tokenization runs through the
+/// shared lang_core tokenizer (yomichan-backed via the app's
+/// DictionaryDb port), with de-conjugation for inflected Japanese
+/// forms; Chinese tokens with no dictionary reading fall back to a
+/// simple per-character pinyin build.
 class AnnotatedToken {
   const AnnotatedToken({
     required this.text,
@@ -96,11 +100,11 @@ class AnnotatedLineState extends State<AnnotatedLine> {
   late final Future<List<AnnotatedToken>> _tokens = _annotate();
 
   Future<List<AnnotatedToken>> _annotate() async {
-    final tokens = await DictionaryService().tokenizeText(widget.text);
+    final tokens = await TokenizerService().tokenize(widget.text);
     return [
       for (final token in tokens)
         AnnotatedToken(
-          text: token.text,
+          text: token.surface,
           reading: _readingFor(token),
           wordTypes: _wordTypesFromTags(token),
         ),
@@ -111,10 +115,11 @@ class AnnotatedLineState extends State<AnnotatedLine> {
   /// a per-character pinyin build for Chinese. Kana and unannotated text
   /// return null (nothing to read above it).
   static String? _readingFor(Token token) {
-    final reading = (token.entry?.reading ?? '').trim();
+    final reading = token.reading.trim();
     if (reading.isNotEmpty) return reading;
-    if (ChineseUtil.isHanzi(token.text)) {
-      return PinyinUtil.getPinyin(token.text) ?? _pinyinPerChar(token.text);
+    if (ChineseUtil.isHanzi(token.surface)) {
+      return PinyinUtil.getPinyin(token.surface) ??
+          _pinyinPerChar(token.surface);
     }
     return null;
   }
@@ -137,9 +142,7 @@ class AnnotatedLineState extends State<AnnotatedLine> {
   /// Word types from the entry's merged tag lists, normalized to the
   /// three hues we tint: `verb`, `adjective`, `adverb`.
   static List<String> _wordTypesFromTags(Token token) {
-    final tags =
-        token.entry?.tags.map((s) => s.toLowerCase()).toList() ??
-        const <String>[];
+    final tags = token.tags.map((s) => s.toLowerCase()).toList(growable: false);
     final has = (Iterable<String> needles) =>
         needles.any((n) => tags.any((s) => s.contains(n)));
     final types = <String>[];

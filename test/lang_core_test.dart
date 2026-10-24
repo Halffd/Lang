@@ -47,6 +47,46 @@ void main() {
       expect(tokens[1].partOfSpeech, 'character');
     });
 
+    test('de-conjugation fallback collapses inflected forms', () async {
+      final tokenizer = Tokenizer(db: _FakeDb(), deconjugator: _FakeDeconj());
+      // 食べて is not in the dictionary; the fake deconjugator maps it
+      // to 食べる, which is.
+      final tokens = await tokenizer.tokenize('食べて');
+      expect(tokens, hasLength(1));
+      expect(tokens.single.surface, '食べて');
+      expect(tokens.single.deconjugatedFrom, '食べる');
+      expect(tokens.single.reading, 'たべる');
+      expect(tokens.single.partOfSpeech, 'word');
+    });
+
+    test('direct match wins over de-conjugation', () async {
+      final tokenizer = Tokenizer(db: _FakeDb(), deconjugator: _FakeDeconj());
+      final tokens = await tokenizer.tokenize('電車');
+      expect(tokens.single.deconjugatedFrom, isNull);
+    });
+
+    test('tags flow through from the dictionary match', () async {
+      final tokenizer = Tokenizer(db: _FakeDb());
+      final tokens = await tokenizer.tokenize('電車');
+      expect(tokens.single.tags, contains('noun'));
+    });
+
+    test('chinese uses the dictionary when wired', () async {
+      final tokenizer = Tokenizer(db: _FakeDb());
+      // the fake db knows 中国 (2 chars) — longest-match beats per-char
+      final tokens = await tokenizer.tokenize('中国人');
+      expect(tokens.first.surface, '中国');
+      expect(tokens.first.partOfSpeech, 'word');
+      expect(tokens.last.surface, '人');
+      expect(tokens.last.partOfSpeech, 'character');
+    });
+
+    test('chinese stays per-character without a dictionary', () async {
+      final tokenizer = Tokenizer();
+      final tokens = await tokenizer.tokenize('中文');
+      expect(tokens.map((t) => t.surface), ['中', '文']);
+    });
+
     test('splitSentences maps surface runs to sentence text', () async {
       final tokenizer = Tokenizer();
       final tokens = await tokenizer.tokenize('Hello world. Second sentence!');
@@ -128,8 +168,25 @@ void main() {
 /// Minimal DictionaryDb fake: knows 電車 and 行く only.
 class _FakeDb implements DictionaryDb {
   final Map<String, DictMatch> _entries = {
-    '電車': const DictMatch(term: '電車', reading: 'でんしゃ', definition: 'train'),
+    '電車': const DictMatch(
+      term: '電車',
+      reading: 'でんしゃ',
+      definition: 'train',
+      tags: ['noun'],
+    ),
     '行く': const DictMatch(term: '行く', reading: 'いく', definition: 'to go'),
+    '食べる': const DictMatch(
+      term: '食べる',
+      reading: 'たべる',
+      definition: 'to eat',
+      tags: ['verb'],
+    ),
+    '中国': const DictMatch(
+      term: '中国',
+      reading: '',
+      definition: 'China',
+      tags: ['noun'],
+    ),
   };
 
   @override
@@ -140,4 +197,15 @@ class _FakeDb implements DictionaryDb {
     }
     return null;
   }
+
+  @override
+  Future<DictMatch?> exactMatch(String term) async => _entries[term];
+}
+
+/// Maps the te-form to its dictionary form — enough to exercise the
+/// de-conjugation fallback.
+class _FakeDeconj implements Deconjugator {
+  @override
+  List<String> deconjugate(String surface) =>
+      surface == '食べて' ? ['食べる'] : const [];
 }
