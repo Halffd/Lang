@@ -1,0 +1,7 @@
+# Pure-Dart package: no Flutter, so the app's flutter_lints include
+# does not resolve here.
+include: package:lints/recommended.yaml
+
+analyzer:
+  language:
+    strict-casts: true
