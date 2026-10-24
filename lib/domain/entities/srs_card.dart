@@ -1,3 +1,5 @@
+import 'package:lang_core/lang_core.dart' show SrsScheduler;
+
 class SrsCard {
   final String id;
   final String userId;
@@ -303,41 +305,28 @@ class SRSCard {
   SRSCard calculateNextReview(int quality) {
     if (type == CardType.suspended) return this;
 
-    const minEaseFactor = 1.3;
-    double newEaseFactor =
-        easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-    if (newEaseFactor < minEaseFactor) newEaseFactor = minEaseFactor;
-
-    int newInterval;
-    int newRepetition = reviewCount + 1;
-    CardType newType;
-
-    if (quality < 3) {
-      newRepetition = 0;
-      newInterval = 0;
-      newType = CardType.learning;
-    } else {
-      if (reviewCount == 0) {
-        newInterval = 1;
-        newType = CardType.learning;
-      } else if (reviewCount == 1) {
-        newInterval = 6;
-        newType = CardType.review;
-      } else {
-        newInterval = (reviewCount * newEaseFactor).round();
-        newType = CardType.review;
-      }
-    }
+    // SM-2 state machine lives in the shared lang_core package so other
+    // clients (CLI, future apps) schedule identically.
+    final r = SrsScheduler.schedule(
+      easeFactor: easeFactor,
+      reviewCount: reviewCount,
+      quality: quality,
+      suspended: type == CardType.suspended,
+    );
 
     final now = DateTime.now();
-    final nextReviewDate = DateTime(now.year, now.month, now.day + newInterval);
+    final nextReviewDate = DateTime(
+      now.year,
+      now.month,
+      now.day + r.intervalDays,
+    );
 
     return copyWith(
-      easeFactor: newEaseFactor,
-      reviewCount: newRepetition,
+      easeFactor: r.easeFactor,
+      reviewCount: r.reviewCount,
       nextReview: nextReviewDate,
       lastReviewDate: now,
-      type: newType,
+      type: r.newCard ? CardType.learning : CardType.review,
     );
   }
 

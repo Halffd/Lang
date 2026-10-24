@@ -1,0 +1,10 @@
+name: lang_core
+description: >-
+  Shared language-learning core: text segmentation, script/language
+  detection, and SRS scheduling math. Pure Dart — no Flutter dependency.
+  Storage and UI stay host-side; hosts implement the DictionaryDb port.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.0.0
