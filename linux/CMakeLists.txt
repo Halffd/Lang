@@ -108,11 +108,44 @@ install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}
 install(FILES "${FLUTTER_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)
 
+# Bundled libraries are installed under their real versioned names
+# (e.g. libwpe-1.0.so.1.9.5), but their dependents reference them by
+# soname (e.g. libwpe-1.0.so.1). Install each library and create the
+# soname symlink in the bundle so the app is self-contained instead of
+# silently resolving sonames from the host system.
+set(BUNDLED_LIB_SONAME_MAP "")
 foreach(bundled_library ${PLUGIN_BUNDLED_LIBRARIES})
   install(FILES "${bundled_library}"
     DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
+  execute_process(
+    COMMAND readelf -d "${bundled_library}"
+    OUTPUT_VARIABLE ELF_DYNAMIC
+    RESULT_VARIABLE ELF_RESULT
+    ERROR_QUIET)
+  if(ELF_RESULT EQUAL 0)
+    string(REGEX MATCH "Library soname: *\\[[^]]+\\]" SONAME_LINE "${ELF_DYNAMIC}")
+    if(SONAME_LINE)
+      string(REGEX REPLACE ".*\\[([^]]+)\\]" "\\1" BUNDLED_LIB_SONAME "${SONAME_LINE}")
+      get_filename_component(BUNDLED_LIB_REAL "${bundled_library}" NAME)
+      if(NOT BUNDLED_LIB_SONAME STREQUAL BUNDLED_LIB_REAL)
+        list(APPEND BUNDLED_LIB_SONAME_MAP "${BUNDLED_LIB_SONAME}:${BUNDLED_LIB_REAL}")
+      endif()
+    endif()
+  endif()
 endforeach(bundled_library)
+if(BUNDLED_LIB_SONAME_MAP)
+  list(REMOVE_DUPLICATES BUNDLED_LIB_SONAME_MAP)
+  install(CODE "
+    foreach(entry IN ITEMS ${BUNDLED_LIB_SONAME_MAP})
+      string(REGEX MATCH \"^([^:]+):(.+)$\" _m \"\${entry}\")
+      set(_soname \"\${CMAKE_MATCH_1}\")
+      set(_real \"\${CMAKE_MATCH_2}\")
+      file(CREATE_LINK \"\${_real}\" \"\${CMAKE_INSTALL_PREFIX}/lib/\${_soname}\" SYMBOLIC)
+      message(STATUS \"symlink \${CMAKE_INSTALL_PREFIX}/lib/\${_soname} -> \${_real}\")
+    endforeach()
+    " COMPONENT Runtime)
+endif()
 
 # Copy the native assets provided by the build.dart from all packages.
 set(NATIVE_ASSETS_DIR "${PROJECT_BUILD_DIR}native_assets/linux/")

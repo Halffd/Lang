@@ -136,10 +136,22 @@ if(NOT HAVE_WPE_PLATFORM AND NOT HAVE_WPE_FDO)
                       "See WPE_BACKEND.md for installation instructions.")
 endif()
 
-# Check for libwpe
-pkg_check_modules(LIBWPE QUIET IMPORTED_TARGET wpe-1.0)
-if(NOT LIBWPE_FOUND)
-  message(FATAL_ERROR "libwpe (wpe-1.0) not found. Please install libwpe-1.0-dev.")
+# libwpe (wpe-1.0) provides the legacy wpe_view_backend* / wpe_input* API,
+# used only by the WPEBackend-FDO path. Modern WPE WebKit (2.48+) folded
+# libwpe's renderer-side code into libWPEWebKit, so wpe-1.0 no longer
+# exists as a separate pkg-config module there. Do not hard-require it:
+# only the legacy backend needs it to compile or link.
+if(HAVE_WPE_FDO)
+  pkg_check_modules(LIBWPE REQUIRED IMPORTED_TARGET wpe-1.0)
+  message(STATUS "flutter_inappwebview_linux: Found libwpe-1.0 (${LIBWPE_VERSION}) for legacy FDO backend")
+else()
+  # WPEPlatform path: nothing references wpe-1.0; absence is fine.
+  pkg_check_modules(LIBWPE QUIET IMPORTED_TARGET wpe-1.0)
+  if(LIBWPE_FOUND)
+    message(STATUS "flutter_inappwebview_linux: Found libwpe-1.0 (${LIBWPE_VERSION})")
+  else()
+    message(STATUS "flutter_inappwebview_linux: libwpe (wpe-1.0) not found; not needed for the WPEPlatform backend")
+  endif()
 endif()
 
 # Check for libsecret for secure credential storage
@@ -171,7 +183,21 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|amd64")
 endif()
 
 # === nlohmann/json dependency for JSON parsing ===
+# Prefer the vendored source tree (third_party/nlohmann_json) so configure
+# works offline and in CI. Set FETCHCONTENT_SOURCE_DIR_NLOHMANN_JSON to
+# override; when the vendored copy is missing we fall back to the URL.
 include(FetchContent)
+set(NLOHMANN_JSON_VENDORED_DIR
+    "${CMAKE_CURRENT_SOURCE_DIR}/third_party/nlohmann_json")
+if(NOT FETCHCONTENT_SOURCE_DIR_NLOHMANN_JSON
+   AND EXISTS "${NLOHMANN_JSON_VENDORED_DIR}/CMakeLists.txt")
+  set(FETCHCONTENT_SOURCE_DIR_NLOHMANN_JSON "${NLOHMANN_JSON_VENDORED_DIR}")
+endif()
+if(FETCHCONTENT_SOURCE_DIR_NLOHMANN_JSON)
+  message(STATUS "flutter_inappwebview_linux: nlohmann/json ${NLOHMANN_JSON_VERSION} from local source dir ${FETCHCONTENT_SOURCE_DIR_NLOHMANN_JSON}")
+else()
+  message(STATUS "flutter_inappwebview_linux: nlohmann/json ${NLOHMANN_JSON_VERSION} from upstream URL")
+endif()
 FetchContent_Declare(
   nlohmann_json
   URL https://github.com/nlohmann/json/releases/download/v${NLOHMANN_JSON_VERSION}/json.tar.xz
@@ -182,7 +208,6 @@ set(JSON_BuildTests OFF CACHE INTERNAL "")
 FetchContent_MakeAvailable(nlohmann_json)
 # Suppress deprecated literal operator warnings from nlohmann_json
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-literal-operator")
-message(STATUS "flutter_inappwebview_linux: nlohmann/json ${NLOHMANN_JSON_VERSION} configured")
 
 # Plugin source files
 list(APPEND PLUGIN_SOURCES
@@ -294,7 +319,9 @@ target_link_libraries(${PLUGIN_NAME} PRIVATE PkgConfig::GTK)
 target_link_libraries(${PLUGIN_NAME} PRIVATE PkgConfig::EPOXY)
 target_link_libraries(${PLUGIN_NAME} PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(${PLUGIN_NAME} PRIVATE PkgConfig::WPE_WEBKIT)
-target_link_libraries(${PLUGIN_NAME} PRIVATE PkgConfig::LIBWPE)
+if(LIBWPE_FOUND)
+  target_link_libraries(${PLUGIN_NAME} PRIVATE PkgConfig::LIBWPE)
+endif()
 target_link_libraries(${PLUGIN_NAME} PRIVATE PkgConfig::WAYLAND_SERVER)
 target_link_libraries(${PLUGIN_NAME} PRIVATE PkgConfig::LIBSECRET)
 
@@ -363,8 +390,12 @@ list(REMOVE_DUPLICATES WPE_LIB_DIRS)
 # Find WPE WebKit library
 find_and_add_library("libWPEWebKit-2.0" "${WPE_LIB_DIRS}" WPE_BUNDLED_LIBS)
 
-# Find libwpe library  
-find_and_add_library("libwpe-1.0" "${WPE_LIB_DIRS}" WPE_BUNDLED_LIBS)
+# Find libwpe library. On the modern WPEPlatform path WebKit itself still
+# depends on libwpe-1.0 at runtime, so bundle it whenever we link it
+# (LIBWPE_FOUND), not just for the legacy FDO backend.
+if(LIBWPE_FOUND)
+  find_and_add_library("libwpe-1.0" "${WPE_LIB_DIRS}" WPE_BUNDLED_LIBS)
+endif()
 
 # WPEPlatform is built into libWPEWebKit-2.0 on modern builds, so there are
 # no separate libWPEPlatform*.so files to bundle.
@@ -427,7 +458,9 @@ target_link_libraries(${TEST_RUNNER} PRIVATE PkgConfig::GTK)
 target_link_libraries(${TEST_RUNNER} PRIVATE PkgConfig::EPOXY)
 target_link_libraries(${TEST_RUNNER} PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(${TEST_RUNNER} PRIVATE PkgConfig::WPE_WEBKIT)
-target_link_libraries(${TEST_RUNNER} PRIVATE PkgConfig::LIBWPE)
+if(LIBWPE_FOUND)
+  target_link_libraries(${TEST_RUNNER} PRIVATE PkgConfig::LIBWPE)
+endif()
 target_link_libraries(${TEST_RUNNER} PRIVATE PkgConfig::WAYLAND_SERVER)
 target_link_libraries(${TEST_RUNNER} PRIVATE PkgConfig::LIBSECRET)
 if(HAVE_WPE_PLATFORM)
