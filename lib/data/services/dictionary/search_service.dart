@@ -1,6 +1,7 @@
 import 'package:lang/data/services/dictionary/local_dictionary_service.dart';
 import 'package:lang/data/services/dictionary/yomichan_service.dart';
 import 'package:lang/data/services/dictionary/tokenizer_service.dart';
+import 'package:lang_core/lang_core.dart' show Token;
 import 'package:lang/data/services/dictionary/language_detector.dart';
 import 'package:lang/domain/entities/dictionary.dart';
 

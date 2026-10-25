@@ -6,6 +6,7 @@ import 'package:lang/presentation/widgets/submit_text_field.dart';
 import 'package:provider/provider.dart';
 
 import 'package:lang/data/services/dictionary/tokenizer_service.dart';
+import 'package:lang_core/lang_core.dart' show Token;
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/presentation/providers/analyzer_provider.dart';
