@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lang/core/services/text_analyzer.dart';
 import 'package:lang/core/services/database.dart';
-import 'package:lang/data/repositories/dictionary_service.dart';
+import 'package:lang/data/services/dictionary/tokenizer_service.dart';
 import 'package:drift/drift.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -10,7 +10,7 @@ void main() {
 
   group('TextAnalyzer Tests', () {
     late AppDatabase appDatabase;
-    late DictionaryService dictionaryService;
+    late TokenizerService tokenizerService;
     late TextAnalyzer textAnalyzer;
 
     setUp(() async {
@@ -20,9 +20,9 @@ void main() {
 
       // Fresh in-memory database per test
       appDatabase = AppDatabase.inMemory();
-      dictionaryService = DictionaryService();
+      tokenizerService = TokenizerService();
 
-      textAnalyzer = TextAnalyzer(appDatabase, dictionaryService);
+      textAnalyzer = TextAnalyzer(appDatabase, tokenizerService);
     });
 
     tearDown(() async {

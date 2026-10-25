@@ -1,14 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:lang/domain/entities/translation_model.dart';
-import 'dictionary_service.dart';
-import '../repositories/translation_service.dart';
+import 'package:lang_core/lang_core.dart' show Token;
+import 'translation_service.dart';
+import 'package:lang/data/datasources/remote/wiktionary_service.dart';
 import 'package:lang/utils/language_detector.dart';
 
 class ReaderTranslationService {
-  final DictionaryService _dictionaryService;
   final TranslationService _translationService;
 
-  ReaderTranslationService(this._dictionaryService, this._translationService);
+  ReaderTranslationService(this._translationService);
 
   Future<void> getDetailedTranslationForToken(
     Token token,
@@ -23,23 +23,23 @@ class ReaderTranslationService {
 
     try {
       // First, detect the language of the token text
-      final detectedLanguage = LanguageDetector.detect(token.text);
+      final detectedLanguage = LanguageDetector.detect(token.surface);
 
       // Check if we should use the enhanced Wiktionary service for detailed information
       final wiktionaryDetails = await _fetchWiktionaryDetails(
-        token.text,
+        token.surface,
         detectedLanguage,
       );
 
       if (wiktionaryDetails.isNotEmpty) {
         // Use Wiktionary details as primary source for multi-language support
-        onWiktionaryResult(token.text, detectedLanguage, wiktionaryDetails);
+        onWiktionaryResult(token.surface, detectedLanguage, wiktionaryDetails);
         return;
       }
 
       // Fallback to the existing translation service if no Wiktionary details
       final request = TranslationRequest(
-        sourceText: token.text,
+        sourceText: token.surface,
         sourceLanguage: detectedLanguage,
         targetLanguage: 'en', // Default to English output
       );
@@ -51,15 +51,17 @@ class ReaderTranslationService {
         onTranslationResult(result);
       } else {
         // If no translation found, show a message
-        onError('No translation found for: ${token.text}');
+        onError('No translation found for: ${token.surface}');
       }
     } catch (e) {
-      onError('Failed to get translation for: ${token.text}');
+      onError('Failed to get translation for: ${token.surface}');
     }
   }
 
   bool _isValidToken(Token? token) {
-    return token != null && token.isWord && token.text.isNotEmpty;
+    return token != null &&
+        token.partOfSpeech == 'word' &&
+        token.surface.isNotEmpty;
   }
 
   Future<List<String>> _fetchWiktionaryDetails(
@@ -67,7 +69,9 @@ class ReaderTranslationService {
     String language,
   ) async {
     try {
-      return await _dictionaryService.fetchWordDetailsMultiLanguage(
+      // the dictionary passthrough was a thin wrapper — call the
+      // wiktionary service directly
+      return await WiktionaryService().fetchWordDetailsForAnyLanguage(
         text,
         language,
       );

@@ -1,13 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import 'database.dart';
-import '../../data/repositories/dictionary_service.dart';
+import '../../database/database_manager.dart';
+import '../../data/services/dictionary/tokenizer_service.dart';
 
 class TextAnalyzer {
   final AppDatabase driftDb;
-  final DictionaryService dictionaryService;
+  final TokenizerService tokenizerService;
 
-  TextAnalyzer(this.driftDb, this.dictionaryService);
+  TextAnalyzer(this.driftDb, this.tokenizerService);
 
   Future<List<WordFrequencyWithDefinition>> analyzeText(String text) async {
     // Use language detection to determine the best analysis method
@@ -31,11 +32,11 @@ class TextAnalyzer {
 
     try {
       // Use existing dictionary tokenizer
-      final tokens = await dictionaryService.tokenizeText(text);
+      final tokens = await tokenizerService.tokenize(text);
       final wordOccurrences = <WordOccurrencesCompanion>[];
 
       for (var i = 0; i < tokens.length; i++) {
-        final tokenText = tokens[i].text;
+        final tokenText = tokens[i].surface;
 
         // Skip punctuation and particles if desired
         if (_isPunctuationOrParticle(tokenText)) {
@@ -45,10 +46,10 @@ class TextAnalyzer {
         wordOccurrences.add(
           WordOccurrencesCompanion.insert(
             word: tokenText,
-            reading: Value(tokens[i].entry?.reading ?? ''),
-            baseForm: const Value(
-              '',
-            ), // Base form not available with current approach
+            reading: Value(tokens[i].reading),
+            // de-conjugation fallback: inflected surfaces carry their
+            // dictionary base form
+            baseForm: Value(tokens[i].deconjugatedFrom ?? ''),
             position: i,
           ),
         );
@@ -129,11 +130,11 @@ class TextAnalyzer {
     await driftDb.clearWordOccurrences();
 
     try {
-      final tokens = await dictionaryService.tokenizeText(text);
+      final tokens = await tokenizerService.tokenize(text);
       final wordOccurrences = <WordOccurrencesCompanion>[];
 
       for (var i = 0; i < tokens.length; i++) {
-        final tokenText = tokens[i].text;
+        final tokenText = tokens[i].surface;
 
         // Skip punctuation and particles if desired
         if (_isPunctuationOrParticle(tokenText)) {
@@ -143,10 +144,10 @@ class TextAnalyzer {
         wordOccurrences.add(
           WordOccurrencesCompanion.insert(
             word: tokenText,
-            reading: Value(tokens[i].entry?.reading ?? ''),
-            baseForm: const Value(
-              '',
-            ), // Base form not available with current approach
+            reading: Value(tokens[i].reading),
+            // de-conjugation fallback: inflected surfaces carry their
+            // dictionary base form
+            baseForm: Value(tokens[i].deconjugatedFrom ?? ''),
             position: i,
           ),
         );
@@ -223,7 +224,7 @@ class TextAnalyzer {
   Future<List<EnhancedWordFrequency>> analyzeTextWithDictionary(
     String text,
   ) async {
-    final db = await dictionaryService.yomichanDatabase;
+    final db = await DatabaseManager().database;
     final basicResults = await analyzeText(text);
 
     // Enhance results with additional Yomichan dictionary data
