@@ -1,9 +1,36 @@
 # Changelog
 
-## 1.1.0 - 2026-09-14
+## 1.5.0 - 2026-10-26
 
 ### Added
 
+- lang_core: shared package extracted (tokenizer, language detection, de-conjugation,
+  SRS math); DictionaryService tokenizer retired in favor of it.
+- Speech: on-device whisper STT (whisper_ggml), furigana transcripts, sessions,
+  auto word-card generation per segment; whisper-subs streaming subtitles in reader.
+- Scanner: mobile text-scanner screen (Kaku-style) plus out-of-app screen capture
+  on desktop.
+- AI exercises: structured-output exercise bank with semantic-QA grader.
+- Shared labels: bookmarks/renaming/tags/colors across sessions, history, analyze.
+- Backup/sync: export-import of all dictionaries, full backup, cloud sync.
+- Analyze: space-separated languages via Wiktionary cards; per-text language config.
+- Word detail: full-page route with sheet escape hatch.
+
+### Fixed
+
+- Analyze screen: search bar no longer overflows ("BOTTOM OVERFLOWED BY 42 PIXELS" at
+  zoomed fonts). The bar is a self-sizing box above the scroll area instead of a
+  pinned sliver with a pre-measured height; the multiline input keeps its
+  viewport-fraction cap so huge pastes still scroll inside the field.
+- Analyze screen: paging settings sync no longer calls notifyListeners during build
+  (threw "setState called during build" when persisted settings differed).
+- Linux build: the vendored webview plugin no longer hard-requires libwpe
+  (`wpe-1.0`); it is only required for the legacy WPEBackend-FDO path. WPE WebKit
+  2.48+ (WPEPlatform API) ships without a separate libwpe package.
+
+## 1.1.0 - 2026-09-14
+
+### Added
 - **Yomichan-style global popup dictionary.** Look up words on any screen via hover, modifier keys (shift/ctrl/alt/meta), click, double click, right/middle click, mobile tap, long press, pen tap, or device shake. All 14 triggers honor an optional extra modifier and an open delay.
   - Deep scanning: when the text under the pointer fails the gates, runs at forward offsets up to the configured depth are tried.
   - Regex require/exclude gates, per-language restriction, compound and conjugation detection toggles, scan length/depth limits.

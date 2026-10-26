@@ -94,7 +94,9 @@ sudo apt-get install -y \
 # Database and storage (required)
 sudo apt-get install -y libsqlite3-dev
 
-# WPE libraries (required)
+# WPE libraries — libwpe is only needed when the plugin builds against the
+# legacy WPEBackend-FDO API (wpebackend-fdo-1.0). WPE WebKit 2.48+ ships the
+# WPEPlatform API built into libWPEWebKit and no separate libwpe package.
 sudo apt-get install -y libwpe-1.0-dev
 ```
 

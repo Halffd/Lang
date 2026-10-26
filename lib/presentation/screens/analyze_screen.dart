@@ -77,69 +77,25 @@ class WordFilter {
       (searchQuery != null && searchQuery!.isNotEmpty);
 }
 
-/// Measured height for the pinned analyse search bar.
+/// Max height for the input field inside the analyse search bar.
 ///
-/// The pinned sliver header needs a fixed extent, but the multiline
-/// search field inside it wraps, so the extent has to match real text
-/// layout. [TextPainter] does the real word-wrap at [fontSize] and
-/// [screenWidth]; callers pass the zoom-scaled size so zooming in grows
-/// the bar instead of overflowing it.
-///
-/// [maxHeightFraction] caps the bar at a fraction of the viewport height
-/// (default 0.5, user-configurable); long text scrolls inside the field
-/// instead of pushing the header past that cap.
-double measureSearchBarHeight({
-  required String text,
-  required double screenWidth,
-  required double fontSize,
-  bool hasResults = false,
-  double maxHeightFraction = 0.5,
-  double viewportHeight = 800,
-}) {
-  // Horizontal plumbing mirrored from _buildSearchBar: container padding
-  // 16+16, gap 12, analyse button min width, prefix icon 48, clear button
-  // 48 when non-empty, border 1+1.
-  final textWidth =
-      (screenWidth - 32 - 12 - 130 - 48 - (text.isEmpty ? 0 : 48) - 2).clamp(
-        40.0,
-        double.infinity,
-      );
-  final painter = TextPainter(
-    text: TextSpan(
-      text: text.isEmpty ? ' ' : text,
-      style: TextStyle(fontSize: fontSize, height: 1.4),
-    ),
-    textDirection: TextDirection.ltr,
-  )..layout(maxWidth: textWidth);
-  // field: contentPadding 14+14, at least a single icon row
-  final fieldHeight = (28 + painter.height).clamp(52.0, 260.0);
-  // container: padding 16 top + 12 bottom
-  double height = (28 + fieldHeight).clamp(96.0, 288.0);
-
-  // When results exist, stat chips add ~40px (Wrap with 4 chips, spacing 8,
-  // runSpacing 6, chip height ~32, plus 10px gap above).
-  if (hasResults) {
-    height += 50;
-  }
-  // Cap at the user-configured fraction of the viewport; the field
-  // scrolls internally beyond that instead of growing the header.
-  final cap = (viewportHeight * maxHeightFraction).clamp(96.0, 2000.0);
-  return height.clamp(96.0, cap);
-}
-
-/// Max height for the input field inside the pinned search bar, derived
-/// from the same numbers [measureSearchBarHeight] uses so the field cap
-/// and the header cap never disagree (the old hardcoded `- 60` overshot
-/// the header cap whenever stat chips were visible or the font was
-/// scaled up, making the field scroll past its own limit).
+/// The search bar is a plain self-sizing box above the scroll area, so
+/// it can never clip its own content. What still needs a budget is the
+/// multiline input: without a cap a huge paste would grow the bar
+/// without bound. The cap is the user-configured fraction of the
+/// viewport (default 0.5) minus the other rows of the bar, so the
+/// field scrolls internally instead of pushing the rest of the bar
+/// off screen.
 double measureSearchFieldMaxHeight({
   bool hasResults = false,
   double maxHeightFraction = 0.5,
   double viewportHeight = 800,
 }) {
   final headerCap = (viewportHeight * maxHeightFraction).clamp(96.0, 2000.0);
-  // 28 = container padding (16 top + 12 bottom); 50 = stat-chips block
-  final reserved = 28 + (hasResults ? 50 : 0);
+  // 28 = container padding (16 top + 12 bottom); ~50 = the stat-chips
+  // row plus its 10px gap; ~28 = one row of input content padding plus
+  // a safety margin for the border.
+  final reserved = 28 + (hasResults ? 50 : 0) + 28;
   return (headerCap - reserved).clamp(52.0, 2000.0);
 }
 
@@ -183,6 +139,26 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
 
   void _onTextChanged() {
     setState(() {});
+  }
+
+  /// Push the user's paging settings (words/chars per page) into the
+  /// analyzer provider. Must run OUTSIDE build: updateSetting fires
+  /// notifyListeners, and calling that during build throws
+  /// "setState()/markNeedsBuild() called during build" (the old code
+  /// did exactly that from _buildAnalysisSection whenever persisted
+  /// settings differed from the provider's defaults on first build).
+  void _syncPagingSettings(AnalyzerProvider provider, AppState appState) {
+    // wire the configurable page size (0 = unlimited)
+    final configuredLines = appState.analysisPageLines;
+    final providerLines = configuredLines == 0 ? 100000 : configuredLines;
+    if (provider.itemsPerPage != providerLines &&
+        (configuredLines == 0 || configuredLines >= 10)) {
+      provider.updateSetting('itemsPerPage', providerLines);
+    }
+    // wire the configurable character budget per page (0 = unlimited)
+    if (provider.pageChars != appState.analysisPageChars) {
+      provider.updateSetting('pageChars', appState.analysisPageChars);
+    }
   }
 
   @override
@@ -260,31 +236,20 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
   double fs(double base, [String group = 'ui']) =>
       font_scale.fs(context, base, group);
 
-  /// Pinned search bar height: measured, not estimated. The old code
-  /// guessed "55 chars per wrapped line, 24px per line"; under text zoom
-  /// both numbers are wrong (chars per line halve, line height doubles),
-  /// which is exactly what produced the 35px bottom overflow in the
-  /// pinned header. TextPainter does the real word-wrap here.
-  double get _searchBarHeight {
-    final provider = Provider.of<AnalyzerProvider>(context, listen: false);
-    final appState = Provider.of<AppState>(context, listen: false);
-    final view = MediaQuery.of(context);
-    return measureSearchBarHeight(
-      text: _controller.text,
-      screenWidth: view.size.width,
-      fontSize: fs(15, 'sentences'),
-      hasResults: provider.analyzedWords.isNotEmpty,
-      maxHeightFraction: appState.inputMaxHeightFraction,
-      viewportHeight: view.size.height,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<AnalyzerProvider>(context);
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final hasResults = provider.analyzedWords.isNotEmpty;
+
+    // Keep the analyzer's paging settings in step with the user's
+    // persisted preferences — after the frame, never during build
+    // (updateSetting notifies listeners).
+    final appState = context.read<AppState>();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _syncPagingSettings(provider, appState);
+    });
 
     return KeyboardListener(
       focusNode: _focusNode,
@@ -295,83 +260,98 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
         body: FadeTransition(
           opacity: _fadeController,
           // full window width: the analysis column is not width-capped
-          child: CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              // 1. SEARCH BAR (pinned, height follows input size)
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _SearchBarDelegate(
-                  child: _buildSearchBar(context, theme, provider, l10n),
-                  theme: theme,
-                  height: _searchBarHeight,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 1. SEARCH BAR — plain box above the scroll area. It
+              // sizes itself to its content, so the input field, stat
+              // chips and analyse button can never overflow it. The
+              // field's own maxHeight cap keeps a huge paste from
+              // eating the screen.
+              _buildSearchBar(context, theme, provider, l10n),
+
+              // 2. SCROLLING BODY
+              Expanded(
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  slivers: [
+                    if (hasResults) ...[
+                      // MERGED ANALYSIS: per-sentence groups — sentence
+                      // with optional furigana > translation > word
+                      // cards. The old separate "Sentences" /
+                      // "Word Definitions" sections are unified here.
+                      SliverToBoxAdapter(
+                        child: _buildAnalysisSection(
+                          context,
+                          theme,
+                          provider,
+                          l10n,
+                        ),
+                      ),
+
+                      // FULL TRANSLATION
+                      if (_showFullTranslation)
+                        SliverToBoxAdapter(
+                          child: AnimatedSize(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                            child: _buildFullTranslation(
+                              context,
+                              theme,
+                              provider,
+                              l10n,
+                            ),
+                          ),
+                        ),
+
+                      if (_showFullTranslation)
+                        const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+                      // PAGE CONTROLS
+                      SliverToBoxAdapter(
+                        child: _buildPageControls(
+                          context,
+                          theme,
+                          provider,
+                          l10n,
+                        ),
+                      ),
+
+                      const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                      // TOGGLE DEFINITIONS
+                      SliverToBoxAdapter(
+                        child: _buildToggleDefinitionsButton(
+                          context,
+                          theme,
+                          provider,
+                          l10n,
+                        ),
+                      ),
+                    ] else ...[
+                      // Empty state
+                      SliverFillRemaining(
+                        child: _buildEmptyState(context, theme, l10n),
+                      ),
+                    ],
+
+                    // FAVORITES / HISTORY (pinned at bottom)
+                    if (_showFavorites)
+                      SliverPersistentHeader(
+                        pinned: true,
+                        delegate: _FavoritesDelegate(
+                          child: _buildFavoritesSection(
+                            context,
+                            theme,
+                            provider,
+                            l10n,
+                          ),
+                          theme: theme,
+                        ),
+                      ),
+                  ],
                 ),
               ),
-
-              if (hasResults) ...[
-                // 2. MERGED ANALYSIS: per-sentence groups — sentence with
-                // optional furigana > translation > word cards. The old
-                // separate "Sentences" / "Word Definitions" sections are
-                // unified here.
-                SliverToBoxAdapter(
-                  child: _buildAnalysisSection(context, theme, provider, l10n),
-                ),
-
-                // 3. FULL TRANSLATION
-                if (_showFullTranslation)
-                  SliverToBoxAdapter(
-                    child: AnimatedSize(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                      child: _buildFullTranslation(
-                        context,
-                        theme,
-                        provider,
-                        l10n,
-                      ),
-                    ),
-                  ),
-
-                if (_showFullTranslation)
-                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-                // 4. PAGE CONTROLS
-                SliverToBoxAdapter(
-                  child: _buildPageControls(context, theme, provider, l10n),
-                ),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-                // 6. TOGGLE DEFINITIONS
-                SliverToBoxAdapter(
-                  child: _buildToggleDefinitionsButton(
-                    context,
-                    theme,
-                    provider,
-                    l10n,
-                  ),
-                ),
-              ] else ...[
-                // Empty state
-                SliverFillRemaining(
-                  child: _buildEmptyState(context, theme, l10n),
-                ),
-              ],
-
-              // 7. FAVORITES / HISTORY (pinned at bottom)
-              if (_showFavorites)
-                SliverPersistentHeader(
-                  pinned: true,
-                  delegate: _FavoritesDelegate(
-                    child: _buildFavoritesSection(
-                      context,
-                      theme,
-                      provider,
-                      l10n,
-                    ),
-                    theme: theme,
-                  ),
-                ),
             ],
           ),
         ),
@@ -517,9 +497,9 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
             children: [
               Expanded(
                 child: ConstrainedBox(
-                  // cap the input at the same height budget the pinned
-                  // header measurement uses, so the field scrolls inside
-                  // the header instead of past it
+                  // cap the input at the configured viewport fraction so
+                  // a huge paste scrolls inside the field instead of
+                  // growing the search bar without bound
                   constraints: BoxConstraints(
                     maxHeight: measureSearchFieldMaxHeight(
                       hasResults: provider.analyzedWords.isNotEmpty,
@@ -712,21 +692,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     AppLocalizations l10n,
   ) {
     final appState = context.watch<AppState>();
-    // wire the configurable page size (0 = unlimited)
-    final configuredLines = appState.analysisPageLines;
-    if (provider.itemsPerPage != configuredLines &&
-        (configuredLines == 0 || configuredLines >= 10)) {
-      provider.updateSetting(
-        'itemsPerPage',
-        configuredLines == 0 ? 100000 : configuredLines,
-      );
-    }
-    // wire the configurable character budget per page (0 = unlimited)
-    if (provider.pageChars != appState.analysisPageChars) {
-      provider.updateSetting('pageChars', appState.analysisPageChars);
-    }
 
-    // card filters from settings
+    // card filters from settings (paging-settings sync runs post-frame
+    // from build; see _syncPagingSettings)
+
     final words = provider.pagedWords
         .where((w) => _passesCardFilters(appState, w))
         .toList();
@@ -2941,42 +2910,6 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
         ],
       ),
     );
-  }
-}
-
-class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
-  final Widget child;
-  final ThemeData theme;
-  final double height;
-
-  _SearchBarDelegate({
-    required this.child,
-    required this.theme,
-    required this.height,
-  });
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return SizedBox(height: height, child: child);
-  }
-
-  @override
-  double get maxExtent => height;
-
-  @override
-  double get minExtent => height;
-
-  @override
-  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {
-    // A new delegate instance means the parent rebuilt (zoom, font
-    // settings, theme change). Returning true unconditionally keeps the
-    // pinned header in step with the body — comparing height only froze
-    // the old font sizes whenever a zoom left the measured height equal.
-    return true;
   }
 }
 

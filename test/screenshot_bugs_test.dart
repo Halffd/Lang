@@ -1,11 +1,23 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:lang/core/services/storage_service.dart';
+import 'package:lang/data/repositories/srs_service.dart';
+import 'package:lang/domain/entities/analyzed_word.dart';
+import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/domain/entities/dictionary.dart';
+import 'package:lang/l10n/app_localizations.dart';
+import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/presentation/screens/analyze_screen.dart';
 
 void main() {
+  AnalyzedWord word(String w) => AnalyzedWord(word: w);
+
   group('DictionaryEntry structured definitions', () {
     // Regression: structured-content nodes went through Map.toString(),
     // producing Dart literal syntax that no jsonDecode can parse, so the
@@ -68,65 +80,111 @@ void main() {
     });
   });
 
-  group('measureSearchBarHeight', () {
-    test('matches a single line at default zoom', () {
+  group('measureSearchFieldMaxHeight (pinned search bar field cap)', () {
+    test('shrinks when results appear so the chips row still fits', () {
+      final bare = measureSearchFieldMaxHeight(
+        hasResults: false,
+        maxHeightFraction: 0.5,
+        viewportHeight: 800,
+      );
+      final withResults = measureSearchFieldMaxHeight(
+        hasResults: true,
+        maxHeightFraction: 0.5,
+        viewportHeight: 800,
+      );
+      expect(withResults, lessThan(bare));
+      // 800 * 0.5 = 400 budget; chips reserve 50 + padding 28 + 28.
+      expect(withResults, 400 - 50 - 28 - 28);
+    });
+
+    test('follows the user-configured viewport fraction', () {
+      final half = measureSearchFieldMaxHeight(
+        maxHeightFraction: 0.5,
+        viewportHeight: 800,
+      );
+      final quarter = measureSearchFieldMaxHeight(
+        maxHeightFraction: 0.25,
+        viewportHeight: 800,
+      );
+      expect(quarter, lessThan(half));
+      // never below the minimum single-line height
       expect(
-        measureSearchBarHeight(text: '日本語', screenWidth: 1200, fontSize: 15),
-        96,
-      );
-    });
-
-    test('grows when zoomed text wraps onto more lines', () {
-      const sentence = '嗯，魔鳞病痊愈以后，我精神好得很呢，每天准备四五顿饭都没问题';
-      final base = measureSearchBarHeight(
-        text: sentence,
-        screenWidth: 1200,
-        fontSize: 15,
-      );
-      // the sentence is short enough to fit on one line at this
-      // width/zoom; at 2x zoom it must wrap and grow the bar
-      final zoomed = measureSearchBarHeight(
-        text: sentence,
-        screenWidth: 1200,
-        fontSize: 30,
-      );
-      expect(zoomed, greaterThan(base));
-    });
-
-    test('at 2x zoom the old 96px estimate did overflow this sentence', () {
-      const sentence = '嗯，魔鳞病痊愈以后，我精神好得很呢，每天准备四五顿饭都没问题';
-      // font 15 * 2x zoom = 30; the old fixed char-count estimate returned
-      // 96 here; real wrapping needs more than that.
-      final zoomed = measureSearchBarHeight(
-        text: sentence,
-        screenWidth: 1200,
-        fontSize: 30,
-      );
-      final tp = TextPainter(
-        text: TextSpan(
-          text: sentence,
-          style: const TextStyle(fontSize: 30, height: 1.4),
+        measureSearchFieldMaxHeight(
+          maxHeightFraction: 0.1,
+          viewportHeight: 400,
         ),
-        textDirection: TextDirection.ltr,
-      )..layout(maxWidth: 1200 - 32 - 12 - 130 - 48 - 48 - 2);
-      expect(
-        96,
-        lessThan(28 + 28 + tp.height),
-        reason: '96px cannot hold the wrapped text at this zoom',
+        greaterThanOrEqualTo(52),
       );
-      // the measured bar must cover: container padding 28 + field
-      // content padding 28 + real text height
-      expect(zoomed, greaterThanOrEqualTo(28 + 28 + tp.height));
     });
+  });
 
-    test('clamps so a huge paste cannot eat the whole screen', () {
-      final enormous = List.filled(2000, '字').join();
-      final height = measureSearchBarHeight(
-        text: enormous,
-        screenWidth: 1200,
-        fontSize: 15,
+  group('AnalyzeScreen search bar layout', () {
+    // Regression (screenshot bug): the pinned header forced its content
+    // into a pre-measured fixed height; whenever the estimate came up
+    // short (zoomed "Analyze Text" button wider than the assumed 130px,
+    // theme contentPadding scaling with zoom) the Column painted past
+    // the header extent: "BOTTOM OVERFLOWED BY 42 PIXELS". The bar is now
+    // a self-sizing box above the scroll area, so it cannot clip itself.
+    //
+    // No FlutterError.onError override is needed: the test binding
+    // already fails the test on any framework exception, including
+    // RenderFlex overflow errors. Overriding onError here would break
+    // the binding's own error plumbing (it needs onError to record
+    // _pendingExceptionDetails).
+    testWidgets('no overflow with zoomed text and results at 1274x640', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      final storage = StorageService();
+      await storage.init();
+      final srs = SRSService(storage);
+      await srs.initialize();
+      // Same shape as the bug screenshot: 1274x640 window, zoomed font
+      // (1.75x ui multiplier), analysis results present.
+      final appState = AppState(storage);
+      appState.setFontSizeMultiplier(1.75);
+      final provider = AnalyzerProvider();
+      provider.testSetAnalyzedWords(List.generate(24, (i) => word('単語$i')));
+      provider.testSetSentences({'単語0': '古くからの友人として'});
+
+      await tester.binding.setSurfaceSize(const Size(1274, 640));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<AppState>.value(
+          value: appState,
+          child: ChangeNotifierProvider<SRSService>.value(
+            value: srs,
+            child: ChangeNotifierProvider<AnalyzerProvider>.value(
+              value: provider,
+              child: MaterialApp(
+                locale: const Locale('en'),
+                localizationsDelegates: const [
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                supportedLocales: AppLocalizations.supportedLocales,
+                home: const AnalyzeScreen(),
+              ),
+            ),
+          ),
+        ),
       );
-      expect(height, lessThanOrEqualTo(288));
+      // If the search bar overflowed, the binding records the RenderFlex
+      // overflow error and fails this test during pumpAndSettle.
+      await tester.pumpAndSettle();
+
+      // The bar and its content made it through layout without errors;
+      // sanity-check the pieces the bug screenshot showed.
+      expect(find.byType(TextField), findsOneWidget);
+      expect(
+        find.text('24'),
+        findsWidgets,
+        reason: 'words-analyzed stat chip is visible',
+      );
+      expect(find.text('Analyze Text'), findsOneWidget);
     });
   });
 }
