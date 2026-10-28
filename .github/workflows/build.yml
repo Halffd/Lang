@@ -19,6 +19,14 @@ jobs:
         with:
           channel: stable
           cache: true
+      - name: Accept Android SDK licenses
+        # whisper_ggml pins NDK 29.0.13113456; runners ship other NDK
+        # revisions, so Gradle downloads that one itself — and refuses
+        # to unless every SDK license is accepted first.
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          [ -x "$SDKMANAGER" ] || SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | head -1)"
+          yes | "$SDKMANAGER" --licenses > /dev/null
       - run: flutter pub get
       - run: flutter build apk --release --split-per-abi
       - uses: actions/upload-artifact@v4
