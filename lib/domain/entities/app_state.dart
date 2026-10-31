@@ -192,6 +192,9 @@ class AppState extends ChangeNotifier {
   bool get speechTtsReadback => _speechTtsReadback;
   bool get speechFadeOut => _speechFadeOut;
   bool get speechAutoCards => _speechAutoCards;
+  double get speechTextScale => _speechTextScale;
+  bool get speechImmersive => _speechImmersive;
+  bool get speechShowTimestamps => _speechShowTimestamps;
   PopupDictionaryConfig get popupDictionaryConfig =>
       _popupDictionaryConfig ??= PopupDictionaryConfig.deserialize(
         _storageService.getStringSync('popup_dictionary_config'),
@@ -257,6 +260,9 @@ class AppState extends ChangeNotifier {
   bool _speechTtsReadback = false; // TTS speaks finalized segments
   bool _speechFadeOut = false; // fade old transcript rows
   bool _speechAutoCards = true; // auto word-card generation per segment
+  double _speechTextScale = 1.5; // transcript font multiplier (1..3)
+  bool _speechImmersive = false; // transcript-only fullscreen view
+  bool _speechShowTimestamps = true; // per-segment elapsed + uptime clock
   PopupDictionaryConfig? _popupDictionaryConfig;
   // screenshot settings (ocr screen screenshot tab)
   bool _screenshotAutoOcr = false;
@@ -754,6 +760,27 @@ class AppState extends ChangeNotifier {
   void setSpeechAutoCards(bool value) {
     _speechAutoCards = value;
     _storageService.setBool('speech_auto_cards', value);
+    notifyListeners();
+  }
+
+  /// Transcript font multiplier for the speech tab (0.8..3.0).
+  void setSpeechTextScale(double value) {
+    _speechTextScale = value.clamp(0.8, 3.0);
+    _storageService.setDouble('speech_text_scale', _speechTextScale);
+    notifyListeners();
+  }
+
+  /// Transcript-only fullscreen view (mimiuchi live-log style).
+  void setSpeechImmersive(bool value) {
+    _speechImmersive = value;
+    _storageService.setBool('speech_immersive', value);
+    notifyListeners();
+  }
+
+  /// Per-segment timestamps: elapsed session time + wall clock (uptime).
+  void setSpeechShowTimestamps(bool value) {
+    _speechShowTimestamps = value;
+    _storageService.setBool('speech_show_timestamps', value);
     notifyListeners();
   }
 
@@ -1338,6 +1365,10 @@ class AppState extends ChangeNotifier {
           _storageService.getBool('speech_tts_readback') ?? false;
       _speechFadeOut = _storageService.getBool('speech_fade_out') ?? false;
       _speechAutoCards = _storageService.getBool('speech_auto_cards') ?? true;
+      _speechTextScale = _storageService.getDouble('speech_text_scale') ?? 1.5;
+      _speechImmersive = _storageService.getBool('speech_immersive') ?? false;
+      _speechShowTimestamps =
+          _storageService.getBool('speech_show_timestamps') ?? true;
       _screenshotAutoOcr =
           _storageService.getBool('screenshot_auto_ocr') ?? false;
       _screenshotAutoTranslate =

@@ -760,40 +760,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
         // Merged per-sentence groups: sentence (furigana) > translation >
         // word cards. Flat grid when no sentence data exists.
         if (groups.isEmpty || (groups.length == 1 && groups.first.key == ''))
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final crossAxisCount = provider.itemsPerRow.clamp(1, 5);
-              final cardWidth =
-                  (constraints.maxWidth - (crossAxisCount - 1) * 10) /
-                  crossAxisCount;
-              final childAspectRatio = cardWidth / 170;
-
-              return GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  childAspectRatio: childAspectRatio,
-                ),
-                itemCount: words.length,
-                itemBuilder: (context, index) {
-                  final word = words[index];
-                  final absolute = pageStart + index;
-                  final selected = provider.selectedWordIndex == absolute;
-                  return _buildWordCard(
-                    context,
-                    theme,
-                    provider,
-                    word,
-                    absolute,
-                    selected: selected,
-                  );
-                },
-              );
-            },
-          )
+          _buildWordWrap(context, words, provider)
         else ...[
           // merged: sentence with furigana > translation > cards
           for (final group in groups) ...[
@@ -805,41 +772,16 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                 appState,
                 group.key,
               ),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final crossAxisCount = provider.itemsPerRow.clamp(1, 5);
-                  final cardWidth =
-                      (constraints.maxWidth - (crossAxisCount - 1) * 10) /
-                      crossAxisCount;
-                  final childAspectRatio = cardWidth / 170;
-
+              Builder(
+                builder: (groupCtx) {
                   final groupWords = group.value
                       .where((w) => _passesCardFilters(appState, w))
                       .toList();
-
-                  return GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                      childAspectRatio: childAspectRatio,
-                    ),
-                    itemCount: groupWords.length,
-                    itemBuilder: (context, index) {
-                      final word = groupWords[index];
-                      final absolute = _filteredSortedIndexOf(provider, word);
-                      final selected = provider.selectedWordIndex == absolute;
-                      return _buildWordCard(
-                        context,
-                        theme,
-                        provider,
-                        word,
-                        absolute,
-                        selected: selected,
-                      );
-                    },
+                  return _buildWordWrap(
+                    groupCtx,
+                    groupWords,
+                    provider,
+                    absoluteFor: (w) => _filteredSortedIndexOf(provider, w),
                   );
                 },
               ),
@@ -851,8 +793,76 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     );
   }
 
-  /// Card filter checkboxes (issue 10): hide particles / known words /
-  /// kana-only words.
+  /// Word cards laid out in rows of [AnalyzerProvider.itemsPerRow] columns,
+  /// sized to their own content instead of a fixed aspect ratio.
+  ///
+  /// The old `GridView.builder` with `childAspectRatio = cardWidth / 170`
+  /// forced every card to exactly ~170px tall regardless of zoom. At
+  /// 2× font zoom the card content (reading + word + definition + tags +
+  /// actions) needs 300+px, so content drew past the cell bounds and
+  /// over adjacent cards — the "overlapping text" screenshot bug.
+  ///
+  /// [absoluteFor] maps a card to its index in the full analyzed list
+  /// (selection + detail sheet address absolute indices). When omitted,
+  /// the display index within [cards] is used — correct for the flat
+  /// paged path where `cards` is already a page of the full list.
+  Widget _buildWordWrap(
+    BuildContext context,
+    List<AnalyzedWord> cards,
+    AnalyzerProvider provider, {
+    int Function(AnalyzedWord word)? absoluteFor,
+  }) {
+    final columns = provider.itemsPerRow.clamp(1, 5);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final itemWidth = (constraints.maxWidth - (columns - 1) * 10) / columns;
+        final rows = <List<AnalyzedWord>>[
+          for (var i = 0; i < cards.length; i += columns)
+            cards.sublist(
+              i,
+              i + columns > cards.length ? cards.length : i + columns,
+            ),
+        ];
+        return Column(
+          children: [
+            for (final row in rows)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final word in row)
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 5),
+                          child: _buildWordCard(
+                            context,
+                            Theme.of(context),
+                            provider,
+                            word,
+                            absoluteFor != null
+                                ? absoluteFor(word)
+                                : cards.indexOf(word),
+                            selected:
+                                provider.selectedWordIndex ==
+                                (absoluteFor != null
+                                    ? absoluteFor(word)
+                                    : cards.indexOf(word)),
+                          ),
+                        ),
+                      ),
+                    // pad short rows so cards keep the grid column width
+                    for (var p = row.length; p < columns; p++)
+                      const Expanded(child: SizedBox()),
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
   bool _passesCardFilters(AppState appState, AnalyzedWord word) {
     if (appState.filterHideParticles && _isParticle(word.word)) return false;
     if (appState.filterHideKana && !_hasKanji(word.word)) return false;
@@ -1783,9 +1793,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                     ],
                   ),
                 ],
-                const Spacer(),
-                // ---- actions pinned bottom-right; single save/favorite
-                // (the old duplicate heart + bookmark are unified here)
+                // ---- actions bottom-right; single save/favorite
+                // (the old duplicate heart + bookmark are unified here).
+                // No Spacer: the card is content-sized (not a fixed-height
+                // grid cell), and a Spacer in an unbounded Column throws.
                 Align(
                   alignment: Alignment.bottomRight,
                   child: WordActionBar(word: word, showSave: false),

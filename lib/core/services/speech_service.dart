@@ -248,11 +248,18 @@ class SpeechService extends ChangeNotifier {
 
   /// Transcribe an audio file. [language] is a whisper language
   /// code ('auto' for auto-detect). Returns (text, detectedLang).
+  ///
+  /// [suppressRepetition] enables the anti-hallucination flags: short
+  /// chunks with no prior context are where whisper loops hardest (the
+  /// same phrase repeated until the window fills), so live transcription
+  /// turns context off and suppresses non-speech tokens; one-shot file
+  /// transcription keeps defaults.
   Future<(String, String?)> transcribeFile(
     String path, {
     required SpeechEngine engine,
     required String modelPath,
     String language = 'auto',
+    bool suppressRepetition = false,
   }) async {
     // Mobile: on-device whisper.cpp via the whisper_ggml FFI plugin —
     // the desktop whisper-cli binary doesn't exist there. The model
@@ -264,8 +271,14 @@ class SpeechService extends ChangeNotifier {
         audioPath: path,
         lang: language,
         keepModelLoaded: true, // chunked live transcription skips reloads
+        // maxContext 0: earlier text stops conditioning the next window,
+        // which is exactly how a hallucinated phrase repeats across
+        // chunks; suppressNonSpeechTokens drops the music/applause
+        // tokens that feed the loop.
+        maxContext: suppressRepetition ? 0 : null,
+        suppressNonSpeechTokens: suppressRepetition,
       );
-      final text = result?.transcription.text.trim() ?? '';
+      final text = _stripRepeatedLines(result?.transcription.text.trim() ?? '');
       return (text, language == 'auto' ? null : language);
     }
 
@@ -286,14 +299,35 @@ class SpeechService extends ChangeNotifier {
           ..add('-bs')
           ..add('$beam');
       }
+      if (suppressRepetition) {
+        // --no-context: drop prior-window conditioning (the hallucination
+        // loop driver); --suppress-nst: mute music/applause tokens.
+        args
+          ..add('--no-context')
+          ..add('--suppress-nst');
+      }
     }
     final (code, stdout_, stderr) = await runCommand(binary, args);
     if (code != 0) {
       throw Exception('transcription failed: $stderr');
     }
-    final text = _parseWhisperOutput(stdout_);
+    final text = _stripRepeatedLines(_parseWhisperOutput(stdout_));
     var lang = language == 'auto' ? _detectLanguageTag(stdout_) : language;
     return (text, lang);
+  }
+
+  /// Collapse within-transcript hallucination loops: whisper repeating a
+  /// phrase line-for-line until its window fills collapses to a single
+  /// occurrence. Cross-chunk repeats are handled by the caller, which
+  /// knows the previous segment's text.
+  static String _stripRepeatedLines(String text) {
+    if (text.isEmpty) return text;
+    final out = <String>[];
+    for (final line in text.split('\n')) {
+      if (out.isNotEmpty && out.last.trim() == line.trim()) continue;
+      out.add(line);
+    }
+    return out.join('\n');
   }
 
   /// OpenAI-compatible STT API: multipart audio POST, JSON text back.
@@ -512,6 +546,9 @@ class SpeechService extends ChangeNotifier {
                   engine: engine,
                   modelPath: modelPath,
                   language: language,
+                  // live chunks are 5s slivers: prime hallucination
+                  // territory (see transcribeFile)
+                  suppressRepetition: true,
                 );
           if (text.trim().isNotEmpty) {
             onSegment(
@@ -574,6 +611,8 @@ class SpeechService extends ChangeNotifier {
                 engine: engine,
                 modelPath: modelPath,
                 language: language,
+                // trailing live chunk: same anti-hallucination rules
+                suppressRepetition: true,
               ));
         if (text.trim().isNotEmpty) {
           onSegment(

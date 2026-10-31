@@ -48,6 +48,7 @@ import 'presentation/screens/srs_screen.dart';
 import 'presentation/screens/study_screen.dart';
 import 'presentation/screens/dictionary_screen.dart';
 import 'presentation/screens/writer_screen.dart';
+import 'presentation/widgets/bottom_bar.dart';
 import 'presentation/providers/ai_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import 'data/datasources/supabase_data_source.dart';
@@ -999,73 +1000,49 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         ],
       ),
       body: _screens[_currentIndex],
-      bottomNavigationBar: Builder(
-        builder: (context) {
-          // 11 destinations: labels only fit when the ui font scale is
-          // small enough — beyond that go icon-only (tooltips still name
-          // the tab on long-press) so nothing is clipped or untappable.
-          final scale =
-              (context.read<AppState>().fontSizeMultiplier *
-                      context.read<AppState>().fontSettings.ui)
-                  .clamp(1.0, 2.5);
-          final labelBehavior = scale > 1.35
-              ? NavigationDestinationLabelBehavior.alwaysHide
-              : NavigationDestinationLabelBehavior.alwaysShow;
-          return NavigationBar(
-            labelBehavior: labelBehavior,
-            selectedIndex: _currentIndex,
-            onDestinationSelected: (index) {
-              setState(() => _currentIndex = index);
-              _syncPopupRoute(index);
-            },
-            destinations: [
-              NavigationDestination(
-                icon: const Icon(Icons.analytics),
-                label: AppLocalizations.of(context)!.analyze,
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.search),
-                label: AppLocalizations.of(context)!.search,
-              ),
-              const NavigationDestination(
-                icon: Icon(Icons.document_scanner),
-                label: 'Scan',
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.menu_book),
-                label: AppLocalizations.of(context)!.reader,
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.sort_by_alpha),
-                label: AppLocalizations.of(context)!.dictionaries,
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.edit_note),
-                label: AppLocalizations.of(context)!.writerTitle,
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.bookmark),
-                label: AppLocalizations.of(context)!.saved,
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.history),
-                label: AppLocalizations.of(context)!.history,
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.school),
-                label: 'SRS',
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.auto_awesome),
-                label: AppLocalizations.of(context)!.ai,
-              ),
-              const NavigationDestination(
-                icon: Icon(Icons.local_play),
-                label: 'Study',
-              ),
-            ],
-          );
+      bottomNavigationBar: BottomBar(
+        currentIndex: _currentIndex,
+        onDestinationSelected: (index) {
+          setState(() => _currentIndex = index);
+          _syncPopupRoute(index);
         },
+        destinations: [
+          DestinationEntry(
+            icon: Icons.analytics,
+            label: AppLocalizations.of(context)!.analyze,
+          ),
+          DestinationEntry(
+            icon: Icons.search,
+            label: AppLocalizations.of(context)!.search,
+          ),
+          DestinationEntry(icon: Icons.document_scanner, label: 'Scan'),
+          DestinationEntry(
+            icon: Icons.menu_book,
+            label: AppLocalizations.of(context)!.reader,
+          ),
+          DestinationEntry(
+            icon: Icons.sort_by_alpha,
+            label: AppLocalizations.of(context)!.dictionaries,
+          ),
+          DestinationEntry(
+            icon: Icons.edit_note,
+            label: AppLocalizations.of(context)!.writerTitle,
+          ),
+          DestinationEntry(
+            icon: Icons.bookmark,
+            label: AppLocalizations.of(context)!.saved,
+          ),
+          DestinationEntry(
+            icon: Icons.history,
+            label: AppLocalizations.of(context)!.history,
+          ),
+          DestinationEntry(icon: Icons.school, label: 'SRS'),
+          DestinationEntry(
+            icon: Icons.auto_awesome,
+            label: AppLocalizations.of(context)!.ai,
+          ),
+          DestinationEntry(icon: Icons.local_play, label: 'Study'),
+        ],
       ),
     );
   }

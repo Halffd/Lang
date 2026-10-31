@@ -359,6 +359,7 @@ class _SpeechTabState extends State<SpeechTab> {
       apiUrl: appState.sttApiUrl,
       apiKey: appState.sttApiKey,
     );
+    if (ok) _liveWallStartMs = DateTime.now().millisecondsSinceEpoch;
     if (!ok && mounted) {
       setState(() => _error = 'microphone unavailable');
     }
@@ -396,8 +397,49 @@ class _SpeechTabState extends State<SpeechTab> {
     }
   }
 
+  /// Normalized form for duplicate detection: lowercase, punctuation
+  /// and common whisper filler tokens stripped, whitespace collapsed.
+  static String _dedupKey(String text) {
+    var t = text.toLowerCase();
+    t = t.replaceAll(RegExp(r'[^\p{L}\p{N}\s]', unicode: true), '');
+    t = t.replaceAll(
+      RegExp(r'\b(thank you|thanks|bye)\b', caseSensitive: false),
+      '',
+    );
+    return t.trim().replaceAll(RegExp(r'\s+'), ' ');
+  }
+
+  /// True when [seg] repeats the previous transcript segment (exact or
+  /// near-normalized) or repeats itself internally — the signature of
+  /// whisper hallucinating over a chunk boundary or a silent/music-only
+  /// chunk. Live STT fires chunks every 5s; music playback produces a
+  /// looped "transcription" of nothing, over and over.
+  bool _isDuplicateSegment(SpeechSegment seg) {
+    final key = _dedupKey(seg.text);
+    if (key.isEmpty) return true; // filler-only segment
+    if (_segments.isEmpty) return false;
+    final prevKey = _dedupKey(_segments.last.text);
+    if (key == prevKey) return true;
+    // near-duplicate: >70% token overlap with the previous segment and
+    // at least 3 tokens (guards against re-ordered whisper outputs)
+    final a = key.split(' ').toSet();
+    final b = prevKey.split(' ').toSet();
+    if (a.length >= 3 && b.length >= 3) {
+      final overlap = a.intersection(b).length / a.union(b).length;
+      if (overlap > 0.7) return true;
+    }
+    return false;
+  }
+
   Future<void> _onSegment(SpeechSegment seg, {required bool translate}) async {
     if (!mounted) return;
+    // 3. dedupe: whisper over music/silence repeats the same line
+    // within and across chunks; drop the repeats instead of spamming
+    // the transcript (and history/TTS) with them.
+    if (_isDuplicateSegment(seg)) {
+      setState(() {});
+      return;
+    }
     setState(() => _segments.add(seg));
     HistoryService.instance.record(
       HistoryCategory.speech,
@@ -512,6 +554,59 @@ class _SpeechTabState extends State<SpeechTab> {
     }
   }
 
+  /// Transcript font-size chooser (0.8x..3x).
+  Future<void> _showTextScaleDialog(AppState appState) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Transcript text size'),
+        content: StatefulBuilder(
+          builder: (ctx, setDialog) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Slider(
+                value: appState.speechTextScale,
+                min: 0.8,
+                max: 3.0,
+                divisions: 22,
+                label: '${appState.speechTextScale.toStringAsFixed(1)}x',
+                onChanged: (v) {
+                  setDialog(() => appState.setSpeechTextScale(v));
+                },
+              ),
+              Text(
+                '${appState.speechTextScale.toStringAsFixed(1)}x',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Transcript-only fullscreen view: every drop of vertical space goes
+  /// to the text, at the user's chosen scale. Closes via the toolbar X
+  /// or the system back gesture.
+  Future<void> _openImmersiveTranscript() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => _ImmersiveTranscriptScreen(
+          segments: _segments,
+          service: _service,
+          liveWallStartMs: _liveWallStartMs,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -565,6 +660,30 @@ class _SpeechTabState extends State<SpeechTab> {
                   ),
                 ),
                 const Spacer(),
+                IconButton(
+                  icon: Icon(
+                    appState.speechShowTimestamps
+                        ? Icons.schedule
+                        : Icons.schedule_outlined,
+                    size: 18,
+                  ),
+                  tooltip: appState.speechShowTimestamps
+                      ? 'Hide timestamps (elapsed + uptime)'
+                      : 'Show timestamps (elapsed + uptime)',
+                  onPressed: () => appState.setSpeechShowTimestamps(
+                    !appState.speechShowTimestamps,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.format_size, size: 18),
+                  tooltip: 'Transcript text size',
+                  onPressed: () => _showTextScaleDialog(appState),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.fullscreen, size: 18),
+                  tooltip: 'Fullscreen transcript',
+                  onPressed: _openImmersiveTranscript,
+                ),
                 IconButton(
                   icon: const Icon(Icons.copy, size: 18),
                   tooltip: '${l10n.speechCopyAll} (Ctrl+C)',
@@ -1011,15 +1130,15 @@ class _SpeechTabState extends State<SpeechTab> {
                     ),
                   )
                 : appState.speechSideBySide
-                ? _buildSideBySide(theme)
-                : _buildStacked(theme),
+                ? _buildSideBySide(theme, appState)
+                : _buildStacked(theme, appState),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStacked(ThemeData theme) {
+  Widget _buildStacked(ThemeData theme, AppState appState) {
     return ListView.builder(
       padding: const EdgeInsets.all(12),
       itemCount: _segments.length,
@@ -1033,25 +1152,44 @@ class _SpeechTabState extends State<SpeechTab> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    margin: const EdgeInsets.only(top: 4, right: 8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      _fmtClock(seg.startMs),
-                      style: TextStyle(
-                        fontSize: fs(context, 10),
-                        color: theme.colorScheme.primary,
+                  if (appState.speechShowTimestamps) ...[
+                    Container(
+                      margin: const EdgeInsets.only(top: 4, right: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        _fmtClock(seg.startMs),
+                        style: TextStyle(
+                          fontSize: fs(context, 10),
+                          color: theme.colorScheme.primary,
+                        ),
                       ),
                     ),
+                    // wall-clock uptime of the segment (mimiuchi log)
+                    Text(
+                      _uptimeAt(seg.startMs),
+                      style: TextStyle(
+                        fontSize: fs(context, 9),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.45,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(
+                    child: _annotatedIfEnabled(
+                      context,
+                      seg,
+                      scale: appState.speechTextScale,
+                    ),
                   ),
-                  Expanded(child: _annotatedIfEnabled(context, seg)),
                 ],
               ),
             ),
@@ -1074,15 +1212,16 @@ class _SpeechTabState extends State<SpeechTab> {
     );
   }
 
-  Widget _buildSideBySide(ThemeData theme) {
+  Widget _buildSideBySide(ThemeData theme, AppState appState) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final twoCols = constraints.maxWidth > 600;
+        final scale = appState.speechTextScale;
         final left = _segments.map((s) => s.text).join('\n\n');
         final right = _segments.map((s) => s.translation ?? '…').join('\n\n');
         if (!twoCols) {
           // narrow: fall back to stacked view
-          return _buildStacked(theme);
+          return _buildStacked(theme, appState);
         }
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1093,7 +1232,7 @@ class _SpeechTabState extends State<SpeechTab> {
                 child: SelectableText(
                   left,
                   style: TextStyle(
-                    fontSize: fs(context, 14, 'sentences'),
+                    fontSize: fs(context, 14, 'sentences') * scale,
                     height: 1.6,
                   ),
                 ),
@@ -1106,7 +1245,7 @@ class _SpeechTabState extends State<SpeechTab> {
                 child: SelectableText(
                   right,
                   style: TextStyle(
-                    fontSize: fs(context, 12, 'translations'),
+                    fontSize: fs(context, 12, 'translations') * scale,
                     height: 2.05,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
                   ),
@@ -1288,10 +1427,16 @@ class _SpeechTabState extends State<SpeechTab> {
 
   /// Furigana/pinyin-annotated transcript row when the global reading
   /// style is on and the text contains CJK; plain selectable text
-  /// otherwise.
-  Widget _annotatedIfEnabled(BuildContext context, SpeechSegment seg) {
+  /// otherwise. [scale] multiplies the base size (user transcript
+  /// text-size setting).
+  Widget _annotatedIfEnabled(
+    BuildContext context,
+    SpeechSegment seg, {
+    double scale = 1.0,
+  }) {
     final appState = context.read<AppState>();
     final style = appState.readingStyle;
+    final base = fs(context, 14, 'sentences') * scale;
     final hasCjk = seg.text.runes.any(
       (c) =>
           (c >= 0x4E00 && c <= 0x9FFF) ||
@@ -1301,13 +1446,13 @@ class _SpeechTabState extends State<SpeechTab> {
     if (style == 'off' || !hasCjk) {
       return SelectableText(
         seg.text,
-        style: TextStyle(fontSize: fs(context, 14, 'sentences'), height: 1.5),
+        style: TextStyle(fontSize: base, height: 1.5),
       );
     }
     return AnnotatedLine(
       text: seg.text,
       appState: appState,
-      fontSize: fs(context, 14, 'sentences'),
+      fontSize: base,
       weight: FontWeight.normal,
     );
   }
@@ -1319,6 +1464,27 @@ class _SpeechTabState extends State<SpeechTab> {
     final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
     return '$h:$m:$s';
   }
+
+  /// Wall-clock time of a segment that started [startMs] into the
+  /// session — the "uptime" column of a mimiuchi log. When idle (loaded
+  /// sessions), only the elapsed offset exists, so the wall clock shows
+  /// the segment's start offset alone.
+  String _uptimeAt(int startMs) {
+    final elapsed = _fmtClock(startMs);
+    if (!_service.isRecording) return elapsed;
+    final at = DateTime.now().subtract(
+      Duration(
+        milliseconds:
+            DateTime.now().millisecondsSinceEpoch - _liveWallStartMs - startMs,
+      ),
+    );
+    final h = at.hour.toString().padLeft(2, '0');
+    final m = at.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
+  /// Wall-clock epoch ms when the live session started; 0 when idle.
+  int _liveWallStartMs = 0;
 }
 
 /// Compact word card for the speech tab's auto-generated deck: word,
@@ -1399,5 +1565,203 @@ class _SpeechCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Transcript-only fullscreen view (speech tab "fullscreen" option):
+/// recording controls collapse into a slim overlay row, all remaining
+/// space goes to the transcript at the user's text scale, with the
+/// same furigana/pinyin annotation and timestamp toggles as the
+/// inline view. Auto-updates while the parent session is live because
+/// segments stream in through the shared service.
+class _ImmersiveTranscriptScreen extends StatefulWidget {
+  const _ImmersiveTranscriptScreen({
+    required this.segments,
+    required this.service,
+    required this.liveWallStartMs,
+  });
+
+  final List<SpeechSegment> segments;
+  final SpeechService service;
+  final int liveWallStartMs;
+
+  @override
+  State<_ImmersiveTranscriptScreen> createState() =>
+      _ImmersiveTranscriptScreenState();
+}
+
+class _ImmersiveTranscriptScreenState
+    extends State<_ImmersiveTranscriptScreen> {
+  int _lastSeen = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _lastSeen = widget.segments.length;
+    // Poll for new segments: the service appends to the parent's list,
+    // so new rows appear here without touching the parent's state.
+    Timer.periodic(const Duration(milliseconds: 500), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      if (widget.segments.length != _lastSeen) {
+        _lastSeen = widget.segments.length;
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appState = context.watch<AppState>();
+    final theme = Theme.of(context);
+    final scale = appState.speechTextScale;
+    final recording = widget.service.isRecording;
+
+    return Scaffold(
+      appBar: AppBar(
+        toolbarHeight: 44,
+        title: Text(
+          recording ? '● live' : 'Transcript',
+          style: TextStyle(
+            fontSize: 13,
+            color: recording ? Colors.redAccent : null,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              appState.speechShowTimestamps
+                  ? Icons.schedule
+                  : Icons.schedule_outlined,
+              size: 18,
+            ),
+            tooltip: appState.speechShowTimestamps
+                ? 'Hide timestamps'
+                : 'Show timestamps',
+            onPressed: () => appState.setSpeechShowTimestamps(
+              !appState.speechShowTimestamps,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.format_size, size: 18),
+            tooltip: 'Transcript text size',
+            onPressed: () => showDialog<void>(
+              context: context,
+              builder: (dialogCtx) => AlertDialog(
+                title: const Text('Transcript text size'),
+                content: StatefulBuilder(
+                  builder: (ctx, setDialog) => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Slider(
+                        value: appState.speechTextScale,
+                        min: 0.8,
+                        max: 3.0,
+                        divisions: 22,
+                        label:
+                            '${appState.speechTextScale.toStringAsFixed(1)}x',
+                        onChanged: (v) {
+                          setDialog(() => appState.setSpeechTextScale(v));
+                        },
+                      ),
+                      Text(
+                        '${appState.speechTextScale.toStringAsFixed(1)}x',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogCtx).pop(),
+                    child: const Text('Close'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, size: 18),
+            tooltip: 'Exit fullscreen',
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+      body: widget.segments.isEmpty
+          ? Center(
+              child: Text(
+                AppLocalizations.of(context)!.speechEmpty,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: theme.colorScheme.outline,
+                ),
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: widget.segments.length,
+              itemBuilder: (context, index) {
+                final seg = widget.segments[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (appState.speechShowTimestamps)
+                        Text(
+                          _fmtClock(seg.startMs),
+                          style: TextStyle(
+                            fontSize: 11 * scale.clamp(1.0, 1.4),
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      _annotate(
+                        context,
+                        seg,
+                        appState,
+                        base: fs(context, 18, 'sentences') * scale,
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+    );
+  }
+
+  Widget _annotate(
+    BuildContext context,
+    SpeechSegment seg,
+    AppState appState, {
+    required double base,
+  }) {
+    final hasCjk = seg.text.runes.any(
+      (c) =>
+          (c >= 0x4E00 && c <= 0x9FFF) ||
+          (c >= 0x3040 && c <= 0x30FF) ||
+          (c >= 0xAC00 && c <= 0xD7AF),
+    );
+    if (appState.readingStyle == 'off' || !hasCjk) {
+      return SelectableText(
+        seg.text,
+        style: TextStyle(fontSize: base, height: 1.6),
+      );
+    }
+    return AnnotatedLine(
+      text: seg.text,
+      appState: appState,
+      fontSize: base,
+      weight: FontWeight.w500,
+    );
+  }
+
+  String _fmtClock(int ms) {
+    final d = Duration(milliseconds: ms);
+    final h = d.inHours.toString().padLeft(2, '0');
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$h:$m:$s';
   }
 }
