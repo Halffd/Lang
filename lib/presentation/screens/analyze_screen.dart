@@ -6,6 +6,7 @@ import 'package:lang/core/services/history_service.dart';
 import 'package:lang/core/services/label_service.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/utils/font_scale.dart' as font_scale;
+import 'package:lang/utils/screen_size.dart';
 
 import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/domain/entities/app_state.dart';
@@ -471,6 +472,89 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     AppLocalizations l10n,
   ) {
     final isLoading = provider.isLoading;
+    // Mobile portrait: field and button stack vertically at full width;
+    // desktop: field + button share one row.
+    final compact = ScreenSize.isMobile(context);
+
+    final inputField = ConstrainedBox(
+      // cap the input at the configured viewport fraction so a huge paste
+      // scrolls inside the field instead of growing the search bar
+      constraints: BoxConstraints(
+        maxHeight: measureSearchFieldMaxHeight(
+          hasResults: provider.analyzedWords.isNotEmpty,
+          maxHeightFraction: context.watch<AppState>().inputMaxHeightFraction,
+          viewportHeight: MediaQuery.sizeOf(context).height,
+        ),
+      ),
+      child: ScriptTextField(
+        controller: _controller,
+        language: provider.currentLanguage,
+        enabled: context.read<AppState>().autoConvertInput,
+        // compact for a word, grows with long text
+        minLines: 1,
+        maxLines: null,
+        style: TextStyle(fontSize: fs(15, 'sentences'), height: 1.4),
+        onSubmitted: (_) => provider.analyzeText(_controller.text),
+        decoration: InputDecoration(
+          hintText: l10n.pasteTextHere,
+          hintStyle: TextStyle(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+          ),
+          contentPadding: const EdgeInsets.all(14),
+          filled: true,
+          fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.5,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+          ),
+          prefixIcon: Icon(
+            Icons.text_snippet,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+          ),
+          suffixIcon: _controller.text.isNotEmpty
+              ? IconButton(
+                  icon: Icon(
+                    Icons.clear,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
+                  onPressed: () => _controller.clear(),
+                )
+              : null,
+        ),
+      ),
+    );
+
+    final analyzeButton = ElevatedButton.icon(
+      onPressed: isLoading
+          ? null
+          : () => provider.analyzeText(_controller.text),
+      icon: isLoading
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2.5),
+            )
+          : const Icon(Icons.analytics_outlined, size: 22),
+      label: Text(
+        isLoading ? l10n.processing : l10n.analyzeText,
+        style: TextStyle(fontSize: fs(14, 'ui'), fontWeight: FontWeight.w600),
+      ),
+      style: ElevatedButton.styleFrom(
+        // was a hard 130px box, so zoomed-in labels clipped
+        minimumSize: const Size(130, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: isLoading ? 0 : 2,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
+      ),
+    );
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
@@ -492,111 +576,20 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: ConstrainedBox(
-                  // cap the input at the configured viewport fraction so
-                  // a huge paste scrolls inside the field instead of
-                  // growing the search bar without bound
-                  constraints: BoxConstraints(
-                    maxHeight: measureSearchFieldMaxHeight(
-                      hasResults: provider.analyzedWords.isNotEmpty,
-                      maxHeightFraction: context
-                          .watch<AppState>()
-                          .inputMaxHeightFraction,
-                      viewportHeight: MediaQuery.sizeOf(context).height,
-                    ),
-                  ),
-                  child: ScriptTextField(
-                    controller: _controller,
-                    language: provider.currentLanguage,
-                    enabled: context.read<AppState>().autoConvertInput,
-                    // compact for a word, grows with long text
-                    minLines: 1,
-                    maxLines: null,
-                    style: TextStyle(
-                      fontSize: fs(15, 'sentences'),
-                      height: 1.4,
-                    ),
-                    onSubmitted: (_) => provider.analyzeText(_controller.text),
-                    decoration: InputDecoration(
-                      hintText: l10n.pasteTextHere,
-                      hintStyle: TextStyle(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.35,
-                        ),
-                      ),
-                      contentPadding: const EdgeInsets.all(14),
-                      filled: true,
-                      fillColor: theme.colorScheme.surfaceContainerHighest
-                          .withValues(alpha: 0.5),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(
-                          color: theme.colorScheme.primary,
-                          width: 2,
-                        ),
-                      ),
-                      prefixIcon: Icon(
-                        Icons.text_snippet,
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.4,
-                        ),
-                      ),
-                      suffixIcon: _controller.text.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(
-                                Icons.clear,
-                                color: theme.colorScheme.onSurface.withValues(
-                                  alpha: 0.5,
-                                ),
-                              ),
-                              onPressed: () => _controller.clear(),
-                            )
-                          : null,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: isLoading
-                    ? null
-                    : () => provider.analyzeText(_controller.text),
-                icon: isLoading
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2.5),
-                      )
-                    : const Icon(Icons.analytics_outlined, size: 22),
-                label: Text(
-                  isLoading ? l10n.processing : l10n.analyzeText,
-                  style: TextStyle(
-                    fontSize: fs(14, 'ui'),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  // was a hard 130px box, so zoomed-in labels clipped
-                  minimumSize: const Size(130, 48),
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: isLoading ? 0 : 2,
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                ),
-              ),
-            ],
-          ),
+          if (compact) ...[
+            // mobile portrait: field and button stack, both full width
+            inputField,
+            const SizedBox(height: 10),
+            SizedBox(width: double.infinity, height: 48, child: analyzeButton),
+          ] else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: inputField),
+                const SizedBox(width: 12),
+                analyzeButton,
+              ],
+            ),
           if (provider.analyzedWords.isNotEmpty) ...[
             const SizedBox(height: 10),
             Wrap(
@@ -812,7 +805,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     AnalyzerProvider provider, {
     int Function(AnalyzedWord word)? absoluteFor,
   }) {
-    final columns = provider.itemsPerRow.clamp(1, 5);
+    // mobile portrait: single column so cards get the full width
+    final columns = ScreenSize.isMobile(context)
+        ? 1
+        : provider.itemsPerRow.clamp(1, 5);
     return LayoutBuilder(
       builder: (context, constraints) {
         final itemWidth = (constraints.maxWidth - (columns - 1) * 10) / columns;

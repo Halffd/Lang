@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/utils/font_scale.dart';
+import 'package:lang/utils/screen_size.dart';
 
 /// Bottom bar for the app's top-level sections.
 ///
@@ -31,7 +32,8 @@ class BottomBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 68,
+          // compact height on mobile portrait, standard on desktop
+          height: ScreenSize.isCompact(context) ? 56 : 68,
           child: LayoutBuilder(
             builder: (context, constraints) {
               final perSlot = constraints.maxWidth / destinations.length;
