@@ -120,6 +120,12 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
   // 2 = clipboard history
   int _bottomTab = 0;
 
+  // Query history for Alt+Left/Right walk-back: recent analysis texts,
+  // newest first. Position -1 = "not browsing" (typing a new query).
+  final List<String> _queryHistory = [];
+  int _historyPos = -1;
+  String _liveQuery = ''; // text being typed when history browsing started
+
   late AnimationController _expandController;
   late AnimationController _fadeController;
 
@@ -174,6 +180,25 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
 
   void _handleKeyEvent(KeyEvent event, AnalyzerProvider provider) {
     if (event is! KeyDownEvent) return;
+    final alt = HardwareKeyboard.instance.isAltPressed;
+    final ctrl = HardwareKeyboard.instance.isControlPressed;
+    // Alt+Left/Right: walk the analysis query history (previous/next)
+    if (alt && event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+      _historyStep(-1, provider);
+      return;
+    }
+    if (alt && event.logicalKey == LogicalKeyboardKey.arrowRight) {
+      _historyStep(1, provider);
+      return;
+    }
+    // Ctrl+Backspace: clear the input and the analyzed results
+    if (ctrl && event.logicalKey == LogicalKeyboardKey.backspace) {
+      setState(() {
+        _controller.clear();
+        provider.clearResults();
+      });
+      return;
+    }
     switch (event.logicalKey) {
       // word navigation
       case LogicalKeyboardKey.arrowRight:
@@ -217,6 +242,34 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
       default:
         break;
     }
+  }
+
+  /// Record every analyzed text so Alt+Left/Right can walk back
+  /// through previous queries.
+  void _rememberQuery(String text) {
+    final t = text.trim();
+    if (t.isEmpty) return;
+    _queryHistory.remove(t);
+    _queryHistory.insert(0, t);
+    if (_queryHistory.length > 50) _queryHistory.removeLast();
+    _historyPos = -1;
+  }
+
+  /// Alt+Left/Right: step through the query history and re-analyze.
+  /// Entering history mode snapshots the live (unedited) input so
+  /// Alt+Right can always return to it.
+  void _historyStep(int delta, AnalyzerProvider provider) {
+    if (_queryHistory.isEmpty) return;
+    if (_historyPos == -1) {
+      if (delta > 0) return; // not browsing yet: right does nothing
+      _liveQuery = _controller.text.trim();
+      _historyPos = 0;
+    }
+    final next = (_historyPos + delta).clamp(0, _queryHistory.length - 1);
+    if (next == _historyPos && delta != 0) return;
+    _historyPos = next;
+    _controller.text = _queryHistory[_historyPos];
+    provider.analyzeText(_controller.text);
   }
 
   /// Next page + focus the first line of it (PgDn / down at bottom).
@@ -494,7 +547,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
         minLines: 1,
         maxLines: null,
         style: TextStyle(fontSize: fs(15, 'sentences'), height: 1.4),
-        onSubmitted: (_) => provider.analyzeText(_controller.text),
+        onSubmitted: (_) {
+          _rememberQuery(_controller.text);
+          provider.analyzeText(_controller.text);
+        },
         decoration: InputDecoration(
           hintText: l10n.pasteTextHere,
           hintStyle: TextStyle(
@@ -533,7 +589,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     final analyzeButton = ElevatedButton.icon(
       onPressed: isLoading
           ? null
-          : () => provider.analyzeText(_controller.text),
+          : () {
+              _rememberQuery(_controller.text);
+              provider.analyzeText(_controller.text);
+            },
       icon: isLoading
           ? const SizedBox(
               width: 18,

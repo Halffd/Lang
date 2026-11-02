@@ -784,6 +784,21 @@ class AnalyzerProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Wipe the current analysis: transcript, words, sentences,
+  /// translations. Used by the analyze screen's Ctrl+Backspace shortcut.
+  void clearResults() {
+    _analyzedWords = [];
+    _sentences = {};
+    _sentenceTranslations.clear();
+    _fullTranslation = '';
+    _lastTranslatedText = '';
+    _invalidateFilteredCache();
+    _selectedWordIndex = -1;
+    _selectedSentenceIndex = -1;
+    _currentPage = 0;
+    notifyListeners();
+  }
+
   // --- Analysis Methods ---
 
   Future<void> analyzeText(String text) async {

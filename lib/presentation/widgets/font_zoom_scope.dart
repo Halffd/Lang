@@ -17,7 +17,11 @@ import 'package:lang/domain/entities/font_zoom.dart';
 class FontZoomScope extends StatefulWidget {
   final Widget child;
 
-  const FontZoomScope({super.key, required this.child});
+  /// Fired when three fingers touch the screen at once — the mobile
+  /// "save the current word" shortcut. Null = gesture disabled.
+  final VoidCallback? onThreeFingerTap;
+
+  const FontZoomScope({super.key, required this.child, this.onThreeFingerTap});
 
   @override
   State<FontZoomScope> createState() => _FontZoomScopeState();
@@ -32,6 +36,10 @@ class _FontZoomScopeState extends State<FontZoomScope> {
   // ctrl+scroll accumulation, applied in one step-sized chunk per notch
   double _scrollAccum = 0;
   Timer? _scrollDebounce;
+
+  // two-finger vertical swipe tracking (font size, mobile)
+  double? _twoFingerMidY;
+  static const double _kSwipeZoomStep = 0.1;
 
   static const _debounce = Duration(milliseconds: 60);
 
@@ -72,6 +80,11 @@ class _FontZoomScopeState extends State<FontZoomScope> {
         _pinchStartDistance = (pts[0] - pts[1]).distance;
         _pinchStartScale = context.read<AppState>().fontSizeMultiplier;
       }
+      // three-finger gesture start: save the selected word (analyze
+      // screen semantics — third finger down commits the current word)
+      if (_touchPointers.length == 3) {
+        widget.onThreeFingerTap?.call();
+      }
     }
   }
 
@@ -91,6 +104,20 @@ class _FontZoomScopeState extends State<FontZoomScope> {
         if (next != appState.fontSizeMultiplier) {
           appState.setFontSizeMultiplier(next);
         }
+        // two-finger vertical drag (both fingers moving the same
+        // direction): swipe up = bigger, swipe down = smaller. Distance
+        // between fingers stays roughly constant while the midpoint
+        // travels — distinguishable from pinch by the pinch ratio.
+        final midY = (pts[0].dy + pts[1].dy) / 2;
+        if (_twoFingerMidY == null) {
+          _twoFingerMidY = midY;
+        } else {
+          final dy = midY - _twoFingerMidY!;
+          if (dy.abs() > 24) {
+            _applyZoom(dy < 0 ? _kSwipeZoomStep : -_kSwipeZoomStep);
+            _twoFingerMidY = midY;
+          }
+        }
       }
     }
   }
@@ -100,6 +127,7 @@ class _FontZoomScopeState extends State<FontZoomScope> {
     if (_touchPointers.length < 2) {
       _pinchStartDistance = null;
       _pinchStartScale = null;
+      _twoFingerMidY = null;
     }
   }
 

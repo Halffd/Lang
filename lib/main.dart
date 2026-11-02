@@ -59,6 +59,7 @@ import 'presentation/providers/user_profile_provider.dart';
 import 'presentation/providers/user_data_provider.dart';
 import 'presentation/screens/reader/pip_windows.dart';
 import 'presentation/screens/scanner_screen.dart';
+import 'presentation/screens/capture_screens.dart';
 import 'presentation/screens/settings_screen.dart';
 import 'presentation/widgets/user_badge.dart';
 import 'presentation/widgets/font_zoom_scope.dart';
@@ -429,7 +430,7 @@ Future<void> main(List<String> args) async {
         if (userDataProvider != null)
           ChangeNotifierProvider.value(value: userDataProvider),
       ],
-      child: const LangApp(),
+      child: LangApp(analyzerProvider: analyzerProvider),
     ),
   );
 }
@@ -627,7 +628,9 @@ class _PopupDictionaryBodyState extends State<_PopupDictionaryBody> {
 }
 
 class LangApp extends StatelessWidget {
-  const LangApp({super.key});
+  const LangApp({super.key, required this.analyzerProvider});
+
+  final AnalyzerProvider analyzerProvider;
 
   @override
   Widget build(BuildContext context) {
@@ -865,7 +868,17 @@ class LangApp extends StatelessWidget {
           // Layout is deliberately not width-capped: content fills the window.
           builder: (context, child) {
             if (child == null) return const SizedBox.shrink();
-            return FontZoomScope(child: child);
+            return FontZoomScope(
+              // three-finger tap saves the analyzer's selected word —
+              // the provider is a ChangeNotifier already in scope here
+              onThreeFingerTap: () {
+                final word = analyzerProvider.selectedWord;
+                if (word != null) {
+                  analyzerProvider.saveWord(word.word);
+                }
+              },
+              child: child,
+            );
           },
         );
       },
@@ -886,6 +899,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     const AnalyzeScreen(),
     const SearchScreen(),
     const ScannerScreen(),
+    const ScreenshotScreen(),
+    const SpeechScreen(),
     const ReaderScreen(),
     const DictionaryScreen(),
     const WriterScreen(),
@@ -901,6 +916,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     'analyze',
     'search',
     'scanner',
+    'screenshot',
+    'speech',
     'reader',
     'dictionary',
     'writer',

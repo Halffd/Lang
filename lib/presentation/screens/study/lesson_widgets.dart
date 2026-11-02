@@ -245,6 +245,8 @@ class _MatchWordsViewState extends State<MatchWordsView> {
               decoration: BoxDecoration(
                 color: selected
                     ? Theme.of(context).colorScheme.primaryContainer
+                    : Theme.of(context).brightness == Brightness.dark
+                    ? Theme.of(context).colorScheme.surfaceContainerHighest
                     : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
@@ -252,6 +254,10 @@ class _MatchWordsViewState extends State<MatchWordsView> {
                       ? Colors.green
                       : (selected
                             ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).brightness == Brightness.dark
+                            ? Theme.of(
+                                context,
+                              ).colorScheme.outline.withValues(alpha: 0.3)
                             : Colors.grey.shade300),
                   width: matched ? 2 : 1.5,
                 ),
@@ -293,14 +299,19 @@ class LessonScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF1C1B1F) : const Color(0xFFF7F7FB);
+    final barBg = isDark ? theme.colorScheme.surface : Colors.white;
+    final progressTrack = isDark ? Colors.grey.shade800 : Colors.grey.shade200;
     final progress = total == 0 ? 0.0 : (current / total).clamp(0.0, 1.0);
     final barColor = strength >= 0.8
         ? Colors.green
         : (strength >= 0.4 ? Colors.amber : Colors.red.shade400);
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7FB),
+      backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: barBg,
         elevation: 0,
         leading: IconButton(icon: const Icon(Icons.close), onPressed: onExit),
         title: Text('$current / $total'),
@@ -310,7 +321,7 @@ class LessonScaffold extends StatelessWidget {
           // step progress
           LinearProgressIndicator(
             value: progress,
-            backgroundColor: Colors.grey.shade200,
+            backgroundColor: progressTrack,
             minHeight: 4,
           ),
           // strength bar
@@ -320,7 +331,7 @@ class LessonScaffold extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
               child: LinearProgressIndicator(
                 value: strength.clamp(0.0, 1.0),
-                backgroundColor: Colors.grey.shade200,
+                backgroundColor: progressTrack,
                 valueColor: AlwaysStoppedAnimation<Color>(barColor),
                 minHeight: 8,
               ),
@@ -354,6 +365,21 @@ class MultipleChoiceView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    // theme-aware surfaces: the app is dark by default, so hardcoding
+    // white cards rendered white-on-white text (invisible)
+    final promptBg = isDark ? theme.colorScheme.surface : Colors.white;
+    final optionBg = isDark
+        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6)
+        : Colors.white;
+    final optionBorder = isDark
+        ? theme.colorScheme.outline.withValues(alpha: 0.3)
+        : Colors.grey.shade300;
+    final correctBg = isDark
+        ? Colors.lightGreen.withValues(alpha: 0.15)
+        : Colors.lightGreen.shade50;
+
     return Padding(
       padding: ScreenSize.adaptivePadding(context),
       child: Column(
@@ -363,7 +389,7 @@ class MultipleChoiceView extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: promptBg,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
@@ -377,16 +403,20 @@ class MultipleChoiceView extends StatelessWidget {
               children: [
                 Text(
                   word,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
                 if (subLabel != null) ...[
                   const SizedBox(height: 8),
                   Text(
                     subLabel!,
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
                   ),
                 ],
               ],
@@ -400,20 +430,20 @@ class MultipleChoiceView extends StatelessWidget {
               itemBuilder: (_, i) => FilledButton.tonal(
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 18),
-                  backgroundColor: i == correctIndex
-                      ? Colors.lightGreen.shade50
-                      : Colors.white,
+                  backgroundColor: i == correctIndex ? correctBg : optionBg,
+                  foregroundColor: theme.colorScheme.onSurface,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
-                    side: BorderSide(color: Colors.grey.shade300),
+                    side: BorderSide(color: optionBorder),
                   ),
                 ),
                 onPressed: () => onPick(i),
                 child: Text(
                   meanings[i],
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -440,6 +470,15 @@ class WrittenEntryField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardBg = isDark ? theme.colorScheme.surface : Colors.white;
+    final fieldBg = isDark
+        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6)
+        : Colors.white;
+    final fieldBorder = isDark
+        ? theme.colorScheme.outline.withValues(alpha: 0.3)
+        : Colors.grey.shade300;
     return Padding(
       padding: ScreenSize.adaptivePadding(context),
       child: Column(
@@ -448,7 +487,7 @@ class WrittenEntryField extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardBg,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
@@ -460,7 +499,10 @@ class WrittenEntryField extends StatelessWidget {
             ),
             child: Text(
               label,
-              style: const TextStyle(fontSize: 24),
+              style: TextStyle(
+                fontSize: 24,
+                color: theme.colorScheme.onSurface,
+              ),
               textAlign: TextAlign.center,
             ),
           ),
@@ -468,13 +510,17 @@ class WrittenEntryField extends StatelessWidget {
           TextField(
             controller: controller,
             autofocus: true,
+            style: TextStyle(color: theme.colorScheme.onSurface),
             decoration: InputDecoration(
               hintText: 'Type the answer…',
+              hintStyle: TextStyle(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: fieldBg,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: Colors.grey.shade300),
+                borderSide: BorderSide(color: fieldBorder),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -518,13 +564,15 @@ class GradeBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = correct ? const Color(0xFF58CC02) : Colors.red.shade400;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
         margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? theme.colorScheme.surface : Colors.white,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -558,7 +606,10 @@ class GradeBanner extends StatelessWidget {
             ),
             if (!correct) ...[
               const SizedBox(height: 8),
-              Text('Answer: $correctAnswer'),
+              Text(
+                'Answer: $correctAnswer',
+                style: TextStyle(color: theme.colorScheme.onSurface),
+              ),
             ],
             const SizedBox(height: 12),
             SizedBox(

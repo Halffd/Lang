@@ -149,7 +149,10 @@ class _LessonPageState extends State<LessonPage> {
               prompt: Center(
                 child: Text(
                   card.meaning,
-                  style: const TextStyle(fontSize: 24, color: Colors.black87),
+                  style: TextStyle(
+                    fontSize: 24,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
               ),
               correctAnswer: card.word,
@@ -434,10 +437,10 @@ class _LessonPageState extends State<LessonPage> {
                 padding: const EdgeInsets.all(24.0),
                 child: Text(
                   card.word,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                   textAlign: TextAlign.center,
                 ),
