@@ -10,11 +10,14 @@ import 'package:flutter_inappwebview_linux/flutter_inappwebview_linux.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:fvp/fvp.dart' as fvp;
 import 'package:provider/provider.dart';
-import 'package:super_clipboard/super_clipboard.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/app_localizations.dart';
 import 'presentation/widgets/structured_definition.dart';
 import 'utils/font_scale.dart';
 import 'utils/japanese_grammar.dart';
+import 'utils/popup_scan_blocker.dart';
+import 'utils/script_converter.dart';
+import 'utils/compound_reading.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'core/services/app_storage.dart';
 import 'core/services/clipboard_manager_service.dart';
@@ -22,6 +25,9 @@ import 'core/services/mobile_listening_service.dart';
 import 'presentation/screens/clipboard_manager_screen.dart';
 import 'core/services/clipboard_monitor_service.dart';
 import 'core/services/history_service.dart';
+import 'core/services/image_clipboard_service.dart';
+import 'core/services/live_ocr/live_ocr_controller.dart';
+import 'core/services/live_ocr/live_ocr_service.dart';
 import 'core/services/popup_dictionary_controller.dart';
 import 'core/services/screenshot_service.dart';
 import 'core/services/supabase_service.dart';
@@ -34,21 +40,14 @@ import 'data/datasources/ai_local_data_source.dart';
 import 'data/datasources/ai_remote_data_source.dart';
 import 'data/repositories/ai_repository_impl.dart';
 import 'data/repositories/srs_service.dart';
-import 'domain/entities/dictionary.dart' show YomichanSearchResult;
+import 'domain/entities/dictionary.dart'
+    show DictionaryEntry, YomichanSearchResult;
 import 'domain/entities/app_state.dart';
 import 'domain/entities/popup_dictionary_config.dart';
 import 'presentation/providers/analyzer_provider.dart';
-import 'presentation/screens/analyze_screen.dart';
-import 'presentation/screens/search_screen.dart';
-import 'presentation/screens/saved_words_screen.dart';
-import 'presentation/screens/history_screen.dart';
-import 'presentation/screens/ai_screen.dart';
-import 'presentation/screens/reader_screen.dart';
-import 'presentation/screens/srs_screen.dart';
-import 'presentation/screens/study_screen.dart';
-import 'presentation/screens/dictionary_screen.dart';
-import 'presentation/screens/writer_screen.dart';
 import 'presentation/widgets/bottom_bar.dart';
+import 'presentation/widgets/app_context_menu_scope.dart';
+import 'presentation/nav_destinations.dart';
 import 'presentation/providers/ai_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import 'data/datasources/supabase_data_source.dart';
@@ -58,11 +57,10 @@ import 'presentation/providers/supabase_provider.dart';
 import 'presentation/providers/user_profile_provider.dart';
 import 'presentation/providers/user_data_provider.dart';
 import 'presentation/screens/reader/pip_windows.dart';
-import 'presentation/screens/scanner_screen.dart';
-import 'presentation/screens/capture_screens.dart';
 import 'presentation/screens/settings_screen.dart';
 import 'presentation/widgets/user_badge.dart';
 import 'presentation/widgets/font_zoom_scope.dart';
+import 'presentation/widgets/live_ocr_overlay.dart';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -207,7 +205,7 @@ Future<void> main(List<String> args) async {
     try {
       final result = await ocrService.recognizeFromBytes(
         imageBytes,
-        engine: OcrEngine.mlKit,
+        engine: OcrService.engineFromName(null),
       );
       if (result.isSuccess) return result.text;
       return null;
@@ -217,6 +215,23 @@ Future<void> main(List<String> args) async {
   };
   // popup dictionary: global yomichan-style lookup on any screen
   _setupPopupDictionary(appState, analyzerProvider);
+
+  // live OCR: continuous screen capture -> OCR -> translation overlay.
+  // The loop is driven by the persisted "live OCR enabled" setting and
+  // follows the OCR engine / language settings while it runs.
+  final liveOcrController = LiveOcrController();
+  liveOcrController.attach(
+    appState: appState,
+    ocrService: ocrService,
+    translationService: buildLiveOcrTranslationService(
+      appState: appState,
+      geminiApiKey: await SharedPreferences.getInstance()
+          .then((p) => p.getString('geminiApiKey')),
+    ),
+    // the loop reports its own failures, so it needs the messages in
+    // the UI language
+    errorMessages: _liveOcrErrorMessages(appState.language),
+  );
 
   // clipboard resume catch-up (mobile background listening)
   WidgetsBinding.instance.addObserver(
@@ -231,14 +246,19 @@ Future<void> main(List<String> args) async {
 
   // screenshots: restore registry, restart auto capture on its saved
   // interval, register global hotkeys for each capture kind
+  ScreenshotService.instance.directoryOverride = appState.screenshotDirectory;
   await ScreenshotService.instance.load();
+  // a directory change takes effect on the next capture
+  appState.addListener(() {
+    ScreenshotService.instance.directoryOverride = appState.screenshotDirectory;
+  });
 
   Future<String?> ocrRunner(String path) async {
     try {
-      // honor the persisted OCR engine choice; ai falls back to
-      // mlKit here since the AI provider isn't wired into hotkeys
+      // honor the persisted OCR engine choice; ai falls back to the
+      // platform default since the AI provider isn't wired into hotkeys
       var engine = OcrService.engineFromName(appState.ocrEngine);
-      if (engine == OcrEngine.ai) engine = OcrEngine.mlKit;
+      if (engine == OcrEngine.ai) engine = OcrService.engineFromName(null);
       if (appState.ocrApiEndpoint.isNotEmpty) {
         ocrService.apiEndpoint = appState.ocrApiEndpoint;
       }
@@ -271,9 +291,7 @@ Future<void> main(List<String> args) async {
 
   Future<void> copyImageRunner(String path) async {
     final bytes = await File(path).readAsBytes();
-    final item = DataWriterItem(suggestedName: 'screenshot.png');
-    item.add(Formats.png(bytes));
-    await ClipboardWriter.instance.write([item]);
+    await ImageClipboardService.copyPng(bytes);
   }
 
   Future<void> copyTextRunner(String text) async {
@@ -323,6 +341,72 @@ Future<void> main(List<String> args) async {
           );
         } else {
           ScreenshotService.instance.stopAutoCapture();
+        }
+      },
+    );
+
+    // Ctrl+Shift+O = OCR the newest clipboard image (or the newest
+    // screenshot when the clipboard has no image) and copy the
+    // recognized text.
+    desktopIPC.registerOcrHotkey(
+      onOcr: () async {
+        final manager = ClipboardManagerService.instance;
+        await manager.load();
+        ClipboardItem? imageEntry;
+        for (final item in manager.items) {
+          if (item.isImage) {
+            imageEntry = item;
+            break;
+          }
+        }
+        // the temp dir is owned by this block and removed afterwards
+        Directory? tempDir;
+        String? path;
+        try {
+          if (imageEntry != null) {
+            final bytes = await manager.readImageBytes(imageEntry);
+            if (bytes != null) {
+              tempDir = await Directory.systemTemp.createTemp('ocr_hotkey');
+              final file = File('${tempDir.path}/clip.png');
+              await file.writeAsBytes(bytes, flush: true);
+              path = file.path;
+            }
+          } else {
+            final shots = ScreenshotService.instance.items;
+            if (shots.isNotEmpty) {
+              path = await ScreenshotService.instance.materializePath(
+                shots.first,
+              );
+            }
+          }
+          if (path == null) {
+            await desktopIPC.showNotification(
+              title: 'OCR',
+              body: 'No image to recognize',
+            );
+            return;
+          }
+          final text = await ocrRunner(path);
+          if (text != null && text.trim().isNotEmpty) {
+            await Clipboard.setData(ClipboardData(text: text.trim()));
+            await desktopIPC.showNotification(
+              title: 'OCR',
+              body: text.trim(),
+            );
+          } else {
+            await desktopIPC.showNotification(
+              title: 'OCR',
+              body: 'No text recognized',
+            );
+          }
+        } finally {
+          if (tempDir != null) {
+            try {
+              await tempDir.delete(recursive: true);
+            } catch (_) {
+              // the OS cleans the temp dir eventually
+            }
+          }
         }
       },
     );
@@ -423,6 +507,7 @@ Future<void> main(List<String> args) async {
         ChangeNotifierProvider.value(value: aiProvider),
         ChangeNotifierProvider.value(value: srsServiceLegacy),
         ChangeNotifierProvider.value(value: userProfileProvider),
+        ChangeNotifierProvider.value(value: liveOcrController),
         if (supabaseProvider != null)
           ChangeNotifierProvider.value(value: supabaseProvider),
         if (srsProvider != null)
@@ -430,8 +515,22 @@ Future<void> main(List<String> args) async {
         if (userDataProvider != null)
           ChangeNotifierProvider.value(value: userDataProvider),
       ],
-      child: LangApp(analyzerProvider: analyzerProvider),
+      child: LangApp(
+        analyzerProvider: analyzerProvider,
+        liveOcrController: liveOcrController,
+      ),
     ),
+  );
+}
+
+/// The messages the live-OCR loop reports its own failures with, in
+/// the UI language.
+LiveOcrErrorMessages _liveOcrErrorMessages(String languageCode) {
+  final l10n = lookupAppLocalizations(Locale(languageCode));
+  return LiveOcrErrorMessages(
+    notConfigured: l10n.liveOcrNotConfigured,
+    captureFailed: l10n.liveOcrCaptureFailed,
+    ocrFailed: l10n.liveOcrOcrFailed,
   );
 }
 
@@ -466,6 +565,11 @@ void _setupPopupDictionary(AppState appState, AnalyzerProvider analyzer) {
     controller.updateConfig(appState.popupDictionaryConfig);
     controller.currentLearningLanguage = appState.learningLanguage;
     controller.activeProfileName = appState.currentProfile;
+    // the video tab's modifier-free hover follows the setting, so
+    // toggling it takes effect without leaving the screen
+    if (controller.routeName == 'video') {
+      controller.plainHoverEnabled = appState.showHoverDefinitions;
+    }
   });
 
   // modifier keys feed the shift/ctrl/alt/meta hover triggers
@@ -503,9 +607,20 @@ void _setupPopupDictionary(AppState appState, AnalyzerProvider analyzer) {
       if (results.isEmpty) continue;
       if (results.firstOrNull == null) continue;
 
-      final result = results.first;
+      var result = results.first;
+      // A compound without its own dictionary entry resolves to a
+      // shorter prefix, whose reading describes only part of the
+      // scanned text. Rebuild the reading from the parts so the popup
+      // shows the reading of the whole term the user selected.
+      if (candidate != lookup.term && result.entry.term != lookup.term) {
+        final compound = await CompoundReading.build(lookup.term);
+        if (compound != null && compound.isNotEmpty) {
+          result = _withReading(result, compound);
+        }
+      }
+      final shown = result;
       return _PopupDictionaryBody(
-        result: result,
+        result: shown,
         sentence: lookup.sentence,
         onAnki: () async {
           final config = controller.config;
@@ -519,9 +634,9 @@ void _setupPopupDictionary(AppState appState, AnalyzerProvider analyzer) {
               deckName: deck,
               modelName: 'Lang Popup Note',
               fields: {
-                'Word': result.entry.term,
-                'Reading': result.entry.reading,
-                'Meaning': result.entry.definitions.take(3).join('; '),
+                'Word': shown.entry.term,
+                'Reading': shown.entry.reading,
+                'Meaning': shown.entry.definitions.take(3).join('; '),
                 'Sentence': lookup.sentence,
               },
             );
@@ -533,6 +648,34 @@ void _setupPopupDictionary(AppState appState, AnalyzerProvider analyzer) {
     }
     return null;
   };
+}
+
+/// A copy of [result] whose entry carries [reading].
+///
+/// The entry is immutable, so the copy is built from its fields.
+YomichanSearchResult _withReading(YomichanSearchResult result, String reading) {
+  final entry = result.entry;
+  return YomichanSearchResult(
+    entry: DictionaryEntry(
+      id: entry.id,
+      dictionaryId: entry.dictionaryId,
+      term: entry.term,
+      reading: reading,
+      definitionTags: entry.definitionTags,
+      rules: entry.rules,
+      popularity: entry.popularity,
+      definitions: entry.definitions,
+      sequence: entry.sequence,
+      termTags: entry.termTags,
+      audioUrl: entry.audioUrl,
+      imageUrl: entry.imageUrl,
+      imageCaption: entry.imageCaption,
+    ),
+    dictionary: result.dictionary,
+    pitches: result.pitches,
+    tones: result.tones,
+    frequencies: result.frequencies,
+  );
 }
 
 /// Compact popup body for a dictionary result.
@@ -567,34 +710,42 @@ class _PopupDictionaryBodyState extends State<_PopupDictionaryBody> {
     final appState = Provider.of<AppState>(context, listen: false);
     final popupConfig = PopupDictionaryController.instance.config;
     final fontScale = popupConfig.fontScale.clamp(0.5, 2.0);
+    final reading = _displayReading(entry.term, entry.reading, popupConfig);
+    // The headword must never wrap one character per line. A long
+    // term in a narrow popup has no room to break, and Flutter's CJK
+    // line breaking falls back to a character break. The headword
+    // therefore gets its own line and never shares a row with the
+    // reading, so it can use the popup's full width.
+    final headword = Text(
+      entry.term,
+      maxLines: 1,
+      softWrap: false,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontSize: fs(context, 20, 'kanji') * fontScale,
+        fontWeight: FontWeight.bold,
+        color: theme.colorScheme.onSurface,
+      ),
+    );
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                entry.term,
-                style: TextStyle(
-                  fontSize: fs(context, 20, 'kanji') * fontScale,
-                  fontWeight: FontWeight.bold,
-                ),
+        headword,
+        if (reading != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              reading,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: fs(context, 12, 'words') * fontScale,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
-            if (popupConfig.showReading && entry.reading.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: Text(
-                  entry.reading,
-                  style: TextStyle(
-                    fontSize: fs(context, 12, 'words') * fontScale,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-              ),
-          ],
-        ),
+          ),
         if (entry.definitions.isNotEmpty) ...[
           const SizedBox(height: 6),
           Flexible(
@@ -625,12 +776,52 @@ class _PopupDictionaryBodyState extends State<_PopupDictionaryBody> {
       ],
     );
   }
+
+  /// The reading to show in the popup header, or null when none should
+  /// be shown.
+  ///
+  /// A kana-only term (no kanji) has the same text as its reading, so
+  /// showing it repeats the word. That is only useful when the reading
+  /// is rendered in romaji, where the kana and its romaji differ — so
+  /// the kana-only reading follows the [readingDisplay] setting unless
+  /// the user explicitly turned it on.
+  static String? _displayReading(
+    String term,
+    String reading,
+    PopupDictionaryConfig config,
+  ) {
+    if (!config.showReading || reading.isEmpty) return null;
+    final kanaOnly = _isKanaOnly(term);
+    if (kanaOnly && !config.showKanaOnlyReading) return null;
+    if (config.readingDisplay == 'romaji') {
+      return ScriptConverter.kanaToRomaji(reading);
+    }
+    return reading;
+  }
+
+  /// Whether [text] consists only of hiragana/katakana (no kanji, no
+  /// latin, no other scripts).
+  static bool _isKanaOnly(String text) {
+    if (text.isEmpty) return false;
+    for (final rune in text.runes) {
+      final isKana = (rune >= 0x3040 && rune <= 0x309F) || // hiragana
+          (rune >= 0x30A0 && rune <= 0x30FF) || // katakana
+          (rune >= 0xFF66 && rune <= 0xFF9D); // halfwidth kana
+      if (!isKana) return false;
+    }
+    return true;
+  }
 }
 
 class LangApp extends StatelessWidget {
-  const LangApp({super.key, required this.analyzerProvider});
+  const LangApp({
+    super.key,
+    required this.analyzerProvider,
+    required this.liveOcrController,
+  });
 
   final AnalyzerProvider analyzerProvider;
+  final LiveOcrController liveOcrController;
 
   @override
   Widget build(BuildContext context) {
@@ -863,7 +1054,15 @@ class LangApp extends StatelessWidget {
             ),
             iconTheme: IconThemeData(size: ui(22), color: Colors.white70),
           ),
-          home: const PopupDictionaryScope(child: MainNavigationShell()),
+          home: PopupDictionaryScope(
+            child: AppContextMenuScope(
+              // Right-click outside a text field opens the app's own
+              // menu (look up / copy the word under the cursor).
+              child: MainNavigationShell(
+                liveOcrController: liveOcrController,
+              ),
+            ),
+          ),
           // Global text zoom (ctrl+scroll, pinch) wraps every route.
           // Layout is deliberately not width-capped: content fills the window.
           builder: (context, child) {
@@ -887,7 +1086,10 @@ class LangApp extends StatelessWidget {
 }
 
 class MainNavigationShell extends StatefulWidget {
-  const MainNavigationShell({super.key});
+  const MainNavigationShell({super.key, required this.liveOcrController});
+
+  /// Drives the continuous live-OCR overlay.
+  final LiveOcrController liveOcrController;
 
   @override
   State<MainNavigationShell> createState() => _MainNavigationShellState();
@@ -895,47 +1097,45 @@ class MainNavigationShell extends StatefulWidget {
 
 class _MainNavigationShellState extends State<MainNavigationShell> {
   int _currentIndex = 0;
-  final List<Widget> _screens = [
-    const AnalyzeScreen(),
-    const SearchScreen(),
-    const ScannerScreen(),
-    const ScreenshotScreen(),
-    const SpeechScreen(),
-    const ReaderScreen(),
-    const DictionaryScreen(),
-    const WriterScreen(),
-    const SavedWordsScreen(),
-    const HistoryScreen(),
-    const SRSScreen(),
-    const AiScreen(),
-    const StudyScreen(),
-  ];
+
+  /// The navigation destinations: one entry per screen, in order.
+  /// The bottom bar renders this list, so the bar and the screen
+  /// order can never drift apart (they used to be two parallel lists
+  /// with different lengths, which scrambled every index after 2).
+  List<NavDestination> get _destinations => navDestinations;
 
   /// Route names for the popup dictionary screen scope filter.
-  static const _routeNames = [
-    'analyze',
-    'search',
-    'scanner',
-    'screenshot',
-    'speech',
-    'reader',
-    'dictionary',
-    'writer',
-    'saved',
-    'history',
-    'srs',
-    'ai',
-    'study',
-  ];
+  List<String> get _routeNames =>
+      _destinations.map((d) => d.route).toList(growable: false);
 
   @override
   void initState() {
     super.initState();
-    // open on the configured default screen
+    // open on the configured default screen (a stale index from an
+    // older build falls back to the first screen)
     final saved = context.read<AppState>().defaultScreenIndex;
-    if (saved >= 0 && saved < _screens.length) _currentIndex = saved;
+    if (saved >= 0 && saved < _destinations.length) _currentIndex = saved;
     _syncPopupRoute(_currentIndex);
     unawaited(_setupDesktopIPC());
+    // switch to Video when WhisperSubs hands off a video
+    context.read<AppState>().videoNavRequest.addListener(() {
+      final req = context.read<AppState>().videoNavRequest.value;
+      if (req == true) {
+        context.read<AppState>().videoNavRequest.value = null;
+        _goToRoute('video');
+      }
+    });
+  }
+
+  /// Index of the destination with [route], or -1.
+  int _indexOfRoute(String route) => navIndexOfRoute(route);
+
+  /// Navigate to the destination with [route] (no-op when unknown).
+  void _goToRoute(String route) {
+    final index = _indexOfRoute(route);
+    if (index < 0) return;
+    if (mounted) setState(() => _currentIndex = index);
+    _syncPopupRoute(index);
   }
 
   void _syncPopupRoute(int index) {
@@ -945,40 +1145,42 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     controller.currentRouteName = (index >= 0 && index < _routeNames.length)
         ? _routeNames[index]
         : '';
+    _syncPlainHover();
+  }
+
+  /// The video tab offers a modifier-free hover definition: resting
+  /// the pointer on a transcript word opens its reading. Every other
+  /// screen keeps the configured trigger, so the plain hover stays off
+  /// there.
+  void _syncPlainHover() {
+    final controller = PopupDictionaryController.instance;
+    final appState = context.read<AppState>();
+    final onVideo = controller.routeName == 'video';
+    controller.plainHoverEnabled = onVideo && appState.showHoverDefinitions;
   }
 
   Future<void> _setupDesktopIPC() async {
     final desktopIPC = DesktopIPCService();
     if (!desktopIPC.isSupported) return;
 
-    desktopIPC.onStudyRequested = () {
-      if (mounted) setState(() => _currentIndex = 8);
-      _syncPopupRoute(8);
-    };
-    desktopIPC.onReaderRequested = () {
-      if (mounted) setState(() => _currentIndex = 3);
-      _syncPopupRoute(3);
-    };
+    desktopIPC.onStudyRequested = () => _goToRoute('study');
+    desktopIPC.onReaderRequested = () => _goToRoute('reader');
     desktopIPC.onQuitRequested = () {
       desktopIPC.dispose();
       exit(0);
     };
 
     desktopIPC.registerCommonHotkeys(
-      onShowStudy: () {
-        if (mounted) setState(() => _currentIndex = 8);
-        _syncPopupRoute(8);
-      },
-      onShowReader: () {
-        if (mounted) setState(() => _currentIndex = 3);
-        _syncPopupRoute(3);
-      },
+      onShowStudy: () => _goToRoute('study'),
+      onShowReader: () => _goToRoute('reader'),
       onToggleWindow: () {
         desktopIPC.toggleWindow();
       },
     );
 
-    // Ctrl+Shift+V = clipboard manager popup (CopyQ-style)
+    // Ctrl+Shift+V = clipboard manager popup (CopyQ-style). The window
+    // is brought forward first, so the popup still reaches the user
+    // when the app sits in the tray.
     if (desktopIPC.isSupported) {
       await desktopIPC.registerHotkey(
         'clipboard_manager',
@@ -986,9 +1188,12 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           key: PhysicalKeyboardKey.keyV,
           modifiers: const [HotKeyModifier.control, HotKeyModifier.shift],
         ),
-        () {
+        () async {
           final ctx = context;
-          if (ctx.mounted) showClipboardManagerPopup(ctx);
+          if (!ctx.mounted) return;
+          await desktopIPC.showWindow();
+          if (!ctx.mounted) return;
+          await showClipboardManagerPopup(ctx);
         },
       );
     }
@@ -1001,7 +1206,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         toolbarHeight: 44,
         titleSpacing: 0,
         automaticallyImplyLeading: false,
-        title: const UserBadge(),
+        // chrome: the popup dictionary must not scan the app's own labels
+        title: const PopupScanBlocker(child: UserBadge()),
         centerTitle: false,
         actions: [
           IconButton(
@@ -1016,53 +1222,61 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           ),
         ],
       ),
-      body: _screens[_currentIndex],
-      bottomNavigationBar: BottomBar(
-        currentIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() => _currentIndex = index);
-          _syncPopupRoute(index);
-        },
-        destinations: [
-          DestinationEntry(
-            icon: Icons.analytics,
-            label: AppLocalizations.of(context)!.analyze,
-          ),
-          DestinationEntry(
-            icon: Icons.search,
-            label: AppLocalizations.of(context)!.search,
-          ),
-          DestinationEntry(icon: Icons.document_scanner, label: 'Scan'),
-          DestinationEntry(
-            icon: Icons.menu_book,
-            label: AppLocalizations.of(context)!.reader,
-          ),
-          DestinationEntry(
-            icon: Icons.sort_by_alpha,
-            label: AppLocalizations.of(context)!.dictionaries,
-          ),
-          DestinationEntry(
-            icon: Icons.edit_note,
-            label: AppLocalizations.of(context)!.writerTitle,
-          ),
-          DestinationEntry(
-            icon: Icons.bookmark,
-            label: AppLocalizations.of(context)!.saved,
-          ),
-          DestinationEntry(
-            icon: Icons.history,
-            label: AppLocalizations.of(context)!.history,
-          ),
-          DestinationEntry(icon: Icons.school, label: 'SRS'),
-          DestinationEntry(
-            icon: Icons.auto_awesome,
-            label: AppLocalizations.of(context)!.ai,
-          ),
-          DestinationEntry(icon: Icons.local_play, label: 'Study'),
+      body: Stack(
+        // the screen must still fill the body: a Stack defaults to
+        // loose fit, which would let it size itself to its content
+        fit: StackFit.expand,
+        children: [
+          _destinations[_currentIndex].screen,
+          // the overlay is a Positioned widget, so it must be a direct
+          // child of the Stack: the builder sits inside it
+          _buildLiveOcrOverlay(context),
         ],
+      ),
+      // chrome: nav labels are localized app strings, not study text
+      bottomNavigationBar: PopupScanBlocker(
+        child: BottomBar(
+          currentIndex: _currentIndex,
+          onDestinationSelected: (index) {
+            setState(() => _currentIndex = index);
+            _syncPopupRoute(index);
+          },
+          destinations: [
+            for (final d in _destinations)
+              DestinationEntry(icon: d.icon, label: _labelFor(d, context)),
+          ],
+        ),
       ),
     );
   }
+
+  /// The live-OCR overlay, drawn above the current screen.
+  ///
+  /// The overlay floats over the whole app, so it lives in the shell's
+  /// stack rather than inside any one screen.
+  Widget _buildLiveOcrOverlay(BuildContext context) {
+    final controller = widget.liveOcrController;
+    final appState = context.watch<AppState>();
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final error = controller.lastError;
+        final text = controller.stableText;
+        if (text == null && error == null) return const SizedBox.shrink();
+        return LiveOcrOverlay(
+          sourceText: text ?? '',
+          translation: controller.stableTranslation,
+          error: error,
+          showTranslation: appState.liveOcrShowTranslation,
+          fontSize: fs(context, 16, 'words'),
+        );
+      },
+    );
+  }
+
+  /// Localized label for a destination.
+  String _labelFor(NavDestination d, BuildContext context) =>
+      d.resolveLabel(AppLocalizations.of(context)!);
 }
 
 /// Reads the clipboard as soon as the app returns to the foreground:

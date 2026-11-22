@@ -1,0 +1,7 @@
+00:00 +0: loading /host/lang/test/tmp_diag_test.dart
+00:00 +0: AnnotatedLine renders the reading
+READING_STYLE=furigana
+FIND_JP=1
+FIND_KANA=1
+FIND_ALL=1
+00:07 +1: All tests passed!

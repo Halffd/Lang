@@ -168,5 +168,63 @@ void main() {
       await second.load();
       expect(second.items.any((i) => i.text == 'persisted'), isTrue);
     });
+
+    test('appendText extends the newest text entry', () async {
+      await mgr.addText('first');
+      await mgr.addText('second');
+      await mgr.appendText('more');
+
+      expect(mgr.items.length, 2);
+      expect(mgr.items.first.text, 'second\nmore');
+    });
+
+    test('appendText creates an entry when the list is empty', () async {
+      final item = await mgr.appendText('only');
+      expect(item, isNotNull);
+      expect(mgr.items.length, 1);
+      expect(mgr.items.first.text, 'only');
+    });
+
+    test('appendText ignores blank input', () async {
+      await mgr.addText('kept');
+      final item = await mgr.appendText('   ');
+      expect(item, isNull);
+      expect(mgr.items.length, 1);
+    });
+
+    test('sort by text orders the entries alphabetically', () async {
+      await mgr.addText('charlie');
+      await mgr.addText('alpha');
+      await mgr.addText('bravo');
+
+      await mgr.sort(ClipboardSortOrder.text);
+
+      expect(mgr.orderedItems.map((e) => e.text).toList(), [
+        'alpha',
+        'bravo',
+        'charlie',
+      ]);
+    });
+
+    test('sort keeps pinned entries in the top block', () async {
+      final pinned = await mgr.addText('zulu');
+      await mgr.togglePin(pinned.id);
+      await mgr.addText('alpha');
+
+      await mgr.sort(ClipboardSortOrder.text);
+
+      expect(mgr.orderedItems.first.text, 'zulu');
+      expect(mgr.orderedItems.first.pinned, isTrue);
+      expect(mgr.orderedItems.last.text, 'alpha');
+    });
+
+    test('the ordered list runs from the newest to the oldest', () async {
+      await mgr.addText('first');
+      await mgr.addText('second');
+      await mgr.addText('third');
+
+      expect(mgr.orderedItems.first.text, 'third');
+      expect(mgr.orderedItems.last.text, 'first');
+    });
   });
 }

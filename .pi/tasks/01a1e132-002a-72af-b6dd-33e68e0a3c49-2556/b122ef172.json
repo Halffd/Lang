@@ -1,0 +1,29 @@
+{
+  "id": "b122ef172",
+  "name": "flutter analyzer retry",
+  "command": "cd /host/lang && flutter analyze lib/utils/cjk_text_extractor.dart test/video_reading_hover_test.dart 2>&1",
+  "description": "Analyze the extractor and its regression test",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1e132-002a-72af-b6dd-33e68e0a3c49-2556/b122ef172.output",
+  "cwd": "/host/lang",
+  "startTime": 1794862636479,
+  "endTime": 1794863218102,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 856484,
+  "bytesWritten": 98,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 3000,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

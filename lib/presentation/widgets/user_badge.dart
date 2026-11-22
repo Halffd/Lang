@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 import 'package:lang/presentation/providers/user_profile_provider.dart';
 
@@ -118,6 +119,7 @@ class _UserSettingsSheetState extends State<UserProfileEditor> {
         child: ListView(
           children: [
             TextField(
+              contextMenuBuilder: AppContextMenu.editable,
               controller: _name,
               decoration: const InputDecoration(labelText: 'Display name'),
             ),

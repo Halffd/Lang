@@ -38,7 +38,11 @@ class RealtimeSyncService {
 
   void disconnect() {
     if (_channel != null) {
-      _supabaseService.client.removeChannel(_channel!);
+      // the client only exists when Supabase was configured; without it
+      // there is no channel to remove
+      if (_supabaseService.isConfigured) {
+        _supabaseService.client.removeChannel(_channel!);
+      }
       _channel = null;
     }
     _isConnected = false;

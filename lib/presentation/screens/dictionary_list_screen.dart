@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -188,17 +189,20 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
+                  contextMenuBuilder: AppContextMenu.editable,
                   controller: nameController,
                   decoration: const InputDecoration(labelText: 'Title'),
                 ),
                 const SizedBox(height: 8),
                 TextField(
+                  contextMenuBuilder: AppContextMenu.editable,
                   controller: descController,
                   decoration: const InputDecoration(labelText: 'Description'),
                   maxLines: 2,
                 ),
                 const SizedBox(height: 8),
                 TextField(
+                  contextMenuBuilder: AppContextMenu.editable,
                   controller: priorityController,
                   decoration: const InputDecoration(
                     labelText: 'Priority (higher = first)',
@@ -231,6 +235,7 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
                 ),
                 if (conditionEnabled) ...[
                   TextField(
+                    contextMenuBuilder: AppContextMenu.editable,
                     controller: languagesController,
                     decoration: const InputDecoration(
                       labelText: 'Languages (comma separated)',
@@ -240,6 +245,7 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
                   ),
                   const SizedBox(height: 8),
                   TextField(
+                    contextMenuBuilder: AppContextMenu.editable,
                     controller: readingsController,
                     decoration: const InputDecoration(
                       labelText: 'Reading patterns (exact or *)',
@@ -249,6 +255,7 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
                   ),
                   const SizedBox(height: 8),
                   TextField(
+                    contextMenuBuilder: AppContextMenu.editable,
                     controller: regexController,
                     decoration: const InputDecoration(
                       labelText: 'Term regex',
@@ -258,6 +265,7 @@ class _DictionaryListScreenState extends State<DictionaryListScreen> {
                   ),
                   const SizedBox(height: 8),
                   TextField(
+                    contextMenuBuilder: AppContextMenu.editable,
                     controller: posController,
                     decoration: const InputDecoration(
                       labelText: 'Part-of-speech tags (comma separated)',

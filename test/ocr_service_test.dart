@@ -440,6 +440,127 @@ void main() {
     });
   });
 
+  group('OcrService platform fallback', () {
+    // ML Kit has no desktop build. A persisted "mlKit" choice used to
+    // reach the ML Kit recognizer on Linux, which produced no text at
+    // all, so every OCR run there silently came back empty.
+    test('mlKit falls back to tesseract where ML Kit cannot run', () {
+      final resolved = OcrService.resolveEngine(OcrEngine.mlKit);
+
+      if (OcrService.isMlKitAvailable) {
+        expect(resolved, OcrEngine.mlKit);
+      } else {
+        expect(resolved, OcrEngine.tesseract);
+      }
+    });
+
+    test('a null engine resolves to the platform default', () {
+      final resolved = OcrService.resolveEngine(null);
+
+      expect(
+        resolved,
+        OcrService.isMlKitAvailable
+            ? OcrEngine.mlKit
+            : OcrEngine.tesseract,
+      );
+    });
+
+    test('other engines are left alone', () {
+      for (final engine in OcrEngine.values) {
+        if (engine == OcrEngine.mlKit) continue;
+        expect(OcrService.resolveEngine(engine), engine);
+      }
+    });
+
+    test('engineFromName keeps a known name even when it cannot run', () {
+      // the stored value is preserved so the UI can show what the user
+      // picked; resolveEngine is where the substitution happens
+      expect(OcrService.engineFromName('mlKit'), OcrEngine.mlKit);
+    });
+
+    test('recognizeFromFile uses tesseract for mlKit where ML Kit cannot run',
+        () async {
+      final service = OcrService();
+      final calls = <String>[];
+      service.runCommand = (executable, arguments) async {
+        calls.add(executable);
+        return (1, '', 'not found');
+      };
+
+      final result = await service.recognizeFromFile(
+        '/nonexistent.png',
+        engine: OcrEngine.mlKit,
+      );
+
+      if (OcrService.isMlKitAvailable) {
+        expect(calls, isEmpty);
+      } else {
+        // the tesseract path was taken, not the ML Kit one
+        expect(calls, contains('tesseract'));
+        expect(result.isSuccess, isFalse);
+        expect(result.error, isNotNull);
+      }
+
+      service.dispose();
+    });
+
+    test('recognizeFromBytes uses tesseract for mlKit where ML Kit cannot run',
+        () async {
+      final service = OcrService();
+      final calls = <String>[];
+      service.runCommand = (executable, arguments) async {
+        calls.add(executable);
+        return (1, '', 'not found');
+      };
+
+      await service.recognizeFromBytes(
+        Uint8List.fromList([1, 2, 3, 4]),
+        engine: OcrEngine.mlKit,
+      );
+
+      if (!OcrService.isMlKitAvailable) {
+        expect(calls, contains('tesseract'));
+      }
+
+      service.dispose();
+    });
+
+    test('a missing tesseract binary reports an error instead of hanging',
+        () async {
+      // The tesseract_ocr plugin ships Android and iOS only. On
+      // desktop, calling it without the native binary used to hang on
+      // the plugin's asset setup, so the OCR call never returned.
+      final service = OcrService();
+      service.runCommand = (executable, arguments) async {
+        return (1, '', 'not found');
+      };
+
+      final tempDir = await Directory.systemTemp.createTemp('tess_guard_test');
+      final image = File('${tempDir.path}/img.png');
+      await image.writeAsBytes([1, 2, 3]);
+
+      final result = await service.recognizeFromFile(
+        image.path,
+        engine: OcrEngine.tesseract,
+      );
+
+      expect(result.isSuccess, isFalse);
+      expect(result.error, isNotNull);
+
+      await tempDir.delete(recursive: true);
+      service.dispose();
+    });
+
+    test('the tesseract plugin is only used where it exists', () {
+      // the plugin has no desktop implementation
+      if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
+        expect(OcrService.isTesseractPluginAvailable, isFalse);
+      } else {
+        expect(OcrService.isTesseractPluginAvailable, isTrue);
+      }
+    });
+  });
+
   group('OcrService engine selection', () {
     test('all engines have names', () {
       final service = OcrService();
@@ -451,7 +572,6 @@ void main() {
 
       service.dispose();
     });
-
     test('all engines have descriptions', () {
       final service = OcrService();
 

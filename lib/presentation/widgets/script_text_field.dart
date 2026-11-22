@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 import 'package:lang/utils/japanese_utils.dart';
 import 'package:lang/utils/script_converter.dart';
 
@@ -187,6 +188,10 @@ class _ScriptTextFieldState extends State<ScriptTextField> {
         minLines: widget.minLines,
         style: widget.style,
         onSubmitted: widget.onSubmitted,
+        // the default toolbar hides inapplicable actions, which left
+        // right-clicks with a single button; the app's menu always
+        // lists the full set (disabled where it does not apply)
+        contextMenuBuilder: AppContextMenu.editable,
         onChanged: (text) {
           if (_isJapanese) {
             _convertTail();

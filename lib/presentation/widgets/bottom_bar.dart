@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
-import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/utils/font_scale.dart';
 import 'package:lang/utils/screen_size.dart';
 
@@ -107,34 +105,38 @@ class _DestinationTile extends StatelessWidget {
     final effective = fs(context, 10).clamp(8.0, 22.0);
     // label only when the zoomed text still fits the slot
     final showLabel = effective <= 14;
-    return InkWell(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            entry.icon,
-            color: selected
-                ? theme.colorScheme.primary
-                : theme.colorScheme.onSurface.withValues(alpha: 0.55),
-          ),
-          if (showLabel && entry.label.isNotEmpty) ...[
-            const SizedBox(height: 3),
-            Text(
-              entry.label,
-              style: TextStyle(
-                fontSize: effective,
-                color: selected
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurface.withValues(alpha: 0.5),
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
+    return Tooltip(
+      message: entry.label,
+      waitDuration: const Duration(milliseconds: 400),
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              entry.icon,
+              color: selected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.55),
             ),
+            if (showLabel && entry.label.isNotEmpty) ...[
+              const SizedBox(height: 3),
+              Text(
+                entry.label,
+                style: TextStyle(
+                  fontSize: effective,
+                  color: selected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

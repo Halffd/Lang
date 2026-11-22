@@ -1,0 +1,30 @@
+00:28 +11: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:29 +11: /host/lang/test/video_reading_hover_test.dart: transcript hover definitions hovering a word opens its definition
+AppStorage: accessed before init(); using in-memory fallback
+00:29 +12: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:29 +12: /host/lang/test/video_reading_hover_test.dart: transcript hover definitions no modifier is needed for the plain hover
+AppStorage: accessed before init(); using in-memory fallback
+00:29 +13: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:29 +14: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:30 +14: /host/lang/test/video_reading_hover_test.dart: transcript hover definitions disabling the plain hover closes an open popup
+AppStorage: accessed before init(); using in-memory fallback
+00:30 +15: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:30 +16: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:30 +17: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:33 +18: /host/lang/test/player_side_pane_test.dart: the description tab shows the description text
+00:33 +19: /host/lang/test/player_side_pane_test.dart: the description tab says so when there is none
+00:34 +20: /host/lang/test/player_side_pane_test.dart: the chapters tab lists the chapters
+00:34 +21: /host/lang/test/player_side_pane_test.dart: the chapters tab says so when there are none
+00:34 +22: /host/lang/test/player_side_pane_test.dart: tapping a chapter reports it
+00:34 +23: /host/lang/test/player_side_pane_test.dart: the transcript tab lists the lines
+00:35 +24: /host/lang/test/player_side_pane_test.dart: the transcript tab says so when no track is loaded
+00:35 +25: /host/lang/test/player_side_pane_test.dart: tapping a transcript line reports its index
+00:35 +26: /host/lang/test/player_side_pane_test.dart: long-pressing a transcript line reports its index
+00:35 +27: /host/lang/test/player_side_pane_test.dart: the settings tab shows the supplied settings
+00:35 +28: /host/lang/test/player_side_pane_test.dart: the settings tab says so when there are none
+00:35 +29: /host/lang/test/player_side_pane_test.dart: hovering a transcript word opens its definition
+AppStorage: accessed before init(); using in-memory fallback
+00:36 +30: /host/lang/test/player_side_pane_test.dart: hovering an annotated transcript word opens its definition
+AppStorage: accessed before init(); using in-memory fallback
+00:36 +31: /host/lang/test/player_side_pane_test.dart: (tearDownAll)
+00:37 +31: All tests passed!

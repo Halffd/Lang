@@ -1,0 +1,29 @@
+{
+  "id": "b300dccc9",
+  "name": "flutter linux release build",
+  "command": "cd /host/lang && flutter build linux --release 2>&1 | tail -20",
+  "description": "Build the Linux release bundle with the extractor fix",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1e132-002a-72af-b6dd-33e68e0a3c49-2556/b300dccc9.output",
+  "cwd": "/host/lang",
+  "startTime": 1794862646400,
+  "endTime": 1794864045773,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 856648,
+  "bytesWritten": 178,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 3000,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

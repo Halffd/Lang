@@ -1,0 +1,40 @@
+00:00 +0: loading /host/lang/test/tmp_geom_test.dart
+00:00 +0: annotated geometry
+READING_RECT=Rect.fromLTRB(251.9, 292.5, 284.9, 301.5)
+BASE_RECT=Rect.fromLTRB(250.0, 301.5, 286.8, 316.5)
+OUTER_SIZE=Size(300.0, 33.0)
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following assertion was thrown running a test:
+'package:flutter/src/rendering/box.dart': Failed assertion: line 2479 pos 7:
+'RenderObject.debugCheckingIntrinsics ||
+          switch (owner!) {
+            PipelineOwner(debugDoingLayout: true) =>
+              RenderObject.debugActiveLayout == parent && parent!.debugDoingThisLayout,
+            PipelineOwner(debugDoingPaint: true) =>
+              RenderObject.debugActivePaint == parent && parent!.debugDoingThisPaint ||
+                  (RenderObject.debugActivePaint == this && debugDoingThisPaint),
+            PipelineOwner() => false,
+          }': is not true.
+
+When the exception was thrown, this was the stack:
+#2      RenderBox.getDistanceToBaseline (package:flutter/src/rendering/box.dart:2479:7)
+#3      main.<anonymous closure> (file:///host/lang/test/tmp_geom_test.dart:55:33)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from class _AssertionError and package:stack_trace)
+
+The test description was:
+  annotated geometry
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:03 +0 -1: annotated geometry [E]
+  Test failed. See exception logs above.
+  The test description was: annotated geometry
+  
+00:04 +0 -1: Some tests failed.
+
+Failing tests:
+  /host/lang/test/tmp_geom_test.dart: annotated geometry

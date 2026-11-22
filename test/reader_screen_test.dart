@@ -10,7 +10,6 @@ import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/presentation/screens/reader/browser_tab.dart';
 import 'package:lang/presentation/screens/reader_screen.dart';
-import 'package:lang/presentation/screens/screenshot_tab.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -47,8 +46,9 @@ void main() {
     expect(find.text('Reader'), findsWidgets);
     expect(find.text('Documents'), findsOneWidget);
     expect(find.text('Browser'), findsOneWidget);
-    expect(find.text('Screenshots'), findsOneWidget);
     expect(find.text('Clipboard'), findsOneWidget);
+    // the screenshot/OCR tab lives in its own bottom-bar screen
+    expect(find.text('Screenshots'), findsNothing);
   });
 
   testWidgets('browser tab hosts the browser launcher', (tester) async {
@@ -59,16 +59,6 @@ void main() {
     expect(find.text('URL or search'), findsOneWidget);
     expect(find.text('NHK Easy News'), findsOneWidget);
     expect(find.textContaining('Visited URLs show up here'), findsOneWidget);
-  });
-
-  testWidgets('screenshot tab is hosted inside reader', (tester) async {
-    await pumpReader(tester);
-    // documents tab shows first; switch to screenshots
-    await tester.tap(find.text('Screenshots'));
-    await tester.pumpAndSettle();
-    expect(find.byType(ScreenshotTab), findsOneWidget);
-    expect(find.text('Full screen'), findsOneWidget);
-    expect(find.text('Region'), findsOneWidget);
   });
 
   testWidgets('clipboard tab shows settings and monitoring off state', (

@@ -1,0 +1,29 @@
+{
+  "id": "be68e3a9c",
+  "name": "flutter side pane tests 5",
+  "command": "cd /host/lang && timeout 900 flutter test test/player_side_pane_test.dart --reporter expanded 2>&1 | tail -30",
+  "description": "Run the player side pane tests with the no-isolate database factory",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1e132-002a-72af-b6dd-33e68e0a3c49-2556/be68e3a9c.output",
+  "cwd": "/host/lang",
+  "startTime": 1794875213085,
+  "endTime": 1794875473063,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 1009958,
+  "bytesWritten": 987,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1200,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

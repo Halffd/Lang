@@ -6,6 +6,7 @@ import 'package:lang/data/repositories/dictionary_service.dart';
 import 'package:lang/data/repositories/radical_search_service.dart';
 import 'package:lang/utils/screen_size.dart';
 import 'package:lang/utils/font_scale.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 class RadicalSearchScreen extends StatefulWidget {
   const RadicalSearchScreen({super.key});
@@ -335,6 +336,7 @@ class _RadicalSearchScreenState extends State<RadicalSearchScreen>
             children: [
               Expanded(
                 child: TextField(
+                  contextMenuBuilder: AppContextMenu.editable,
                   controller: _componentController,
                   decoration: const InputDecoration(
                     hintText: 'Enter a kanji to decompose...',

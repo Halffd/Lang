@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io' show Platform;
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 import 'package:desktop_webview_window/desktop_webview_window.dart';
 import 'package:flutter/material.dart';
@@ -431,6 +432,7 @@ class _BrowserTabState extends State<BrowserTab> {
                     ),
                     const SizedBox(height: 8),
                     TextField(
+                      contextMenuBuilder: AppContextMenu.editable,
                       decoration: const InputDecoration(
                         labelText: 'Proxy (http://host:port, blank = none)',
                         border: OutlineInputBorder(),
@@ -466,6 +468,7 @@ class _BrowserTabState extends State<BrowserTab> {
                     ),
                     const SizedBox(height: 12),
                     TextField(
+                      contextMenuBuilder: AppContextMenu.editable,
                       decoration: const InputDecoration(
                         labelText: 'Element filter (table, div.class, #id)',
                         border: OutlineInputBorder(),
@@ -478,6 +481,7 @@ class _BrowserTabState extends State<BrowserTab> {
                     ),
                     const SizedBox(height: 8),
                     TextField(
+                      contextMenuBuilder: AppContextMenu.editable,
                       decoration: const InputDecoration(
                         labelText: 'Text filter (regex per line)',
                         border: OutlineInputBorder(),
@@ -566,6 +570,7 @@ class _BrowserTabState extends State<BrowserTab> {
             Padding(
               padding: const EdgeInsets.all(12),
               child: SelectableText(
+                contextMenuBuilder: AppContextMenu.editable,
                 result.error ?? 'unknown error',
                 style: TextStyle(fontSize: 11, color: theme.colorScheme.error),
               ),
@@ -634,6 +639,7 @@ class _BrowserTabState extends State<BrowserTab> {
                   ),
                   child: SingleChildScrollView(
                     child: SelectableText(
+                      contextMenuBuilder: AppContextMenu.editable,
                       bodyText,
                       style: const TextStyle(fontSize: 12, height: 1.5),
                     ),
@@ -740,6 +746,7 @@ class _BrowserTabState extends State<BrowserTab> {
             children: [
               Expanded(
                 child: TextField(
+                  contextMenuBuilder: AppContextMenu.editable,
                   controller: _urlCtrl,
                   decoration: InputDecoration(
                     hintText: l10n?.browserUrlHint,
@@ -904,6 +911,7 @@ class _BrowserTabState extends State<BrowserTab> {
             ),
             Expanded(
               child: TextField(
+                contextMenuBuilder: AppContextMenu.editable,
                 controller: _addressCtrl,
                 keyboardType: TextInputType.url,
                 decoration: InputDecoration(
@@ -1041,6 +1049,7 @@ class _HeaderAddRowState extends State<_HeaderAddRow> {
       children: [
         Expanded(
           child: TextField(
+            contextMenuBuilder: AppContextMenu.editable,
             controller: _keyCtrl,
             decoration: const InputDecoration(
               hintText: 'Header name',
@@ -1052,6 +1061,7 @@ class _HeaderAddRowState extends State<_HeaderAddRow> {
         const SizedBox(width: 6),
         Expanded(
           child: TextField(
+            contextMenuBuilder: AppContextMenu.editable,
             controller: _valueCtrl,
             decoration: const InputDecoration(
               hintText: 'Value',

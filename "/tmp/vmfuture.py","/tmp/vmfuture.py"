@@ -1,0 +1,53 @@
+import json, sys, time
+sys.path.insert(0, '/tmp')
+from vmclient import rpc, get_isolate, get_class_id
+
+iso = get_isolate()
+
+
+def get_obj(oid):
+    resp = rpc('getObject', {'isolateId': iso, 'objectId': oid})
+    if 'error' in resp:
+        return {'ERROR': str(resp['error'])[:300]}
+    return resp['result']
+
+
+def resolve_future(future_id, tries=40):
+    """Poll a Future until it is completed, then read its value."""
+    for _ in range(tries):
+        obj = get_obj(future_id)
+        if 'ERROR' in obj:
+            return obj
+        state = obj.get('valueAsString')
+        # A completed Future's _state field holds the result.
+        for f in (obj.get('fields') or []):
+            if f.get('name') == '_state':
+                v = f.get('value')
+                if isinstance(v, dict):
+                    inner = get_obj(v.get('id')) if v.get('id') else {}
+                    if inner.get('valueAsString') is not None:
+                        return inner.get('valueAsString')
+                    # A completed state is a _FutureListener or the value
+                    # itself; report the kind.
+                    if inner.get('kind') not in (None, 'Pending', 'NULL'):
+                        return f"kind={inner.get('kind')} " \
+                               f"value={inner.get('valueAsString')!r}"
+        if state is not None and 'complete' in str(state).lower():
+            return state
+        time.sleep(0.5)
+    return '<timed out>'
+
+
+iso3, lib3, cls3 = get_class_id('data/services/ocr_service.dart', 'OcrService')
+r3 = rpc('getInstances', {'isolateId': iso, 'objectId': cls3, 'limit': 5})
+svc_id = r3['result']['instances'][0]['id']
+
+res = rpc('invoke', {
+    'isolateId': iso,
+    'targetId': svc_id,
+    'selector': 'hasNativeTesseract',
+    'argumentIds': '[]',
+})
+fut_id = res['result']['id']
+print('future id:', fut_id)
+print('resolved:', resolve_future(fut_id))

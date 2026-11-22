@@ -8,6 +8,7 @@ import 'package:screenshot/screenshot.dart';
 import 'package:lang/domain/entities/srs_card.dart';
 import 'package:lang/data/repositories/srs_service.dart';
 import 'package:lang/utils/font_scale.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 class AddCardSheet extends StatefulWidget {
   final SRSCard? editCard;
@@ -219,6 +220,7 @@ class _AddCardSheetState extends State<AddCardSheet> {
             padding: const EdgeInsets.all(16),
             children: [
               TextField(
+                contextMenuBuilder: AppContextMenu.editable,
                 controller: _wordController,
                 decoration: const InputDecoration(
                   labelText: 'Word/Expression *',
@@ -228,6 +230,7 @@ class _AddCardSheetState extends State<AddCardSheet> {
               ),
               const SizedBox(height: 12),
               TextField(
+                contextMenuBuilder: AppContextMenu.editable,
                 controller: _readingController,
                 decoration: const InputDecoration(
                   labelText: 'Reading (Kana/Pinyin)',
@@ -236,6 +239,7 @@ class _AddCardSheetState extends State<AddCardSheet> {
               ),
               const SizedBox(height: 12),
               TextField(
+                contextMenuBuilder: AppContextMenu.editable,
                 controller: _meaningController,
                 decoration: const InputDecoration(
                   labelText: 'Meaning *',
@@ -245,6 +249,7 @@ class _AddCardSheetState extends State<AddCardSheet> {
               ),
               const SizedBox(height: 12),
               TextField(
+                contextMenuBuilder: AppContextMenu.editable,
                 controller: _notesController,
                 decoration: const InputDecoration(
                   labelText: 'Notes',
@@ -254,6 +259,7 @@ class _AddCardSheetState extends State<AddCardSheet> {
               ),
               const SizedBox(height: 12),
               TextField(
+                contextMenuBuilder: AppContextMenu.editable,
                 controller: _tagsController,
                 decoration: const InputDecoration(
                   labelText: 'Tags (comma separated)',

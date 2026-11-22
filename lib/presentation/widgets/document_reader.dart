@@ -6,6 +6,7 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:epub_view/epub_view.dart';
 import 'package:archive/archive.dart';
 import 'package:lang/utils/font_scale.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 typedef OnPageChangedCallback = void Function(int currentPage, int totalPages);
 
@@ -294,6 +295,7 @@ class DocumentReaderState extends State<DocumentReader> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
                 child: SelectableText(
+                  contextMenuBuilder: AppContextMenu.editable,
                   snapshot.data!,
                   style: TextStyle(fontSize: fs(context, 16, 'sentences')),
                 ),
@@ -471,6 +473,7 @@ class DocumentReaderState extends State<DocumentReader> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
                 child: SelectableText(
+                  contextMenuBuilder: AppContextMenu.editable,
                   _stripHtml(htmlContent),
                   style: TextStyle(fontSize: fs(context, 16, 'sentences')),
                 ),

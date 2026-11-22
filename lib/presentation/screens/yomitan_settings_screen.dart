@@ -7,6 +7,7 @@ import 'package:lang/domain/entities/anki_note_data.dart';
 import 'package:lang/data/services/anki_connect_service.dart';
 import 'dart:io';
 import 'package:lang/utils/font_scale.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 /// Yomitan-style settings screen covering all export settings:
 /// profiles, general, storage, scanning, popup, appearance, audio,
@@ -234,6 +235,7 @@ Future<String?> _promptText(BuildContext context, String label) {
     builder: (context) => AlertDialog(
       title: Text(label),
       content: TextField(
+        contextMenuBuilder: AppContextMenu.editable,
         controller: controller,
         autofocus: true,
         onSubmitted: (v) => Navigator.of(context).pop(v),
@@ -364,6 +366,7 @@ class _StorageSection extends StatelessWidget {
           'Frequency sorting dictionary',
           'Sort results using a frequency dictionary',
           TextField(
+            contextMenuBuilder: AppContextMenu.editable,
             decoration: InputDecoration(
               hintText: 'Dictionary name',
               border: const OutlineInputBorder(),
@@ -906,6 +909,7 @@ Widget _numberField(
   void Function(double) onChanged,
 ) {
   return TextField(
+    contextMenuBuilder: AppContextMenu.editable,
     decoration: InputDecoration(
       labelText: label,
       border: const OutlineInputBorder(),
@@ -1111,6 +1115,7 @@ class _AnkiSection extends StatelessWidget {
           'AnkiConnect server address',
           'Change the URL of the AnkiConnect server',
           TextField(
+            contextMenuBuilder: AppContextMenu.editable,
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
               isDense: true,
@@ -1153,6 +1158,7 @@ class _AnkiSection extends StatelessWidget {
           'Card tags',
           'List of space or comma separated tags to add to the card',
           TextField(
+            contextMenuBuilder: AppContextMenu.editable,
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
               isDense: true,
@@ -1169,6 +1175,7 @@ class _AnkiSection extends StatelessWidget {
           'API key',
           'Pass a secret value to AnkiConnect API calls',
           TextField(
+            contextMenuBuilder: AppContextMenu.editable,
             obscureText: true,
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
@@ -1383,6 +1390,7 @@ class NoteTypeEditorScreen extends StatelessWidget {
                 'Deck',
                 'Anki deck for this note type',
                 TextField(
+                  contextMenuBuilder: AppContextMenu.editable,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     isDense: true,
@@ -1399,6 +1407,7 @@ class NoteTypeEditorScreen extends StatelessWidget {
                 'Model',
                 'Anki note model (Basic, jp-mining-note, ...)',
                 TextField(
+                  contextMenuBuilder: AppContextMenu.editable,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     isDense: true,
@@ -1439,6 +1448,7 @@ class NoteTypeEditorScreen extends StatelessWidget {
                       Expanded(
                         flex: 2,
                         child: TextField(
+                          contextMenuBuilder: AppContextMenu.editable,
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             isDense: true,
@@ -1454,6 +1464,7 @@ class NoteTypeEditorScreen extends StatelessWidget {
                       Expanded(
                         flex: 3,
                         child: TextField(
+                          contextMenuBuilder: AppContextMenu.editable,
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             isDense: true,
@@ -1777,6 +1788,7 @@ class _MarkerTemplatesEditorState extends State<_MarkerTemplatesEditor> {
                     : null,
                 children: [
                   TextField(
+                    contextMenuBuilder: AppContextMenu.editable,
                     controller: _controllers.putIfAbsent(
                       marker,
                       () => TextEditingController(

@@ -1,0 +1,33 @@
+import json, sys
+sys.path.insert(0, '/tmp')
+from vmclient import (get_class_id, call_static, get_static, rpc,
+                      get_isolate)
+
+iso, lib, cls = get_class_id('data/services/ocr_service.dart', 'OcrService')
+print('OcrService class id:', cls, flush=True)
+
+scope = rpc('getObject', {'isolateId': iso, 'objectId': cls})['result']
+print('\n--- static members present ---')
+for f in scope.get('functions', []):
+    if f.get('static'):
+        print(' ', f.get('name'))
+
+print('\n--- live values ---')
+for prop in ('isMlKitAvailable', 'isTesseractPluginAvailable'):
+    r = get_static(cls, prop)
+    if 'error' in r:
+        print(f'  {prop}: ERROR {r["error"]}')
+    else:
+        v = r.get('result', {})
+        print(f'  {prop} = {v.get("value")}')
+
+# engineFromName is static; resolveEngine is static.
+print('\n--- engine resolution ---')
+for fn in ('engineFromName', 'resolveEngine'):
+    r = call_static(cls, fn)
+    if 'error' in r:
+        print(f'  {fn}(): ERROR {str(r["error"])[:200]}')
+    else:
+        v = r.get('result', {})
+        print(f'  {fn}() -> kind={v.get("kind")} class={v.get("class")} '
+              f'id={v.get("id")}')

@@ -1,0 +1,29 @@
+{
+  "id": "be703596c",
+  "name": "Linux release build",
+  "command": "/tmp/build.sh",
+  "description": "Build the Linux release bundle for the OCR fallback change",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1eb13-779e-7084-8e48-64465954b5e5-9736/be703596c.output",
+  "cwd": "/host/lang",
+  "startTime": 1794988329935,
+  "endTime": 1794995712364,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 267450,
+  "bytesWritten": 0,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 10800,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

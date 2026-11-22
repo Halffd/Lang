@@ -1,0 +1,30 @@
+   - 'RenderParagraph' is from 'package:flutter/src/rendering/paragraph.dart' ('/home/agent/.cache/flutter_sdk/packages/flutter/lib/src/rendering/paragraph.dart').
+  Try accessing using ?. instead.
+        text: word.text,
+                   ^^^^
+  lib/utils/cjk_text_extractor.dart:165:40: Error: Property 'size' cannot be accessed on 'RenderParagraph?' because it is potentially null.
+   - 'RenderParagraph' is from 'package:flutter/src/rendering/paragraph.dart' ('/home/agent/.cache/flutter_sdk/packages/flutter/lib/src/rendering/paragraph.dart').
+  Try accessing using ?. instead.
+                local.dx.clamp(0.0, word.size.width),
+                                         ^^^^
+  lib/utils/cjk_text_extractor.dart:166:40: Error: Property 'size' cannot be accessed on 'RenderParagraph?' because it is potentially null.
+   - 'RenderParagraph' is from 'package:flutter/src/rendering/paragraph.dart' ('/home/agent/.cache/flutter_sdk/packages/flutter/lib/src/rendering/paragraph.dart').
+  Try accessing using ?. instead.
+                local.dy.clamp(0.0, word.size.height),
+                                         ^^^^
+  lib/utils/cjk_text_extractor.dart:163:12: Error: Method 'getPositionForOffset' cannot be called on 'RenderParagraph?' because it is potentially null.
+   - 'RenderParagraph' is from 'package:flutter/src/rendering/paragraph.dart' ('/home/agent/.cache/flutter_sdk/packages/flutter/lib/src/rendering/paragraph.dart').
+  Try calling using ?. instead.
+            .getPositionForOffset(
+             ^^^^^^^^^^^^^^^^^^^^
+  lib/utils/cjk_text_extractor.dart:157:12: Error: The argument type 'RenderParagraph?' can't be assigned to the parameter type 'RenderBox'.
+   - 'RenderParagraph' is from 'package:flutter/src/rendering/paragraph.dart' ('/home/agent/.cache/flutter_sdk/packages/flutter/lib/src/rendering/paragraph.dart').
+   - 'RenderBox' is from 'package:flutter/src/rendering/box.dart' ('/home/agent/.cache/flutter_sdk/packages/flutter/lib/src/rendering/box.dart').
+        box: word,
+             ^
+  .
+00:00 +0 -2: Some tests failed.
+
+Failing tests:
+  /host/lang/test/player_side_pane_test.dart: loading /host/lang/test/player_side_pane_test.dart
+  /host/lang/test/video_reading_hover_test.dart: loading /host/lang/test/video_reading_hover_test.dart

@@ -1,0 +1,29 @@
+{
+  "id": "b3aa5ad99",
+  "name": "flutter linux release build 2",
+  "command": "cd /host/lang && timeout 2400 flutter build linux --release 2>&1 | tail -20",
+  "description": "Rebuild the Linux release bundle with the final extractor",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1e132-002a-72af-b6dd-33e68e0a3c49-2556/b3aa5ad99.output",
+  "cwd": "/host/lang",
+  "startTime": 1794882160146,
+  "endTime": 1794882673351,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 1095736,
+  "bytesWritten": 111,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 2700,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "b39d32e5a",
+  "name": "Native OCR e2e test",
+  "command": "/tmp/rune2e.sh",
+  "description": "Run the end-to-end native tesseract OCR verification test",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1eb13-779e-7084-8e48-64465954b5e5-9736/b39d32e5a.output",
+  "cwd": "/host/lang",
+  "startTime": 1795006048974,
+  "endTime": 1795006814074,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 340657,
+  "bytesWritten": 0,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 5400,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

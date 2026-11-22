@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lang/domain/entities/srs_deck.dart';
 import 'package:lang/data/repositories/srs_service.dart';
 import 'package:lang/utils/font_scale.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 class DeckManagerSheet extends StatefulWidget {
   final SRSService srsService;
@@ -64,12 +65,14 @@ class _DeckManagerSheetState extends State<DeckManagerSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TextField(
+                  contextMenuBuilder: AppContextMenu.editable,
                   controller: nameController,
                   decoration: const InputDecoration(labelText: 'Name'),
                   autofocus: true,
                 ),
                 const SizedBox(height: 12),
                 TextField(
+                  contextMenuBuilder: AppContextMenu.editable,
                   controller: descController,
                   decoration: const InputDecoration(
                     labelText: 'Description (optional)',

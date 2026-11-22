@@ -6,6 +6,7 @@ import 'package:lang/utils/font_scale.dart';
 import 'package:lang/domain/entities/translation_model.dart';
 import 'package:lang/data/repositories/translation_service.dart';
 import 'package:lang/data/datasources/local_translation_service.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 class SentenceTranslatorScreen extends StatefulWidget {
   const SentenceTranslatorScreen({super.key});
@@ -167,6 +168,7 @@ class _SentenceTranslatorScreenState extends State<SentenceTranslatorScreen> {
 
             // Input text field
             TextField(
+              contextMenuBuilder: AppContextMenu.editable,
               controller: _sourceController,
               maxLines: 3,
               decoration: const InputDecoration(

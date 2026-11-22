@@ -1,0 +1,30 @@
+{
+  "id": "b297cd5e7",
+  "name": "Lang app live",
+  "command": "/tmp/runapp.sh",
+  "description": "Run the release Linux app on DISPLAY=:0 for live OCR verification",
+  "status": "failed",
+  "outputPath": ".pi/tasks/01a1eb13-779e-7084-8e48-64465954b5e5-9736/b297cd5e7.output",
+  "cwd": "/host/lang",
+  "startTime": 1794999850098,
+  "endTime": 1794999890770,
+  "exitCode": null,
+  "signal": "SIGTERM",
+  "pid": 317258,
+  "bytesWritten": 0,
+  "isAgent": false,
+  "surviveReload": false,
+  "error": "Timed out while preparing a background task after 30000ms",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 3600,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

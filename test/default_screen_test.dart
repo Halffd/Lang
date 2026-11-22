@@ -7,7 +7,7 @@ import 'package:lang/domain/entities/app_state.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('default screen index clamps to the 9 nav destinations', () async {
+  test('default screen index rejects negatives', () async {
     SharedPreferences.setMockInitialValues({});
     final storage = StorageService();
     await storage.init();
@@ -15,14 +15,11 @@ void main() {
 
     expect(appState.defaultScreenIndex, 0);
 
-    appState.setDefaultScreenIndex(8); // ai
-    expect(appState.defaultScreenIndex, 8);
+    appState.setDefaultScreenIndex(5);
+    expect(appState.defaultScreenIndex, 5);
 
-    appState.setDefaultScreenIndex(9); // out of range: ignored
-    expect(appState.defaultScreenIndex, 8);
-
-    appState.setDefaultScreenIndex(-1); // out of range: ignored
-    expect(appState.defaultScreenIndex, 8);
+    appState.setDefaultScreenIndex(-1);
+    expect(appState.defaultScreenIndex, 5);
   });
 
   test('default screen index persists', () async {

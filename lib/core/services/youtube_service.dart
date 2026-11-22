@@ -7,6 +7,7 @@
 /// (unlike jidoujisho's desktop VLC player) does not offer.
 library;
 
+import 'package:lang/utils/chapter_parser.dart';
 import 'package:lang/utils/subtitle_parser.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
@@ -75,6 +76,8 @@ class YouTubeVideoInfo {
     required this.title,
     required this.author,
     required this.qualities,
+    this.description = '',
+    this.chapters = const [],
   });
 
   final String videoId;
@@ -84,6 +87,13 @@ class YouTubeVideoInfo {
   /// Sorted smallest to largest; the last entry is the best quality.
   final List<YouTubeStreamOption> qualities;
 
+  /// The video's description, empty when the backend could not fetch it.
+  final String description;
+
+  /// Chapter markers parsed from the description, empty when the
+  /// description carries none.
+  final List<YouTubeChapter> chapters;
+
   /// The default stream to play: the highest quality available.
   YouTubeStreamOption get best => qualities.last;
 
@@ -91,6 +101,15 @@ class YouTubeVideoInfo {
   /// to the video ID when the watch-page scrape was blocked.
   String get displayLabel =>
       title.isEmpty ? videoId : (author.isEmpty ? title : '$title · $author');
+
+  /// The chapter covering [position], or null when there are no chapters
+  /// or the position falls outside all of them.
+  YouTubeChapter? chapterAt(Duration position) {
+    for (final chapter in chapters) {
+      if (chapter.contains(position)) return chapter;
+    }
+    return null;
+  }
 }
 
 /// One closed-caption track: language plus where to fetch it.
@@ -180,13 +199,19 @@ class YouTubeService implements YouTubeBackend {
     try {
       String title;
       String author;
+      String description;
+      Duration? duration;
       try {
         final video = await yt.videos.get(id);
         title = video.title;
         author = video.author;
+        description = video.description;
+        duration = video.duration;
       } on Object {
         title = '';
         author = '';
+        description = '';
+        duration = null;
       }
       final manifest = await yt.videos.streams.getManifest(
         id,
@@ -202,6 +227,8 @@ class YouTubeService implements YouTubeBackend {
         title: title,
         author: author,
         qualities: qualities,
+        description: description,
+        chapters: ChapterParser.parse(description, videoDuration: duration),
       );
     } finally {
       yt.close();

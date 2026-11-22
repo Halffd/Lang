@@ -92,8 +92,20 @@ class StructuredDefinition extends StatelessWidget {
     if (node is String) {
       out.write(node);
     } else if (node is List) {
-      for (final c in node) {
-        _flatten(c, out);
+      // A list is a gloss list: separate its items with '; ' so senses
+      // stop running together ("dog cat pet" → "dog; cat; pet").
+      // Structured lists (<li>/<div> items) and plain-text lists
+      // (JSON arrays of strings) both need the separator; inline runs
+      // (spans inside one sentence) are Maps, not a List of items.
+      final isItemList = node.isNotEmpty &&
+          node.every(
+            (c) =>
+                c is String ||
+                (c is Map && (c['tag'] == 'li' || c['tag'] == 'div')),
+          );
+      for (var i = 0; i < node.length; i++) {
+        if (isItemList && i > 0) out.write('; ');
+        _flatten(node[i], out);
       }
     } else if (node is Map) {
       final m = node.map((k, v) => MapEntry(k.toString(), v));

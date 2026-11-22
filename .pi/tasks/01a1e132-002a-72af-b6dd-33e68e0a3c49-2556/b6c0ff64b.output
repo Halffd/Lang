@@ -1,0 +1,4 @@
+Analyzing 7 items...                                            
+[background task timeout: Timed out after 1800s]
+
+[background task POSIX termination: POSIX process group 838961 remained present after SIGKILL. Descendant processes may have leaked.]

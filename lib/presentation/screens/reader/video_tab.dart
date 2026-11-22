@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -14,17 +15,17 @@ import 'package:lang/core/services/popup_dictionary_controller.dart';
 import 'package:lang/core/services/whisper_subs_service.dart';
 import 'package:lang/presentation/screens/reader/pip_windows.dart';
 import 'package:lang/presentation/widgets/annotated_line.dart';
-import 'package:lang/data/repositories/dictionary_service.dart';
-import 'package:lang/utils/pinyin_util.dart';
 import 'package:lang/core/services/mobile_listening_service.dart';
 import 'package:lang/core/services/youtube_resolver.dart';
 import 'package:lang/core/services/youtube_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/l10n/app_localizations.dart';
-import 'package:lang/utils/chinese_util.dart';
+import 'package:lang/utils/chapter_parser.dart';
 import 'package:lang/utils/font_scale.dart';
 import 'package:lang/utils/subtitle_parser.dart';
 import 'package:lang/presentation/widgets/submit_text_field.dart';
+import 'package:lang/presentation/widgets/video/player_side_pane.dart';
+import 'package:lang/presentation/widgets/video/player_surface.dart';
 
 /// Video player tab.
 ///
@@ -59,9 +60,7 @@ class _VideoTabState extends State<VideoTab> {
   String? _youtubeVideoId;
 
   bool _loading = false;
-  bool _showTranscript = false;
   int _activeIndex = -1;
-  final _transcriptScroll = ScrollController();
   Timer? _ticker;
 
   /// What is currently open: a file path or the canonical YouTube URL.
@@ -78,7 +77,6 @@ class _VideoTabState extends State<VideoTab> {
   /// Desktop popup windows: PiP mini-player and captions.
   WindowController? _pipWindow;
   WindowController? _captionWindow;
-  int? _captionPushedIndex;
 
   /// Android PiP controller (floating package).
   final Floating _floating = Floating();
@@ -91,6 +89,20 @@ class _VideoTabState extends State<VideoTab> {
 
   /// Ticks since the last progress persist (25 ticks = 5s).
   int _ticksSincePersist = 0;
+
+  /// The side pane's open tab.
+  PlayerPaneTab _paneTab = PlayerPaneTab.description;
+
+  /// Whether the side pane is open on narrow layouts (a drawer there,
+  /// a permanent pane on wide ones).
+  bool _paneOpen = true;
+
+  /// The metadata of the loaded YouTube video: description, chapters and
+  /// the quality list. Null for local files, which have no chapters.
+  YouTubeVideoInfo? _videoInfo;
+
+  /// The chapter currently playing, for the pane's chapter list.
+  YouTubeChapter? _activeChapter;
 
   /// yt-dlp when installed, youtube_explode otherwise.
   final _youtube = YouTubeResolver();
@@ -113,7 +125,6 @@ class _VideoTabState extends State<VideoTab> {
     _appState?.videoLoadRequest.removeListener(_onVideoLoadRequest);
     _persistProgress();
     _ticker?.cancel();
-    _transcriptScroll.dispose();
     if (_listeningMode) {
       // leaving the tab ends the listening session (the notification
       // goes away with it; a proper background queue is out of scope)
@@ -135,13 +146,6 @@ class _VideoTabState extends State<VideoTab> {
       v.value.position.inMilliseconds,
       _watchedMs,
     );
-  }
-
-  String _fmt(Duration d) {
-    final h = d.inHours;
-    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return h > 0 ? '$h:$m:$s' : '$m:$s';
   }
 
   /// Swap in a fully initialized controller, keeping the customization
@@ -222,9 +226,9 @@ class _VideoTabState extends State<VideoTab> {
         _activeStreamUrl = path;
         _watchedMs = 0;
         _youtubeVideoId = null;
+        _videoInfo = null;
         _cues = const [];
         _subLabel = null;
-        _showTranscript = false;
       });
       appState.recordRecentVideo({
         'kind': 'file',
@@ -290,9 +294,9 @@ class _VideoTabState extends State<VideoTab> {
         _currentSource = mediaUrl;
         _watchedMs = 0;
         _youtubeVideoId = null;
+        _videoInfo = null;
         _cues = const [];
         _subLabel = null;
-        _showTranscript = false;
       });
       final srtUrl = request['srtUrl'] as String?;
       if (srtUrl != null && srtUrl.isNotEmpty) {
@@ -356,9 +360,9 @@ class _VideoTabState extends State<VideoTab> {
         _activeStreamUrl = info.best.url;
         _watchedMs = 0;
         _youtubeVideoId = info.videoId;
+        _videoInfo = info;
         _cues = const [];
         _subLabel = null;
-        _showTranscript = false;
       });
       appState.recordRecentVideo({
         'kind': 'youtube',
@@ -414,6 +418,7 @@ class _VideoTabState extends State<VideoTab> {
       builder: (context) => AlertDialog(
         title: Text(l10n?.videoYouTube ?? 'YouTube'),
         content: TextField(
+          contextMenuBuilder: AppContextMenu.editable,
           controller: field,
           autofocus: true,
           decoration: InputDecoration(
@@ -430,7 +435,7 @@ class _VideoTabState extends State<VideoTab> {
               final picked = await _searchYouTube();
               if (picked != null && mounted) await _openYouTube(picked);
             },
-            child: const Text('Search…'),
+            child: Text(l10n?.videoSearchEllipsis ?? 'Search…'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -448,6 +453,7 @@ class _VideoTabState extends State<VideoTab> {
   /// Search YouTube (yt-dlp `ytsearch` / explode fallback) and let the
   /// user pick a result. Returns the canonical watch URL of the pick.
   Future<String?> _searchYouTube() async {
+    final l10n = AppLocalizations.of(context);
     final field = TextEditingController();
     List<YouTubeSearchHit>? hits;
     String? error;
@@ -483,13 +489,14 @@ class _VideoTabState extends State<VideoTab> {
           }
 
           return AlertDialog(
-            title: const Text('Search YouTube'),
+            title: Text(l10n?.videoSearchYouTube ?? 'Search YouTube'),
             content: SizedBox(
               width: 440,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
+                    contextMenuBuilder: AppContextMenu.editable,
                     controller: field,
                     autofocus: true,
                     decoration: const InputDecoration(
@@ -749,7 +756,6 @@ class _VideoTabState extends State<VideoTab> {
     setState(() {
       _cues = cues;
       _subLabel = label;
-      _showTranscript = cues.isNotEmpty;
       _activeIndex = -1;
       _error = cues.isEmpty ? 'no cues found in $label' : null;
     });
@@ -764,10 +770,12 @@ class _VideoTabState extends State<VideoTab> {
   Future<void> _transcribeWithServer() async {
     if (_loading || _currentSource == null) return;
     final appState = context.read<AppState>();
+    final l10n = AppLocalizations.of(context);
     final url = appState.whisperSubsUrl.trim();
     if (url.isEmpty) {
       setState(
-        () => _error = 'Set the WhisperSubs server URL in Settings first.',
+        () => _error = l10n?.videoWhisperSubsServerMissing ??
+            'Set the WhisperSubs server URL in Settings first.',
       );
       return;
     }
@@ -782,7 +790,7 @@ class _VideoTabState extends State<VideoTab> {
       builder: (ctx) => ValueListenableBuilder<String>(
         valueListenable: status,
         builder: (ctx, line, _) => AlertDialog(
-          title: const Text('WhisperSubs'),
+          title: Text(l10n?.videoWhisperSubs ?? 'WhisperSubs'),
           content: Row(
             children: [
               const SizedBox(
@@ -859,7 +867,6 @@ class _VideoTabState extends State<VideoTab> {
         _loading = false;
         _cues = cues;
         _subLabel = track.label;
-        _showTranscript = cues.isNotEmpty;
         _activeIndex = -1;
         _error = cues.isEmpty ? 'no cues found in ${track.label}' : null;
       });
@@ -934,10 +941,8 @@ class _VideoTabState extends State<VideoTab> {
               ),
         );
         if (idx == _activeIndex) return;
-        final wasHidden = _activeIndex < 0 && idx >= 0;
         setState(() => _activeIndex = idx);
         _pushCaptionToWindow();
-        if (wasHidden) _scrollTranscriptTo(idx);
         return;
       }
       if (v.value.isPlaying) {
@@ -952,12 +957,27 @@ class _VideoTabState extends State<VideoTab> {
         _cues,
         _subtitlePosition(context.read<AppState>()),
       );
+      _trackActiveChapter();
       if (idx == _activeIndex) return;
-      final wasHidden = _activeIndex < 0 && idx >= 0;
       setState(() => _activeIndex = idx);
-      if (wasHidden) _scrollTranscriptTo(idx);
       _pushCaptionToWindow();
     });
+  }
+
+  /// Keep [_activeChapter] in step with the playhead, so the side pane
+  /// can mark the chapter being played.
+  void _trackActiveChapter() {
+    final info = _videoInfo;
+    if (info == null || info.chapters.isEmpty) {
+      if (_activeChapter != null) {
+        setState(() => _activeChapter = null);
+      }
+      return;
+    }
+    final chapter = info.chapterAt(_video?.value.position ?? Duration.zero);
+    if (chapter?.start != _activeChapter?.start) {
+      setState(() => _activeChapter = chapter);
+    }
   }
 
   // ------------------------------------------------------------
@@ -1017,6 +1037,13 @@ class _VideoTabState extends State<VideoTab> {
     final v = _video;
     final url = _activeStreamUrl;
     if (v == null || url == null) return;
+    // the PiP window is already open: show it again rather than spawning
+    // a second one
+    final existing = _pipWindow;
+    if (existing != null) {
+      await existing.show();
+      return;
+    }
     final session = PipSession(
       url: url,
       isFile: _youtubeVideoId == null,
@@ -1039,11 +1066,16 @@ class _VideoTabState extends State<VideoTab> {
   /// package. The video keeps playing in the system PiP window.
   Future<void> _enterMobilePip() async {
     try {
+      final l10n = AppLocalizations.of(context);
       final available = await _floating.isPipAvailable;
       if (!available) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('PiP unavailable on this device')),
+            SnackBar(
+              content: Text(
+                l10n?.videoPipUnavailable ?? 'PiP unavailable on this device',
+              ),
+            ),
           );
         }
         return;
@@ -1099,28 +1131,13 @@ class _VideoTabState extends State<VideoTab> {
     try {
       await win.invokeMethod('updateCaption', {'text': text});
     } catch (_) {
-      // window closed
+      // the window was closed; nothing to push to
     }
   }
 
   /// Toggle the in-app draggable caption overlay (mobile + desktop).
   void _toggleCaptionOverlay() {
     setState(() => _showCaptionOverlay = !_showCaptionOverlay);
-  }
-
-  void _scrollTranscriptTo(int index) {
-    if (index < 0 || !_transcriptScroll.hasClients) return;
-    // each row is a fixed-height list tile plus the divider, so an estimated
-    // extent keeps this independent of text length
-    final target = (index * 56.0).clamp(
-      0.0,
-      _transcriptScroll.position.maxScrollExtent,
-    );
-    _transcriptScroll.animateTo(
-      target,
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOut,
-    );
   }
 
   /// Recent videos with their watch time; tapping reopens and resumes.
@@ -1191,7 +1208,11 @@ class _VideoTabState extends State<VideoTab> {
   /// Look a cue up in the shared popup dictionary. Tries the whole line
   /// first, then falls back to its first token, which is the actionable part
   /// when the line is a whole sentence.
+  ///
+  /// Gated on the hover-definitions setting: with it off, neither the
+  /// long press nor the hover on a transcript word opens a definition.
   Future<void> _lookup(SubtitleCue cue) async {
+    if (!context.read<AppState>().showHoverDefinitions) return;
     final text = cue.plainText;
     if (text.isEmpty) return;
     await PopupDictionaryController.instance.showLookupFor(text);
@@ -1220,172 +1241,115 @@ class _VideoTabState extends State<VideoTab> {
       return _buildNoMedia(l10n, theme);
     }
 
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Flow's rule: on a wide screen the pane sits beside the player,
+        // on a narrow one it becomes a drawer over it.
+        final wide = constraints.maxWidth >= _paneBreakpoint;
+        final player = _buildPlayer(v, l10n, theme, appState, subScale);
+
+        if (wide) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: player),
+              if (_paneOpen) ...[
+                const VerticalDivider(width: 1),
+                SizedBox(
+                  width: _paneWidth,
+                  child: _buildSidePane(l10n, theme, appState),
+                ),
+              ],
+            ],
+          );
+        }
+
+        return Stack(
+          children: [
+            Positioned.fill(child: player),
+            if (_paneOpen)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: constraints.maxHeight * 0.7,
+                child: _buildSidePane(l10n, theme, appState),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// The width at which the side pane moves beside the player instead of
+  /// covering it.
+  static const double _paneBreakpoint = 840;
+
+  /// The width of the side pane on wide screens.
+  static const double _paneWidth = 360;
+
+  /// The video picture with its overlay controls, and the strip of
+  /// secondary actions under it.
+  Widget _buildPlayer(
+    VideoPlayerController v,
+    AppLocalizations? l10n,
+    ThemeData theme,
+    AppState appState,
+    double subScale,
+  ) {
+    final activeCue = _cues.isNotEmpty && _activeIndex >= 0
+        ? _cues[_activeIndex.clamp(0, _cues.length - 1)].plainText
+        : null;
+
+    // The controls surface: the full player with its controls.
+    final playerSurface = VideoPlayerSurface(
+      controller: v,
+      appState: appState,
+      activeCue: activeCue,
+      subtitleScale: subScale,
+      chapters: _videoInfo?.chapters ?? const [],
+      onTogglePlay: () => v.value.isPlaying ? v.pause() : v.play(),
+      onSeek: (position) => v.seekTo(position),
+      onSelectChapter: (chapter) => v.seekTo(chapter.start),
+      leadingControls: [
+        _speedButton(appState, l10n),
+        _qualityButton(l10n),
+      ],
+      trailingControls: [
+        _subtitleSizeButton(appState, l10n),
+        _delayButton(appState, l10n),
+        _paneToggleButton(l10n),
+      ],
+    );
+
     return Column(
       children: [
         if (_showCaptionOverlay && _cues.isNotEmpty)
           DraggableCaptionOverlay(
-            text: _activeIndex >= 0
-                ? _cues[_activeIndex.clamp(0, _cues.length - 1)].plainText
-                : '',
+            text: activeCue ?? '',
             fontSize: fs(context, 13) * subScale * 1.4,
+            appState: appState,
             onDismiss: () => setState(() => _showCaptionOverlay = false),
           ),
         AspectRatio(
           aspectRatio: v.value.aspectRatio == 0 ? 16 / 9 : v.value.aspectRatio,
-          // Android PiP: when the system enters PiP, drop the controls and
-          // show only the video surface (native PiP window shows it).
-          child: PiPSwitcher(
-            childWhenDisabled: Stack(
-              alignment: Alignment.center,
-              children: [
-                VideoPlayer(v),
-                if (_cues.isNotEmpty)
-                  Positioned(
-                    left: 12,
-                    right: 12,
-                    bottom: 12,
-                    child: _ActiveSubtitle(
-                      cue: _cues.isNotEmpty && _activeIndex >= 0
-                          ? _cues[_activeIndex.clamp(0, _cues.length - 1)]
-                          : null,
-                      scale: fs(context, 13) * subScale,
-                    ),
-                  ),
-                ValueListenableBuilder<VideoPlayerValue>(
-                  valueListenable: v,
-                  builder: (context, state, _) => state.isPlaying
-                      ? const SizedBox.shrink()
-                      : IconButton(
-                          iconSize: 64,
-                          color: Colors.white70,
-                          icon: const Icon(Icons.play_circle_fill),
-                          onPressed: () => v.play(),
-                        ),
-                ),
-              ],
-            ),
-            // PiP: video only, no controls (system window owns it)
-            childWhenEnabled: VideoPlayer(v),
-          ),
+          // PiPSwitcher polls the platform PiP status every 10ms; the
+          // plugin only exists on Android, so on every other platform
+          // the poll throws unhandled MissingPluginExceptions and
+          // floods the log. Only Android gets the switcher.
+          child:
+              Platform.isAndroid
+                  ? PiPSwitcher(
+                    // Android PiP: when the system enters PiP, drop the
+                    // controls and show only the video surface (native
+                    // PiP window shows it).
+                    childWhenDisabled: playerSurface,
+                    // PiP: video only, no controls (system window owns it)
+                    childWhenEnabled: VideoPlayer(v),
+                  )
+                  : playerSurface,
         ),
-        VideoProgressIndicator(v, allowScrubbing: true),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          child: Wrap(
-            spacing: 4,
-            runSpacing: 0,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              IconButton(
-                icon: Icon(v.value.isPlaying ? Icons.pause : Icons.play_arrow),
-                onPressed: () => v.value.isPlaying ? v.pause() : v.play(),
-              ),
-              Text(
-                '${_fmt(v.value.position)} / ${_fmt(v.value.duration)}',
-                style: TextStyle(fontSize: fs(context, 12)),
-              ),
-              _speedMenu(appState, l10n),
-              _subtitleSizeMenu(appState, l10n),
-              _delayMenu(appState, l10n),
-              if (_cues.isNotEmpty)
-                TextButton.icon(
-                  icon: Icon(
-                    _showTranscript
-                        ? Icons.view_list
-                        : Icons.closed_caption_outlined,
-                    size: 18,
-                  ),
-                  label: Text(
-                    _showTranscript
-                        ? (l10n?.videoHideTranscript ?? 'Hide transcript')
-                        : (l10n?.videoShowTranscript ?? 'Transcript'),
-                  ),
-                  onPressed: () =>
-                      setState(() => _showTranscript = !_showTranscript),
-                ),
-              TextButton.icon(
-                icon: const Icon(Icons.subtitles_outlined, size: 18),
-                label: Text(_subLabel ?? (l10n?.videoLoadSubs ?? 'Load subs')),
-                onPressed: _pickSubtitles,
-              ),
-              IconButton(
-                icon: const Icon(Icons.history, size: 18),
-                tooltip: l10n?.videoRecent ?? 'Recent',
-                onPressed: _loading ? null : _showRecentVideos,
-              ),
-              // picture-in-picture: desktop mini window / Android native
-              IconButton(
-                icon: const Icon(Icons.picture_in_picture_alt, size: 18),
-                tooltip: _isDesktopTarget
-                    ? 'Pop out mini player'
-                    : 'Picture-in-picture',
-                onPressed: _togglePip,
-              ),
-              // popup captions: desktop popup window / in-app overlay
-              IconButton(
-                icon: Icon(
-                  Icons.closed_caption,
-                  size: 18,
-                  color: (_showCaptionOverlay || _captionWindow != null)
-                      ? theme.colorScheme.primary
-                      : null,
-                ),
-                tooltip: 'Popup captions',
-                onPressed: () {
-                  if (_isDesktopTarget) {
-                    _openCaptionsWindow();
-                  } else {
-                    _toggleCaptionOverlay();
-                  }
-                },
-              ),
-              // mobile listening mode: background audio, screen off
-              if (MobileListeningService.isSupported &&
-                  _activeStreamUrl != null)
-                IconButton(
-                  icon: Icon(
-                    _listeningMode
-                        ? Icons.headphones
-                        : Icons.headphones_outlined,
-                    size: 18,
-                    color: _listeningMode ? theme.colorScheme.primary : null,
-                  ),
-                  tooltip: _listeningMode
-                      ? 'Leave listening mode (back to video)'
-                      : 'Listening mode (audio only, screen off)',
-                  onPressed: _toggleListeningMode,
-                ),
-              if (_youtubeVideoId != null) ...[
-                TextButton.icon(
-                  icon: const Icon(Icons.closed_caption, size: 18),
-                  label: Text(l10n?.videoCaptions ?? 'Captions'),
-                  onPressed: _loading ? null : _pickCaptions,
-                ),
-                TextButton.icon(
-                  icon: const Icon(Icons.graphic_eq, size: 18),
-                  label: const Text('WhisperSubs'),
-                  onPressed: _loading ? null : _transcribeWithServer,
-                ),
-              ],
-            ],
-          ),
-        ),
-        if (_mediaLabel != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                _mediaLabel!,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: fs(context, 11),
-                  color: theme.colorScheme.outline,
-                ),
-              ),
-            ),
-          ),
+        _buildActionBar(l10n, theme, appState),
         if (_error != null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -1397,13 +1361,261 @@ class _VideoTabState extends State<VideoTab> {
               ),
             ),
           ),
-        if (_showTranscript) _buildTranscript(appState, l10n, theme),
-        const SizedBox(height: 8),
       ],
     );
   }
 
-  Widget _speedMenu(AppState appState, AppLocalizations? l10n) {
+  /// The strip of actions under the player: subtitles, captions, PiP,
+  /// popup captions, listening mode and recents.
+  Widget _buildActionBar(
+    AppLocalizations? l10n,
+    ThemeData theme,
+    AppState appState,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Wrap(
+        spacing: 4,
+        runSpacing: 0,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          TextButton.icon(
+            icon: const Icon(Icons.subtitles_outlined, size: 18),
+            label: Text(_subLabel ?? (l10n?.videoLoadSubs ?? 'Load subs')),
+            onPressed: _pickSubtitles,
+          ),
+          if (_youtubeVideoId != null) ...[
+            TextButton.icon(
+              icon: const Icon(Icons.closed_caption, size: 18),
+              label: Text(l10n?.videoCaptions ?? 'Captions'),
+              onPressed: _loading ? null : _pickCaptions,
+            ),
+            TextButton.icon(
+              icon: const Icon(Icons.graphic_eq, size: 18),
+              label: Text(l10n?.videoWhisperSubs ?? 'WhisperSubs'),
+              onPressed: _loading ? null : _transcribeWithServer,
+            ),
+          ],
+          IconButton(
+            icon: const Icon(Icons.history, size: 18),
+            tooltip: l10n?.videoRecent ?? 'Recent',
+            onPressed: _loading ? null : _showRecentVideos,
+          ),
+          // picture-in-picture: desktop mini window / Android native
+          IconButton(
+            icon: const Icon(Icons.picture_in_picture_alt, size: 18),
+            tooltip: _isDesktopTarget
+                ? (l10n?.videoPopOutMiniPlayer ?? 'Pop out mini player')
+                : (l10n?.videoPictureInPicture ?? 'Picture-in-picture'),
+            onPressed: _togglePip,
+          ),
+          // popup captions: desktop popup window / in-app overlay
+          IconButton(
+            icon: Icon(
+              Icons.closed_caption,
+              size: 18,
+              color: (_showCaptionOverlay || _captionWindow != null)
+                  ? theme.colorScheme.primary
+                  : null,
+            ),
+            tooltip: l10n?.videoPopupCaptions ?? 'Popup captions',
+            onPressed: () {
+              if (_isDesktopTarget) {
+                _openCaptionsWindow();
+              } else {
+                _toggleCaptionOverlay();
+              }
+            },
+          ),
+          // mobile listening mode: background audio, screen off
+          if (MobileListeningService.isSupported && _activeStreamUrl != null)
+            IconButton(
+              icon: Icon(
+                _listeningMode
+                    ? Icons.headphones
+                    : Icons.headphones_outlined,
+                size: 18,
+                color: _listeningMode ? theme.colorScheme.primary : null,
+              ),
+              tooltip: _listeningMode
+                  ? (l10n?.videoLeaveListeningMode ??
+                        'Leave listening mode (back to video)')
+                  : (l10n?.videoListeningMode ??
+                        'Listening mode (audio only, screen off)'),
+              onPressed: _toggleListeningMode,
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// The side pane: description, chapters, transcript and settings.
+  Widget _buildSidePane(
+    AppLocalizations? l10n,
+    ThemeData theme,
+    AppState appState,
+  ) {
+    final info = _videoInfo;
+    return Material(
+      color: theme.colorScheme.surface,
+      child: PlayerSidePane(
+        tab: _paneTab,
+        onTabChanged: (tab) => setState(() => _paneTab = tab),
+        title: info?.title ?? _mediaLabel,
+        author: info?.author,
+        showAuthor: info != null,
+        description: info?.description ?? '',
+        chapters: info?.chapters ?? const [],
+        currentPosition: _video?.value.position ?? Duration.zero,
+        transcript: [
+          for (final cue in _cues) (text: cue.plainText, start: cue.startDuration),
+        ],
+        activeTranscriptIndex: _activeIndex,
+        onSelectChapter: (chapter) => _video?.seekTo(chapter.start),
+        onSelectLine: (index) => _seekTo(_cues[index]),
+        onLookupLine: (index) => _lookup(_cues[index]),
+        transcriptBuilder: (context, text, active) => _buildTranscriptLine(
+          context,
+          text,
+          active,
+          appState,
+        ),
+        settings: _buildSettingsPane(l10n, theme, appState),
+      ),
+    );
+  }
+
+  /// One line of the transcript in the side pane. Reading annotations
+  /// (furigana, pinyin, word colouring) are applied when the reading
+  /// style is on, the same way the other readers render them.
+  Widget _buildTranscriptLine(
+    BuildContext context,
+    String text,
+    bool active,
+    AppState appState,
+  ) {
+    final subScale = appState.videoSubtitleScale;
+    if (!_needsAnnotation(appState)) {
+      return Text(
+        text,
+        maxLines: 3,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: fs(context, 12) * subScale,
+          fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+        ),
+      );
+    }
+    return AnnotatedLine(
+      text: text,
+      appState: appState,
+      fontSize: fs(context, 12) * subScale,
+      weight: active ? FontWeight.w600 : FontWeight.normal,
+    );
+  }
+
+  /// The settings tab: the playback controls that are not on the
+  /// picture itself.
+  List<Widget> _buildSettingsPane(
+    AppLocalizations? l10n,
+    ThemeData theme,
+    AppState appState,
+  ) {
+    return [
+      ListTile(
+        dense: true,
+        leading: const Icon(Icons.speed),
+        title: Text(l10n?.videoSpeed ?? 'Playback speed'),
+        subtitle: Text('${appState.videoPlaybackSpeed}x'),
+        trailing: PopupMenuButton<double>(
+          tooltip: l10n?.videoSpeed ?? 'Playback speed',
+          onSelected: _setSpeed,
+          itemBuilder: (context) => [
+            for (final speed in const [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0])
+              CheckedPopupMenuItem(
+                value: speed,
+                checked: appState.videoPlaybackSpeed == speed,
+                child: Text('${speed}x'),
+              ),
+          ],
+          child: const Icon(Icons.more_vert),
+        ),
+      ),
+      ListTile(
+        dense: true,
+        leading: const Icon(Icons.format_size),
+        title: Text(l10n?.videoSubtitleSize ?? 'Subtitle size'),
+        subtitle: Text('${appState.videoSubtitleScale}x'),
+        trailing: PopupMenuButton<double>(
+          tooltip: l10n?.videoSubtitleSize ?? 'Subtitle size',
+          onSelected: appState.setVideoSubtitleScale,
+          itemBuilder: (context) => [
+            for (final scale in const [0.75, 1.0, 1.25, 1.5, 2.0])
+              CheckedPopupMenuItem(
+                value: scale,
+                checked: appState.videoSubtitleScale == scale,
+                child: Text('${scale}x'),
+              ),
+          ],
+          child: const Icon(Icons.more_vert),
+        ),
+      ),
+      ListTile(
+        dense: true,
+        leading: const Icon(Icons.timer_outlined),
+        title: Text(l10n?.videoDelay ?? 'Subtitle delay'),
+        subtitle: Text(
+          appState.videoSubtitleOffsetMs == 0
+              ? '0 ms'
+              : '${appState.videoSubtitleOffsetMs > 0 ? '+' : ''}'
+                    '${appState.videoSubtitleOffsetMs} ms',
+        ),
+        trailing: PopupMenuButton<int>(
+          tooltip: l10n?.videoDelay ?? 'Subtitle delay',
+          onSelected: appState.setVideoSubtitleOffset,
+          itemBuilder: (context) => [
+            for (final ms in _delayPresets)
+              CheckedPopupMenuItem(
+                value: ms,
+                checked: appState.videoSubtitleOffsetMs == ms,
+                child: Text(ms == 0 ? '0 ms' : '${ms > 0 ? '+' : ''}$ms ms'),
+              ),
+          ],
+          child: const Icon(Icons.more_vert),
+        ),
+      ),
+      if (_videoInfo != null && _videoInfo!.qualities.length > 1)
+        ListTile(
+          dense: true,
+          leading: const Icon(Icons.high_quality_outlined),
+          title: Text(l10n?.videoQuality ?? 'Quality'),
+          subtitle: Text(_activeQualityLabel),
+          trailing: PopupMenuButton<String>(
+            tooltip: l10n?.videoQuality ?? 'Quality',
+            onSelected: _switchQuality,
+            itemBuilder: (context) => [
+              for (final option in _videoInfo!.qualities)
+                CheckedPopupMenuItem(
+                  value: option.url,
+                  checked: option.url == _activeStreamUrl,
+                  child: Text(option.label),
+                ),
+            ],
+            child: const Icon(Icons.more_vert),
+          ),
+        ),
+      if (_activeChapter != null)
+        ListTile(
+          dense: true,
+          leading: const Icon(Icons.bookmark_outline),
+          title: Text(l10n?.videoCurrentChapter ?? 'Current chapter'),
+          subtitle: Text(_activeChapter!.title),
+        ),
+    ];
+  }
+
+  /// The playback-speed button overlaid on the picture.
+  Widget _speedButton(AppState appState, AppLocalizations? l10n) {
     return PopupMenuButton<double>(
       tooltip: l10n?.videoSpeed ?? 'Playback speed',
       onSelected: _setSpeed,
@@ -1415,24 +1627,15 @@ class _VideoTabState extends State<VideoTab> {
             child: Text('${speed}x'),
           ),
       ],
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.speed, size: 18, color: Theme.of(context).hintColor),
-            const SizedBox(width: 4),
-            Text(
-              '${appState.videoPlaybackSpeed}x',
-              style: TextStyle(fontSize: fs(context, 12)),
-            ),
-          ],
-        ),
+      child: _OverlayButton(
+        icon: Icons.speed,
+        label: '${appState.videoPlaybackSpeed}x',
       ),
     );
   }
 
-  Widget _subtitleSizeMenu(AppState appState, AppLocalizations? l10n) {
+  /// The subtitle-size button overlaid on the picture.
+  Widget _subtitleSizeButton(AppState appState, AppLocalizations? l10n) {
     return PopupMenuButton<double>(
       tooltip: l10n?.videoSubtitleSize ?? 'Subtitle size',
       onSelected: appState.setVideoSubtitleScale,
@@ -1444,23 +1647,9 @@ class _VideoTabState extends State<VideoTab> {
             child: Text('${scale}x'),
           ),
       ],
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.format_size,
-              size: 18,
-              color: Theme.of(context).hintColor,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              '${appState.videoSubtitleScale}x',
-              style: TextStyle(fontSize: fs(context, 12)),
-            ),
-          ],
-        ),
+      child: _OverlayButton(
+        icon: Icons.format_size,
+        label: '${appState.videoSubtitleScale}x',
       ),
     );
   }
@@ -1468,7 +1657,8 @@ class _VideoTabState extends State<VideoTab> {
   /// Subtitle delay presets, mirroring jidoujisho's subtitle-delay option.
   static const _delayPresets = [-5000, -1000, -250, 0, 250, 1000, 5000];
 
-  Widget _delayMenu(AppState appState, AppLocalizations? l10n) {
+  /// The subtitle-delay button overlaid on the picture.
+  Widget _delayButton(AppState appState, AppLocalizations? l10n) {
     return PopupMenuButton<int>(
       tooltip: l10n?.videoDelay ?? 'Subtitle delay',
       onSelected: appState.setVideoSubtitleOffset,
@@ -1480,28 +1670,97 @@ class _VideoTabState extends State<VideoTab> {
             child: Text(ms == 0 ? '0 ms' : '${ms > 0 ? '+' : ''}$ms ms'),
           ),
       ],
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.timer_outlined,
-              size: 18,
-              color: Theme.of(context).hintColor,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              appState.videoSubtitleOffsetMs == 0
-                  ? '0 ms'
-                  : '${appState.videoSubtitleOffsetMs > 0 ? '+' : ''}'
-                        '${appState.videoSubtitleOffsetMs} ms',
-              style: TextStyle(fontSize: fs(context, 12)),
-            ),
-          ],
-        ),
+      child: _OverlayButton(
+        icon: Icons.timer_outlined,
+        label: appState.videoSubtitleOffsetMs == 0
+            ? '0 ms'
+            : '${appState.videoSubtitleOffsetMs > 0 ? '+' : ''}'
+                  '${appState.videoSubtitleOffsetMs} ms',
       ),
     );
+  }
+
+  /// The quality button overlaid on the picture. Only shown when the
+  /// source has more than one quality to pick from.
+  Widget _qualityButton(AppLocalizations? l10n) {
+    final info = _videoInfo;
+    if (info == null || info.qualities.length < 2) {
+      return const SizedBox.shrink();
+    }
+    return PopupMenuButton<String>(
+      tooltip: l10n?.videoQuality ?? 'Quality',
+      onSelected: _switchQuality,
+      itemBuilder: (context) => [
+        for (final option in info.qualities)
+          CheckedPopupMenuItem(
+            value: option.url,
+            checked: option.url == _activeStreamUrl,
+            child: Text(option.label),
+          ),
+      ],
+      child: _OverlayButton(
+        icon: Icons.high_quality_outlined,
+        label: _activeQualityLabel,
+      ),
+    );
+  }
+
+  /// The button that opens and closes the side pane.
+  Widget _paneToggleButton(AppLocalizations? l10n) {
+    return IconButton(
+      icon: Icon(
+        _paneOpen ? Icons.view_sidebar : Icons.view_sidebar_outlined,
+        size: 20,
+      ),
+      color: Colors.white,
+      tooltip: _paneOpen
+          ? (l10n?.videoHidePane ?? 'Hide side panel')
+          : (l10n?.videoShowPane ?? 'Show side panel'),
+      onPressed: () => setState(() => _paneOpen = !_paneOpen),
+    );
+  }
+
+  /// The label of the quality currently playing.
+  String get _activeQualityLabel {
+    final info = _videoInfo;
+    if (info == null) return '';
+    for (final option in info.qualities) {
+      if (option.url == _activeStreamUrl) return option.label;
+    }
+    return '';
+  }
+
+  /// Switch to another quality of the same video, keeping the playhead.
+  Future<void> _switchQuality(String url) async {
+    final v = _video;
+    if (v == null) return;
+    final l10n = AppLocalizations.of(context);
+    final position = v.value.position;
+    final wasPlaying = v.value.isPlaying;
+    final controller = VideoPlayerController.networkUrl(Uri.parse(url));
+    try {
+      await controller.initialize();
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+      final appState = context.read<AppState>();
+      await controller.setPlaybackSpeed(appState.videoPlaybackSpeed);
+      await controller.seekTo(position);
+      if (wasPlaying) await controller.play();
+      setState(() {
+        _video?.dispose();
+        _video = controller;
+        _activeStreamUrl = url;
+      });
+    } on Object {
+      await controller.dispose();
+      if (!mounted) return;
+      setState(
+        () => _error =
+            l10n?.videoCouldNotSwitchQuality ?? 'Could not switch quality.',
+      );
+    }
   }
 
   Widget _buildNoMedia(AppLocalizations? l10n, ThemeData theme) {
@@ -1572,97 +1831,39 @@ class _VideoTabState extends State<VideoTab> {
     );
   }
 
-  Widget _buildTranscript(
-    AppState appState,
-    AppLocalizations? l10n,
-    ThemeData theme,
-  ) {
-    if (_cues.isEmpty) {
-      return Expanded(
-        child: Center(
-          child: Text(
-            l10n?.videoNoSubs ?? 'No subtitle track loaded.',
-            style: TextStyle(
-              fontSize: fs(context, 13),
-              color: theme.colorScheme.outline,
-            ),
-          ),
-        ),
-      );
-    }
-    final subScale = appState.videoSubtitleScale;
-    final annotate = _needsAnnotation(appState);
-    return Expanded(
-      child: ListView.separated(
-        controller: _transcriptScroll,
-        itemCount: _cues.length,
-        separatorBuilder: (_, _) => const Divider(height: 1),
-        itemBuilder: (context, i) {
-          final cue = _cues[i];
-          final active = i == _activeIndex;
-          return ListTile(
-            dense: true,
-            selected: active,
-            selectedTileColor: theme.colorScheme.primaryContainer.withValues(
-              alpha: 0.25,
-            ),
-            leading: SizedBox(
-              width: 48,
-              child: Text(
-                _fmt(cue.startDuration),
-                style: TextStyle(
-                  fontSize: fs(context, 11),
-                  color: theme.colorScheme.outline,
-                ),
-              ),
-            ),
-            title: annotate
-                ? AnnotatedLine(
-                    text: cue.plainText,
-                    appState: appState,
-                    fontSize: fs(context, 13) * subScale,
-                    weight: active ? FontWeight.w600 : FontWeight.normal,
-                  )
-                : Text(
-                    cue.plainText,
-                    style: TextStyle(
-                      fontSize: fs(context, 13) * subScale,
-                      fontWeight: active ? FontWeight.w600 : FontWeight.normal,
-                    ),
-                  ),
-            onTap: () => _seekTo(cue),
-            onLongPress: () => _lookup(cue),
-          );
-        },
-      ),
-    );
-  }
-
   /// Whether the annotated path is on: either setting needs tokenizing.
   bool _needsAnnotation(AppState appState) =>
       appState.readingStyle != 'off' || appState.wordColoringEnabled;
 }
 
-class _ActiveSubtitle extends StatelessWidget {
-  const _ActiveSubtitle({required this.cue, required this.scale});
+/// A small button drawn over the video picture: an icon with its
+/// current value beside it.
+class _OverlayButton extends StatelessWidget {
+  const _OverlayButton({required this.icon, required this.label});
 
-  final SubtitleCue? cue;
-  final double scale;
+  final IconData icon;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    final text = cue?.plainText ?? '';
-    if (text.isEmpty) return const SizedBox.shrink();
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: TextStyle(color: Colors.white, fontSize: scale),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: Colors.white),
+          if (label.isNotEmpty) ...[
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontFeatures: [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -1671,15 +1872,20 @@ class _ActiveSubtitle extends StatelessWidget {
 /// Draggable floating caption bubble (in-app overlay for mobile and
 /// desktop): shows the current subtitle/STT cue text above everything
 /// else in the tab. Drag to reposition; double-tap to dismiss.
+///
+/// The cue text carries the same furigana / pinyin annotation as the
+/// subtitle over the picture and the transcript pane.
 class DraggableCaptionOverlay extends StatefulWidget {
   final String text;
   final double fontSize;
+  final AppState? appState;
   final VoidCallback? onDismiss;
 
   const DraggableCaptionOverlay({
     super.key,
     required this.text,
     required this.fontSize,
+    this.appState,
     this.onDismiss,
   });
 
@@ -1694,6 +1900,15 @@ class _DraggableCaptionOverlayState extends State<DraggableCaptionOverlay> {
   @override
   Widget build(BuildContext context) {
     if (widget.text.isEmpty) return const SizedBox.shrink();
+    final style = TextStyle(
+      fontSize: widget.fontSize,
+      height: 1.4,
+      color: Colors.white,
+      fontWeight: FontWeight.w600,
+    );
+    final appState = widget.appState;
+    final annotated = appState != null && appState.readingStyle != 'off';
+
     return Positioned(
       left: _offset.dx,
       top: _offset.dy,
@@ -1709,15 +1924,15 @@ class _DraggableCaptionOverlayState extends State<DraggableCaptionOverlay> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
           ),
-          child: Text(
-            widget.text,
-            style: TextStyle(
-              fontSize: widget.fontSize,
-              height: 1.4,
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          child: annotated
+              ? AnnotatedLine(
+                  text: widget.text,
+                  appState: appState,
+                  fontSize: widget.fontSize,
+                  weight: FontWeight.w600,
+                  baseStyle: style,
+                )
+              : Text(widget.text, style: style),
         ),
       ),
     );

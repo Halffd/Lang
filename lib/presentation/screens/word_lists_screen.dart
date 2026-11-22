@@ -9,6 +9,7 @@ import 'package:lang/presentation/widgets/dictionary_entry_card.dart';
 import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/utils/screen_size.dart';
 import 'package:lang/utils/font_scale.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 class WordListsScreen extends StatefulWidget {
   const WordListsScreen({super.key});
@@ -523,6 +524,7 @@ class _WordListsScreenState extends State<WordListsScreen>
                     children: [
                       Expanded(
                         child: TextField(
+                          contextMenuBuilder: AppContextMenu.editable,
                           controller: _searchController,
                           decoration: InputDecoration(
                             hintText: 'Search for a word...',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 class ImportWordsSheet extends StatefulWidget {
   final Function(List<String>) onImport;
@@ -92,6 +93,7 @@ class _ImportWordsSheetState extends State<ImportWordsSheet> {
               const SizedBox(height: 16),
               Expanded(
                 child: TextField(
+                  contextMenuBuilder: AppContextMenu.editable,
                   controller: _controller,
                   maxLines: null,
                   expands: true,

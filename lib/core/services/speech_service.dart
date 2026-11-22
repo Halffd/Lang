@@ -105,6 +105,13 @@ class SpeechService extends ChangeNotifier {
   String? _currentChunkPath;
   int _chunkStartMs = 0;
 
+  /// Completes when the chunk timer is not mid-rotation.
+  ///
+  /// The rotation stops the recorder and starts a new one, which are
+  /// both awaits. stopLive() waits for this so it does not read the
+  /// chunk path while the timer is swapping it.
+  Completer<void>? _rotationDone;
+
   /// Session-relative clock origin so segment timestamps are mm:ss
   /// offsets, not epoch ms.
   int _sessionStartMs = 0;
@@ -502,79 +509,121 @@ class SpeechService extends ChangeNotifier {
     try {
       final dir = await modelsDirProvider();
       if (!dir.existsSync()) dir.createSync(recursive: true);
-      _currentChunkPath = '${dir.path}/live_chunk_0.wav';
+      final chunk0 = '${dir.path}/live_chunk_0.wav';
+      _currentChunkPath = chunk0;
       await _recorder.start(
         const RecordConfig(
           encoder: AudioEncoder.wav,
           sampleRate: 16000,
           numChannels: 1,
         ),
-        path: _currentChunkPath!,
+        path: chunk0,
       );
 
       _chunkTimer = Timer.periodic(Duration(seconds: chunkSeconds), (_) async {
         if (!_recording) return;
+        // The chunk paths are captured as locals: stopLive() clears
+        // _currentChunkPath while this callback is suspended on the
+        // recorder's await, and reading the field afterwards would hit
+        // a null. The locals keep the two chunks distinct even when
+        // the session ends mid-rotation.
         final finishedPath = _currentChunkPath;
+        if (finishedPath == null) return;
         final startMs = _chunkStartMs - _sessionStartMs;
         // rotate to a fresh chunk file
         chunkIndex++;
-        _currentChunkPath = '${dir.path}/live_chunk_$chunkIndex.wav';
+        final nextPath = '${dir.path}/live_chunk_$chunkIndex.wav';
+        _currentChunkPath = nextPath;
         _chunkStartMs = DateTime.now().millisecondsSinceEpoch;
-        await _recorder.stop();
-        if (_recording) {
-          await _recorder.start(
-            const RecordConfig(
-              encoder: AudioEncoder.wav,
-              sampleRate: 16000,
-              numChannels: 1,
-            ),
-            path: _currentChunkPath!,
-          );
-        }
-        onChunkRecorded?.call(chunkIndex - 1);
-        // transcribe the finished chunk
+        // stopLive() waits for this so it does not read the chunk path
+        // while it is being swapped
+        final rotation = Completer<void>();
+        _rotationDone = rotation;
         try {
-          final (text, lang) = engine == SpeechEngine.api
-              ? await transcribeApi(
-                  finishedPath!,
-                  apiUrl: apiUrl ?? '',
-                  apiKey: apiKey ?? '',
-                  language: language,
-                )
-              : await transcribeFile(
-                  finishedPath!,
-                  engine: engine,
-                  modelPath: modelPath,
-                  language: language,
-                  // live chunks are 5s slivers: prime hallucination
-                  // territory (see transcribeFile)
-                  suppressRepetition: true,
-                );
-          if (text.trim().isNotEmpty) {
-            onSegment(
-              SpeechSegment(
-                text: text.trim(),
-                language: lang,
-                startMs: startMs,
-                endMs: DateTime.now().millisecondsSinceEpoch - _sessionStartMs,
+          await _recorder.stop();
+          if (_recording) {
+            await _recorder.start(
+              const RecordConfig(
+                encoder: AudioEncoder.wav,
+                sampleRate: 16000,
+                numChannels: 1,
               ),
+              path: nextPath,
             );
+            onChunkRecorded?.call(chunkIndex - 1);
           }
-        } catch (e) {
-          debugPrint('chunk transcription failed: $e');
         } finally {
-          // keep only the current chunk file on disk
-          try {
-            final f = File(finishedPath!);
-            if (f.existsSync()) f.deleteSync();
-          } catch (_) {}
+          _rotationDone = null;
+          if (!rotation.isCompleted) rotation.complete();
         }
+        await _transcribeChunk(
+          finishedPath: finishedPath,
+          startMs: startMs,
+          engine: engine,
+          modelPath: modelPath,
+          language: language,
+          apiUrl: apiUrl,
+          apiKey: apiKey,
+          onSegment: onSegment,
+        );
       });
       return true;
     } catch (e) {
       _recording = false;
       debugPrint('live start failed: $e');
       return false;
+    }
+  }
+
+  /// Transcribe one finished live chunk and report it as a segment.
+  ///
+  /// The chunk file is deleted afterwards, whether the transcription
+  /// succeeded or not, so a failing chunk does not leave files behind.
+  Future<void> _transcribeChunk({
+    required String finishedPath,
+    required int startMs,
+    required SpeechEngine engine,
+    required String modelPath,
+    required String language,
+    required String? apiUrl,
+    required String? apiKey,
+    required void Function(SpeechSegment segment) onSegment,
+  }) async {
+    try {
+      final (text, lang) = engine == SpeechEngine.api
+          ? await transcribeApi(
+              finishedPath,
+              apiUrl: apiUrl ?? '',
+              apiKey: apiKey ?? '',
+              language: language,
+            )
+          : await transcribeFile(
+              finishedPath,
+              engine: engine,
+              modelPath: modelPath,
+              language: language,
+              // live chunks are 5s slivers: prime hallucination
+              // territory (see transcribeFile)
+              suppressRepetition: true,
+            );
+      if (text.trim().isNotEmpty) {
+        onSegment(
+          SpeechSegment(
+            text: text.trim(),
+            language: lang,
+            startMs: startMs,
+            endMs: DateTime.now().millisecondsSinceEpoch - _sessionStartMs,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('chunk transcription failed: $e');
+    } finally {
+      // keep only the current chunk file on disk
+      try {
+        final f = File(finishedPath);
+        if (f.existsSync()) f.deleteSync();
+      } catch (_) {}
     }
   }
 
@@ -591,6 +640,11 @@ class SpeechService extends ChangeNotifier {
     _chunkTimer?.cancel();
     _chunkTimer = null;
     _recording = false;
+    // The chunk timer may be mid-rotation (suspended on the recorder's
+    // stop). Wait for it to finish before reading the path, otherwise
+    // the trailing chunk is the *next* (empty) file and the chunk
+    // that actually holds audio is lost.
+    await _rotationDone?.future;
     final path = _currentChunkPath;
     final startMs = _chunkStartMs - _sessionStartMs;
     try {

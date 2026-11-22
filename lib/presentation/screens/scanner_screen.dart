@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -117,7 +118,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
   Future<void> _processFile(String path) async {
     final appState = context.read<AppState>();
     var engine = OcrService.engineFromName(appState.ocrEngine);
-    if (engine == OcrEngine.ai) engine = OcrEngine.mlKit;
+    // the ai engine needs the AI provider from the search screen's
+    // context; fall back to the platform default engine
+    if (engine == OcrEngine.ai) engine = OcrService.engineFromName(null);
     final lang = appState.ocrLanguage;
     final language = (lang.isEmpty || lang == 'auto')
         ? appState.learningLanguage
@@ -528,6 +531,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: SelectableText(
+                contextMenuBuilder: AppContextMenu.editable,
                 _fullText,
                 style: const TextStyle(fontSize: 13, height: 1.5),
               ),
@@ -585,6 +589,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               ),
               const Spacer(),
               SelectableText(
+                contextMenuBuilder: AppContextMenu.editable,
                 '${_textCtrl.text.trim().length} chars',
                 style: TextStyle(
                   fontSize: fs(context, 11),

@@ -1,0 +1,20 @@
+00:00 +0: loading /host/lang/test/player_side_pane_test.dart
+test/player_side_pane_test.dart:307:66: Error: Required named parameter 'weight' must be provided.
+      transcriptBuilder: (context, text, active) => AnnotatedLine(
+                                                                 ^
+lib/presentation/widgets/annotated_line.dart:34:9: Context: Found this candidate, but the arguments don't match.
+  const AnnotatedLine({
+        ^^^^^^^^^^^^^
+00:00 +0 -1: loading /host/lang/test/player_side_pane_test.dart [E]
+  Failed to load "/host/lang/test/player_side_pane_test.dart":
+  Compilation failed for testPath=/host/lang/test/player_side_pane_test.dart: test/player_side_pane_test.dart:307:66: Error: Required named parameter 'weight' must be provided.
+        transcriptBuilder: (context, text, active) => AnnotatedLine(
+                                                                   ^
+  lib/presentation/widgets/annotated_line.dart:34:9: Context: Found this candidate, but the arguments don't match.
+    const AnnotatedLine({
+          ^^^^^^^^^^^^^
+  .
+00:00 +0 -1: Some tests failed.
+
+Failing tests:
+  /host/lang/test/player_side_pane_test.dart: loading /host/lang/test/player_side_pane_test.dart

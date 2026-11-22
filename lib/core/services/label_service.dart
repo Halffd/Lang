@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 import 'package:flutter/material.dart';
 
@@ -296,6 +297,7 @@ class _ItemLabelSheetState extends State<_ItemLabelSheet> {
           const SizedBox(height: 16),
           if (widget.onRename != null)
             TextField(
+              contextMenuBuilder: AppContextMenu.editable,
               controller: _nameCtrl,
               decoration: const InputDecoration(
                 labelText: 'Name',
@@ -305,6 +307,7 @@ class _ItemLabelSheetState extends State<_ItemLabelSheet> {
             ),
           if (widget.onRename != null) const SizedBox(height: 12),
           TextField(
+            contextMenuBuilder: AppContextMenu.editable,
             controller: _tagsCtrl,
             decoration: const InputDecoration(
               labelText: 'Tags (comma separated)',

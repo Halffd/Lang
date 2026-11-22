@@ -74,6 +74,35 @@ void main() {
     expect(find.widgetWithText(OutlinedButton, 'YouTube'), findsOneWidget);
   });
 
+  testWidgets('YouTube source opens a URL prompt with the load actions', (
+    tester,
+  ) async {
+    await pumpTabWithPrefs(tester, {});
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'YouTube'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'Paste a YouTube URL'), findsOneWidget);
+    expect(find.widgetWithText(TextButton, 'Search…'), findsOneWidget);
+    expect(find.widgetWithText(TextButton, 'Cancel'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Load'), findsOneWidget);
+  });
+
+  testWidgets('cancelling the YouTube prompt closes it without loading', (
+    tester,
+  ) async {
+    await pumpTabWithPrefs(tester, {});
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'YouTube'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.text('Not a YouTube video.'), findsNothing);
+  });
+
   testWidgets('offers no customization controls before a video is picked', (
     tester,
   ) async {
@@ -106,4 +135,5 @@ void main() {
     });
     expect(find.text('Recent'), findsOneWidget);
   });
+
 }

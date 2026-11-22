@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 import 'package:flutter/material.dart';
 
@@ -508,6 +509,7 @@ class WrittenEntryField extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           TextField(
+            contextMenuBuilder: AppContextMenu.editable,
             controller: controller,
             autofocus: true,
             style: TextStyle(color: theme.colorScheme.onSurface),

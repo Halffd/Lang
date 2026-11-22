@@ -194,14 +194,47 @@ class PopupDictionaryController with ChangeNotifier {
   /// Called for hover triggers on every hover event (single
   /// dispatch path: the scope sends hover events here only).
   void onHoverUpdate(PointerHoverEvent event) {
+    // The video tab offers a plain hover definition: the pointer
+    // resting on a transcript word opens its reading. It is opt-in
+    // through the hover-definitions setting and only applies to the
+    // video route, so it never changes the behaviour of the other
+    // screens. It takes precedence over the configured trigger: the
+    // video tab's whole point is that no modifier is needed.
+    if (_plainHoverEnabled) {
+      _scheduleHover(
+        event.position,
+        immediate: false,
+        needsExtraModifier: false,
+      );
+      return;
+    }
     final trigger = config.effectiveTrigger(_activeProfileName);
     if (trigger.needsModifier || trigger == PopupTrigger.hover) {
       _scheduleHover(event.position, immediate: trigger == PopupTrigger.hover);
     }
   }
 
-  void _scheduleHover(Offset position, {required bool immediate}) {
-    if (!_extraModifierHeld()) {
+  /// Whether a plain hover (no modifier) opens the definition.
+  ///
+  /// Set by the shell from the hover-definitions setting while the
+  /// video tab is the active route.
+  bool _plainHoverEnabled = false;
+
+  /// Enable or disable the modifier-free hover.
+  set plainHoverEnabled(bool value) {
+    if (_plainHoverEnabled == value) return;
+    _plainHoverEnabled = value;
+    if (!value) hide();
+  }
+
+  bool get plainHoverEnabled => _plainHoverEnabled;
+
+  void _scheduleHover(
+    Offset position, {
+    required bool immediate,
+    bool needsExtraModifier = true,
+  }) {
+    if (needsExtraModifier && !_extraModifierHeld()) {
       _delayTimer?.cancel();
       return;
     }
@@ -400,8 +433,9 @@ class PopupDictionaryController with ChangeNotifier {
     if (term.trim().isEmpty) return;
     if (!_currentRouteAllows()) return;
     if (config.languages.isNotEmpty &&
-        !config.languages.contains(currentLearningLanguage))
+        !config.languages.contains(currentLearningLanguage)) {
       return;
+    }
     if (!config.allowsText(term)) return;
     final builder = lookupBuilder;
     final overlay = _rootOverlay;

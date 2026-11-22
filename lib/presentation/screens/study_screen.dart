@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -359,6 +360,7 @@ class _StudyScreenState extends State<StudyScreen> {
               ),
               const SizedBox(height: 12),
               TextField(
+                contextMenuBuilder: AppContextMenu.editable,
                 controller: titleCtrl,
                 decoration: const InputDecoration(
                   labelText: 'Title',
@@ -378,6 +380,7 @@ class _StudyScreenState extends State<StudyScreen> {
                         children: [
                           Expanded(
                             child: TextField(
+                              contextMenuBuilder: AppContextMenu.editable,
                               controller: fronts[i],
                               decoration: const InputDecoration(
                                 hintText: 'Front (word)',
@@ -389,6 +392,7 @@ class _StudyScreenState extends State<StudyScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: TextField(
+                              contextMenuBuilder: AppContextMenu.editable,
                               controller: backs[i],
                               decoration: const InputDecoration(
                                 hintText: 'Back (meaning)',

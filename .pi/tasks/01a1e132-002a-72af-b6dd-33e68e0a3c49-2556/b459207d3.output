@@ -1,0 +1,32 @@
+00:00 +0: loading /host/lang/test/tmp_geom_test.dart
+test/tmp_geom_test.dart:61:75: Error: A value of type 'double?' can't be assigned to a variable of type 'num'.
+      'OUTER_BASELINE_Y=${outer.getTransformTo(null).getTranslation().y + outerBaseline}',
+                                                                          ^
+test/tmp_geom_test.dart:80:68: Error: A value of type 'double?' can't be assigned to a variable of type 'num'.
+            '    text="${c.text.toPlainText()}" baselineY=${ct.y + bl} top=${ct.y} bottom=${ct.y + c.size.height}',
+                                                                   ^
+test/tmp_geom_test.dart:90:80: Error: A value of type 'double?' can't be assigned to a variable of type 'num'.
+      'BASE_BASELINE_Y=${baseP.getTransformTo(null).getTranslation().y + baseP.getDistanceToBaseline(TextBaseline.alphabetic, onlyReal: true)}',
+                                                                               ^
+test/tmp_geom_test.dart:93:80: Error: A value of type 'double?' can't be assigned to a variable of type 'num'.
+      'READ_BASELINE_Y=${readP.getTransformTo(null).getTranslation().y + readP.getDistanceToBaseline(TextBaseline.alphabetic, onlyReal: true)}',
+                                                                               ^
+00:00 +0 -1: loading /host/lang/test/tmp_geom_test.dart [E]
+  Failed to load "/host/lang/test/tmp_geom_test.dart":
+  Compilation failed for testPath=/host/lang/test/tmp_geom_test.dart: test/tmp_geom_test.dart:61:75: Error: A value of type 'double?' can't be assigned to a variable of type 'num'.
+        'OUTER_BASELINE_Y=${outer.getTransformTo(null).getTranslation().y + outerBaseline}',
+                                                                            ^
+  test/tmp_geom_test.dart:80:68: Error: A value of type 'double?' can't be assigned to a variable of type 'num'.
+              '    text="${c.text.toPlainText()}" baselineY=${ct.y + bl} top=${ct.y} bottom=${ct.y + c.size.height}',
+                                                                     ^
+  test/tmp_geom_test.dart:90:80: Error: A value of type 'double?' can't be assigned to a variable of type 'num'.
+        'BASE_BASELINE_Y=${baseP.getTransformTo(null).getTranslation().y + baseP.getDistanceToBaseline(TextBaseline.alphabetic, onlyReal: true)}',
+                                                                                 ^
+  test/tmp_geom_test.dart:93:80: Error: A value of type 'double?' can't be assigned to a variable of type 'num'.
+        'READ_BASELINE_Y=${readP.getTransformTo(null).getTranslation().y + readP.getDistanceToBaseline(TextBaseline.alphabetic, onlyReal: true)}',
+                                                                                 ^
+  .
+00:00 +0 -1: Some tests failed.
+
+Failing tests:
+  /host/lang/test/tmp_geom_test.dart: loading /host/lang/test/tmp_geom_test.dart

@@ -39,6 +39,7 @@ class _FontZoomScopeState extends State<FontZoomScope> {
 
   // two-finger vertical swipe tracking (font size, mobile)
   double? _twoFingerMidY;
+  _TwoFingerMode? _twoFingerMode;
   static const double _kSwipeZoomStep = 0.1;
 
   static const _debounce = Duration(milliseconds: 60);
@@ -79,11 +80,23 @@ class _FontZoomScopeState extends State<FontZoomScope> {
         final pts = _touchPointers.values.toList();
         _pinchStartDistance = (pts[0] - pts[1]).distance;
         _pinchStartScale = context.read<AppState>().fontSizeMultiplier;
+        // baseline for the mode-lock decision (pinch vs swipe); without
+        // this the swipe delta is always 0 on the first move and the
+        // gesture can never lock to swipe
+        _twoFingerMidY = (pts[0].dy + pts[1].dy) / 2;
+        _twoFingerMode = null;
       }
       // three-finger gesture start: save the selected word (analyze
       // screen semantics — third finger down commits the current word)
       if (_touchPointers.length == 3) {
         widget.onThreeFingerTap?.call();
+        // the third finger shifts both remaining fingers' positions:
+        // re-baseline the pinch so the ratio does not jump
+        final pts = _touchPointers.values.toList();
+        final pair = pts.take(2).toList();
+        _pinchStartDistance = (pair[0] - pair[1]).distance;
+        _pinchStartScale = context.read<AppState>().fontSizeMultiplier;
+        _twoFingerMidY = (pair[0].dy + pair[1].dy) / 2;
       }
     }
   }
@@ -94,30 +107,53 @@ class _FontZoomScopeState extends State<FontZoomScope> {
     if (_touchPointers.length == 2 && _pinchStartDistance != null) {
       final pts = _touchPointers.values.toList();
       final dist = (pts[0] - pts[1]).distance;
-      if (_pinchStartDistance! > 10) {
-        final ratio = dist / _pinchStartDistance!;
-        final appState = context.read<AppState>();
-        final next = ((_pinchStartScale ?? 1.0) * ratio).clamp(
-          FontZoom.minMultiplier,
-          FontZoom.maxMultiplier,
-        );
-        if (next != appState.fontSizeMultiplier) {
-          appState.setFontSizeMultiplier(next);
-        }
-        // two-finger vertical drag (both fingers moving the same
-        // direction): swipe up = bigger, swipe down = smaller. Distance
-        // between fingers stays roughly constant while the midpoint
-        // travels — distinguishable from pinch by the pinch ratio.
-        final midY = (pts[0].dy + pts[1].dy) / 2;
-        if (_twoFingerMidY == null) {
+      final midY = (pts[0].dy + pts[1].dy) / 2;
+      final appState = context.read<AppState>();
+
+      // Mode-lock: the first decisive movement picks pinch OR swipe.
+      // Without this the two handlers fight — finger drift during a
+      // pinch moves the midpoint and the swipe handler yanks the font.
+      //
+      // Pinch wins ties: a two-finger spread also drags the midpoint
+      // vertically, so a swipe lock on equal movement would steal
+      // every pinch. Only a clearly larger midpoint move locks swipe.
+      if (_twoFingerMode == null) {
+        final dDist = (dist - _pinchStartDistance!).abs();
+        final dMid = _twoFingerMidY == null
+            ? 0.0
+            : (midY - _twoFingerMidY!).abs();
+        if (dDist > 18) {
+          _twoFingerMode = _TwoFingerMode.pinch;
+        } else if (dMid > 18 && dMid > dDist * 1.5) {
+          _twoFingerMode = _TwoFingerMode.swipe;
           _twoFingerMidY = midY;
-        } else {
+        }
+        return; // undecided — wait for a decisive move
+      }
+
+      switch (_twoFingerMode!) {
+        case _TwoFingerMode.pinch:
+          if (_pinchStartDistance! > 10) {
+            final ratio = dist / _pinchStartDistance!;
+            final next = ((_pinchStartScale ?? 1.0) * ratio).clamp(
+              FontZoom.minMultiplier,
+              FontZoom.maxMultiplier,
+            );
+            if (next != appState.fontSizeMultiplier) {
+              appState.setFontSizeMultiplier(next);
+            }
+          }
+        case _TwoFingerMode.swipe:
+          // vertical two-finger swipe: up = bigger, down = smaller
+          if (_twoFingerMidY == null) {
+            _twoFingerMidY = midY;
+            return;
+          }
           final dy = midY - _twoFingerMidY!;
           if (dy.abs() > 24) {
             _applyZoom(dy < 0 ? _kSwipeZoomStep : -_kSwipeZoomStep);
             _twoFingerMidY = midY;
           }
-        }
       }
     }
   }
@@ -128,6 +164,16 @@ class _FontZoomScopeState extends State<FontZoomScope> {
       _pinchStartDistance = null;
       _pinchStartScale = null;
       _twoFingerMidY = null;
+      _twoFingerMode = null;
+    } else if (_touchPointers.length == 2) {
+      // back to two fingers (a third finger lifted): re-baseline so the
+      // pinch ratio continues from the current spread instead of
+      // jumping by the distance travelled during the three-finger tap
+      final pts = _touchPointers.values.toList();
+      _pinchStartDistance = (pts[0] - pts[1]).distance;
+      _pinchStartScale = context.read<AppState>().fontSizeMultiplier;
+      _twoFingerMidY = (pts[0].dy + pts[1].dy) / 2;
+      _twoFingerMode = null;
     }
   }
 
@@ -150,3 +196,7 @@ class _FontZoomScopeState extends State<FontZoomScope> {
     );
   }
 }
+
+/// What the current two-finger gesture is doing — mode-locked on the
+/// first decisive movement so pinch and swipe never fight each other.
+enum _TwoFingerMode { pinch, swipe }

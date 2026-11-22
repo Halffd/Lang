@@ -1,0 +1,30 @@
+{
+  "id": "b6c0ff64b",
+  "name": "flutter analyzer",
+  "command": "cd /host/lang && flutter analyze lib/utils/cjk_text_extractor.dart lib/core/services/popup_dictionary_controller.dart lib/presentation/screens/reader/video_tab.dart lib/presentation/widgets/video/player_surface.dart lib/domain/entities/popup_dictionary_config.dart test/video_reading_hover_test.dart test/player_side_pane_test.dart 2>&1",
+  "description": "Analyze the files touched by the reading annotation and popup dictionary work",
+  "status": "failed",
+  "outputPath": ".pi/tasks/01a1e132-002a-72af-b6dd-33e68e0a3c49-2556/b6c0ff64b.output",
+  "cwd": "/host/lang",
+  "startTime": 1794860663746,
+  "endTime": 1794862617687,
+  "exitCode": null,
+  "signal": "SIGTERM",
+  "pid": 838961,
+  "bytesWritten": 249,
+  "isAgent": false,
+  "surviveReload": false,
+  "error": "Timed out after 1800s; POSIX process group 838961 remained present after SIGKILL. Descendant processes may have leaked.",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1800,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

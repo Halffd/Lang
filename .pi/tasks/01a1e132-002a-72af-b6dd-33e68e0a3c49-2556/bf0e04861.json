@@ -1,0 +1,29 @@
+{
+  "id": "bf0e04861",
+  "name": "flutter diag test 2",
+  "command": "cd /host/lang && timeout 600 flutter test test/tmp_diag_test.dart --reporter expanded --plain-name 'AnnotatedLine renders the reading' 2>&1 | tail -30",
+  "description": "Diagnose AnnotatedLine rendering with the no-isolate sqflite factory",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1e132-002a-72af-b6dd-33e68e0a3c49-2556/bf0e04861.output",
+  "cwd": "/host/lang",
+  "startTime": 1794874802545,
+  "endTime": 1794875097872,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 1003883,
+  "bytesWritten": 181,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 900,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

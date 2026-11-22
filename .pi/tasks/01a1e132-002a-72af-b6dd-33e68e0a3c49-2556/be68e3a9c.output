@@ -1,0 +1,30 @@
+00:08 +12: the settings tab says so when there are none
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+00:09 +13: hovering a transcript word opens its definition
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+AppStorage: accessed before init(); using in-memory fallback
+00:09 +14: hovering an annotated transcript word opens its definition
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+AppStorage: accessed before init(); using in-memory fallback
+00:10 +15: All tests passed!

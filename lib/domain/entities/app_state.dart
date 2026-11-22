@@ -98,6 +98,7 @@ class AppState extends ChangeNotifier {
   // the video tab a source to load.
   final readerTabRequest = ValueNotifier<int?>(null);
   final videoLoadRequest = ValueNotifier<Map<String, dynamic>?>(null);
+  final videoNavRequest = ValueNotifier<bool?>(null);
 
   /// The device locale's language component, read from the platform
   /// dispatcher. Only used for the very first launch, when no stored
@@ -205,6 +206,15 @@ class AppState extends ChangeNotifier {
   bool get screenshotCopyOcrText => _screenshotCopyOcrText;
   bool get screenshotCopyImage => _screenshotCopyImage;
   int get screenshotAutoIntervalMin => _screenshotAutoIntervalMin;
+
+  /// The directory screenshots are written to. Empty means the app's
+  /// own documents folder.
+  String get screenshotDirectory => _screenshotDirectory;
+  bool get liveOcrEnabled => _liveOcrEnabled;
+  int get liveOcrIntervalSec => _liveOcrIntervalSec;
+  int get liveOcrRequiredRepeats => _liveOcrRequiredRepeats;
+  bool get liveOcrShowTranslation => _liveOcrShowTranslation;
+  bool get liveOcrUseFullscreen => _liveOcrUseFullscreen;
   bool get autoConvertInput => _autoConvertInput;
   int get defaultScreenIndex => _defaultScreenIndex;
   bool get autoPasteReader => _autoPasteReader;
@@ -272,6 +282,14 @@ class AppState extends ChangeNotifier {
   bool _screenshotCopyOcrText = false;
   bool _screenshotCopyImage = false;
   int _screenshotAutoIntervalMin = 0; // 0 = off, minutes otherwise
+  // where screenshots are written; empty = the app documents folder
+  String _screenshotDirectory = '';
+  // live OCR (continuous screen capture -> OCR -> translation overlay)
+  bool _liveOcrEnabled = false;
+  int _liveOcrIntervalSec = 2; // seconds between capture attempts
+  int _liveOcrRequiredRepeats = 2; // identical reads before translating
+  bool _liveOcrShowTranslation = true; // show the translation in the overlay
+  bool _liveOcrUseFullscreen = false; // read the whole screen, not the region
   bool _autoConvertInput = true; // Default to auto-convert letters to Japanese
   List<String> _profiles = ['Default'];
   bool _autoPasteReader = false; // Auto-paste from clipboard in reader mode
@@ -820,6 +838,47 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Sets the directory screenshots are written to. An empty value
+  /// restores the default (the app's documents folder).
+  void setScreenshotDirectory(String path) {
+    _screenshotDirectory = path.trim();
+    _storageService.setString('screenshot_directory', _screenshotDirectory);
+    notifyListeners();
+  }
+
+  void setLiveOcrEnabled(bool value) {
+    _liveOcrEnabled = value;
+    _storageService.setBool('live_ocr_enabled', value);
+    notifyListeners();
+  }
+
+  void setLiveOcrIntervalSec(int value) {
+    _liveOcrIntervalSec = value.clamp(1, 60);
+    _storageService.setInt('live_ocr_interval_sec', _liveOcrIntervalSec);
+    notifyListeners();
+  }
+
+  void setLiveOcrRequiredRepeats(int value) {
+    _liveOcrRequiredRepeats = value.clamp(1, 10);
+    _storageService.setInt(
+      'live_ocr_required_repeats',
+      _liveOcrRequiredRepeats,
+    );
+    notifyListeners();
+  }
+
+  void setLiveOcrShowTranslation(bool value) {
+    _liveOcrShowTranslation = value;
+    _storageService.setBool('live_ocr_show_translation', value);
+    notifyListeners();
+  }
+
+  void setLiveOcrUseFullscreen(bool value) {
+    _liveOcrUseFullscreen = value;
+    _storageService.setBool('live_ocr_use_fullscreen', value);
+    notifyListeners();
+  }
+
   void setAutoConvertInput(bool value) {
     _autoConvertInput = value;
     _storageService.setBool('auto_convert_japanese', value);
@@ -827,10 +886,10 @@ class AppState extends ChangeNotifier {
   }
 
   void setDefaultScreenIndex(int value) {
-    // Ensure value is within valid range (0-8 for the 9 screens:
-    // analyze, search, reader, dictionary, writer, saved, history,
-    // srs, ai)
-    if (value >= 0 && value <= 8) {
+    // The valid range is the navigation destination count, which lives
+    // in the presentation layer; the shell clamps out-of-range values
+    // when it reads this index, so only reject negatives here.
+    if (value >= 0) {
       _defaultScreenIndex = value;
       _storageService.setInt('default_screen_index', value);
       notifyListeners();
@@ -1380,6 +1439,17 @@ class AppState extends ChangeNotifier {
           _storageService.getBool('screenshot_copy_image') ?? false;
       _screenshotAutoIntervalMin =
           _storageService.getInt('screenshot_auto_interval_min') ?? 0;
+      _screenshotDirectory =
+          _storageService.getStringSync('screenshot_directory') ?? '';
+      _liveOcrEnabled = _storageService.getBool('live_ocr_enabled') ?? false;
+      _liveOcrIntervalSec =
+          _storageService.getInt('live_ocr_interval_sec') ?? 2;
+      _liveOcrRequiredRepeats =
+          _storageService.getInt('live_ocr_required_repeats') ?? 2;
+      _liveOcrShowTranslation =
+          _storageService.getBool('live_ocr_show_translation') ?? true;
+      _liveOcrUseFullscreen =
+          _storageService.getBool('live_ocr_use_fullscreen') ?? false;
       _autoConvertInput =
           _storageService.getBool('auto_convert_japanese') ?? true;
       _defaultScreenIndex = _storageService.getInt('default_screen_index') ?? 0;
@@ -1473,8 +1543,9 @@ class AppState extends ChangeNotifier {
           _storageService.getStringSync('profile_activation_screen') ?? 'all';
       _profileActivationApp =
           _storageService.getStringSync('profile_activation_app') ?? 'default';
-      // Ensure value is within valid range (0-6 for the 7 screens)
-      if (_defaultScreenIndex < 0 || _defaultScreenIndex > 6) {
+      // A stale index from an older build (fewer destinations) is
+      // clamped by the shell when it opens the app.
+      if (_defaultScreenIndex < 0) {
         _defaultScreenIndex = 0;
       }
     } catch (e) {

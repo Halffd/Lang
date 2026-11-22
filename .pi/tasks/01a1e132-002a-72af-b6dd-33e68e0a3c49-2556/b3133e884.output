@@ -1,0 +1,31 @@
+00:00 +0: loading /host/lang/test/tmp_diag_test.dart
+00:00 +0: tokenizer in plain dart
+LANG=ja
+TOKENS=[Instance of 'Token', Instance of 'Token', Instance of 'Token', Instance of 'Token', Instance of 'Token']
+  surface=日本語 reading=にほんご
+  surface=の reading=
+  surface=テ reading=
+  surface=ス reading=
+  surface=ト reading=
+00:00 +1: AnnotatedLine renders the reading
+*** sqflite warning ***
+
+You are changing sqflite default factory.
+Be aware of the potential side effects. Any library using sqflite
+will have this factory as the default for all operations.
+
+*** sqflite warning ***
+
+05:47 +1 -1: loading /host/lang/test/tmp_diag_test.dart [E]
+  Bad state: Cannot close sink while adding stream.
+  package:stream_channel/src/guarantee_channel.dart 180:7      _GuaranteeSink.close
+  package:flutter_tools/src/test/flutter_platform.dart 765:43  FlutterPlatform._startTest
+  
+One or more uncaught errors occurred shutting down:
+  Bad state: Cannot add event while adding stream.
+05:47 +1 -1: AnnotatedLine renders the reading - did not complete [E]
+05:47 +1 -1: Some tests failed.
+
+Failing tests:
+  /host/lang/test/tmp_diag_test.dart: AnnotatedLine renders the reading (did not complete)
+  /host/lang/test/tmp_diag_test.dart: loading /host/lang/test/tmp_diag_test.dart

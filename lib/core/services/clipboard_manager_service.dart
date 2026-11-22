@@ -343,6 +343,48 @@ class ClipboardManagerService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Appends [text] to the newest text entry, creating the entry when
+  /// the list has no text yet. The result is one entry with the
+  /// combined text, not two entries.
+  Future<ClipboardItem?> appendText(String text) async {
+    await load();
+    final addition = text.trim();
+    if (addition.isEmpty) return null;
+
+    final idx = _items.indexWhere((i) => i.isText);
+    if (idx < 0) return await addText(addition);
+
+    final existing = _items[idx];
+    final combined = '${existing.text!.trimRight()}\n$addition';
+    final updated = existing.copyWith(text: combined);
+    _items[idx] = updated;
+    await _persist();
+    notifyListeners();
+    return updated;
+  }
+
+  /// Sorts the entries. Pinned entries keep their block at the top and
+  /// are sorted among themselves; the rest follow.
+  Future<void> sort(ClipboardSortOrder order) async {
+    await load();
+    int compare(ClipboardItem a, ClipboardItem b) => switch (order) {
+      ClipboardSortOrder.newest =>
+        b.timestamp.compareTo(a.timestamp),
+      ClipboardSortOrder.oldest =>
+        a.timestamp.compareTo(b.timestamp),
+      ClipboardSortOrder.text =>
+        (a.text ?? '').toLowerCase().compareTo(
+          (b.text ?? '').toLowerCase(),
+        ),
+    };
+
+    final pinned = _items.where((i) => i.pinned).toList()..sort(compare);
+    final rest = _items.where((i) => !i.pinned).toList()..sort(compare);
+    _items = [...pinned, ...rest];
+    await _persist();
+    notifyListeners();
+  }
+
   /// Clear all unpinned entries (pinned survive, CopyQ/Ditto behaviour).
   Future<int> clearUnpinned() async {
     await load();
@@ -404,13 +446,6 @@ class ClipboardManagerService extends ChangeNotifier {
     // rebuild the backing list in the new ordered arrangement
     ordered.removeAt(pos);
     ordered.insert(target, item);
-
-    final pinnedOnly = ordered.where((i) => i.pinned).toSet();
-    final newPinned = ordered.where((i) => pinnedOnly.contains(i)).toList();
-    final newRest = ordered.where((i) => !pinnedOnly.contains(i)).toList();
-    _items = [...newRest, ...newPinned.reversed];
-    // note: _items order is "unpinned (oldest→newest at tail) + pinned";
-    // simpler: keep a single list ordered like the view
     _items = ordered;
     await _persist();
     notifyListeners();
@@ -418,6 +453,9 @@ class ClipboardManagerService extends ChangeNotifier {
 }
 
 enum ClipboardMoveDir { top, up, down, bottom }
+
+/// The order the clipboard entries are sorted in.
+enum ClipboardSortOrder { newest, oldest, text }
 
 /// Clipboard text setter isolated so tests can stub it.
 class ClipboardSetText {

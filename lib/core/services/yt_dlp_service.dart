@@ -14,6 +14,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 
 import 'package:lang/core/services/youtube_service.dart';
+import 'package:lang/utils/chapter_parser.dart';
 import 'package:lang/utils/subtitle_parser.dart';
 
 /// Runs a subprocess; injectable so tests can fake yt-dlp output.
@@ -175,11 +176,19 @@ class YtDlpService implements YouTubeBackend {
     final qualities = YouTubeService.qualityOptions(muxed);
     if (qualities.isEmpty) return null;
 
+    final description = json['description']?.toString() ?? '';
+    final durationSeconds = json['duration'];
+    final duration = durationSeconds is num
+        ? Duration(seconds: durationSeconds.toInt())
+        : null;
+
     return YouTubeVideoInfo(
       videoId: id,
       title: json['title']?.toString() ?? '',
       author: json['uploader']?.toString() ?? json['channel']?.toString() ?? '',
       qualities: qualities,
+      description: description,
+      chapters: ChapterParser.parse(description, videoDuration: duration),
     );
   }
 

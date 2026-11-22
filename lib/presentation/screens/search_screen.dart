@@ -7,16 +7,21 @@ import 'package:lang/data/services/ocr_service.dart';
 import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/presentation/providers/ai_provider.dart';
 import 'package:lang/domain/entities/app_state.dart';
+import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/presentation/widgets/script_text_field.dart';
 import 'package:lang/domain/entities/analyzed_word.dart';
 import 'package:lang/presentation/widgets/word_detail_sheet.dart';
-import 'package:lang/presentation/screens/screenshot_tab.dart';
-import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/utils/font_scale.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 enum OcrMode { mlKit, tesseract, easyOcr, ai, api }
 
-enum OcrTab { text, screenshot }
+/// The OCR mode to use when nothing is stored yet.
+///
+/// ML Kit has no desktop build, so desktop starts on Tesseract;
+/// picking ML Kit there would silently produce no text.
+OcrMode get _defaultOcrMode =>
+    OcrService.isMlKitAvailable ? OcrMode.mlKit : OcrMode.tesseract;
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -38,8 +43,9 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _isOcrMode = false;
   bool _isProcessingImage = false;
   int _columnCount = 6;
-  OcrMode _ocrMode = OcrMode.mlKit;
-  OcrTab _ocrTab = OcrTab.text;
+  // ML Kit has no desktop build, so the default follows the platform:
+  // ML Kit on mobile, Tesseract on desktop.
+  OcrMode _ocrMode = _defaultOcrMode;
 
   @override
   void initState() {
@@ -110,38 +116,11 @@ class _SearchScreenState extends State<SearchScreen> {
               const SizedBox(height: 16),
               Expanded(child: _buildSentenceWordGrid(theme, provider)),
             ] else if (_isOcrMode) ...[
-              // text / screenshot tabs inside OCR mode
-              SegmentedButton<OcrTab>(
-                segments: [
-                  ButtonSegment(
-                    value: OcrTab.text,
-                    icon: const Icon(Icons.text_fields, size: 16),
-                    label: Text(
-                      AppLocalizations.of(context)!.textTab,
-                      style: TextStyle(fontSize: fs(context, 12)),
-                    ),
-                  ),
-                  ButtonSegment(
-                    value: OcrTab.screenshot,
-                    icon: const Icon(Icons.screenshot_monitor, size: 16),
-                    label: Text(
-                      AppLocalizations.of(context)!.screenshotTab,
-                      style: TextStyle(fontSize: fs(context, 12)),
-                    ),
-                  ),
-                ],
-                selected: {_ocrTab},
-                onSelectionChanged: (selection) {
-                  setState(() => _ocrTab = selection.first);
-                },
-              ),
+              // the screenshot capture tab lives in the dedicated OCR
+              // bottom-bar screen, not here
+              _buildOcrInput(theme, provider),
               const SizedBox(height: 16),
-              if (_ocrTab == OcrTab.text) ...[
-                _buildOcrInput(theme, provider),
-                const SizedBox(height: 16),
-                Expanded(child: _buildOcrResults(theme, provider)),
-              ] else
-                Expanded(child: ScreenshotTab()),
+              Expanded(child: _buildOcrResults(theme, provider)),
             ] else ...[
               _buildSearchInput(theme, provider),
               const SizedBox(height: 16),
@@ -207,12 +186,18 @@ class _SearchScreenState extends State<SearchScreen> {
           items: [
             DropdownMenuItem(
               value: OcrMode.mlKit,
+              enabled: OcrService.isMlKitAvailable,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Icons.speed, size: 14),
                   const SizedBox(width: 4),
-                  Text('ML Kit', style: TextStyle(fontSize: fs(context, 12))),
+                  Text(
+                    OcrService.isMlKitAvailable
+                        ? 'ML Kit'
+                        : 'ML Kit (${AppLocalizations.of(context)!.ocrEngineMlKitUnavailable})',
+                    style: TextStyle(fontSize: fs(context, 12)),
+                  ),
                 ],
               ),
             ),
@@ -512,6 +497,7 @@ class _SearchScreenState extends State<SearchScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
+              contextMenuBuilder: AppContextMenu.editable,
               controller: keyController,
               decoration: const InputDecoration(
                 labelText: 'API key',
@@ -520,6 +506,7 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
             const SizedBox(height: 12),
             TextField(
+              contextMenuBuilder: AppContextMenu.editable,
               controller: endpointController,
               decoration: const InputDecoration(
                 labelText: 'Endpoint (optional)',
@@ -830,6 +817,9 @@ class _SearchScreenState extends State<SearchScreen> {
         OcrMode.ai => OcrEngine.ai,
         OcrMode.api => OcrEngine.api,
       };
+      // ML Kit has no desktop build: fall back rather than returning
+      // no text
+      final effectiveEngine = OcrService.resolveEngine(engine);
 
       // endpoint override for self-hosted OCR.space-compatible APIs
       if (appState.ocrApiEndpoint.isNotEmpty) {
@@ -838,7 +828,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
       final result = await ocrService.recognizeFromFile(
         imageFile.path,
-        engine: engine,
+        engine: effectiveEngine,
         language: Provider.of<AnalyzerProvider>(
           context,
           listen: false,
@@ -853,15 +843,21 @@ class _SearchScreenState extends State<SearchScreen> {
         _ocrController.text = result.text;
       } else if (result.isEasyOcrUnavailable) {
         _ocrController.text = '';
+        // the fallback engine follows the platform: ML Kit has no
+        // desktop build
+        final fallback = _defaultOcrMode;
+        final fallbackName = fallback == OcrMode.mlKit
+            ? 'ML Kit'
+            : 'Tesseract';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text(
+            content: Text(
               'EasyOCR requires a Python backend (pip install easyocr). '
-              'Using ML Kit instead...',
+              'Using $fallbackName instead...',
             ),
             action: SnackBarAction(
               label: 'Switch',
-              onPressed: () => setState(() => _ocrMode = OcrMode.mlKit),
+              onPressed: () => setState(() => _ocrMode = fallback),
             ),
           ),
         );

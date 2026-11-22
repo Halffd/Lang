@@ -9,6 +9,7 @@ import 'package:lang/utils/srs_conversion_utils.dart';
 import 'package:lang/utils/font_scale.dart';
 import 'package:lang/presentation/widgets/dictionary_entry_card.dart';
 import 'package:lang/utils/screen_size.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 class SavedWordsScreen extends StatefulWidget {
   const SavedWordsScreen({super.key});
@@ -67,6 +68,7 @@ class _SavedWordsScreenState extends State<SavedWordsScreen> {
                   children: [
                     Expanded(
                       child: TextField(
+                        contextMenuBuilder: AppContextMenu.editable,
                         controller: _searchController,
                         decoration: InputDecoration(
                           hintText: 'Search saved words',

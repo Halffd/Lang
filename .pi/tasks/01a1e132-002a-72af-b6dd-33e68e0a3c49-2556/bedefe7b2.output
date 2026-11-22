@@ -1,0 +1,17 @@
+00:00 +0: loading /host/lang/test/player_side_pane_test.dart
+00:00 +0: shows a tab for each section
+00:33 +1: tapping a tab reports the new tab
+00:44 +2: the description tab shows the description text
+00:44 +3: the description tab says so when there is none
+00:45 +4: the chapters tab lists the chapters
+00:45 +5: the chapters tab says so when there are none
+00:45 +6: tapping a chapter reports it
+00:45 +7: the transcript tab lists the lines
+00:45 +8: the transcript tab says so when no track is loaded
+00:45 +9: tapping a transcript line reports its index
+00:46 +10: long-pressing a transcript line reports its index
+00:46 +11: the settings tab shows the supplied settings
+00:46 +12: the settings tab says so when there are none
+00:46 +13: hovering a transcript word opens its definition
+AppStorage: accessed before init(); using in-memory fallback
+00:46 +14: hovering an annotated transcript word opens its definition

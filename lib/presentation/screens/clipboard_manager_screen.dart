@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'package:lang/core/services/clipboard_manager_service.dart';
+import 'package:lang/core/services/image_clipboard_service.dart';
 import 'package:lang/data/services/ocr_service.dart';
 import 'package:lang/core/services/screenshot_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
@@ -147,13 +149,14 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
     ClipboardItem item,
     ClipboardManagerService mgr,
   ) async {
-    final ctrl = TextEditingController(text: item.text ?? '');
+    final fieldKey = GlobalKey<OwnedSubmitTextFieldState>();
     final newText = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Edit entry'),
-        content: SubmitTextField(
-          controller: ctrl,
+        content: OwnedSubmitTextField(
+          key: fieldKey,
+          initialText: item.text ?? '',
           maxLines: 8,
           autofocus: true,
           decoration: const InputDecoration(border: OutlineInputBorder()),
@@ -166,7 +169,7 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(ctx, ctrl.text),
+            onPressed: () => Navigator.pop(ctx, fieldKey.currentState!.text),
             child: const Text('Save'),
           ),
         ],
@@ -181,13 +184,15 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
     ClipboardItem item,
     ClipboardManagerService mgr,
   ) async {
-    final ctrl = TextEditingController(text: item.tags.join(', '));
+    final fieldKey = GlobalKey<OwnedTextFieldState>();
     final tagsRaw = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Tags'),
-        content: TextField(
-          controller: ctrl,
+        content: OwnedTextField(
+          key: fieldKey,
+          initialText: item.tags.join(', '),
+          useAppContextMenu: true,
           autofocus: true,
           decoration: const InputDecoration(
             hintText: 'comma,separated,tags',
@@ -200,7 +205,7 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(ctx, ctrl.text),
+            onPressed: () => Navigator.pop(ctx, fieldKey.currentState!.text),
             child: const Text('Save'),
           ),
         ],
@@ -215,6 +220,38 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
     await mgr.setTags(item.id, tags);
   }
 
+  /// Asks for text and appends it to the newest text entry, so
+  /// multi-line notes build up in one place instead of piling up as
+  /// separate entries.
+  Future<void> _appendText(ClipboardManagerService mgr) async {
+    final fieldKey = GlobalKey<OwnedSubmitTextFieldState>();
+    final text = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Append text'),
+        content: OwnedSubmitTextField(
+          key: fieldKey,
+          maxLines: 6,
+          autofocus: true,
+          decoration: const InputDecoration(border: OutlineInputBorder()),
+          onSubmitted: (value) => Navigator.pop(ctx, value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, fieldKey.currentState!.text),
+            child: const Text('Append'),
+          ),
+        ],
+      ),
+    );
+    if (text == null || text.trim().isEmpty) return;
+    await mgr.appendText(text);
+  }
+
   // ------------------------------------------------------------
   // screenshot + OCR actions (wired like the screenshot tab)
   // ------------------------------------------------------------
@@ -222,7 +259,9 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
   Future<String?> _runOcr(String path) async {
     final appState = context.read<AppState>();
     var engine = OcrService.engineFromName(appState.ocrEngine);
-    if (engine == OcrEngine.ai) engine = OcrEngine.mlKit;
+    // the ai engine needs the AI provider from the search screen's
+    // context; fall back to the platform default engine
+    if (engine == OcrEngine.ai) engine = OcrService.engineFromName(null);
     final lang = appState.ocrLanguage;
     final language = (lang.isEmpty || lang == 'auto')
         ? appState.learningLanguage
@@ -470,12 +509,44 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
       mgr.togglePin(items[idx].id);
       return KeyEventResult.handled;
     }
+    // Ctrl+1..Ctrl+10 copies the nth row of the list the user sees,
+    // so the shortcut matches what is on screen even when a filter or
+    // a search hides rows.
+    if (HardwareKeyboard.instance.isControlPressed) {
+      final position = _digitPosition(key);
+      if (position != null) {
+        if (items.length >= position) {
+          _copyItem(items[position - 1], mgr);
+          if (widget.popupMode && mounted) Navigator.of(context).pop();
+        }
+        return KeyEventResult.handled;
+      }
+    }
     if (key == LogicalKeyboardKey.escape && widget.popupMode) {
       Navigator.of(context).pop();
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
   }
+
+  /// The 1-based position of a digit key, or null when the key is not
+  /// a digit. Ctrl+0 is bound to the tenth entry.
+  static int? _digitPosition(LogicalKeyboardKey key) =>
+      _digitPositions[key];
+
+  static final Map<LogicalKeyboardKey, int> _digitPositions =
+      <LogicalKeyboardKey, int>{
+        LogicalKeyboardKey.digit1: 1,
+        LogicalKeyboardKey.digit2: 2,
+        LogicalKeyboardKey.digit3: 3,
+        LogicalKeyboardKey.digit4: 4,
+        LogicalKeyboardKey.digit5: 5,
+        LogicalKeyboardKey.digit6: 6,
+        LogicalKeyboardKey.digit7: 7,
+        LogicalKeyboardKey.digit8: 8,
+        LogicalKeyboardKey.digit9: 9,
+        LogicalKeyboardKey.digit0: 10,
+      };
 
   // ------------------------------------------------------------
   // build
@@ -505,6 +576,7 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
                   children: [
                     Expanded(
                       child: TextField(
+                        contextMenuBuilder: AppContextMenu.editable,
                         controller: _searchCtrl,
                         onChanged: (_) => setState(() {}),
                         decoration: InputDecoration(
@@ -518,10 +590,56 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
                       ),
                     ),
                     const SizedBox(width: 6),
+                    IconButton(
+                      tooltip: 'Append text',
+                      icon: const Icon(Icons.note_add_outlined, size: 18),
+                      onPressed: () => _appendText(mgr),
+                    ),
+                    PopupMenuButton<String>(
+                      tooltip: 'Sort',
+                      icon: const Icon(Icons.sort, size: 18),
+                      onSelected: (v) {
+                        // run after the menu's own rebuild, so the
+                        // reordered list does not deactivate the
+                        // still-dirty menu button
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (!mounted) return;
+                          mgr.sort(
+                            switch (v) {
+                              'oldest' => ClipboardSortOrder.oldest,
+                              'text' => ClipboardSortOrder.text,
+                              _ => ClipboardSortOrder.newest,
+                            },
+                          );
+                        });
+                      },
+                      itemBuilder: (ctx) => const [
+                        PopupMenuItem(
+                          value: 'newest',
+                          child: Text('Sort: newest first'),
+                        ),
+                        PopupMenuItem(
+                          value: 'oldest',
+                          child: Text('Sort: oldest first'),
+                        ),
+                        PopupMenuItem(
+                          value: 'text',
+                          child: Text('Sort: by text'),
+                        ),
+                      ],
+                    ),
                     PopupMenuButton<String>(
                       tooltip: 'Actions',
                       icon: const Icon(Icons.more_vert),
-                      onSelected: (v) => _onMenu(mgr, v),
+                      onSelected: (v) {
+                        // run after the menu's own rebuild, so a
+                        // clearing action does not deactivate the
+                        // still-dirty menu button
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (!mounted) return;
+                          _onMenu(mgr, v);
+                        });
+                      },
                       itemBuilder: (ctx) => [
                         const PopupMenuItem(
                           value: 'clear',
@@ -711,20 +829,33 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               child: Row(
                 children: [
-                  Text(
-                    '${visible.length}/${mgr.items.length} items'
-                    '${_selected.isNotEmpty ? ' · ${_selected.length} selected' : ''}',
-                    style: TextStyle(
-                      fontSize: fs(context, 11) * _fontScaleFactor,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  Flexible(
+                    child: Text(
+                      '${visible.length}/${mgr.items.length} items'
+                      '${_selected.isNotEmpty ? ' · ${_selected.length} selected' : ''}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: fs(context, 11) * _fontScaleFactor,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
                     ),
                   ),
-                  const Spacer(),
-                  Text(
-                    '↑↓ navigate · Enter copy · Del remove · Ctrl+P pin',
-                    style: TextStyle(
-                      fontSize: fs(context, 10) * _fontScaleFactor,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                  const SizedBox(width: 8),
+                  // the hint shrinks on narrow windows instead of
+                  // overflowing the row
+                  Flexible(
+                    flex: 2,
+                    child: Text(
+                      '↑↓ navigate · Enter copy · Del remove · Ctrl+P pin · '
+                      'Ctrl+1-10 copy nth',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                      style: TextStyle(
+                        fontSize: fs(context, 10) * _fontScaleFactor,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                      ),
                     ),
                   ),
                 ],
@@ -780,13 +911,10 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
             if (item.isImage)
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
-                child: Image.file(
-                  File(item.imagePath!),
-                  width: 36 * _rowScale,
-                  height: 36 * _rowScale,
-                  fit: BoxFit.cover,
-                  cacheWidth: 96,
-                  errorBuilder: (_, _, _) => const Icon(Icons.broken_image),
+                child: _ClipboardThumbnail(
+                  item: item,
+                  manager: mgr,
+                  size: 36 * _rowScale,
                 ),
               )
             else
@@ -849,7 +977,17 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
         color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
       ),
       padding: EdgeInsets.zero,
-      onSelected: (v) => _onRowMenu(mgr, item, v),
+      onSelected: (v) {
+        // The menu closes by marking this button dirty and rebuilding it
+        // in the next frame. An action that reorders or removes the row
+        // would deactivate the still-dirty button, which the framework
+        // refuses to do. Running the action after that frame keeps the
+        // button's own rebuild and the list rebuild apart.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _onRowMenu(mgr, item, v);
+        });
+      },
       itemBuilder: (ctx) => [
         const PopupMenuItem(value: 'copy', child: Text('Copy')),
         if (item.isText)
@@ -923,9 +1061,70 @@ class _ClipboardManagerScreenState extends State<ClipboardManagerScreen> {
   }
 }
 
+/// The thumbnail of a clipboard image entry. The bytes are read once
+/// per item: reading them on every build would restart the read on
+/// each frame and never settle.
+class _ClipboardThumbnail extends StatefulWidget {
+  final ClipboardItem item;
+  final ClipboardManagerService manager;
+  final double size;
+
+  const _ClipboardThumbnail({
+    required this.item,
+    required this.manager,
+    required this.size,
+  });
+
+  @override
+  State<_ClipboardThumbnail> createState() => _ClipboardThumbnailState();
+}
+
+class _ClipboardThumbnailState extends State<_ClipboardThumbnail> {
+  Future<Uint8List?>? _bytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _bytes = widget.manager.readImageBytes(widget.item);
+  }
+
+  @override
+  void didUpdateWidget(_ClipboardThumbnail oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.item.id != widget.item.id) {
+      _bytes = widget.manager.readImageBytes(widget.item);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Uint8List?>(
+      future: _bytes,
+      builder: (context, snapshot) {
+        final bytes = snapshot.data;
+        if (bytes == null) {
+          return SizedBox(
+            width: widget.size,
+            height: widget.size,
+            child: const Icon(Icons.broken_image),
+          );
+        }
+        return Image.memory(
+          bytes,
+          width: widget.size,
+          height: widget.size,
+          fit: BoxFit.cover,
+          cacheWidth: 96,
+          errorBuilder: (_, _, _) => const Icon(Icons.broken_image),
+        );
+      },
+    );
+  }
+}
+
 /// Image clipboard writer isolated so tests can stub it. On desktop the
-/// super_clipboard / xclip route is wired by the host; text entries go
-/// through [ClipboardSetText].
+/// platform image writer is wired by the host; text entries go through
+/// [ClipboardSetText].
 class ClipboardManagerImageCopy {
   static Future<void> Function(Uint8List bytes)? override;
 
@@ -935,53 +1134,6 @@ class ClipboardManagerImageCopy {
       await o(bytes);
       return;
     }
-    // best-effort desktop image copy through the CLI tools the
-    // screenshot service already depends on
-    try {
-      final dir = await Directory.systemTemp.createTemp('clipimg');
-      final f = File('${dir.path}/img.png');
-      await f.writeAsBytes(bytes);
-      if (Platform.isLinux) {
-        final wl = await Process.run('wl-copy', [], runInShell: false);
-        final xclip = await Process.run('xclip', []);
-        // prefer wayland tool when it exists; run via args
-        final hasWl = await _exists('wl-copy');
-        final hasXclip = await _exists('xclip');
-        if (hasWl) {
-          await Process.run('sh', ['-c', 'wl-copy < "${f.path}"']);
-        } else if (hasXclip) {
-          await Process.run('sh', [
-            '-c',
-            'xclip -selection clipboard -t image/png -i "${f.path}"',
-          ]);
-        } else {
-          wl.exitCode;
-          xclip.exitCode;
-        }
-      } else if (Platform.isMacOS) {
-        await Process.run('sh', [
-          '-c',
-          'osascript -e "set the clipboard to (read (POSIX file \\"${f.path}\\") as «class PNGf»)"',
-        ]);
-      } else if (Platform.isWindows) {
-        await Process.run('powershell', [
-          '-NoProfile',
-          '-Command',
-          'Add-Type -AssemblyName System.Windows.Forms; '
-              '[Windows.Forms.Clipboard]::SetImage([System.Drawing.Image]::FromFile("${f.path.replaceAll('\\', '/')}"))',
-        ]);
-      }
-    } catch (_) {
-      // image clipboard not available
-    }
-  }
-
-  static Future<bool> _exists(String bin) async {
-    try {
-      final r = await Process.run('which', [bin]);
-      return r.exitCode == 0;
-    } catch (_) {
-      return false;
-    }
+    await ImageClipboardService.copyPng(bytes);
   }
 }

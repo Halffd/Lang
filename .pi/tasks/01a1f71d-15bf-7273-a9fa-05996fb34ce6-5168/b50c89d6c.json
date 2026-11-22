@@ -1,0 +1,29 @@
+{
+  "id": "b50c89d6c",
+  "name": "Linux debug build",
+  "command": "/tmp/build_debug.sh",
+  "description": "Build the Linux debug bundle with the current source so live inspection reflects the shipped code",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1f71d-15bf-7273-a9fa-05996fb34ce6-5168/b50c89d6c.output",
+  "cwd": "/host/lang",
+  "startTime": 1795159364913,
+  "endTime": 1795160802867,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 130855,
+  "bytesWritten": 154,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 10800,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

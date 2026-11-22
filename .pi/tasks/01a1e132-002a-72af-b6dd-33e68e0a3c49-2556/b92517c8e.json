@@ -1,0 +1,29 @@
+{
+  "id": "b92517c8e",
+  "name": "flutter side pane tests 4",
+  "command": "cd /host/lang && timeout 900 flutter test test/player_side_pane_test.dart --reporter expanded --plain-name 'hovering an annotated transcript word opens its definition' 2>&1 | tail -30",
+  "description": "Run only the new annotated transcript hover test",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1e132-002a-72af-b6dd-33e68e0a3c49-2556/b92517c8e.output",
+  "cwd": "/host/lang",
+  "startTime": 1794873732102,
+  "endTime": 1794873934441,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 991634,
+  "bytesWritten": 1971,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1200,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

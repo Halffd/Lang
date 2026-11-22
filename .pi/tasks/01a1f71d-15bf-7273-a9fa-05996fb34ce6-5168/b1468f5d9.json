@@ -1,0 +1,29 @@
+{
+  "id": "b1468f5d9",
+  "name": "Final OCR test suite",
+  "command": "/tmp/runtest4.sh",
+  "description": "Re-run the OCR test suites against the current source after the Flutter SDK relocation",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1f71d-15bf-7273-a9fa-05996fb34ce6-5168/b1468f5d9.output",
+  "cwd": "/host/lang",
+  "startTime": 1795159915855,
+  "endTime": 1795160835284,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 135784,
+  "bytesWritten": 271,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 10800,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

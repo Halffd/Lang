@@ -141,6 +141,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get columns => 'Columns';
 
   @override
+  String get cardHeight => 'Card height';
+
+  @override
+  String get cardHeightAuto => 'Card height: auto';
+
+  @override
+  String cardHeightPx(Object px) {
+    return 'Card height: ${px}px';
+  }
+
+  @override
+  String contextLookUp(Object term) {
+    return 'Look up $term';
+  }
+
+  @override
+  String contextCopy(Object term) {
+    return 'Copy $term';
+  }
+
+  @override
+  String get contextCopySentence => 'Copy sentence';
+
+  @override
+  String get contextLookUpSelection => 'Look up';
+
+  @override
   String get context => 'Context';
 
   @override
@@ -394,7 +421,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get collapse => 'Collapse';
 
   @override
+  String get collapseSearchBar => 'Collapse search bar';
+
+  @override
   String get expand => 'Expand';
+
+  @override
+  String get expandSearchBar => 'Expand search bar';
 
   @override
   String get filter => 'Filter';
@@ -832,12 +865,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scriptConversionTitle => 'Script conversion while typing';
 
   @override
-  String get screenshotTab => 'Screenshots';
-
-  @override
-  String get textTab => 'Text';
-
-  @override
   String get captureFullscreen => 'Full screen';
 
   @override
@@ -874,7 +901,79 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ocrEngineAiUnavailable => 'unavailable here';
 
   @override
+  String get ocrEngineMlKitUnavailable => 'not available on desktop';
+
+  @override
+  String get ocrBackendMlKit => 'ML Kit';
+
+  @override
+  String get ocrBackendMlKitDesc =>
+      'On-device recognizer, fast and offline (mobile only)';
+
+  @override
+  String get ocrBackendTesseract => 'Tesseract';
+
+  @override
+  String get ocrBackendTesseractDesc =>
+      'Local OCR binary with image preprocessing';
+
+  @override
+  String get ocrBackendEasyOcr => 'EasyOCR';
+
+  @override
+  String get ocrBackendEasyOcrDesc =>
+      'Local Python OCR, good with printed text';
+
+  @override
+  String get ocrBackendTransformers => 'Transformers';
+
+  @override
+  String get ocrBackendTransformersDesc =>
+      'Local Hugging Face model, heavy but accurate';
+
+  @override
+  String get ocrBackendHuggingFace => 'Hugging Face';
+
+  @override
+  String get ocrBackendHuggingFaceDesc =>
+      'Remote inference API, needs an account';
+
+  @override
+  String get ocrBackendAi => 'AI vision';
+
+  @override
+  String get ocrBackendAiDesc => 'The configured AI provider reads the image';
+
+  @override
+  String get ocrBackendApi => 'OCR API';
+
+  @override
+  String get ocrBackendApiDesc => 'Remote HTTP OCR service, needs an endpoint';
+
+  @override
   String get copyOcrText => 'Copy OCR text to clipboard';
+
+  @override
+  String get liveOcrRunning => 'Live OCR is running';
+
+  @override
+  String get liveOcrStopped => 'Live OCR is off';
+
+  @override
+  String get liveOcrOpenSettings => 'OCR settings';
+
+  @override
+  String get searchScreenContent => 'Search screen content';
+
+  @override
+  String get searchScreenContentHint =>
+      'Capture the screen, read it with OCR and search the words it contains.';
+
+  @override
+  String get searchScreenContentFailed => 'Could not read the screen';
+
+  @override
+  String get searchScreenContentEmpty => 'No text found on the screen';
 
   @override
   String get copyImage => 'Copy image to clipboard';
@@ -884,6 +983,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get screenshotAlbum => 'Album';
+
+  @override
+  String get screenshotPreview => 'Screen preview';
+
+  @override
+  String get screenshotPreviewRefresh => 'Refresh the preview';
+
+  @override
+  String get screenshotTranscriptions => 'Transcriptions';
+
+  @override
+  String get screenshotNoTranscriptions => 'No transcriptions yet';
+
+  @override
+  String get screenshotTranscriptionEmpty => 'The screenshot has no text';
+
+  @override
+  String get screenshotOcrDetails => 'OCR details';
+
+  @override
+  String get screenshotOcrEngine => 'Engine';
+
+  @override
+  String get screenshotOcrLanguage => 'Language';
+
+  @override
+  String get screenshotOcrTime => 'Recognized';
+
+  @override
+  String get screenshotCopyOcrResult => 'Copy the OCR text';
+
+  @override
+  String get screenshotShowOcrDetails => 'Show the OCR details';
 
   @override
   String get noScreenshots => 'No screenshots yet';
@@ -914,9 +1046,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get readerTabDocuments => 'Documents';
-
-  @override
-  String get readerTabScreenshots => 'Screenshots';
 
   @override
   String get readerTabClipboard => 'Clipboard';
@@ -1024,6 +1153,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get videoPickSubtitleSource => 'Subtitle source';
 
   @override
+  String get videoDescription => 'Description';
+
+  @override
+  String get videoChapters => 'Chapters';
+
+  @override
+  String get videoSettings => 'Settings';
+
+  @override
+  String get videoNoDescription => 'No description available.';
+
+  @override
+  String get videoNoChapters => 'No chapters in this video.';
+
+  @override
+  String get videoNoSettings => 'No settings available.';
+
+  @override
+  String get videoQuality => 'Quality';
+
+  @override
+  String get videoCurrentChapter => 'Current chapter';
+
+  @override
+  String get videoShowPane => 'Show side panel';
+
+  @override
+  String get videoHidePane => 'Hide side panel';
+
+  @override
   String get readerTabVideo => 'Video';
 
   @override
@@ -1077,9 +1236,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activitySpeech => 'Speech transcription';
-
-  @override
-  String get speechTab => 'Speech';
 
   @override
   String get speechRecord => 'Record';
@@ -1200,6 +1356,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get popupScreenSRS => 'SRS';
 
   @override
+  String get popupScreenVideo => 'Video';
+
+  @override
   String get popupNone => 'None';
 
   @override
@@ -1235,6 +1394,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get popupShowSentence => 'Show sentence';
 
   @override
+  String get popupReadingDisplay => 'Reading display';
+
+  @override
+  String get popupReadingKana => 'Kana';
+
+  @override
+  String get popupReadingRomaji => 'Romaji';
+
+  @override
+  String get popupShowKanaOnlyReading => 'Show reading for kana-only words';
+
+  @override
   String get popupProfileAlternation => 'Profile alternation';
 
   @override
@@ -1252,4 +1423,222 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get analysisSection => 'Analysis';
+
+  @override
+  String get liveOcrEnable => 'Enable live OCR';
+
+  @override
+  String get liveOcrSection => 'Live OCR';
+
+  @override
+  String get liveOcrErrorPrefix => 'Live OCR';
+
+  @override
+  String get liveOcrUnsupported =>
+      'Screen capture is not available on this machine, so live OCR cannot run here.';
+
+  @override
+  String get copyFailed => 'Copy failed';
+
+  @override
+  String get copied => 'Copied';
+
+  @override
+  String get screenshotFolder => 'Screenshot folder';
+
+  @override
+  String get screenshotFolderUnknown => 'Unknown';
+
+  @override
+  String get screenshotChooseFolder => 'Choose screenshot folder';
+
+  @override
+  String get screenshotResetFolder => 'Use the default folder';
+
+  @override
+  String get screenshotSearch => 'Search screenshots';
+
+  @override
+  String get screenshotManager => 'Manager';
+
+  @override
+  String get globalHotkeys => 'Global hotkeys';
+
+  @override
+  String get ocrScreenshotTitle => 'OCR / Screenshot';
+
+  @override
+  String get globalHotkeysSubtitle =>
+      'These shortcuts work while another application has the focus.';
+
+  @override
+  String get screenshotNoMatches => 'No screenshots match the filter';
+
+  @override
+  String get screenshotFilter => 'Filter';
+
+  @override
+  String get screenshotSort => 'Sort';
+
+  @override
+  String get screenshotFilterAll => 'Visible';
+
+  @override
+  String get screenshotFilterHidden => 'Hidden';
+
+  @override
+  String get screenshotFilterWithText => 'With text';
+
+  @override
+  String get screenshotFilterWithoutText => 'Without text';
+
+  @override
+  String get screenshotSortNewest => 'Newest first';
+
+  @override
+  String get screenshotSortOldest => 'Oldest first';
+
+  @override
+  String get screenshotSortName => 'By name';
+
+  @override
+  String get screenshotHasText => 'has text';
+
+  @override
+  String get screenshotCopied => 'Copied';
+
+  @override
+  String get screenshotNoRelativePath =>
+      'The screenshot is not inside the screenshot folder';
+
+  @override
+  String get screenshotProperties => 'Properties';
+
+  @override
+  String get screenshotPropertyName => 'Name';
+
+  @override
+  String get screenshotPropertyKind => 'Kind';
+
+  @override
+  String get screenshotPropertyTaken => 'Taken';
+
+  @override
+  String get screenshotPropertyPath => 'Path';
+
+  @override
+  String get screenshotPropertySize => 'File size';
+
+  @override
+  String get screenshotPropertyText => 'Recognized text';
+
+  @override
+  String get screenshotRename => 'Rename screenshot';
+
+  @override
+  String get screenshotEditText => 'Edit recognized text';
+
+  @override
+  String get screenshotCrop => 'Crop screenshot';
+
+  @override
+  String get screenshotCropLeft => 'Left';
+
+  @override
+  String get screenshotCropTop => 'Top';
+
+  @override
+  String get screenshotCropWidth => 'Width';
+
+  @override
+  String get screenshotCropHeight => 'Height';
+
+  @override
+  String get screenshotCropped => 'Screenshot cropped';
+
+  @override
+  String get screenshotCropFailed => 'The crop failed';
+
+  @override
+  String get liveOcrNotConfigured => 'Live OCR is not configured';
+
+  @override
+  String get liveOcrCaptureFailed => 'Screen capture failed';
+
+  @override
+  String get liveOcrOcrFailed => 'OCR failed';
+
+  @override
+  String get liveOcrSectionSubtitle =>
+      'Continuous screen capture with live translation';
+
+  @override
+  String get liveOcrEnableSubtitle =>
+      'Continuously read the screen and show the text with its translation in a floating overlay';
+
+  @override
+  String get liveOcrFullscreen => 'Read the whole screen';
+
+  @override
+  String get liveOcrFullscreenSubtitle =>
+      'Off: read only the region you last selected with the region capture';
+
+  @override
+  String get liveOcrShowTranslation => 'Show translation';
+
+  @override
+  String get liveOcrShowTranslationSubtitle =>
+      'Show the translated text under the source';
+
+  @override
+  String get liveOcrCaptureInterval => 'Capture interval';
+
+  @override
+  String get liveOcrStableReads => 'Stable reads';
+
+  @override
+  String get videoPopOutMiniPlayer => 'Pop out mini player';
+
+  @override
+  String get videoPictureInPicture => 'Picture-in-picture';
+
+  @override
+  String get videoPopupCaptions => 'Popup captions';
+
+  @override
+  String get videoLeaveListeningMode => 'Leave listening mode (back to video)';
+
+  @override
+  String get videoListeningMode => 'Listening mode (audio only, screen off)';
+
+  @override
+  String get videoSearchYouTube => 'Search YouTube';
+
+  @override
+  String get videoSearchEllipsis => 'Search…';
+
+  @override
+  String get videoPipUnavailable => 'PiP unavailable on this device';
+
+  @override
+  String get videoCouldNotSwitchQuality => 'Could not switch quality.';
+
+  @override
+  String get videoWhisperSubsServerMissing =>
+      'Set the WhisperSubs server URL in Settings first.';
+
+  @override
+  String get videoWhisperSubs => 'WhisperSubs';
+
+  @override
+  String get screenshotCopyImageItem => 'Copy image';
+
+  @override
+  String get screenshotCopyPathItem => 'Copy path';
+
+  @override
+  String get screenshotPreviousCapture => 'Previous capture';
+
+  @override
+  String get screenshotAlbumEmpty => 'The album is empty';
 }

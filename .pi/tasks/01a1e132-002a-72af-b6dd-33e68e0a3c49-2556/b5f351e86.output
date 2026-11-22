@@ -1,0 +1,38 @@
+00:00 +0: loading /host/lang/test/video_reading_hover_test.dart
+00:00 +0: /host/lang/test/player_side_pane_test.dart: shows a tab for each section
+00:26 +1: /host/lang/test/player_side_pane_test.dart: shows a tab for each section
+00:26 +2: /host/lang/test/video_reading_hover_test.dart: reading annotations reading style furigana is kept for the subtitles
+00:26 +3: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:26 +4: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:26 +5: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:26 +6: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:26 +7: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:26 +8: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:26 +9: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:26 +10: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:27 +11: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:27 +11: /host/lang/test/video_reading_hover_test.dart: transcript hover definitions hovering a word opens its definition
+AppStorage: accessed before init(); using in-memory fallback
+00:27 +12: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:27 +12: /host/lang/test/video_reading_hover_test.dart: transcript hover definitions no modifier is needed for the plain hover
+AppStorage: accessed before init(); using in-memory fallback
+00:27 +13: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:27 +14: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:27 +14: /host/lang/test/video_reading_hover_test.dart: transcript hover definitions disabling the plain hover closes an open popup
+AppStorage: accessed before init(); using in-memory fallback
+00:27 +15: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:28 +16: /host/lang/test/player_side_pane_test.dart: tapping a tab reports the new tab
+00:30 +17: /host/lang/test/player_side_pane_test.dart: the description tab shows the description text
+00:30 +18: /host/lang/test/player_side_pane_test.dart: the description tab says so when there is none
+00:31 +19: /host/lang/test/player_side_pane_test.dart: the chapters tab lists the chapters
+00:31 +20: /host/lang/test/player_side_pane_test.dart: the chapters tab says so when there are none
+00:31 +21: /host/lang/test/player_side_pane_test.dart: tapping a chapter reports it
+00:31 +22: /host/lang/test/player_side_pane_test.dart: the transcript tab lists the lines
+00:31 +23: /host/lang/test/player_side_pane_test.dart: the transcript tab says so when no track is loaded
+00:31 +24: /host/lang/test/player_side_pane_test.dart: tapping a transcript line reports its index
+00:31 +25: /host/lang/test/player_side_pane_test.dart: long-pressing a transcript line reports its index
+00:32 +26: /host/lang/test/player_side_pane_test.dart: the settings tab shows the supplied settings
+00:32 +27: /host/lang/test/player_side_pane_test.dart: the settings tab says so when there are none
+00:32 +28: /host/lang/test/player_side_pane_test.dart: hovering a transcript word opens its definition
+AppStorage: accessed before init(); using in-memory fallback
+00:33 +29: All tests passed!

@@ -6,16 +6,14 @@ import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/presentation/screens/document_reader_screen.dart';
 import 'package:lang/presentation/screens/reader/browser_tab.dart';
-import 'package:lang/presentation/screens/reader/video_tab.dart';
 import 'package:lang/presentation/screens/reader/whisper_subs_tab.dart';
-import 'package:lang/presentation/screens/screenshot_tab.dart';
-import 'package:lang/presentation/screens/speech_tab.dart';
 import 'package:lang/presentation/widgets/clipboard_settings.dart';
 import 'package:lang/utils/font_scale.dart';
 
-/// Reader hub: documents (pdf/epub/txt/cbz/manga), screenshots
-/// (capture + OCR + album) and clipboard (monitor settings, live
-/// history) in one screen with three tabs.
+
+/// Reader hub: documents (pdf/epub/txt/cbz/manga), the browser, the
+/// clipboard (monitor settings, live history) and WhisperSubs. The
+/// screenshot/OCR capture tab lives in its own bottom-bar screen.
 class ReaderScreen extends StatefulWidget {
   const ReaderScreen({super.key});
 
@@ -30,7 +28,7 @@ class _ReaderScreenState extends State<ReaderScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 7, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     HistoryService.instance.load();
     // Other tabs (WhisperSubs browse) can ask the reader to switch to
     // a tab, e.g. handing a video to the video tab. The AppState
@@ -78,18 +76,9 @@ class _ReaderScreenState extends State<ReaderScreen>
               text: l10n.readerTabBrowser,
             ),
             Tab(
-              icon: const Icon(Icons.screenshot_monitor, size: 18),
-              text: l10n.readerTabScreenshots,
-            ),
-            Tab(
               icon: const Icon(Icons.content_paste, size: 18),
               text: l10n.readerTabClipboard,
             ),
-            Tab(
-              icon: const Icon(Icons.play_circle_outline, size: 18),
-              text: l10n.readerTabVideo,
-            ),
-            Tab(icon: const Icon(Icons.mic, size: 18), text: l10n.speechTab),
             Tab(
               icon: const Icon(Icons.graphic_eq, size: 18),
               text: 'WhisperSubs',
@@ -102,10 +91,7 @@ class _ReaderScreenState extends State<ReaderScreen>
         children: const [
           DocumentReaderScreen(),
           BrowserTab(),
-          ScreenshotTab(),
           _ClipboardTab(),
-          VideoTab(),
-          SpeechTab(),
           WhisperSubsTab(),
         ],
       ),

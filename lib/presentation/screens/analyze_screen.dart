@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:lang/presentation/widgets/word_action_bar.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:lang/core/services/history_service.dart';
 import 'package:lang/core/services/label_service.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/utils/font_scale.dart' as font_scale;
+import 'package:lang/utils/popup_scan_blocker.dart';
 import 'package:lang/utils/screen_size.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/domain/entities/app_state.dart';
+import 'package:lang/domain/entities/font_zoom.dart';
 import 'package:lang/presentation/widgets/word_detail_sheet.dart';
 import 'package:lang/presentation/widgets/structured_definition.dart';
 import 'package:lang/presentation/widgets/script_text_field.dart';
@@ -102,6 +106,11 @@ double measureSearchFieldMaxHeight({
 
 class AnalyzeScreen extends StatefulWidget {
   const AnalyzeScreen({super.key});
+
+  /// Text handed over from another screen (e.g. the OCR screen's
+  /// screen-content search). Consumed by [State.initState] once.
+  static String? pendingText;
+
   @override
   State<AnalyzeScreen> createState() => _AnalyzeScreenState();
 }
@@ -116,6 +125,15 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
   bool _showFullTranslation = true;
   bool _showFavorites = true;
 
+  /// Whether the search bar is expanded. When collapsed only a slim
+  /// handle stays visible, so the results get the whole window.
+  bool _searchBarExpanded = true;
+
+  /// The search bar hides itself while the user scrolls down through
+  /// the results and comes back when they scroll up — the same
+  /// behaviour as a sticky header that gets out of the way.
+  bool _searchBarHidden = false;
+
   // Bottom section tab: 0 = favorites+word history, 1 = analyses,
   // 2 = clipboard history
   int _bottomTab = 0;
@@ -124,7 +142,6 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
   // newest first. Position -1 = "not browsing" (typing a new query).
   final List<String> _queryHistory = [];
   int _historyPos = -1;
-  String _liveQuery = ''; // text being typed when history browsing started
 
   late AnimationController _expandController;
   late AnimationController _fadeController;
@@ -142,10 +159,44 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     );
     _fadeController.forward();
     _controller.addListener(_onTextChanged);
+    _scrollController.addListener(_onScroll);
+
+    // consume text handed over from another screen (screen-content search)
+    final pending = AnalyzeScreen.pendingText;
+    AnalyzeScreen.pendingText = null;
+    if (pending != null && pending.trim().isNotEmpty) {
+      _controller.text = pending.trim();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<AnalyzerProvider>().analyzeText(pending.trim());
+      });
+    }
   }
 
   void _onTextChanged() {
     setState(() {});
+  }
+
+  /// Hide the search bar while the user scrolls down through the
+  /// results and bring it back when they scroll up. The bar is
+  /// restored as soon as the user reaches the top again.
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    // only react to real user scrolling, not to layout jumps
+    if (position.userScrollDirection == ScrollDirection.reverse) {
+      if (!_searchBarHidden && _searchBarExpanded) {
+        setState(() => _searchBarHidden = true);
+      }
+    } else if (position.userScrollDirection == ScrollDirection.forward) {
+      if (_searchBarHidden) {
+        setState(() => _searchBarHidden = false);
+      }
+    }
+    // back at the top: always show the bar
+    if (position.pixels <= 0 && _searchBarHidden) {
+      setState(() => _searchBarHidden = false);
+    }
   }
 
   /// Push the user's paging settings (words/chars per page) into the
@@ -182,6 +233,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     if (event is! KeyDownEvent) return;
     final alt = HardwareKeyboard.instance.isAltPressed;
     final ctrl = HardwareKeyboard.instance.isControlPressed;
+    final shift = HardwareKeyboard.instance.isShiftPressed;
     // Alt+Left/Right: walk the analysis query history (previous/next)
     if (alt && event.logicalKey == LogicalKeyboardKey.arrowLeft) {
       _historyStep(-1, provider);
@@ -189,6 +241,13 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     }
     if (alt && event.logicalKey == LogicalKeyboardKey.arrowRight) {
       _historyStep(1, provider);
+      return;
+    }
+    // Zoom shortcuts:
+    //   +/-            definition text size
+    //   Shift +/-      card column count
+    //   Ctrl  +/-      all text (global multiplier)
+    if (_handleZoomKey(event.logicalKey, shift: shift, ctrl: ctrl, provider: provider)) {
       return;
     }
     // Ctrl+Backspace: clear the input and the analyzed results
@@ -244,6 +303,62 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     }
   }
 
+  /// Handle the +/- zoom shortcuts.
+  ///
+  /// * `+` / `-` — the definition text size (the 'translations' font
+  ///   group, which sizes the gloss lines on the cards).
+  /// * `Shift` + `+` / `-` — the number of card columns.
+  /// * `Ctrl` + `+` / `-` — every text size (the global multiplier).
+  ///
+  /// Returns true when the key was consumed.
+  bool _handleZoomKey(
+    LogicalKeyboardKey key, {
+    required bool shift,
+    required bool ctrl,
+    required AnalyzerProvider provider,
+  }) {
+    final int? direction = switch (key) {
+      LogicalKeyboardKey.equal ||
+      LogicalKeyboardKey.add ||
+      LogicalKeyboardKey.numpadAdd => 1,
+      LogicalKeyboardKey.minus ||
+      LogicalKeyboardKey.numpadSubtract => -1,
+      _ => null,
+    };
+    if (direction == null) return false;
+
+    final appState = context.read<AppState>();
+    if (ctrl) {
+      // all text: the global font multiplier
+      final step = appState.fontZoomStep;
+      final next = (appState.fontSizeMultiplier + direction * step).clamp(
+        FontZoom.minMultiplier,
+        FontZoom.maxMultiplier,
+      );
+      if (next != appState.fontSizeMultiplier) {
+        appState.setFontSizeMultiplier(next);
+      }
+      return true;
+    }
+
+    if (shift) {
+      // card columns
+      final next = (provider.itemsPerRow + direction).clamp(1, 12);
+      if (next != provider.itemsPerRow) {
+        provider.updateSetting('itemsPerRow', next);
+      }
+      return true;
+    }
+
+    // definition text: the 'translations' group sizes the gloss lines
+    final current = appState.fontSettings.translations;
+    final next = (current + direction * 0.1).clamp(0.5, 3.0);
+    if (next != current) {
+      appState.setFontGroup('translations', next);
+    }
+    return true;
+  }
+
   /// Record every analyzed text so Alt+Left/Right can walk back
   /// through previous queries.
   void _rememberQuery(String text) {
@@ -256,13 +371,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
   }
 
   /// Alt+Left/Right: step through the query history and re-analyze.
-  /// Entering history mode snapshots the live (unedited) input so
-  /// Alt+Right can always return to it.
   void _historyStep(int delta, AnalyzerProvider provider) {
     if (_queryHistory.isEmpty) return;
     if (_historyPos == -1) {
       if (delta > 0) return; // not browsing yet: right does nothing
-      _liveQuery = _controller.text.trim();
       _historyPos = 0;
     }
     final next = (_historyPos + delta).clamp(0, _queryHistory.length - 1);
@@ -321,8 +433,21 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
               // sizes itself to its content, so the input field, stat
               // chips and analyse button can never overflow it. The
               // field's own maxHeight cap keeps a huge paste from
-              // eating the screen.
-              _buildSearchBar(context, theme, provider, l10n),
+              // eating the screen. It slides out of the way while the
+              // user scrolls down through the results and comes back
+              // on the way up.
+              AnimatedSize(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOut,
+                alignment: Alignment.topCenter,
+                child: _searchBarHidden
+                    // a slim strip stays visible so the bar can be
+                    // brought back without scrolling up first
+                    ? _buildSearchBarHandle(context, theme)
+                    : PopupScanBlocker(
+                        child: _buildSearchBar(context, theme, provider, l10n),
+                      ),
+              ),
 
               // 2. SCROLLING BODY
               Expanded(
@@ -420,10 +545,12 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     AppLocalizations l10n,
   ) {
     return AppBar(
-      title: Text(
-        l10n.langAnalyze,
-        style: theme.textTheme.headlineMedium?.copyWith(
-          fontWeight: FontWeight.bold,
+      title: PopupScanBlocker(
+        child: Text(
+          l10n.langAnalyze,
+          style: theme.textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       leading: IconButton(
@@ -453,7 +580,9 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
             );
           },
         ),
-        _buildLanguageSelector(context, provider, l10n),
+        PopupScanBlocker(
+          child: _buildLanguageSelector(context, provider, l10n),
+        ),
       ],
       elevation: 0,
       scrolledUnderElevation: 1,
@@ -616,7 +745,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     );
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      padding: EdgeInsets.fromLTRB(16, _searchBarExpanded ? 16 : 6, 16, 12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         border: Border(
@@ -635,58 +764,130 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (compact) ...[
-            // mobile portrait: field and button stack, both full width
-            inputField,
-            const SizedBox(height: 10),
-            SizedBox(width: double.infinity, height: 48, child: analyzeButton),
-          ] else
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: inputField),
-                const SizedBox(width: 12),
-                analyzeButton,
-              ],
-            ),
-          if (provider.analyzedWords.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                _buildStatChip(
-                  context,
-                  theme,
-                  Icons.format_list_numbered_rounded,
-                  '${provider.analyzedWords.length}',
-                  l10n.wordsAnalyzed(provider.analyzedWords.length),
+          // collapse / expand handle: always reachable, even when the
+          // bar is collapsed or hidden behind a scroll
+          Row(
+            children: [
+              Expanded(
+                child: _searchBarExpanded
+                    ? const SizedBox.shrink()
+                    : Text(
+                        _controller.text.trim().isEmpty
+                            ? l10n.pasteTextHere
+                            : _controller.text.trim(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: fs(13, 'sentences'),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
+                        ),
+                      ),
+              ),
+              IconButton(
+                tooltip: _searchBarExpanded
+                    ? l10n.collapseSearchBar
+                    : l10n.expandSearchBar,
+                visualDensity: VisualDensity.compact,
+                iconSize: 20,
+                icon: Icon(
+                  _searchBarExpanded
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
-                _buildStatChip(
-                  context,
-                  theme,
-                  Icons.text_fields_rounded,
-                  '${provider.sentences.length}',
-                  l10n.sentencesFound(provider.sentences.length),
-                ),
-                _buildStatChip(
-                  context,
-                  theme,
-                  Icons.grid_view_rounded,
-                  '${provider.itemsPerRow}',
-                  l10n.columns,
-                ),
-                _buildStatChip(
-                  context,
-                  theme,
-                  Icons.pages_rounded,
-                  '',
-                  l10n.page(provider.currentPage + 1, provider.totalPages),
-                ),
-              ],
-            ),
+                onPressed: () {
+                  setState(() {
+                    _searchBarExpanded = !_searchBarExpanded;
+                    if (_searchBarExpanded) _searchBarHidden = false;
+                  });
+                },
+              ),
+            ],
+          ),
+          if (_searchBarExpanded) ...[
+            if (compact) ...[
+              // mobile portrait: field and button stack, both full width
+              inputField,
+              const SizedBox(height: 10),
+              SizedBox(width: double.infinity, height: 48, child: analyzeButton),
+            ] else
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: inputField),
+                  const SizedBox(width: 12),
+                  analyzeButton,
+                ],
+              ),
+            if (provider.analyzedWords.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  _buildStatChip(
+                    context,
+                    theme,
+                    Icons.format_list_numbered_rounded,
+                    '${provider.analyzedWords.length}',
+                    l10n.wordsAnalyzed(provider.analyzedWords.length),
+                  ),
+                  _buildStatChip(
+                    context,
+                    theme,
+                    Icons.text_fields_rounded,
+                    '${provider.sentences.length}',
+                    l10n.sentencesFound(provider.sentences.length),
+                  ),
+                  _buildStatChip(
+                    context,
+                    theme,
+                    Icons.grid_view_rounded,
+                    '${provider.itemsPerRow}',
+                    l10n.columns,
+                  ),
+                  _buildStatChip(
+                    context,
+                    theme,
+                    Icons.pages_rounded,
+                    '',
+                    l10n.page(provider.currentPage + 1, provider.totalPages),
+                  ),
+                ],
+              ),
+            ],
           ],
         ],
+      ),
+    );
+  }
+
+  /// Slim strip shown while the search bar is hidden by a downward
+  /// scroll. Tapping it brings the bar back.
+  Widget _buildSearchBarHandle(BuildContext context, ThemeData theme) {
+    return Material(
+      color: theme.colorScheme.surface,
+      child: InkWell(
+        onTap: () => setState(() => _searchBarHidden = false),
+        child: Container(
+          height: 28,
+          width: double.infinity,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: theme.colorScheme.outline.withValues(alpha: 0.15),
+              ),
+            ),
+          ),
+          child: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            size: 18,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+          ),
+        ),
       ),
     );
   }
@@ -752,7 +953,6 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
         .where((w) => _passesCardFilters(appState, w))
         .toList();
 
-    final pageStart = provider.currentPage * provider.itemsPerPage;
     final groups = provider.sentenceGroups;
 
     return Column(
@@ -806,7 +1006,9 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
         ),
         const SizedBox(height: 8),
         // Filter / Sort / Group Bar
-        _buildFilterSortGroupBar(context, theme, provider, l10n),
+        PopupScanBlocker(
+          child: _buildFilterSortGroupBar(context, theme, provider, l10n),
+        ),
         const SizedBox(height: 12),
 
         // Merged per-sentence groups: sentence (furigana) > translation >
@@ -867,10 +1069,11 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     // mobile portrait: single column so cards get the full width
     final columns = ScreenSize.isMobile(context)
         ? 1
-        : provider.itemsPerRow.clamp(1, 5);
+        : provider.itemsPerRow.clamp(1, 12);
+    // minimum card height (0 = content-sized)
+    final minHeight = provider.cardHeight;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final itemWidth = (constraints.maxWidth - (columns - 1) * 10) / columns;
         final rows = <List<AnalyzedWord>>[
           for (var i = 0; i < cards.length; i += columns)
             cards.sublist(
@@ -883,33 +1086,36 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
             for (final row in rows)
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (final word in row)
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 5),
-                          child: _buildWordCard(
-                            context,
-                            Theme.of(context),
-                            provider,
-                            word,
-                            absoluteFor != null
-                                ? absoluteFor(word)
-                                : cards.indexOf(word),
-                            selected:
-                                provider.selectedWordIndex ==
-                                (absoluteFor != null
-                                    ? absoluteFor(word)
-                                    : cards.indexOf(word)),
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final word in row)
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 5),
+                            child: _buildWordCard(
+                              context,
+                              Theme.of(context),
+                              provider,
+                              word,
+                              absoluteFor != null
+                                  ? absoluteFor(word)
+                                  : cards.indexOf(word),
+                              selected:
+                                  provider.selectedWordIndex ==
+                                  (absoluteFor != null
+                                      ? absoluteFor(word)
+                                      : cards.indexOf(word)),
+                              minHeight: minHeight,
+                            ),
                           ),
                         ),
-                      ),
-                    // pad short rows so cards keep the grid column width
-                    for (var p = row.length; p < columns; p++)
-                      const Expanded(child: SizedBox()),
-                  ],
+                      // pad short rows so cards keep the grid column width
+                      for (var p = row.length; p < columns; p++)
+                        const Expanded(child: SizedBox()),
+                    ],
+                  ),
                 ),
               ),
           ],
@@ -1068,57 +1274,66 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     AnalyzerProvider provider,
     AppLocalizations l10n,
   ) {
+    // 1..12 columns: the dropdown picks an exact value, the slider
+    // steps through the same range.
+    const maxColumns = 12;
+    final columns = provider.itemsPerRow.clamp(1, maxColumns);
     return Tooltip(
       message: l10n.columns,
-      child: PopupMenuButton<int>(
-        initialValue: provider.itemsPerRow,
-        onSelected: (val) => provider.updateSetting('itemsPerRow', val),
-        itemBuilder: (context) => List.generate(5, (i) => i + 1)
-            .map(
-              (n) => PopupMenuItem(
-                value: n,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.grid_view_rounded,
-                      size: 18,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                    const SizedBox(width: 12),
-                    Text('$n ${n == 1 ? l10n.column : l10n.columns}'),
-                  ],
-                ),
-              ),
-            )
-            .toList(),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: theme.colorScheme.outline.withValues(alpha: 0.15),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: theme.colorScheme.outline.withValues(alpha: 0.15),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.grid_view_rounded,
+              size: 16,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.grid_view_rounded,
-                size: 16,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            const SizedBox(width: 6),
+            SizedBox(
+              width: 96,
+              child: Slider(
+                value: columns.toDouble(),
+                min: 1,
+                max: maxColumns.toDouble(),
+                divisions: maxColumns - 1,
+                label: '$columns',
+                onChanged: (v) =>
+                    provider.updateSetting('itemsPerRow', v.round()),
               ),
-              const SizedBox(width: 6),
-              Text(
-                '${provider.itemsPerRow} ${l10n.columns}',
-                style: TextStyle(
-                  fontSize: fs(12, 'ui'),
-                  fontWeight: FontWeight.w500,
-                  color: theme.colorScheme.onSurface,
+            ),
+            SizedBox(
+              width: 58,
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<int>(
+                  value: columns,
+                  isDense: true,
+                  isExpanded: true,
+                  borderRadius: BorderRadius.circular(12),
+                  items: [
+                    for (var n = 1; n <= maxColumns; n++)
+                      DropdownMenuItem(
+                        value: n,
+                        child: Text('$n ${n == 1 ? l10n.column : l10n.columns}'),
+                      ),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      provider.updateSetting('itemsPerRow', val);
+                    }
+                  },
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -1677,6 +1892,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     AnalyzedWord word,
     int index, {
     bool selected = false,
+    int minHeight = 0,
   }) {
     final appState = context.watch<AppState>();
     final mode = appState.cardDisplayMode;
@@ -1684,13 +1900,9 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
     final reading = word.reading ?? '';
     final pinyin = word.mdbgData?.pinyin ?? '';
     final displayReading = reading.isNotEmpty ? reading : pinyin;
-    final definition = word.ichiMoeDefinitions.isNotEmpty
-        ? word.ichiMoeDefinitions.first
-        : (word.mdbgData?.definitions.isNotEmpty ?? false
-              ? word.mdbgData!.definitions.first
-              : (word.wiktionaryDefinitions.isNotEmpty
-                    ? word.wiktionaryDefinitions.first
-                    : ''));
+    // Join up to two senses with '; ' so multiple glosses read as a
+    // list instead of one run-on line ("dog cat" → "dog; cat").
+    final definition = _cardDefinition(word);
     final freq = word.frequency ?? 0;
 
     Color freqColor;
@@ -1718,6 +1930,9 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
       },
       child: Card(
         elevation: 0,
+        // a configured minimum height keeps cards in a row aligned;
+        // 0 leaves them content-sized
+        margin: EdgeInsets.zero,
         color: selected
             ? theme.colorScheme.primary.withValues(alpha: 0.10)
             : theme.colorScheme.surface,
@@ -1736,11 +1951,13 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
             _showWordDetail(context, word, provider);
           },
           borderRadius: BorderRadius.circular(compact ? 10 : 14),
-          child: Padding(
-            padding: EdgeInsets.all(compact ? 8 : 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: minHeight.toDouble()),
+            child: Padding(
+              padding: EdgeInsets.all(compact ? 8 : 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 // ---- reading above word (compact), word first (others)
                 if (mode == 'onlyReading')
                   Text(
@@ -1780,6 +1997,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                   ),
                 ],
                 // ---- definition right under the word
+                // (_cardDefinition already flattened the senses and
+                // separated them with '; ')
                 if ((mode == 'compact' ||
                         mode == 'normal' ||
                         mode == 'full' ||
@@ -1788,7 +2007,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
-                      _stripStructured(definition),
+                      definition,
                       style: TextStyle(
                         fontSize: fs(compact ? 10.5 : 12, 'ui'),
                         height: 1.25,
@@ -1800,54 +2019,6 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                // ---- small tags row (compact/normal/full)
-                if (mode != 'onlyWord' &&
-                    mode != 'onlyReading' &&
-                    mode != 'onlyWordReading' &&
-                    mode != 'onlyWordDefinition') ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      if (freq > 0) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 1,
-                          ),
-                          decoration: BoxDecoration(
-                            color: freqColor.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                          child: Text(
-                            '$freq',
-                            style: TextStyle(
-                              fontSize: fs(8.5, 'ui'),
-                              fontWeight: FontWeight.bold,
-                              color: freqColor,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                      ],
-                      Expanded(
-                        child: Text(
-                          [
-                            if (reading.isNotEmpty && pinyin.isNotEmpty)
-                              pinyin, // secondary reading shown as small tag
-                          ].join(),
-                          style: TextStyle(
-                            fontSize: fs(8.5, 'ui'),
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.4,
-                            ),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
                 // ---- actions bottom-right; single save/favorite
                 // (the old duplicate heart + bookmark are unified here).
                 // No Spacer: the card is content-sized (not a fixed-height
@@ -1883,7 +2054,18 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                     ),
                   ),
                 ],
-              ],
+                // ---- tags at the card end: colored word type,
+                // frequency band, secondary reading
+                _WordTagsRow(
+                  word: word,
+                  freq: freq,
+                  freqColor: freqColor,
+                  pinyin: pinyin,
+                  reading: reading,
+                  compact: compact,
+                ),
+                ],
+              ),
             ),
           ),
         ),
@@ -1896,6 +2078,49 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
   static String _stripStructured(String definition) {
     final flat = StructuredDefinition.flatten(definition);
     return flat.replaceAll(RegExp(r'\s+'), ' ').trim();
+  }
+
+  /// Best available gloss(es) for a card: flatten and join the first
+  /// two senses with '; ' so definitions never merge into one blur.
+  ///
+  /// The leading part-of-speech marker is stripped: the card already
+  /// shows the word type as a coloured chip, and leaving it in the
+  /// definition line printed it twice ("noun (common) (いぬ) animal"
+  /// under a "noun" chip).
+  static String _cardDefinition(AnalyzedWord word) {
+    final List<String> src;
+    if (word.ichiMoeDefinitions.isNotEmpty) {
+      src = word.ichiMoeDefinitions;
+    } else if (word.mdbgData?.definitions.isNotEmpty ?? false) {
+      src = word.mdbgData!.definitions;
+    } else if (word.wiktionaryDefinitions.isNotEmpty) {
+      src = word.wiktionaryDefinitions;
+    } else {
+      src = const [];
+    }
+    final flat = src
+        .map(_stripStructured)
+        .map(_stripPosMarker)
+        .where((s) => s.isNotEmpty)
+        .toList();
+    if (flat.isEmpty) return '';
+    return flat.take(2).join('; ');
+  }
+
+  /// Leading part-of-speech markers used by the dictionaries the app
+  /// reads: "noun (common) (いぬ) animal", "common noun ...", "verb
+  /// (transitive) ...".
+  static final _posMarkerPattern = RegExp(
+    r'^(common noun|noun|common adjective|adjective|i-adjective|na-adjective|'
+    r'common verb|verb|adverb|particle|auxiliary|pronoun|preposition|'
+    r'conjunction|interjection|expression|phrase|idiom|numeral)'
+    r'(?:\s*\((?:[^()]*)\))*\s*[:\-–]?\s*',
+    caseSensitive: false,
+  );
+
+  /// Remove a leading part-of-speech marker from a flattened gloss.
+  static String _stripPosMarker(String definition) {
+    return definition.replaceFirst(_posMarkerPattern, '').trim();
   }
 
   void _showWordDetail(
@@ -1955,6 +2180,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                 ),
                 const SizedBox(height: 6),
                 SelectableText(
+                  contextMenuBuilder: AppContextMenu.editable,
                   _controller.text,
                   style: TextStyle(
                     fontSize: fs(13, 'sentences'),
@@ -1974,6 +2200,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                 ),
                 const SizedBox(height: 6),
                 SelectableText(
+                  contextMenuBuilder: AppContextMenu.editable,
                   fullTranslation,
                   style: TextStyle(
                     fontSize: fs(13.5, 'translations'),
@@ -2193,8 +2420,20 @@ class _AnalyzeScreenState extends State<AnalyzeScreen>
                   l10n.perPageRow(provider.itemsPerRow),
                   provider.itemsPerRow,
                   1,
-                  5,
+                  12,
                   (v) => provider.updateSetting('itemsPerRow', v),
+                ),
+                _buildSettingSlider(
+                  context,
+                  theme,
+                  Icons.height_rounded,
+                  provider.cardHeight == 0
+                      ? l10n.cardHeightAuto
+                      : l10n.cardHeightPx(provider.cardHeight),
+                  provider.cardHeight,
+                  0,
+                  400,
+                  (v) => provider.updateSetting('cardHeight', v),
                 ),
                 _buildSettingSlider(
                   context,
@@ -3003,4 +3242,121 @@ class _FavoritesDelegate extends SliverPersistentHeaderDelegate {
   @override
   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>
       true;
+}
+
+/// Colored tag chips pinned to the end of a word card: part of speech
+/// (derived from the gloss text), frequency band, and the secondary
+/// reading (pinyin when the primary reading is furigana, or vice versa).
+class _WordTagsRow extends StatelessWidget {
+  const _WordTagsRow({
+    required this.word,
+    required this.freq,
+    required this.freqColor,
+    required this.pinyin,
+    required this.reading,
+    required this.compact,
+  });
+
+  final AnalyzedWord word;
+  final int freq;
+  final Color freqColor;
+  final String pinyin;
+  final String reading;
+  final bool compact;
+
+  /// Part of speech guessed from the available glosses; null when no
+  /// marker matched. Colors mirror the reader/annotated-line palette.
+  static (String, Color)? _posOf(AnalyzedWord w) {
+    final hay = [
+      ...w.ichiMoeDefinitions,
+      ...w.wiktionaryDefinitions,
+      ...w.localDefinitions.map((d) => d.values.join(' ')),
+      if (w.mdbgData != null) w.mdbgData!.definitions.join(' '),
+    ].join(' ').toLowerCase();
+    if (hay.contains('particle')) return ('particle', const Color(0xFFF59E0B));
+    if (hay.contains('auxiliary')) {
+      return ('auxiliary', const Color(0xFFFB923C));
+    }
+    if (hay.contains('i-adjective') ||
+        hay.contains('na-adjective') ||
+        hay.contains('adjective')) {
+      return ('adjective', const Color(0xFF06B6D4));
+    }
+    if (hay.contains('adverb')) return ('adverb', const Color(0xFFA78BFA));
+    if (hay.contains('verb')) return ('verb', const Color(0xFF8B5CF6));
+    if (hay.contains('noun')) return ('noun', const Color(0xFF60A5FA));
+    if (hay.contains('expression') || hay.contains('phrase')) {
+      return ('expression', const Color(0xFF34D399));
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final pos = _posOf(word);
+    final chips = <Widget>[
+      if (pos != null)
+        _chip(
+          theme,
+          label: pos.$1,
+          color: pos.$2,
+          icon: Icons.category_rounded,
+          fontSize: font_scale.fs(context, 9, 'ui'),
+        ),
+      if (freq > 0)
+        _chip(
+          theme,
+          label: '#$freq',
+          color: freqColor,
+          icon: Icons.bar_chart_rounded,
+          fontSize: font_scale.fs(context, 9, 'ui'),
+        ),
+      if (reading.isNotEmpty && pinyin.isNotEmpty)
+        _chip(
+          theme,
+          label: pinyin,
+          color: theme.colorScheme.secondary,
+          icon: Icons.translate_rounded,
+          fontSize: font_scale.fs(context, 9, 'ui'),
+        ),
+    ];
+    if (chips.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: EdgeInsets.only(top: compact ? 4 : 6),
+      child: Wrap(spacing: 4, runSpacing: 4, children: chips),
+    );
+  }
+
+  Widget _chip(
+    ThemeData theme, {
+    required String label,
+    required Color color,
+    required IconData icon,
+    required double fontSize,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.45)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: fontSize + 2, color: color),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: fontSize,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

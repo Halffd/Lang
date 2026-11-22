@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
 import 'package:lang/core/services/screenshot_service.dart';
 
 void main() {
@@ -119,14 +120,41 @@ HDMI-0 disconnected (normal left inverted right x axis y axis)
     expect(service.items, isEmpty);
   });
 
-  test('monitor capture falls back to full screen geometry', () async {
+  test('monitor capture uses the monitor geometry, not a bare index', () async {
     final item = await service.capture(ScreenshotKind.monitor, monitor: 0);
     expect(item, isNotNull);
     final maimCalls = commands
         .where((c) => c.$1 == 'maim')
         .map((c) => c.$2)
         .toList();
-    expect(maimCalls.any((args) => args.contains('-m')), isTrue);
+    // maim's -m index is 1-based and its order does not match
+    // xrandr's, so the capture must go by the monitor's geometry.
+    expect(maimCalls.any((args) => args.contains('-m')), isFalse);
+    expect(
+      maimCalls.any(
+        (args) => args.contains('-g') && args.contains('1920x1080+0+0'),
+      ),
+      isTrue,
+    );
+  });
+
+  test('a monitor capture never falls back to the whole virtual screen', () async {
+    // the second monitor starts at x=1920, so a capture that ignores
+    // the geometry would be the whole desktop
+    final item = await service.capture(ScreenshotKind.monitor, monitor: 1);
+    expect(item, isNotNull);
+    final maimCalls = commands
+        .where((c) => c.$1 == 'maim')
+        .map((c) => c.$2)
+        .toList();
+    expect(
+      maimCalls.any(
+        (args) => args.contains('-g') && args.contains('1280x1024+1920+0'),
+      ),
+      isTrue,
+    );
+    // no call may capture the root window
+    expect(maimCalls.any((args) => args.contains('root')), isFalse);
   });
 
   test('auto capture uses saved region when available', () async {
@@ -355,5 +383,212 @@ HDMI-0 disconnected (normal left inverted right x axis y axis)
     final item = await plain.capture(ScreenshotKind.fullscreen);
     expect(item, isNotNull);
     expect(File(item!.path).existsSync(), isTrue);
+  });
+
+  group('screenshot manager operations', () {
+    test('rename sets the display name and trims it', () async {
+      final item = await service.capture(ScreenshotKind.fullscreen);
+      expect(item, isNotNull);
+
+      service.rename(item!.id, '  invoice  ');
+
+      expect(service.items.first.name, 'invoice');
+      expect(service.items.first.displayName, 'invoice');
+    });
+
+    test('an empty name falls back to the file name without extension',
+        () async {
+      final item = await service.capture(ScreenshotKind.fullscreen);
+      service.rename(item!.id, '');
+
+      expect(service.items.first.name, '');
+      final fileName = item.path.split('/').last;
+      expect(service.items.first.displayName, fileName.replaceAll('.png', ''));
+    });
+
+    test('setHidden toggles the hidden flag', () async {
+      final item = await service.capture(ScreenshotKind.fullscreen);
+
+      service.setHidden(item!.id, true);
+      expect(service.items.first.hidden, isTrue);
+
+      service.setHidden(item.id, false);
+      expect(service.items.first.hidden, isFalse);
+    });
+
+    test('editOcrText replaces the recognized text', () async {
+      final item = await service.capture(ScreenshotKind.fullscreen);
+
+      service.editOcrText(item!.id, '  corrected  ');
+
+      expect(service.items.first.ocrText, 'corrected');
+    });
+
+    test('relativePath is null for a path outside the folder', () async {
+      final item = await service.capture(ScreenshotKind.fullscreen);
+      service.directoryOverride = '/some/other/folder';
+
+      expect(service.relativePath(item!), isNull);
+    });
+
+    test('relativePath strips the screenshot folder prefix', () async {
+      final item = await service.capture(ScreenshotKind.fullscreen);
+      service.directoryOverride = tempDir.path;
+
+      final relative = service.relativePath(item!);
+      expect(relative, isNotNull);
+      expect(relative, item.path.substring('${tempDir.path}/'.length));
+      expect(relative, isNot(contains('/')));
+    });
+
+    test('relativePath is null when no folder override is set', () async {
+      final item = await service.capture(ScreenshotKind.fullscreen);
+      service.directoryOverride = '';
+
+      expect(service.relativePath(item!), isNull);
+    });
+
+    test('crop rejects a rectangle outside the image', () async {
+      final item = await service.capture(ScreenshotKind.fullscreen);
+      // the fake capture writes a 4-byte file that is not a valid PNG,
+      // so decoding fails and the crop is refused
+      final cropped = await service.crop(
+        item!,
+        const ScreenshotCropRect(left: 0, top: 0, width: 10, height: 10),
+      );
+
+      expect(cropped, isNull);
+    });
+
+    test('crop replaces the image with the cropped region', () async {
+      // the default fake capture writes a 4-byte stub; write a real
+      // 40x30 PNG instead so the crop can be decoded and verified
+      service.runCommand = (executable, arguments) async {
+        if (executable == 'which') {
+          const tools = {'maim', 'slop', 'xdotool', 'xrandr'};
+          return (tools.contains(arguments.first) ? 0 : 1, '', '');
+        }
+        if (executable == 'maim') {
+          final source = img.Image(40, 30);
+          img.fill(source, img.Color.fromRgb(10, 20, 30));
+          File(
+            arguments.last,
+          ).writeAsBytesSync(Uint8List.fromList(img.encodePng(source)));
+          return (0, '', '');
+        }
+        return (1, '', '');
+      };
+
+      final item = await service.capture(ScreenshotKind.fullscreen);
+      expect(item, isNotNull);
+
+      final size = await service.imageSize(item!);
+      expect(size, isNotNull);
+      expect(size!.width, 40);
+      expect(size.height, 30);
+
+      final cropped = await service.crop(
+        item,
+        const ScreenshotCropRect(left: 5, top: 5, width: 20, height: 10),
+      );
+      expect(cropped, isNotNull);
+
+      final croppedSize = await service.imageSize(cropped!);
+      expect(croppedSize, isNotNull);
+      expect(croppedSize!.width, 20);
+      expect(croppedSize.height, 10);
+      expect(cropped.path, isNot(item.path));
+    });
+
+    test('crop leaves the item list length unchanged', () async {
+      service.runCommand = (executable, arguments) async {
+        if (executable == 'which') {
+          const tools = {'maim', 'slop', 'xdotool', 'xrandr'};
+          return (tools.contains(arguments.first) ? 0 : 1, '', '');
+        }
+        if (executable == 'maim') {
+          final source = img.Image(40, 30);
+          img.fill(source, img.Color.fromRgb(10, 20, 30));
+          File(
+            arguments.last,
+          ).writeAsBytesSync(Uint8List.fromList(img.encodePng(source)));
+          return (0, '', '');
+        }
+        return (1, '', '');
+      };
+
+      final item = await service.capture(ScreenshotKind.fullscreen);
+      final before = service.items.length;
+
+      await service.crop(
+        item!,
+        const ScreenshotCropRect(left: 0, top: 0, width: 10, height: 10),
+      );
+
+      expect(service.items.length, before);
+    });
+  });
+
+  group('wayland output names', () {
+    test('only the unindented lines are outputs', () {
+      // wlr-randr prints one block per output: the name at column 0
+      // and its properties indented.
+      const out = '''
+DP-1
+  Physical size: 597mm x 336mm
+  Enabled: yes
+  Position: 0,0
+  Scale: 1.00
+  Transform: 0
+  Mode: 1920x1080
+HDMI-A-1
+  Physical size: 600mm x 340mm
+  Enabled: yes
+  Position: 1920,0
+  Scale: 1.00
+  Transform: 0
+  Mode: 1920x1080
+''';
+      expect(
+        ScreenshotService.parseWaylandOutputNames(out),
+        ['DP-1', 'HDMI-A-1'],
+      );
+    });
+
+    test('the property lines are not counted as outputs', () {
+      // the old parser matched every line, so the monitor count was
+      // inflated and the per-monitor capture picked the wrong output
+      const out = '''
+DP-1
+  Position: 0,0
+  Mode: 1920x1080
+  Transform: 0
+''';
+      final names = ScreenshotService.parseWaylandOutputNames(out);
+      expect(names, hasLength(1));
+      expect(names.first, 'DP-1');
+    });
+
+    test('empty output yields no names', () {
+      expect(ScreenshotService.parseWaylandOutputNames(''), isEmpty);
+    });
+  });
+
+  group('region selection styling', () {
+    test('the slurp style asks for a yellow border and a text box', () {
+      final args = ScreenshotService.slurpStyleArgs();
+      expect(args, containsAllInOrder(['-c', '#FFFF00FF']));
+      expect(args, containsAllInOrder(['-w', '4']));
+      // -B is the option box: the background the dimensions text sits on
+      expect(args, containsAllInOrder(['-B', '#3C3C3C40']));
+    });
+
+    test('the slop style asks for a thick yellow border', () {
+      final args = ScreenshotService.slopStyleArgs();
+      // slop 7.x takes the border thickness as -b and RGBA floats for
+      // the colour
+      expect(args, containsAllInOrder(['-b', '4']));
+      expect(args, containsAllInOrder(['-c', '1,1,0,1']));
+    });
   });
 }

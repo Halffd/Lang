@@ -10,6 +10,7 @@ import 'package:lang/domain/entities/anki_note_data.dart';
 import 'package:lang/domain/entities/anki_note_types.dart';
 import 'package:lang/presentation/providers/analyzer_provider.dart';
 import 'package:lang/utils/font_scale.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 /// Rich Anki export dialog for a word.
 ///
@@ -394,6 +395,7 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
 
               _sectionLabel('Sentence'),
               TextField(
+                contextMenuBuilder: AppContextMenu.editable,
                 controller: _sentenceController,
                 maxLines: 2,
                 decoration: const InputDecoration(
@@ -405,6 +407,7 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
 
               _sectionLabel('Secondary definitions'),
               TextField(
+                contextMenuBuilder: AppContextMenu.editable,
                 controller: _secondaryController,
                 maxLines: 3,
                 decoration: const InputDecoration(
@@ -417,6 +420,7 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
 
               _sectionLabel('Comments'),
               TextField(
+                contextMenuBuilder: AppContextMenu.editable,
                 controller: _commentsController,
                 maxLines: 2,
                 decoration: const InputDecoration(
@@ -428,6 +432,7 @@ class _AnkiExportDialogState extends State<AnkiExportDialog> {
 
               _sectionLabel('Tags (space or comma separated)'),
               TextField(
+                contextMenuBuilder: AppContextMenu.editable,
                 controller: _tagsController,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),

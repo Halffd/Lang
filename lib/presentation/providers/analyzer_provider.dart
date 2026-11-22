@@ -40,6 +40,11 @@ class AnalyzerProvider extends ChangeNotifier {
   // Settings
   String _currentLanguage = 'ja';
   int _itemsPerRow = 2;
+
+  /// Minimum card height in logical pixels. 0 = cards size to their
+  /// content (the default); a positive value pins every card in a row
+  /// to at least that height so rows stay aligned.
+  int _cardHeight = 0;
   int _itemsPerPage = 50;
   int _pageChars = 0; // 0 = unlimited characters per page
   bool _showIchiMoe = true;
@@ -72,6 +77,9 @@ class AnalyzerProvider extends ChangeNotifier {
   // Getters
   String get currentLanguage => _currentLanguage;
   int get itemsPerRow => _itemsPerRow;
+
+  /// Minimum card height in logical pixels (0 = content-sized).
+  int get cardHeight => _cardHeight;
   int get itemsPerPage => _itemsPerPage;
   bool get showIchiMoe => _showIchiMoe;
   bool get showWiktionary => _showWiktionary;
@@ -533,7 +541,13 @@ class AnalyzerProvider extends ChangeNotifier {
   }
 
   Future<void> updateSetting(String key, dynamic value) async {
-    if (key == 'itemsPerRow') _itemsPerRow = value;
+    if (key == 'itemsPerRow') {
+      _itemsPerRow = (value as num).toInt().clamp(1, 12);
+    }
+    if (key == 'cardHeight') {
+      // 0 = content-sized cards; otherwise a minimum height in px
+      _cardHeight = (value as num).toInt().clamp(0, 600);
+    }
     if (key == 'itemsPerPage') {
       _itemsPerPage = value;
       _currentPage = 0;

@@ -187,4 +187,115 @@ void main() {
       expect(find.text('Analyze Text'), findsOneWidget);
     });
   });
+
+  group('AnalyzeScreen word card', () {
+    // Regression: card senses were concatenated without a separator
+    // ("dog cat pet" read as one blob) and the tag chips sat in the
+    // middle of the card instead of at its end.
+    testWidgets('senses are separated and tags sit at the card end', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      final storage = StorageService();
+      await storage.init();
+      final srs = SRSService(storage);
+      await srs.initialize();
+      final appState = AppState(storage);
+      final provider = AnalyzerProvider();
+      provider.testSetAnalyzedWords([
+        AnalyzedWord(
+          word: '犬',
+          frequency: 42,
+          ichiMoeDefinitions: ['dog; canine'],
+          localDefinitions: [
+            {'name': 'noun', 'definition': 'noun (common) (いぬ) animal'},
+          ],
+        ),
+      ]);
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<AppState>.value(
+          value: appState,
+          child: ChangeNotifierProvider<SRSService>.value(
+            value: srs,
+            child: ChangeNotifierProvider<AnalyzerProvider>.value(
+              value: provider,
+              child: MaterialApp(
+                locale: const Locale('en'),
+                localizationsDelegates: const [
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                supportedLocales: AppLocalizations.supportedLocales,
+                home: const AnalyzeScreen(),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // the two senses stay separated
+      expect(find.textContaining('dog; canine'), findsOneWidget);
+
+      // the part-of-speech tag is colored and rendered
+      expect(find.text('noun'), findsOneWidget);
+      // the frequency chip moved to the card end
+      expect(find.text('#42'), findsOneWidget);
+    });
+
+    // Regression: the word type was printed twice — once as the
+    // coloured chip and again as the leading marker of the definition
+    // line ("noun (common) (いぬ) animal" under a "noun" chip).
+    testWidgets('word type is not repeated in the definition line', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      final storage = StorageService();
+      await storage.init();
+      final srs = SRSService(storage);
+      await srs.initialize();
+      final appState = AppState(storage);
+      final provider = AnalyzerProvider();
+      provider.testSetAnalyzedWords([
+        AnalyzedWord(
+          word: '犬',
+          frequency: 42,
+          ichiMoeDefinitions: ['noun (common) (いぬ) animal'],
+        ),
+      ]);
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<AppState>.value(
+          value: appState,
+          child: ChangeNotifierProvider<SRSService>.value(
+            value: srs,
+            child: ChangeNotifierProvider<AnalyzerProvider>.value(
+              value: provider,
+              child: MaterialApp(
+                locale: const Locale('en'),
+                localizationsDelegates: const [
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                supportedLocales: AppLocalizations.supportedLocales,
+                home: const AnalyzeScreen(),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // the type chip is still there…
+      expect(find.text('noun'), findsOneWidget);
+      // …but the definition line no longer repeats the marker
+      expect(find.textContaining('(common)'), findsNothing);
+      expect(find.textContaining('animal'), findsOneWidget);
+    });
+  });
 }

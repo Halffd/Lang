@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/presentation/screens/screenshot_tab.dart';
 import 'package:lang/presentation/screens/speech_tab.dart';
 
@@ -12,7 +13,10 @@ class ScreenshotScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(toolbarHeight: 44, title: const Text('OCR / Screenshot')),
+      appBar: AppBar(
+        toolbarHeight: 44,
+        title: Text(AppLocalizations.of(context)!.ocrScreenshotTitle),
+      ),
       body: const ScreenshotTab(),
     );
   }

@@ -137,6 +137,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get columns => '列';
 
   @override
+  String get cardHeight => '卡片高度';
+
+  @override
+  String get cardHeightAuto => '卡片高度：自动';
+
+  @override
+  String cardHeightPx(Object px) {
+    return '卡片高度：${px}px';
+  }
+
+  @override
+  String contextLookUp(Object term) {
+    return '查询 $term';
+  }
+
+  @override
+  String contextCopy(Object term) {
+    return '复制 $term';
+  }
+
+  @override
+  String get contextCopySentence => '复制句子';
+
+  @override
+  String get contextLookUpSelection => '查询';
+
+  @override
   String get context => '上下文';
 
   @override
@@ -385,7 +412,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get collapse => '折叠';
 
   @override
+  String get collapseSearchBar => '折叠搜索栏';
+
+  @override
   String get expand => '展开';
+
+  @override
+  String get expandSearchBar => '展开搜索栏';
 
   @override
   String get filter => '筛选';
@@ -816,12 +849,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scriptConversionTitle => '输入时文字转换';
 
   @override
-  String get screenshotTab => '截图';
-
-  @override
-  String get textTab => '文本';
-
-  @override
   String get captureFullscreen => '全屏';
 
   @override
@@ -858,7 +885,73 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ocrEngineAiUnavailable => 'unavailable here';
 
   @override
+  String get ocrEngineMlKitUnavailable => '桌面端不可用';
+
+  @override
+  String get ocrBackendMlKit => 'ML Kit';
+
+  @override
+  String get ocrBackendMlKitDesc => '端侧识别器，快速且离线（仅移动端）';
+
+  @override
+  String get ocrBackendTesseract => 'Tesseract';
+
+  @override
+  String get ocrBackendTesseractDesc => '带图像预处理的本地 OCR 程序';
+
+  @override
+  String get ocrBackendEasyOcr => 'EasyOCR';
+
+  @override
+  String get ocrBackendEasyOcrDesc => '本地 Python OCR，擅长印刷文字';
+
+  @override
+  String get ocrBackendTransformers => 'Transformers';
+
+  @override
+  String get ocrBackendTransformersDesc => '本地 Hugging Face 模型，较重但准确';
+
+  @override
+  String get ocrBackendHuggingFace => 'Hugging Face';
+
+  @override
+  String get ocrBackendHuggingFaceDesc => '远程推理 API，需要账号';
+
+  @override
+  String get ocrBackendAi => 'AI 视觉';
+
+  @override
+  String get ocrBackendAiDesc => '由已配置的 AI 提供商读取图像';
+
+  @override
+  String get ocrBackendApi => 'OCR API';
+
+  @override
+  String get ocrBackendApiDesc => '远程 HTTP OCR 服务，需要接口地址';
+
+  @override
   String get copyOcrText => '复制OCR文本到剪贴板';
+
+  @override
+  String get liveOcrRunning => '实时 OCR 正在运行';
+
+  @override
+  String get liveOcrStopped => '实时 OCR 已关闭';
+
+  @override
+  String get liveOcrOpenSettings => 'OCR 设置';
+
+  @override
+  String get searchScreenContent => '搜索屏幕内容';
+
+  @override
+  String get searchScreenContentHint => '截取屏幕，用 OCR 读取并搜索其中的单词。';
+
+  @override
+  String get searchScreenContentFailed => '无法读取屏幕';
+
+  @override
+  String get searchScreenContentEmpty => '屏幕上没有找到文本';
 
   @override
   String get copyImage => '复制图片到剪贴板';
@@ -868,6 +961,39 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get screenshotAlbum => '相册';
+
+  @override
+  String get screenshotPreview => '屏幕预览';
+
+  @override
+  String get screenshotPreviewRefresh => '刷新预览';
+
+  @override
+  String get screenshotTranscriptions => '文字转录';
+
+  @override
+  String get screenshotNoTranscriptions => '还没有转录记录';
+
+  @override
+  String get screenshotTranscriptionEmpty => '这张截图没有文字';
+
+  @override
+  String get screenshotOcrDetails => 'OCR 详情';
+
+  @override
+  String get screenshotOcrEngine => '引擎';
+
+  @override
+  String get screenshotOcrLanguage => '语言';
+
+  @override
+  String get screenshotOcrTime => '识别时间';
+
+  @override
+  String get screenshotCopyOcrResult => '复制 OCR 文本';
+
+  @override
+  String get screenshotShowOcrDetails => '显示 OCR 详情';
 
   @override
   String get noScreenshots => '还没有截图';
@@ -898,9 +1024,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get readerTabDocuments => '文档';
-
-  @override
-  String get readerTabScreenshots => '截图';
 
   @override
   String get readerTabClipboard => '剪贴板';
@@ -936,75 +1059,105 @@ class AppLocalizationsZh extends AppLocalizations {
   String get browserClose => 'Close browser';
 
   @override
-  String get videoNoMedia => 'Pick a video to play with a subtitle track.';
+  String get videoNoMedia => '选择一个带字幕轨的视频进行播放。';
 
   @override
-  String get videoLoading => 'Loading...';
+  String get videoLoading => '加载中...';
 
   @override
-  String get videoPickVideo => 'Pick video';
+  String get videoPickVideo => '选择视频';
 
   @override
-  String get videoShowTranscript => 'Transcript';
+  String get videoShowTranscript => '字幕文本';
 
   @override
-  String get videoHideTranscript => 'Hide transcript';
+  String get videoHideTranscript => '隐藏字幕文本';
 
   @override
-  String get videoLoadSubs => 'Load subs';
+  String get videoLoadSubs => '加载字幕';
 
   @override
-  String get videoNoSubs => 'No subtitle track loaded.';
+  String get videoNoSubs => '尚未加载字幕轨。';
 
   @override
   String get videoYouTube => 'YouTube';
 
   @override
-  String get videoYouTubeHint => 'Paste a YouTube URL';
+  String get videoYouTubeHint => '粘贴 YouTube 网址';
 
   @override
-  String get videoLoad => 'Load';
+  String get videoLoad => '加载';
 
   @override
-  String get videoInvalidUrl => 'Not a YouTube video.';
+  String get videoInvalidUrl => '不是 YouTube 视频。';
 
   @override
-  String get videoCaptions => 'Captions';
+  String get videoCaptions => '字幕';
 
   @override
-  String get videoNoCaptions => 'No caption tracks available.';
+  String get videoNoCaptions => '没有可用的字幕轨。';
 
   @override
-  String get videoSpeed => 'Playback speed';
+  String get videoSpeed => '播放速度';
 
   @override
-  String get videoSubtitleSize => 'Subtitle size';
+  String get videoSubtitleSize => '字幕大小';
 
   @override
-  String get videoDelay => 'Subtitle delay';
+  String get videoDelay => '字幕延迟';
 
   @override
-  String get videoRecent => 'Recent';
+  String get videoRecent => '最近观看';
 
   @override
-  String get videoNoRecent => 'Nothing watched yet.';
+  String get videoNoRecent => '还没有观看记录。';
 
   @override
   String videoWatchedFor(String duration) {
-    return '$duration watched';
+    return '已观看 $duration';
   }
 
   @override
-  String get videoPasteSubs => 'Paste subtitles';
+  String get videoPasteSubs => '粘贴字幕';
 
   @override
-  String get videoPastedSubs => 'Pasted subtitles';
+  String get videoPastedSubs => '已粘贴的字幕';
 
   @override
-  String get videoMissingFile => 'File no longer exists.';
+  String get videoMissingFile => '文件已不存在。';
 
   @override
-  String get videoPickSubtitleSource => 'Subtitle source';
+  String get videoPickSubtitleSource => '字幕来源';
+
+  @override
+  String get videoDescription => '简介';
+
+  @override
+  String get videoChapters => '章节';
+
+  @override
+  String get videoSettings => '设置';
+
+  @override
+  String get videoNoDescription => '没有可用的简介。';
+
+  @override
+  String get videoNoChapters => '这个视频没有章节。';
+
+  @override
+  String get videoNoSettings => '没有可用的设置。';
+
+  @override
+  String get videoQuality => '画质';
+
+  @override
+  String get videoCurrentChapter => '当前章节';
+
+  @override
+  String get videoShowPane => '显示侧边栏';
+
+  @override
+  String get videoHidePane => '隐藏侧边栏';
 
   @override
   String get readerTabVideo => 'Video';
@@ -1059,9 +1212,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get activitySpeech => '语音转写';
-
-  @override
-  String get speechTab => '语音';
 
   @override
   String get speechRecord => '录音';
@@ -1181,6 +1331,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get popupScreenSRS => 'SRS';
 
   @override
+  String get popupScreenVideo => '视频';
+
+  @override
   String get popupNone => '无';
 
   @override
@@ -1216,6 +1369,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get popupShowSentence => '显示句子';
 
   @override
+  String get popupReadingDisplay => '读音显示方式';
+
+  @override
+  String get popupReadingKana => '假名';
+
+  @override
+  String get popupReadingRomaji => '罗马字';
+
+  @override
+  String get popupShowKanaOnlyReading => '为纯假名单词显示读音';
+
+  @override
   String get popupProfileAlternation => '配置文件切换';
 
   @override
@@ -1232,4 +1397,214 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get analysisSection => '分析';
+
+  @override
+  String get liveOcrEnable => '启用实时 OCR';
+
+  @override
+  String get liveOcrSection => '实时 OCR';
+
+  @override
+  String get liveOcrErrorPrefix => '实时 OCR';
+
+  @override
+  String get liveOcrUnsupported => '此设备不支持截屏，因此无法运行实时 OCR。';
+
+  @override
+  String get copyFailed => '复制失败';
+
+  @override
+  String get copied => '已复制';
+
+  @override
+  String get screenshotFolder => '截图文件夹';
+
+  @override
+  String get screenshotFolderUnknown => '未知';
+
+  @override
+  String get screenshotChooseFolder => '选择截图文件夹';
+
+  @override
+  String get screenshotResetFolder => '使用默认文件夹';
+
+  @override
+  String get screenshotSearch => '搜索截图';
+
+  @override
+  String get screenshotManager => '管理';
+
+  @override
+  String get globalHotkeys => '全局快捷键';
+
+  @override
+  String get ocrScreenshotTitle => 'OCR / 截图';
+
+  @override
+  String get globalHotkeysSubtitle => '即使其他应用处于焦点状态，这些快捷键也有效。';
+
+  @override
+  String get screenshotNoMatches => '没有符合筛选条件的截图';
+
+  @override
+  String get screenshotFilter => '筛选';
+
+  @override
+  String get screenshotSort => '排序';
+
+  @override
+  String get screenshotFilterAll => '可见';
+
+  @override
+  String get screenshotFilterHidden => '已隐藏';
+
+  @override
+  String get screenshotFilterWithText => '有文字';
+
+  @override
+  String get screenshotFilterWithoutText => '无文字';
+
+  @override
+  String get screenshotSortNewest => '最新优先';
+
+  @override
+  String get screenshotSortOldest => '最旧优先';
+
+  @override
+  String get screenshotSortName => '按名称';
+
+  @override
+  String get screenshotHasText => '有文字';
+
+  @override
+  String get screenshotCopied => '已复制';
+
+  @override
+  String get screenshotNoRelativePath => '该截图不在截图文件夹内';
+
+  @override
+  String get screenshotProperties => '属性';
+
+  @override
+  String get screenshotPropertyName => '名称';
+
+  @override
+  String get screenshotPropertyKind => '类型';
+
+  @override
+  String get screenshotPropertyTaken => '拍摄时间';
+
+  @override
+  String get screenshotPropertyPath => '路径';
+
+  @override
+  String get screenshotPropertySize => '文件大小';
+
+  @override
+  String get screenshotPropertyText => '识别的文字';
+
+  @override
+  String get screenshotRename => '重命名截图';
+
+  @override
+  String get screenshotEditText => '编辑识别的文字';
+
+  @override
+  String get screenshotCrop => '裁剪截图';
+
+  @override
+  String get screenshotCropLeft => '左';
+
+  @override
+  String get screenshotCropTop => '上';
+
+  @override
+  String get screenshotCropWidth => '宽';
+
+  @override
+  String get screenshotCropHeight => '高';
+
+  @override
+  String get screenshotCropped => '截图已裁剪';
+
+  @override
+  String get screenshotCropFailed => '裁剪失败';
+
+  @override
+  String get liveOcrNotConfigured => '实时 OCR 尚未配置';
+
+  @override
+  String get liveOcrCaptureFailed => '截屏失败';
+
+  @override
+  String get liveOcrOcrFailed => 'OCR 失败';
+
+  @override
+  String get liveOcrSectionSubtitle => '连续截屏并进行实时翻译';
+
+  @override
+  String get liveOcrEnableSubtitle => '持续读取屏幕，并在浮动窗口中显示文本及其翻译';
+
+  @override
+  String get liveOcrFullscreen => '读取整个屏幕';
+
+  @override
+  String get liveOcrFullscreenSubtitle => '关闭时：仅读取上次使用区域截图所选择的区域';
+
+  @override
+  String get liveOcrShowTranslation => '显示翻译';
+
+  @override
+  String get liveOcrShowTranslationSubtitle => '在原文下方显示翻译文本';
+
+  @override
+  String get liveOcrCaptureInterval => '截图间隔';
+
+  @override
+  String get liveOcrStableReads => '稳定读取次数';
+
+  @override
+  String get videoPopOutMiniPlayer => '弹出迷你播放器';
+
+  @override
+  String get videoPictureInPicture => '画中画';
+
+  @override
+  String get videoPopupCaptions => '悬浮字幕';
+
+  @override
+  String get videoLeaveListeningMode => '退出聆听模式（返回视频）';
+
+  @override
+  String get videoListeningMode => '聆听模式（仅音频，关闭屏幕）';
+
+  @override
+  String get videoSearchYouTube => '搜索 YouTube';
+
+  @override
+  String get videoSearchEllipsis => '搜索…';
+
+  @override
+  String get videoPipUnavailable => '此设备不支持画中画';
+
+  @override
+  String get videoCouldNotSwitchQuality => '无法切换画质。';
+
+  @override
+  String get videoWhisperSubsServerMissing => '请先在设置中填写 WhisperSubs 服务器网址。';
+
+  @override
+  String get videoWhisperSubs => 'WhisperSubs';
+
+  @override
+  String get screenshotCopyImageItem => '复制图片';
+
+  @override
+  String get screenshotCopyPathItem => '复制路径';
+
+  @override
+  String get screenshotPreviousCapture => '上一次截图';
+
+  @override
+  String get screenshotAlbumEmpty => '相册是空的';
 }

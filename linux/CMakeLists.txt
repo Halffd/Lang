@@ -113,26 +113,97 @@ install(FILES "${FLUTTER_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
 # soname (e.g. libwpe-1.0.so.1). Install each library and create the
 # soname symlink in the bundle so the app is self-contained instead of
 # silently resolving sonames from the host system.
+#
+# A bundled library also drags in its own dependencies: libWPEWebKit
+# needs libjxl, libavif, libenchant and about a hundred more. The
+# bundle's lib directory is on the RPATH, so the loader resolves those
+# sonames there first and fails when they are missing. The whole
+# dependency closure therefore has to be bundled as well, or the app
+# dies at startup with "error while loading shared libraries".
+#
+# find_package_handle_standard_args and friends are not needed here:
+# the closure is read straight out of each ELF's DT_NEEDED entries and
+# resolved against the system library paths.
+function(bundle_dependency_closure LIBRARY OUT_VAR)
+  set(_collected ${ARGN})
+  set(_pending "${LIBRARY}")
+  # the sonames already claimed by a collected library, so a library
+  # is never pulled in twice. The file name and the soname it declares
+  # are both registered.
+  set(_known_sonames "")
+  while(_pending)
+    # CMake 4 removed the POP_FRONT sub-command, so the queue is
+    # drained with GET + REMOVE_AT instead.
+    list(GET _pending 0 _current)
+    list(REMOVE_AT _pending 0)
+    if(_current IN_LIST _collected)
+      continue()
+    endif()
+    list(APPEND _collected "${_current}")
+    get_filename_component(_current_name "${_current}" NAME)
+    list(APPEND _known_sonames "${_current_name}")
+
+    execute_process(
+      COMMAND readelf -d "${_current}"
+      OUTPUT_VARIABLE _dynamic
+      RESULT_VARIABLE _result
+      ERROR_QUIET)
+    if(NOT _result EQUAL 0)
+      continue()
+    endif()
+    # the soname this library declares
+    string(REGEX MATCH "Library soname: *\\[([^]]+)\\]" _soname_line "${_dynamic}")
+    if(_soname_line)
+      string(REGEX REPLACE ".*\\[([^]]+)\\]" "\\1" _current_soname "${_soname_line}")
+      list(APPEND _known_sonames "${_current_soname}")
+    endif()
+    # each DT_NEEDED entry looks like "(NEEDED) Shared library: [libfoo.so.1]"
+    string(REGEX MATCHALL "Shared library: \\[([^]]+)\\]" _needed "${_dynamic}")
+    foreach(_match IN LISTS _needed)
+      string(REGEX REPLACE ".*\\[([^]]+)\\]" "\\1" _soname "${_match}")
+      if(_soname STREQUAL "")
+        continue()
+      endif()
+      if(_soname IN_LIST _known_sonames)
+        continue()
+      endif()
+      # resolve the soname to a real file on the system
+      find_library(_resolved_${_soname}
+        NAMES ${_soname}
+        PATHS /usr/lib /usr/lib64 /usr/local/lib /usr/local/lib64
+        NO_DEFAULT_PATH)
+      if(_resolved_${_soname})
+        list(APPEND _pending "${_resolved_${_soname}}")
+      endif()
+    endforeach()
+  endwhile()
+  set(${OUT_VAR} ${_collected} PARENT_SCOPE)
+endfunction()
+
 set(BUNDLED_LIB_SONAME_MAP "")
+set(BUNDLED_LIBRARIES_WITH_DEPS "")
 foreach(bundled_library ${PLUGIN_BUNDLED_LIBRARIES})
-  install(FILES "${bundled_library}"
-    DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
-    COMPONENT Runtime)
-  execute_process(
-    COMMAND readelf -d "${bundled_library}"
-    OUTPUT_VARIABLE ELF_DYNAMIC
-    RESULT_VARIABLE ELF_RESULT
-    ERROR_QUIET)
-  if(ELF_RESULT EQUAL 0)
-    string(REGEX MATCH "Library soname: *\\[[^]]+\\]" SONAME_LINE "${ELF_DYNAMIC}")
-    if(SONAME_LINE)
-      string(REGEX REPLACE ".*\\[([^]]+)\\]" "\\1" BUNDLED_LIB_SONAME "${SONAME_LINE}")
-      get_filename_component(BUNDLED_LIB_REAL "${bundled_library}" NAME)
-      if(NOT BUNDLED_LIB_SONAME STREQUAL BUNDLED_LIB_REAL)
-        list(APPEND BUNDLED_LIB_SONAME_MAP "${BUNDLED_LIB_SONAME}:${BUNDLED_LIB_REAL}")
+  bundle_dependency_closure("${bundled_library}" _closure)
+  foreach(closure_library IN LISTS _closure)
+    install(FILES "${closure_library}"
+      DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+      COMPONENT Runtime)
+    execute_process(
+      COMMAND readelf -d "${closure_library}"
+      OUTPUT_VARIABLE ELF_DYNAMIC
+      RESULT_VARIABLE ELF_RESULT
+      ERROR_QUIET)
+    if(ELF_RESULT EQUAL 0)
+      string(REGEX MATCH "Library soname: *\\[[^]]+\\]" SONAME_LINE "${ELF_DYNAMIC}")
+      if(SONAME_LINE)
+        string(REGEX REPLACE ".*\\[([^]]+)\\]" "\\1" BUNDLED_LIB_SONAME "${SONAME_LINE}")
+        get_filename_component(BUNDLED_LIB_REAL "${closure_library}" NAME)
+        if(NOT BUNDLED_LIB_SONAME STREQUAL BUNDLED_LIB_REAL)
+          list(APPEND BUNDLED_LIB_SONAME_MAP "${BUNDLED_LIB_SONAME}:${BUNDLED_LIB_REAL}")
+        endif()
       endif()
     endif()
-  endif()
+  endforeach(closure_library)
 endforeach(bundled_library)
 if(BUNDLED_LIB_SONAME_MAP)
   list(REMOVE_DUPLICATES BUNDLED_LIB_SONAME_MAP)

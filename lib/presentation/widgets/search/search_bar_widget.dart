@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 /// Reusable search bar widget
 class SearchBarWidget extends StatelessWidget {
@@ -34,6 +35,7 @@ class SearchBarWidget extends StatelessWidget {
         ],
       ),
       child: TextField(
+        contextMenuBuilder: AppContextMenu.editable,
         controller: controller,
         focusNode: focusNode,
         autofocus: autoFocus,

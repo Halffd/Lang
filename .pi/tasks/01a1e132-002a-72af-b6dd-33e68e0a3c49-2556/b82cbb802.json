@@ -1,0 +1,29 @@
+{
+  "id": "b82cbb802",
+  "name": "flutter hover tests 7",
+  "command": "cd /host/lang && timeout 1200 flutter test test/player_side_pane_test.dart test/video_reading_hover_test.dart --reporter expanded 2>&1 | tail -30",
+  "description": "Run the affected test suites after the base-word fix",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1e132-002a-72af-b6dd-33e68e0a3c49-2556/b82cbb802.output",
+  "cwd": "/host/lang",
+  "startTime": 1794879167932,
+  "endTime": 1794879642931,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 1063089,
+  "bytesWritten": 1597,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1500,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

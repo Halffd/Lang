@@ -136,6 +136,20 @@ class OcrService {
     return isMlKitAvailable ? OcrEngine.mlKit : OcrEngine.tesseract;
   }
 
+  /// The engine to use when the caller cannot supply one, or when the
+  /// chosen engine cannot run on this platform.
+  ///
+  /// ML Kit only has Android/iOS implementations. A persisted
+  /// "mlKit" choice therefore has to fall back to Tesseract on
+  /// desktop, otherwise every OCR run there silently returns no text.
+  static OcrEngine resolveEngine(OcrEngine? engine) {
+    final chosen = engine ?? engineFromName(null);
+    if (chosen == OcrEngine.mlKit && !isMlKitAvailable) {
+      return OcrEngine.tesseract;
+    }
+    return chosen;
+  }
+
   TextRecognizer get _recognizer {
     if (!isMlKitAvailable) {
       throw UnsupportedError(
@@ -209,7 +223,7 @@ class OcrService {
     AiImageTextFetcher? aiFetcher,
     bool preprocess = true,
   }) async {
-    final effectiveEngine = engine ?? engineFromName(null);
+    final effectiveEngine = resolveEngine(engine);
     switch (effectiveEngine) {
       case OcrEngine.mlKit:
         return _recognizeWithMlKit(File(imagePath));
@@ -252,7 +266,7 @@ class OcrService {
     AiImageTextFetcher? aiFetcher,
     bool preprocess = true,
   }) async {
-    final effectiveEngine = engine ?? engineFromName(null);
+    final effectiveEngine = resolveEngine(engine);
     switch (effectiveEngine) {
       case OcrEngine.mlKit:
         return _recognizeWithMlKitFromBytes(bytes);
@@ -393,6 +407,12 @@ class OcrService {
   // tesseract_ocr plugin elsewhere.
   // --------------------------------------------------------------
 
+  /// Whether the tesseract_ocr plugin has a native implementation on
+  /// this platform. The plugin ships Android and iOS only; on desktop
+  /// the native binary is the only way in.
+  static bool get isTesseractPluginAvailable =>
+      Platform.isAndroid || Platform.isIOS;
+
   Future<OcrResult> _recognizeWithTesseract(
     String imagePath, {
     String? language,
@@ -402,6 +422,18 @@ class OcrService {
 
     if (await hasNativeTesseract()) {
       return _runNativeTesseract(imagePath, tessLanguage, preprocess);
+    }
+
+    // no native binary: the plugin is the only remaining option, and
+    // it only exists on mobile. Calling it on desktop hangs on the
+    // asset/channel setup, so report the missing binary instead.
+    if (!isTesseractPluginAvailable) {
+      return OcrResult(
+        text: '',
+        error:
+            'Tesseract is not installed. Install the tesseract binary '
+            '(e.g. "apt install tesseract-ocr") or pick another engine.',
+      );
     }
 
     // mobile / no binary: fall back to the plugin

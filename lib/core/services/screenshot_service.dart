@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:image/image.dart' as img;
 import 'package:lang/core/services/app_storage.dart';
 import 'package:lang/core/services/script_assets.dart';
 import 'package:path_provider/path_provider.dart';
@@ -30,6 +31,13 @@ class ScreenshotItem {
   /// Region geometry "x,y w,h" for the last interactive selection.
   final String? geometry;
 
+  /// User-set display name. Empty means the file name is used.
+  final String name;
+
+  /// Hidden items stay in the registry but are filtered out of the
+  /// album and history views.
+  final bool hidden;
+
   const ScreenshotItem({
     required this.id,
     required this.path,
@@ -37,7 +45,17 @@ class ScreenshotItem {
     required this.timestamp,
     this.ocrText,
     this.geometry,
+    this.name = '',
+    this.hidden = false,
   });
+
+  /// The name shown in the UI: the user's name, or the file name.
+  String get displayName {
+    if (name.isNotEmpty) return name;
+    final file = path.split('/').last;
+    final dot = file.lastIndexOf('.');
+    return dot > 0 ? file.substring(0, dot) : file;
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -46,6 +64,8 @@ class ScreenshotItem {
     'timestamp': timestamp,
     'ocrText': ocrText,
     'geometry': geometry,
+    'name': name,
+    'hidden': hidden,
   };
 
   static ScreenshotItem fromJson(Map<String, dynamic> json) => ScreenshotItem(
@@ -58,19 +78,46 @@ class ScreenshotItem {
     timestamp: (json['timestamp'] as num).toInt(),
     ocrText: json['ocrText'] as String?,
     geometry: json['geometry'] as String?,
+    name: json['name'] as String? ?? '',
+    hidden: json['hidden'] == true,
   );
 
-  ScreenshotItem copyWith({String? ocrText, String? geometry}) =>
-      ScreenshotItem(
-        id: id,
-        path: path,
-        kind: kind,
-        timestamp: timestamp,
-        ocrText: ocrText ?? this.ocrText,
-        geometry: geometry ?? this.geometry,
-      );
+  ScreenshotItem copyWith({
+    String? path,
+    String? ocrText,
+    String? geometry,
+    String? name,
+    bool? hidden,
+  }) => ScreenshotItem(
+    id: id,
+    path: path ?? this.path,
+    kind: kind,
+    timestamp: timestamp,
+    ocrText: ocrText ?? this.ocrText,
+    geometry: geometry ?? this.geometry,
+    name: name ?? this.name,
+    hidden: hidden ?? this.hidden,
+  );
 
   DateTime get time => DateTime.fromMillisecondsSinceEpoch(timestamp);
+}
+
+/// A rectangle in image pixels, used by the crop action.
+class ScreenshotCropRect {
+  final int left;
+  final int top;
+  final int width;
+  final int height;
+
+  const ScreenshotCropRect({
+    required this.left,
+    required this.top,
+    required this.width,
+    required this.height,
+  });
+
+  int get right => left + width;
+  int get bottom => top + height;
 }
 
 /// Abstraction over Process.run so tests can inject fake command
@@ -82,6 +129,67 @@ typedef CommandRunner =
     );
 
 enum ScreenshotPlatform { x11, wayland, windows, macos, unsupported }
+
+/// One monitor the app can capture.
+class ScreenshotMonitor {
+  /// The platform's name for the output (e.g. "HDMI-1"). Empty when
+  /// the platform does not name its outputs.
+  final String name;
+
+  /// The output's pixel size, when the platform reports it.
+  final int? width;
+  final int? height;
+
+  /// Whether this is the primary output.
+  final bool isPrimary;
+
+  const ScreenshotMonitor({
+    this.name = '',
+    this.width,
+    this.height,
+    this.isPrimary = false,
+  });
+
+  /// A label for the UI: the output name and its resolution.
+  String get label {
+    if (name.isEmpty) return isPrimary ? 'Primary' : 'Monitor';
+    if (width != null && height != null) {
+      return '$name ($width×$height)';
+    }
+    return name;
+  }
+}
+
+/// One monitor reported by xrandr.
+class X11Monitor {
+  /// The output name (e.g. "HDMI-1").
+  final String name;
+
+  final int width;
+  final int height;
+
+  /// The output's position in the virtual screen.
+  final int x;
+  final int y;
+
+  /// Whether this is the primary output.
+  final bool isPrimary;
+
+  const X11Monitor({
+    required this.name,
+    required this.width,
+    required this.height,
+    required this.x,
+    required this.y,
+    this.isPrimary = false,
+  });
+
+  /// The geometry in imagemagick style ("WxH+X+Y").
+  String get geometry => '${width}x$height+$x+$y';
+
+  @override
+  String toString() => 'X11Monitor($name, $geometry)';
+}
 
 /// Captures screenshots through native tools and keeps a persistent
 /// registry of taken shots (history + album).
@@ -123,6 +231,12 @@ class ScreenshotService extends ChangeNotifier {
   /// `<app docs>`/screenshots).
   Future<Directory> Function() dirProvider = _defaultDirProvider;
 
+  /// The user-chosen directory screenshots are written to. Empty means
+  /// the default (the app's documents folder). Set by the settings
+  /// screen; read at capture time so a change takes effect on the next
+  /// capture without a restart.
+  String directoryOverride = '';
+
   /// Injectable environment for tests (defaults to
   /// [Platform.environment]). Real detection reads DISPLAY/WAYLAND_DISPLAY,
   /// which differs between headless CI boxes and desktop sessions, so tests
@@ -161,9 +275,17 @@ class ScreenshotService extends ChangeNotifier {
   bool get isLoaded => _loaded;
   bool get isAutoCaptureActive => _autoTimer != null;
 
+  /// The directory screenshots are currently written to, without
+  /// creating it.
+  Future<Directory> currentDirectory() async {
+    final override = directoryOverride.trim();
+    if (override.isNotEmpty) return Directory(override);
+    return await dirProvider();
+  }
+
   /// Directory where screenshots are written.
   Future<Directory> _shotsDir() async {
-    final dir = await dirProvider();
+    final dir = await currentDirectory();
     if (!dir.existsSync()) dir.createSync(recursive: true);
     return dir;
   }
@@ -262,13 +384,7 @@ class ScreenshotService extends ChangeNotifier {
         '${_two(now.hour)}${_two(now.minute)}${_two(now.second)}_${kind.name}.png';
 
     String? geometry;
-    final ok = switch (platform) {
-      ScreenshotPlatform.x11 => await _captureX11(path, kind, monitor),
-      ScreenshotPlatform.wayland => await _captureWayland(path, kind, monitor),
-      ScreenshotPlatform.windows => await _captureWindows(path, kind, monitor),
-      ScreenshotPlatform.macos => await _captureMacos(path, kind),
-      ScreenshotPlatform.unsupported => false,
-    };
+    final ok = await _captureToFile(path, kind, monitor, platform);
     if (!ok) return null;
 
     // remember interactive region geometry for previousRegion
@@ -317,6 +433,50 @@ class ScreenshotService extends ChangeNotifier {
 
   static String _two(int n) => n.toString().padLeft(2, '0');
 
+  /// Runs the platform capture for [kind] into [path].
+  Future<bool> _captureToFile(
+    String path,
+    ScreenshotKind kind,
+    int monitor,
+    ScreenshotPlatform platform,
+  ) => switch (platform) {
+    ScreenshotPlatform.x11 => _captureX11(path, kind, monitor),
+    ScreenshotPlatform.wayland => _captureWayland(path, kind, monitor),
+    ScreenshotPlatform.windows => _captureWindows(path, kind, monitor),
+    ScreenshotPlatform.macos => _captureMacos(path, kind),
+    ScreenshotPlatform.unsupported => Future.value(false),
+  };
+
+  /// Captures a frame without registering it in the screenshot history.
+  ///
+  /// The live-OCR loop polls continuously, so its captures must not
+  /// pile up in the album, the registry file, or the storage backend.
+  /// The frame is written to a temp file and returned as bytes; the
+  /// caller owns it.
+  Future<Uint8List?> captureTransient(
+    ScreenshotKind kind, {
+    int monitor = 0,
+  }) async {
+    final platform = await detectPlatform();
+    if (platform == ScreenshotPlatform.unsupported) return null;
+
+    final dir = await Directory.systemTemp.createTemp('lang_live_ocr');
+    final path = '${dir.path}/frame.png';
+    try {
+      final ok = await _captureToFile(path, kind, monitor, platform);
+      if (!ok) return null;
+      return await File(path).readAsBytes();
+    } catch (e) {
+      debugPrint('ScreenshotService transient capture error: $e');
+      return null;
+    } finally {
+      try {
+        final d = Directory(dir.path);
+        if (d.existsSync()) d.deleteSync(recursive: true);
+      } catch (_) {}
+    }
+  }
+
   // --------------------------------------------------------------
   // X11 (maim primary; scrot / gnome-screenshot / import fallback)
   // --------------------------------------------------------------
@@ -332,9 +492,16 @@ class ScreenshotService extends ChangeNotifier {
         case ScreenshotKind.fullscreen:
           return _tryRun([path]);
         case ScreenshotKind.monitor:
-          // maim captures monitor n natively
-          if (await _tryRun(['-m', '$monitor', path])) return true;
-          return _tryRun([path]);
+          // Capture the monitor by its exact xrandr geometry.
+          //
+          // maim's `-m` index is 1-based and its order does not
+          // necessarily match xrandr's, so passing the app's 0-based
+          // index picked the wrong output — and `maim -m 0` fails
+          // outright, which sent the capture down the fallback path
+          // and could hand back every monitor. The app's monitor list
+          // comes from xrandr, so its geometry is the reliable handle.
+          if (await _captureMonitorByGeometry(path, monitor)) return true;
+          return false;
         case ScreenshotKind.window:
           final winId = await _activeWindowId();
           if (winId == null) return false;
@@ -359,8 +526,10 @@ class ScreenshotService extends ChangeNotifier {
         case ScreenshotKind.auto:
           return _tryRunScrot([path]);
         case ScreenshotKind.monitor:
+          // scrot has no monitor mode; capture the monitor's geometry
+          // with -a. There is no full-screen fallback here either.
           final geometry = await _monitorGeometryX11(monitor);
-          if (geometry == null) return _tryRunScrot([path]);
+          if (geometry == null) return false;
           // scrot -a takes "x,y,w,h" (top-left + size)
           final (x, y, w, h) = _parseGeometry(geometry);
           return _tryRunScrot(['-a', '$x,$y,$w,$h', path]);
@@ -374,6 +543,18 @@ class ScreenshotService extends ChangeNotifier {
     }
     final gnome = await _which('gnome-screenshot');
     if (gnome != null) {
+      if (kind == ScreenshotKind.monitor) {
+        // gnome-screenshot has no monitor mode: capture the monitor's
+        // geometry with -a
+        final geometry = await _monitorGeometryX11(monitor);
+        if (geometry == null) return false;
+        final (x, y, w, h) = _parseGeometry(geometry);
+        return _tryRunGnome([
+          '--file=$path',
+          '-a',
+          '$x,$y,$w,$h',
+        ]);
+      }
       final flag = switch (kind) {
         ScreenshotKind.window => '-w',
         ScreenshotKind.region || ScreenshotKind.previousRegion => '-a',
@@ -383,11 +564,81 @@ class ScreenshotService extends ChangeNotifier {
     }
     final imagemagick = await _which('import');
     if (imagemagick != null) {
+      if (kind == ScreenshotKind.monitor) {
+        // import -window with the output name captures one monitor
+        final monitors = await _x11Monitors();
+        if (monitor < 0 || monitor >= monitors.length) return false;
+        return _tryRunImport([
+          '-window',
+          monitors[monitor].name,
+          path,
+        ]);
+      }
       if (kind == ScreenshotKind.region ||
           kind == ScreenshotKind.previousRegion) {
         return _tryRunImport(['-window', 'root', path]);
       }
       return _tryRunImport([path]);
+    }
+    return false;
+  }
+
+  /// Capture one monitor by its geometry, using whichever tool is
+  /// available.
+  ///
+  /// Used when the tool's native monitor selection fails: the
+  /// geometry still identifies exactly one monitor, so the result is
+  /// never the whole virtual screen.
+  Future<bool> _captureMonitorByGeometry(String path, int monitor) async {
+    final geometry = await _monitorGeometryX11(monitor);
+    if (geometry == null) return false;
+    final (x, y, w, h) = _parseGeometry(geometry);
+    if (w <= 0 || h <= 0) return false;
+    final maim = await _which('maim');
+    if (maim != null) {
+      // maim -g takes "WxH+X+Y"
+      if (await _tryRun(['-g', geometry, path])) return true;
+    }
+    final scrot = await _which('scrot');
+    if (scrot != null) {
+      if (await _tryRunScrot(['-a', '$x,$y,$w,$h', path])) return true;
+    }
+    final gnome = await _which('gnome-screenshot');
+    if (gnome != null) {
+      if (await _tryRunGnome([
+        '--file=$path',
+        '-a',
+        '$x,$y,$w,$h',
+      ])) {
+        return true;
+      }
+    }
+    final imagemagick = await _which('import');
+    if (imagemagick != null) {
+      final monitors = await _x11Monitors();
+      if (monitor >= 0 && monitor < monitors.length) {
+        // grab the output's own screen: this is the exact monitor,
+        // with no chance of picking up a neighbour
+        if (await _tryRunImport([
+          '-window',
+          monitors[monitor].name,
+          path,
+        ])) {
+          return true;
+        }
+      }
+      // Fall back to cropping the root window. `+repage` drops the
+      // virtual-desktop offset, so the saved image is the monitor's
+      // pixels and not a canvas-sized frame with the content in a
+      // corner.
+      return _tryRunImport([
+        '-window',
+        'root',
+        '-crop',
+        geometry,
+        '+repage',
+        path,
+      ]);
     }
     return false;
   }
@@ -428,8 +679,54 @@ class ScreenshotService extends ChangeNotifier {
     }
   }
 
+  /// The region-selection styling the user asked for: a thick yellow
+  /// border and a dark-grey background the selection text sits on.
+  ///
+  /// The values are the ones the selection tools take, so they are
+  /// constants rather than settings: every user wants the same
+  /// visible, high-contrast selection.
+  ///
+  /// The colours are `#rrggbbaa`, so "75% transparent" is an alpha of
+  /// 0x40 (25% opaque).
+  static const String regionBorderColor = '#FFFF00FF'; // yellow
+  static const int regionBorderWidth = 4;
+  static const String regionTextBackground = '#3C3C3C40'; // dark grey, 75% transparent
+  static const String regionBackgroundColor = '#00000040'; // dimmed backdrop
+  static const String regionSelectionColor = '#FFFF0040'; // yellow, 75% transparent
+  static const int regionPointerSize = 48;
+
+  /// The slop arguments that style the selection on X11.
+  ///
+  /// slop draws the border itself and prints the geometry, which
+  /// maim then captures.
+  ///
+  /// slop 7.x takes the border thickness as `-b` and the colour as
+  /// RGBA floats, not a hex string.
+  static List<String> slopStyleArgs() => [
+    '-b',
+    '$regionBorderWidth',
+    '-c',
+    '1,1,0,1', // yellow, opaque
+  ];
+
+  /// The slurp arguments that style the selection on Wayland.
+  ///
+  /// `-B` is the option-box colour: the box the dimensions text is
+  /// drawn on, which is the "text background" the user asked for.
+  static List<String> slurpStyleArgs() => [
+    '-b',
+    regionBackgroundColor,
+    '-c',
+    regionBorderColor,
+    '-s',
+    regionSelectionColor,
+    '-B',
+    regionTextBackground,
+    '-w',
+    '$regionBorderWidth',
+  ];
+
   Future<bool> _captureRegionX11(String path, ScreenshotKind kind) async {
-    // previous region: reuse saved geometry with maim -g
     if (kind == ScreenshotKind.previousRegion) {
       final saved = await _loadSavedRegion();
       if (saved == null) return false;
@@ -438,16 +735,71 @@ class ScreenshotService extends ChangeNotifier {
     // interactive selection: slop prints geometry for maim
     final slop = await _which('slop');
     if (slop != null) {
-      final (code, out, _) = await runCommand('slop', ['-f', '%g']);
-      if (code == 0 && out.trim().isNotEmpty) {
+      // slop draws its own crosshair, sized by the Xcursor theme. The
+      // theme's size is an X resource, so it is raised for the
+      // selection and put back afterwards.
+      return _withBigCursor(() async {
+        final (code, out, _) = await runCommand('slop', [
+          '-f',
+          '%g',
+          ...slopStyleArgs(),
+        ]);
+        if (code != 0 || out.trim().isEmpty) return false;
         final geometry = out.trim(); // "WxH+X+Y"
         await _saveRegion(geometry);
         return _tryRun(['-g', geometry, path]);
-      }
-      return false;
+      });
     }
     // maim has its own interactive selection without slop
     return _tryRun(['-s', path]);
+  }
+
+  /// Run [body] with a larger mouse cursor, then restore the old size.
+  ///
+  /// The Xcursor size lives in the X server's resource database, so it
+  /// is a global, momentary change: the old value is read first and
+  /// written back when the selection ends, whatever the outcome.
+  Future<bool> _withBigCursor(Future<bool> Function() body) async {
+    final xrdb = await _which('xrdb');
+    if (xrdb == null) {
+      return body();
+    }
+    String? previous;
+    try {
+      final (code, out, _) = await runCommand('xrdb', ['-query']);
+      if (code == 0) {
+        // the value looks like "Xcursor.size:\t32"
+        for (final line in out.split('\n')) {
+          if (line.startsWith('Xcursor.size:')) {
+            previous = line.split(':').last.trim();
+            break;
+          }
+        }
+      }
+    } catch (_) {}
+
+    try {
+      await runCommand('xrdb', [
+        '-merge',
+        'Xcursor.size: $regionPointerSize',
+      ]);
+    } catch (_) {}
+
+    try {
+      return await body();
+    } finally {
+      // put the old size back, or drop the resource if there was none
+      try {
+        if (previous == null) {
+          await runCommand('xrdb', ['-remove', 'Xcursor.size']);
+        } else {
+          await runCommand('xrdb', [
+            '-merge',
+            'Xcursor.size: $previous',
+          ]);
+        }
+      } catch (_) {}
+    }
   }
 
   Future<String?> _activeWindowId() async {
@@ -458,22 +810,63 @@ class ScreenshotService extends ChangeNotifier {
     return null;
   }
 
-  Future<String?> _monitorGeometryX11(int monitor) async {
+  /// The connected monitors reported by xrandr, in xrandr's order.
+  ///
+  /// Each entry is the output name and its geometry
+  /// ("WxH+X+Y", imagemagick style).
+  ///
+  /// The "connected" match is anchored to the output name: a plain
+  /// substring match also hits "disconnected", which inflated the
+  /// monitor count and made the per-monitor capture pick the wrong
+  /// output (or none at all).
+  Future<List<X11Monitor>> _x11Monitors() async {
     try {
       final (code, out, _) = await runCommand('xrandr', ['--query']);
-      if (code != 0) return null;
-      final connected = RegExp(
-        r'connected(?: primary)?\s+(\d+)x(\d+)\+(\d+)\+(\d+)',
-        multiLine: true,
+      if (code != 0) return const [];
+      return parseXrandrMonitors(out);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// The geometry of the monitor at [monitor], or null when there is
+  /// no such monitor.
+  Future<String?> _monitorGeometryX11(int monitor) async {
+    final monitors = await _x11Monitors();
+    if (monitor < 0 || monitor >= monitors.length) return null;
+    return monitors[monitor].geometry;
+  }
+
+  /// Parse the monitor list out of `xrandr --query` output.
+  ///
+  /// Only connected outputs count, and only when they carry a current
+  /// geometry. The "primary" flag is recorded but does not change the
+  /// order: the monitor index in the UI follows xrandr's order, so the
+  /// dropdown and the capture always agree.
+  @visibleForTesting
+  static List<X11Monitor> parseXrandrMonitors(String output) {
+    final monitors = <X11Monitor>[];
+    // "NAME connected [primary] WxH+X+Y (normal ...)"
+    final pattern = RegExp(
+      r'^(\S+)\s+connected(?:\s+primary)?\s+(\d+)x(\d+)\+(-?\d+)\+(-?\d+)',
+      multiLine: true,
+    );
+    for (final m in pattern.allMatches(output)) {
+      monitors.add(
+        X11Monitor(
+          name: m.group(1)!,
+          width: int.parse(m.group(2)!),
+          height: int.parse(m.group(3)!),
+          x: int.parse(m.group(4)!),
+          y: int.parse(m.group(5)!),
+          isPrimary: RegExp(
+            r'^${RegExp.escape(m.group(1)!)}\s+connected\s+primary',
+            multiLine: true,
+          ).hasMatch(output),
+        ),
       );
-      final matches = connected.allMatches(out).toList();
-      if (monitor < matches.length) {
-        final m = matches[monitor];
-        // imagemagick-style geometry "WxH+X+Y"
-        return '${m.group(1)}x${m.group(2)}+${m.group(3)}+${m.group(4)}';
-      }
-    } catch (_) {}
-    return null;
+    }
+    return monitors;
   }
 
   // --------------------------------------------------------------
@@ -494,7 +887,10 @@ class ScreenshotService extends ChangeNotifier {
         return _tryRunGrim([path]);
       case ScreenshotKind.monitor:
         final output = await _waylandOutputName(monitor);
-        if (output == null) return _tryRunGrim([path]);
+        // no output name: there is no monitor to capture. Falling back
+        // to a full-screen grab would hand the user every monitor
+        // when they asked for one.
+        if (output == null) return false;
         return _tryRunGrim(['-o', output, path]);
       case ScreenshotKind.region:
       case ScreenshotKind.previousRegion:
@@ -505,17 +901,9 @@ class ScreenshotService extends ChangeNotifier {
   /// grim -o wants an output *name* (e.g. HDMI-A-1), not an index.
   /// List them via wlr-randr and pick by position.
   Future<String?> _waylandOutputName(int monitor) async {
-    try {
-      final (code, out, _) = await runCommand('wlr-randr', []);
-      if (code != 0) return null;
-      final names = RegExp(r'^([A-Za-z0-9-]+)', multiLine: true)
-          .allMatches(out)
-          .map((m) => m.group(1)!)
-          .where((n) => !n.startsWith('Position:') && !n.startsWith('Mode:'))
-          .toList();
-      if (monitor < names.length) return names[monitor];
-    } catch (_) {}
-    return null;
+    final names = await _waylandOutputNames();
+    if (monitor < 0 || monitor >= names.length) return null;
+    return names[monitor];
   }
 
   Future<bool> _tryRunGrim(List<String> args) async {
@@ -535,7 +923,11 @@ class ScreenshotService extends ChangeNotifier {
     }
     final slurp = await _which('slurp');
     if (slurp != null) {
-      final (code, out, _) = await runCommand('slurp', ['-f', '%wx%h+%x+%y']);
+      final (code, out, _) = await runCommand('slurp', [
+        '-f',
+        '%wx%h+%x+%y',
+        ...slurpStyleArgs(),
+      ]);
       if (code == 0 && out.trim().isNotEmpty) {
         final geometry = out.trim(); // "WxH+X+Y"
         await _saveRegion(geometry);
@@ -743,6 +1135,120 @@ class ScreenshotService extends ChangeNotifier {
     _persist();
   }
 
+  /// Sets the user-facing name of an item.
+  void rename(String id, String name) {
+    final index = _items.indexWhere((i) => i.id == id);
+    if (index == -1) return;
+    _items[index] = _items[index].copyWith(name: name.trim());
+    notifyListeners();
+    _persist();
+  }
+
+  /// Hides or shows an item. Hidden items stay in the registry but are
+  /// filtered out of the views.
+  void setHidden(String id, bool hidden) {
+    final index = _items.indexWhere((i) => i.id == id);
+    if (index == -1) return;
+    _items[index] = _items[index].copyWith(hidden: hidden);
+    notifyListeners();
+    _persist();
+  }
+
+  /// Replaces the OCR text of an item (the manager's edit action).
+  void editOcrText(String id, String text) {
+    final index = _items.indexWhere((i) => i.id == id);
+    if (index == -1) return;
+    _items[index] = _items[index].copyWith(ocrText: text.trim());
+    notifyListeners();
+    _persist();
+  }
+
+  /// The absolute path of an item's image on disk. Blob-stored items
+  /// are materialized into a temp file; the caller owns it.
+  Future<String?> absolutePath(ScreenshotItem item) =>
+      materializePath(item);
+
+  /// The path of an item relative to the screenshot directory, for
+  /// display. Null when the item does not live under that directory.
+  String? relativePath(ScreenshotItem item) {
+    if (!MediaRef.isFile(item.path)) return null;
+    final dir = directoryOverride.trim();
+    if (dir.isEmpty) return null;
+    final normalized = dir.endsWith('/') ? dir : '$dir/';
+    return item.path.startsWith(normalized)
+        ? item.path.substring(normalized.length)
+        : null;
+  }
+
+  /// The pixel dimensions of an item's image, or null when the payload
+  /// cannot be decoded.
+  Future<({int width, int height})?> imageSize(ScreenshotItem item) async {
+    final bytes = await AppStorage.readMedia(item.path);
+    if (bytes == null) return null;
+    try {
+      final decoded = img.decodeImage(bytes);
+      if (decoded == null) return null;
+      return (width: decoded.width, height: decoded.height);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Crops an item to [rect] and replaces the stored image with the
+  /// cropped version. Returns the new item, or null when the crop
+  /// failed.
+  Future<ScreenshotItem?> crop(
+    ScreenshotItem item,
+    ScreenshotCropRect rect,
+  ) async {
+    final bytes = await AppStorage.readMedia(item.path);
+    if (bytes == null) return null;
+    final cropped = _cropBytes(bytes, rect);
+    if (cropped == null) return null;
+
+    final newRef = await AppStorage.writeMedia(cropped);
+    final index = _items.indexWhere((i) => i.id == item.id);
+    if (index < 0) {
+      await AppStorage.deleteMedia(newRef);
+      return null;
+    }
+    final updated = _items[index].copyWith(path: newRef);
+    _items[index] = updated;
+    // the old payload is replaced, not kept
+    unawaited(AppStorage.deleteMedia(item.path));
+    notifyListeners();
+    _persist();
+    return updated;
+  }
+
+  /// Crops PNG bytes with the `image` package. Returns null when the
+  /// crop is out of bounds or the bytes cannot be decoded.
+  static Uint8List? _cropBytes(Uint8List bytes, ScreenshotCropRect rect) {
+    try {
+      final decoded = img.decodeImage(bytes);
+      if (decoded == null) return null;
+      if (rect.left < 0 ||
+          rect.top < 0 ||
+          rect.width <= 0 ||
+          rect.height <= 0 ||
+          rect.right > decoded.width ||
+          rect.bottom > decoded.height) {
+        return null;
+      }
+      final cropped = img.copyCrop(
+        decoded,
+        rect.left,
+        rect.top,
+        rect.width,
+        rect.height,
+      );
+      return Uint8List.fromList(img.encodePng(cropped));
+    } catch (e) {
+      debugPrint('ScreenshotService: crop failed: $e');
+      return null;
+    }
+  }
+
   /// Delete one screenshot (file + registry entry).
   void remove(String id) {
     final item = _items.where((i) => i.id == id).firstOrNull;
@@ -776,34 +1282,81 @@ class ScreenshotService extends ChangeNotifier {
     return f.path;
   }
 
-  /// Monitor count for the settings UI.
-  Future<int> monitorCount() async {
+  /// The monitors this machine has, in capture-index order.
+  ///
+  /// The list is empty when the platform cannot report its outputs;
+  /// callers then fall back to a single, unnamed monitor.
+  ///
+  /// The X11 list comes from `xrandr --query` and only counts
+  /// *connected* outputs: a plain "connected" substring match also
+  /// hits "disconnected", which inflated the count and made the
+  /// per-monitor capture pick the wrong output.
+  Future<List<ScreenshotMonitor>> monitors() async {
     final platform = await detectPlatform();
     switch (platform) {
       case ScreenshotPlatform.x11:
-        try {
-          final (code, out, _) = await runCommand('xrandr', ['--query']);
-          if (code == 0) {
-            return RegExp(r'connected', multiLine: true).allMatches(out).length;
-          }
-        } catch (_) {}
-        return 1;
+        final x11 = await _x11Monitors();
+        if (x11.isEmpty) return const [];
+        return [
+          for (final m in x11)
+            ScreenshotMonitor(
+              name: m.name,
+              width: m.width,
+              height: m.height,
+              isPrimary: m.isPrimary,
+            ),
+        ];
       case ScreenshotPlatform.wayland:
-        final name = await _waylandOutputName(0);
-        return name == null ? 1 : await _waylandOutputCount();
+        final names = await _waylandOutputNames();
+        if (names.isEmpty) return const [];
+        return [
+          for (final n in names) ScreenshotMonitor(name: n),
+        ];
       default:
-        return 1;
+        return const [];
     }
   }
 
-  Future<int> _waylandOutputCount() async {
+  /// Monitor count for the settings UI.
+  Future<int> monitorCount() async {
+    final list = await monitors();
+    if (list.isEmpty) return 1;
+    return list.length;
+  }
+
+  /// The Wayland output names, in wlr-randr's order.
+  ///
+  /// wlr-randr prints one block per output: the output name starts at
+  /// column 0 and its properties (`Position:`, `Mode:`, ...) are
+  /// indented. Only the unindented lines are output names — matching
+  /// every line picked up the properties as well, which inflated the
+  /// monitor count and made the per-monitor capture pick the wrong
+  /// output (or capture every output).
+  Future<List<String>> _waylandOutputNames() async {
     try {
       final (code, out, _) = await runCommand('wlr-randr', []);
-      if (code == 0) {
-        return RegExp(r'^[A-Z]', multiLine: true).allMatches(out).length;
-      }
-    } catch (_) {}
-    return 1;
+      if (code != 0) return const [];
+      return parseWaylandOutputNames(out);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// The output names in `wlr-randr` output.
+  ///
+  /// wlr-randr prints one block per output: the output name starts at
+  /// column 0 and its properties (`Position:`, `Mode:`, `Transform:`)
+  /// are indented. Only the unindented lines are output names.
+  @visibleForTesting
+  static List<String> parseWaylandOutputNames(String output) {
+    final names = <String>[];
+    for (final line in output.split('\n')) {
+      if (line.isEmpty || line.startsWith(' ')) continue;
+      final name = line.split(RegExp(r'\s')).first;
+      if (name.isEmpty) continue;
+      names.add(name);
+    }
+    return names;
   }
 
   /// Raw image bytes of a stored screenshot (blob or file ref).
@@ -812,4 +1365,18 @@ class ScreenshotService extends ChangeNotifier {
     if (item == null) return null;
     return AppStorage.readMedia(item.path);
   }
+
+  /// The file size of a stored screenshot, in bytes.
+  ///
+  /// Blob-stored screenshots have no file on disk, so their size comes
+  /// from the stored bytes.
+  Future<int> fileSize(ScreenshotItem item) async {
+    final file = File(item.path);
+    try {
+      if (file.existsSync()) return await file.length();
+    } catch (_) {}
+    final bytes = await AppStorage.readMedia(item.path);
+    return bytes?.length ?? 0;
+  }
+
 }

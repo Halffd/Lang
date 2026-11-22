@@ -141,6 +141,33 @@ class AppLocalizationsEs extends AppLocalizations {
   String get columns => 'Columnas';
 
   @override
+  String get cardHeight => 'Altura de la tarjeta';
+
+  @override
+  String get cardHeightAuto => 'Altura de la tarjeta: automática';
+
+  @override
+  String cardHeightPx(Object px) {
+    return 'Altura de la tarjeta: ${px}px';
+  }
+
+  @override
+  String contextLookUp(Object term) {
+    return 'Buscar $term';
+  }
+
+  @override
+  String contextCopy(Object term) {
+    return 'Copiar $term';
+  }
+
+  @override
+  String get contextCopySentence => 'Copiar la frase';
+
+  @override
+  String get contextLookUpSelection => 'Buscar';
+
+  @override
   String get context => 'Contexto';
 
   @override
@@ -395,7 +422,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get collapse => 'Colapsar';
 
   @override
+  String get collapseSearchBar => 'Contraer la barra de búsqueda';
+
+  @override
   String get expand => 'Expandir';
+
+  @override
+  String get expandSearchBar => 'Expandir la barra de búsqueda';
 
   @override
   String get filter => 'Filtrar';
@@ -834,12 +867,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get scriptConversionTitle => 'Conversión de escritura al escribir';
 
   @override
-  String get screenshotTab => 'Capturas';
-
-  @override
-  String get textTab => 'Texto';
-
-  @override
   String get captureFullscreen => 'Pantalla completa';
 
   @override
@@ -876,7 +903,80 @@ class AppLocalizationsEs extends AppLocalizations {
   String get ocrEngineAiUnavailable => 'unavailable here';
 
   @override
+  String get ocrEngineMlKitUnavailable => 'no disponible en escritorio';
+
+  @override
+  String get ocrBackendMlKit => 'ML Kit';
+
+  @override
+  String get ocrBackendMlKitDesc =>
+      'Reconocedor en el dispositivo, rápido y sin conexión (solo móvil)';
+
+  @override
+  String get ocrBackendTesseract => 'Tesseract';
+
+  @override
+  String get ocrBackendTesseractDesc =>
+      'Binario OCR local con preprocesado de imagen';
+
+  @override
+  String get ocrBackendEasyOcr => 'EasyOCR';
+
+  @override
+  String get ocrBackendEasyOcrDesc =>
+      'OCR local en Python, bueno con texto impreso';
+
+  @override
+  String get ocrBackendTransformers => 'Transformers';
+
+  @override
+  String get ocrBackendTransformersDesc =>
+      'Modelo local de Hugging Face, pesado pero preciso';
+
+  @override
+  String get ocrBackendHuggingFace => 'Hugging Face';
+
+  @override
+  String get ocrBackendHuggingFaceDesc =>
+      'API de inferencia remota, requiere una cuenta';
+
+  @override
+  String get ocrBackendAi => 'Visión de IA';
+
+  @override
+  String get ocrBackendAiDesc => 'El proveedor de IA configurado lee la imagen';
+
+  @override
+  String get ocrBackendApi => 'API de OCR';
+
+  @override
+  String get ocrBackendApiDesc =>
+      'Servicio OCR remoto por HTTP, requiere un endpoint';
+
+  @override
   String get copyOcrText => 'Copiar texto OCR al portapapeles';
+
+  @override
+  String get liveOcrRunning => 'El OCR en vivo está en marcha';
+
+  @override
+  String get liveOcrStopped => 'El OCR en vivo está apagado';
+
+  @override
+  String get liveOcrOpenSettings => 'Ajustes de OCR';
+
+  @override
+  String get searchScreenContent => 'Buscar en el contenido de la pantalla';
+
+  @override
+  String get searchScreenContentHint =>
+      'Captura la pantalla, léela con OCR y busca las palabras que contiene.';
+
+  @override
+  String get searchScreenContentFailed => 'No se pudo leer la pantalla';
+
+  @override
+  String get searchScreenContentEmpty => 'No se encontró texto en la pantalla';
 
   @override
   String get copyImage => 'Copiar imagen al portapapeles';
@@ -886,6 +986,39 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get screenshotAlbum => 'Álbum';
+
+  @override
+  String get screenshotPreview => 'Vista previa de la pantalla';
+
+  @override
+  String get screenshotPreviewRefresh => 'Actualizar la vista previa';
+
+  @override
+  String get screenshotTranscriptions => 'Transcripciones';
+
+  @override
+  String get screenshotNoTranscriptions => 'Aún no hay transcripciones';
+
+  @override
+  String get screenshotTranscriptionEmpty => 'La captura no tiene texto';
+
+  @override
+  String get screenshotOcrDetails => 'Detalles del OCR';
+
+  @override
+  String get screenshotOcrEngine => 'Motor';
+
+  @override
+  String get screenshotOcrLanguage => 'Idioma';
+
+  @override
+  String get screenshotOcrTime => 'Reconocido';
+
+  @override
+  String get screenshotCopyOcrResult => 'Copiar el texto del OCR';
+
+  @override
+  String get screenshotShowOcrDetails => 'Mostrar los detalles del OCR';
 
   @override
   String get noScreenshots => 'Aún no hay capturas';
@@ -916,9 +1049,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get readerTabDocuments => 'Documentos';
-
-  @override
-  String get readerTabScreenshots => 'Capturas';
 
   @override
   String get readerTabClipboard => 'Portapapeles';
@@ -955,75 +1085,106 @@ class AppLocalizationsEs extends AppLocalizations {
   String get browserClose => 'Close browser';
 
   @override
-  String get videoNoMedia => 'Pick a video to play with a subtitle track.';
+  String get videoNoMedia =>
+      'Elige un vídeo para reproducir con una pista de subtítulos.';
 
   @override
-  String get videoLoading => 'Loading...';
+  String get videoLoading => 'Cargando...';
 
   @override
-  String get videoPickVideo => 'Pick video';
+  String get videoPickVideo => 'Elegir vídeo';
 
   @override
-  String get videoShowTranscript => 'Transcript';
+  String get videoShowTranscript => 'Transcripción';
 
   @override
-  String get videoHideTranscript => 'Hide transcript';
+  String get videoHideTranscript => 'Ocultar transcripción';
 
   @override
-  String get videoLoadSubs => 'Load subs';
+  String get videoLoadSubs => 'Cargar subtítulos';
 
   @override
-  String get videoNoSubs => 'No subtitle track loaded.';
+  String get videoNoSubs => 'No hay ninguna pista de subtítulos cargada.';
 
   @override
   String get videoYouTube => 'YouTube';
 
   @override
-  String get videoYouTubeHint => 'Paste a YouTube URL';
+  String get videoYouTubeHint => 'Pega una URL de YouTube';
 
   @override
-  String get videoLoad => 'Load';
+  String get videoLoad => 'Cargar';
 
   @override
-  String get videoInvalidUrl => 'Not a YouTube video.';
+  String get videoInvalidUrl => 'No es un vídeo de YouTube.';
 
   @override
-  String get videoCaptions => 'Captions';
+  String get videoCaptions => 'Subtítulos';
 
   @override
-  String get videoNoCaptions => 'No caption tracks available.';
+  String get videoNoCaptions => 'No hay pistas de subtítulos disponibles.';
 
   @override
-  String get videoSpeed => 'Playback speed';
+  String get videoSpeed => 'Velocidad de reproducción';
 
   @override
-  String get videoSubtitleSize => 'Subtitle size';
+  String get videoSubtitleSize => 'Tamaño del subtítulo';
 
   @override
-  String get videoDelay => 'Subtitle delay';
+  String get videoDelay => 'Retraso del subtítulo';
 
   @override
-  String get videoRecent => 'Recent';
+  String get videoRecent => 'Recientes';
 
   @override
-  String get videoNoRecent => 'Nothing watched yet.';
+  String get videoNoRecent => 'Todavía no has visto nada.';
 
   @override
   String videoWatchedFor(String duration) {
-    return '$duration watched';
+    return '$duration visto';
   }
 
   @override
-  String get videoPasteSubs => 'Paste subtitles';
+  String get videoPasteSubs => 'Pegar subtítulos';
 
   @override
-  String get videoPastedSubs => 'Pasted subtitles';
+  String get videoPastedSubs => 'Subtítulos pegados';
 
   @override
-  String get videoMissingFile => 'File no longer exists.';
+  String get videoMissingFile => 'El archivo ya no existe.';
 
   @override
-  String get videoPickSubtitleSource => 'Subtitle source';
+  String get videoPickSubtitleSource => 'Fuente de subtítulos';
+
+  @override
+  String get videoDescription => 'Descripción';
+
+  @override
+  String get videoChapters => 'Capítulos';
+
+  @override
+  String get videoSettings => 'Ajustes';
+
+  @override
+  String get videoNoDescription => 'No hay descripción disponible.';
+
+  @override
+  String get videoNoChapters => 'Este vídeo no tiene capítulos.';
+
+  @override
+  String get videoNoSettings => 'No hay ajustes disponibles.';
+
+  @override
+  String get videoQuality => 'Calidad';
+
+  @override
+  String get videoCurrentChapter => 'Capítulo actual';
+
+  @override
+  String get videoShowPane => 'Mostrar panel lateral';
+
+  @override
+  String get videoHidePane => 'Ocultar panel lateral';
 
   @override
   String get readerTabVideo => 'Video';
@@ -1080,9 +1241,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get activitySpeech => 'Transcripción de voz';
-
-  @override
-  String get speechTab => 'Voz';
 
   @override
   String get speechRecord => 'Grabar';
@@ -1204,6 +1362,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get popupScreenSRS => 'SRS';
 
   @override
+  String get popupScreenVideo => 'Vídeo';
+
+  @override
   String get popupNone => 'Ninguno';
 
   @override
@@ -1239,6 +1400,19 @@ class AppLocalizationsEs extends AppLocalizations {
   String get popupShowSentence => 'Mostrar oración';
 
   @override
+  String get popupReadingDisplay => 'Visualización de lectura';
+
+  @override
+  String get popupReadingKana => 'Kana';
+
+  @override
+  String get popupReadingRomaji => 'Romaji';
+
+  @override
+  String get popupShowKanaOnlyReading =>
+      'Mostrar lectura en palabras solo de kana';
+
+  @override
   String get popupProfileAlternation => 'Alternancia de perfil';
 
   @override
@@ -1256,4 +1430,225 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get analysisSection => 'Análisis';
+
+  @override
+  String get liveOcrEnable => 'Activar OCR en vivo';
+
+  @override
+  String get liveOcrSection => 'OCR en vivo';
+
+  @override
+  String get liveOcrErrorPrefix => 'OCR en vivo';
+
+  @override
+  String get liveOcrUnsupported =>
+      'La captura de pantalla no está disponible en esta máquina, por lo que el OCR en vivo no puede ejecutarse aquí.';
+
+  @override
+  String get copyFailed => 'Error al copiar';
+
+  @override
+  String get copied => 'Copiado';
+
+  @override
+  String get screenshotFolder => 'Carpeta de capturas';
+
+  @override
+  String get screenshotFolderUnknown => 'Desconocida';
+
+  @override
+  String get screenshotChooseFolder => 'Elegir carpeta de capturas';
+
+  @override
+  String get screenshotResetFolder => 'Usar la carpeta predeterminada';
+
+  @override
+  String get screenshotSearch => 'Buscar capturas';
+
+  @override
+  String get screenshotManager => 'Gestor';
+
+  @override
+  String get globalHotkeys => 'Atajos globales';
+
+  @override
+  String get ocrScreenshotTitle => 'OCR / Capturas';
+
+  @override
+  String get globalHotkeysSubtitle =>
+      'Estos atajos funcionan mientras otra aplicación tiene el foco.';
+
+  @override
+  String get screenshotNoMatches => 'Ninguna captura coincide con el filtro';
+
+  @override
+  String get screenshotFilter => 'Filtrar';
+
+  @override
+  String get screenshotSort => 'Ordenar';
+
+  @override
+  String get screenshotFilterAll => 'Visibles';
+
+  @override
+  String get screenshotFilterHidden => 'Ocultas';
+
+  @override
+  String get screenshotFilterWithText => 'Con texto';
+
+  @override
+  String get screenshotFilterWithoutText => 'Sin texto';
+
+  @override
+  String get screenshotSortNewest => 'Más recientes primero';
+
+  @override
+  String get screenshotSortOldest => 'Más antiguas primero';
+
+  @override
+  String get screenshotSortName => 'Por nombre';
+
+  @override
+  String get screenshotHasText => 'tiene texto';
+
+  @override
+  String get screenshotCopied => 'Copiado';
+
+  @override
+  String get screenshotNoRelativePath =>
+      'La captura no está dentro de la carpeta de capturas';
+
+  @override
+  String get screenshotProperties => 'Propiedades';
+
+  @override
+  String get screenshotPropertyName => 'Nombre';
+
+  @override
+  String get screenshotPropertyKind => 'Tipo';
+
+  @override
+  String get screenshotPropertyTaken => 'Tomada';
+
+  @override
+  String get screenshotPropertyPath => 'Ruta';
+
+  @override
+  String get screenshotPropertySize => 'Tamaño del archivo';
+
+  @override
+  String get screenshotPropertyText => 'Texto reconocido';
+
+  @override
+  String get screenshotRename => 'Renombrar captura';
+
+  @override
+  String get screenshotEditText => 'Editar texto reconocido';
+
+  @override
+  String get screenshotCrop => 'Recortar captura';
+
+  @override
+  String get screenshotCropLeft => 'Izquierda';
+
+  @override
+  String get screenshotCropTop => 'Arriba';
+
+  @override
+  String get screenshotCropWidth => 'Ancho';
+
+  @override
+  String get screenshotCropHeight => 'Alto';
+
+  @override
+  String get screenshotCropped => 'Captura recortada';
+
+  @override
+  String get screenshotCropFailed => 'El recorte falló';
+
+  @override
+  String get liveOcrNotConfigured => 'El OCR en vivo no está configurado';
+
+  @override
+  String get liveOcrCaptureFailed => 'La captura de pantalla falló';
+
+  @override
+  String get liveOcrOcrFailed => 'El OCR falló';
+
+  @override
+  String get liveOcrSectionSubtitle =>
+      'Captura continua de pantalla con traducción en vivo';
+
+  @override
+  String get liveOcrEnableSubtitle =>
+      'Leer la pantalla continuamente y mostrar el texto con su traducción en una capa flotante';
+
+  @override
+  String get liveOcrFullscreen => 'Leer toda la pantalla';
+
+  @override
+  String get liveOcrFullscreenSubtitle =>
+      'Desactivado: leer solo la región que seleccionaste por última vez con la captura de región';
+
+  @override
+  String get liveOcrShowTranslation => 'Mostrar traducción';
+
+  @override
+  String get liveOcrShowTranslationSubtitle =>
+      'Mostrar el texto traducido debajo del original';
+
+  @override
+  String get liveOcrCaptureInterval => 'Intervalo de captura';
+
+  @override
+  String get liveOcrStableReads => 'Lecturas estables';
+
+  @override
+  String get videoPopOutMiniPlayer => 'Abrir reproductor flotante';
+
+  @override
+  String get videoPictureInPicture => 'Imagen en imagen';
+
+  @override
+  String get videoPopupCaptions => 'Subtítulos flotantes';
+
+  @override
+  String get videoLeaveListeningMode =>
+      'Salir del modo de escucha (volver al vídeo)';
+
+  @override
+  String get videoListeningMode =>
+      'Modo de escucha (solo audio, pantalla apagada)';
+
+  @override
+  String get videoSearchYouTube => 'Buscar en YouTube';
+
+  @override
+  String get videoSearchEllipsis => 'Buscar…';
+
+  @override
+  String get videoPipUnavailable =>
+      'Imagen en imagen no disponible en este dispositivo';
+
+  @override
+  String get videoCouldNotSwitchQuality => 'No se pudo cambiar la calidad.';
+
+  @override
+  String get videoWhisperSubsServerMissing =>
+      'Configura primero la URL del servidor WhisperSubs en Ajustes.';
+
+  @override
+  String get videoWhisperSubs => 'WhisperSubs';
+
+  @override
+  String get screenshotCopyImageItem => 'Copiar imagen';
+
+  @override
+  String get screenshotCopyPathItem => 'Copiar ruta';
+
+  @override
+  String get screenshotPreviousCapture => 'Captura anterior';
+
+  @override
+  String get screenshotAlbumEmpty => 'El álbum está vacío';
 }

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -820,6 +821,7 @@ class _AiDeckGeneratorSheetState extends State<AiDeckGeneratorSheet> {
             if (_editingTemplate) ...[
               const SizedBox(height: 8),
               TextField(
+                contextMenuBuilder: AppContextMenu.editable,
                 controller: _templateNameCtrl,
                 decoration: const InputDecoration(
                   labelText: 'Template name',
@@ -828,6 +830,7 @@ class _AiDeckGeneratorSheetState extends State<AiDeckGeneratorSheet> {
               ),
               const SizedBox(height: 8),
               TextField(
+                contextMenuBuilder: AppContextMenu.editable,
                 controller: _templatePromptCtrl,
                 decoration: const InputDecoration(
                   labelText: 'System prompt',
@@ -871,6 +874,7 @@ class _AiDeckGeneratorSheetState extends State<AiDeckGeneratorSheet> {
               ],
             ),
             TextField(
+              contextMenuBuilder: AppContextMenu.editable,
               controller: _apiController,
               decoration: const InputDecoration(
                 labelText: 'API key (optional)',
@@ -988,6 +992,7 @@ class _AiDeckGeneratorSheetState extends State<AiDeckGeneratorSheet> {
           width: 480,
           child: SingleChildScrollView(
             child: SelectableText(
+              contextMenuBuilder: AppContextMenu.editable,
               json,
               style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
             ),

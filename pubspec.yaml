@@ -61,6 +61,8 @@ dependencies:
   tesseract_ocr: ^0.5.0
   fl_chart: ^0.70.2
   image_picker: ^1.1.2
+  # Screenshot crop in the screenshot manager
+  image: ^3.3.0
   video_player: ^2.9.2
   audioplayers: ^6.1.0
   # Mobile listening mode: background audio + media-notification controls

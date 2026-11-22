@@ -1,0 +1,29 @@
+{
+  "id": "b82aa7feb",
+  "name": "flutter side pane tests",
+  "command": "cd /host/lang && flutter test test/player_side_pane_test.dart --reporter expanded 2>&1 | tail -40",
+  "description": "Run the player side pane tests including the new annotated transcript hover test",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1e132-002a-72af-b6dd-33e68e0a3c49-2556/b82aa7feb.output",
+  "cwd": "/host/lang",
+  "startTime": 1794871234835,
+  "endTime": 1794871587671,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 961806,
+  "bytesWritten": 1213,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 2400,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

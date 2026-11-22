@@ -1,0 +1,29 @@
+{
+  "id": "bedefe7b2",
+  "name": "flutter side pane tests 2",
+  "command": "cd /host/lang && flutter test test/player_side_pane_test.dart --reporter expanded 2>&1 | tail -40",
+  "description": "Run the player side pane tests with the in-memory dictionary",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1e132-002a-72af-b6dd-33e68e0a3c49-2556/bedefe7b2.output",
+  "cwd": "/host/lang",
+  "startTime": 1794871712524,
+  "endTime": 1794873185319,
+  "exitCode": null,
+  "signal": "SIGKILL",
+  "pid": 967231,
+  "bytesWritten": 921,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 2400,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

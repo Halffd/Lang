@@ -12,6 +12,7 @@ import 'package:lang/utils/font_scale.dart';
 import 'package:lang/presentation/screens/srs/sheets/add_card_sheet.dart';
 import 'package:lang/presentation/screens/srs/sheets/card_detail_sheet.dart';
 import 'package:lang/presentation/screens/srs/sheets/import_words_sheet.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 class CardsTab extends StatefulWidget {
   final SRSService srsService;
@@ -186,6 +187,7 @@ class _CardsTabState extends State<CardsTab> {
               children: [
                 Expanded(
                   child: TextField(
+                    contextMenuBuilder: AppContextMenu.editable,
                     controller: _searchController,
                     decoration: InputDecoration(
                       hintText: 'Search cards...',

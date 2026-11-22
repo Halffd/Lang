@@ -4,6 +4,7 @@ import 'package:path/path.dart' as path;
 import 'package:lang/core/services/history_service.dart';
 import 'package:lang/presentation/widgets/bounded_input.dart';
 import 'package:lang/presentation/widgets/document_reader.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 class DocumentReaderScreen extends StatefulWidget {
   final String? filePath;
@@ -157,6 +158,7 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
           child: BoundedInput(
             child: TextField(
+              contextMenuBuilder: AppContextMenu.editable,
               controller: _textController,
               minLines: 2,
               maxLines: 6,
@@ -286,6 +288,7 @@ class DocumentReaderScreenState extends State<DocumentReaderScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: TextFormField(
+                        contextMenuBuilder: AppContextMenu.editable,
                         controller: _pageController,
                         keyboardType: TextInputType.number,
                         textAlign: TextAlign.center,
@@ -590,6 +593,7 @@ class _TextReaderView extends StatelessWidget {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: SelectableText(
+        contextMenuBuilder: AppContextMenu.editable,
         initialText,
         style: theme.textTheme.bodyLarge?.copyWith(height: 1.7),
       ),

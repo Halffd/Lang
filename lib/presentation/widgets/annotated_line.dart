@@ -37,6 +37,9 @@ class AnnotatedLine extends StatefulWidget {
     required this.appState,
     required this.fontSize,
     required this.weight,
+    this.baseStyle,
+    this.readingStyle,
+    this.textAlign,
   });
 
   final String text;
@@ -44,16 +47,41 @@ class AnnotatedLine extends StatefulWidget {
   final double fontSize;
   final FontWeight weight;
 
+  /// Style the base text and the reading are painted with.
+  ///
+  /// Null (the default) keeps the reader behaviour: the base text is
+  /// coloured by learning state and word type, and the reading is a
+  /// dimmed version of it. Supplying a style pins the colours — what
+  /// the video subtitle overlay needs, where the text sits white on a
+  /// picture and learning-state colours would be unreadable.
+  final TextStyle? baseStyle;
+
+  /// Which reading to draw above the base text. Null takes the
+  /// reading style from [appState]; `'off'` draws none.
+  final String? readingStyle;
+
+  /// How the text is aligned within its box.
+  final TextAlign? textAlign;
+
   /// Reading size as a fraction of the base size.
   static const double readingScale = 0.6;
 
   /// Whether a reading belongs above [token] under the current style:
   /// `off` never reads, `furigana`/`pinyin` read only their script,
   /// `auto` reads whenever a reading is known.
-  static bool hasReadingFor(String style, AnnotatedToken token) {
+  ///
+  /// [isChinese] says whether the line is Chinese. Kanji are shared
+  /// between the two scripts, so without it a Japanese reading (日 →
+  /// ひ) would be drawn under the pinyin style.
+  static bool hasReadingFor(
+    String style,
+    AnnotatedToken token, {
+    bool isChinese = false,
+  }) {
     if (style == 'off') return false;
     if ((token.reading ?? '').isEmpty) return false;
     if (style == 'furigana') {
+      if (isChinese) return false;
       return token.text.runes.any(
         (c) =>
             c >= 0x4E00 && c <= 0x9FFF || // kanji
@@ -61,7 +89,9 @@ class AnnotatedLine extends StatefulWidget {
       );
     }
     if (style == 'pinyin') {
-      return ChineseUtil.isHanzi(token.text);
+      // Chinese tokens are words, not single characters, so the gate
+      // looks for hanzi anywhere in the token.
+      return isChinese && ChineseUtil.containsChinese(token.text);
     }
     return true;
   }
@@ -99,13 +129,24 @@ class AnnotatedLine extends StatefulWidget {
 class AnnotatedLineState extends State<AnnotatedLine> {
   late final Future<List<AnnotatedToken>> _tokens = _annotate();
 
+  /// Whether the line is Chinese. Kanji are shared between Chinese and
+  /// Japanese, so the reading style needs this to tell the scripts
+  /// apart.
+  bool _isChinese = false;
+
   Future<List<AnnotatedToken>> _annotate() async {
-    final tokens = await TokenizerService().tokenize(widget.text);
+    final tokenizer = TokenizerService();
+    final tokens = await tokenizer.tokenize(widget.text);
+    // Kanji are shared between Chinese and Japanese, so the pinyin
+    // fallback must only run on a Chinese line. On a Japanese line it
+    // would put Chinese readings over Japanese kanji.
+    final isChinese = tokenizer.detectLanguage(widget.text) == 'zh';
+    _isChinese = isChinese;
     return [
       for (final token in tokens)
         AnnotatedToken(
           text: token.surface,
-          reading: _readingFor(token),
+          reading: _readingFor(token, isChinese: isChinese),
           wordTypes: _wordTypesFromTags(token),
         ),
     ];
@@ -114,14 +155,15 @@ class AnnotatedLineState extends State<AnnotatedLine> {
   /// Reading for [token]: the dictionary entry's reading, falling back to
   /// a per-character pinyin build for Chinese. Kana and unannotated text
   /// return null (nothing to read above it).
-  static String? _readingFor(Token token) {
+  ///
+  /// The dictionary is Japanese, so its readings are kana. For a Chinese
+  /// line they are simply wrong and pinyin stands in — the same rule
+  /// [AnalyzedWord.readingFor] applies to looked-up words.
+  static String? _readingFor(Token token, {required bool isChinese}) {
     final reading = token.reading.trim();
-    if (reading.isNotEmpty) return reading;
-    if (ChineseUtil.isHanzi(token.surface)) {
-      return PinyinUtil.getPinyin(token.surface) ??
-          _pinyinPerChar(token.surface);
-    }
-    return null;
+    if (!isChinese) return reading.isEmpty ? null : reading;
+    if (!ChineseUtil.containsChinese(token.surface)) return null;
+    return PinyinUtil.getPinyin(token.surface) ?? _pinyinPerChar(token.surface);
   }
 
   /// Multi-character Chinese: pinyin per character, joined with a space.
@@ -131,7 +173,7 @@ class AnnotatedLineState extends State<AnnotatedLine> {
     if (word.length < 2) return null;
     final syllables = <String>[];
     for (final char in word.split('')) {
-      if (!ChineseUtil.isHanzi(char)) continue;
+      if (!ChineseUtil.isHanzi(char)) return null;
       final p = PinyinUtil.getPinyin(char);
       if (p == null) return null;
       syllables.add(p);
@@ -143,7 +185,7 @@ class AnnotatedLineState extends State<AnnotatedLine> {
   /// three hues we tint: `verb`, `adjective`, `adverb`.
   static List<String> _wordTypesFromTags(Token token) {
     final tags = token.tags.map((s) => s.toLowerCase()).toList(growable: false);
-    final has = (Iterable<String> needles) =>
+    bool has(Iterable<String> needles) =>
         needles.any((n) => tags.any((s) => s.contains(n)));
     final types = <String>[];
     if (has(['verb', 'v1', 'v5', 'vk', 'vs', 'vz'])) types.add('verb');
@@ -163,18 +205,30 @@ class AnnotatedLineState extends State<AnnotatedLine> {
         final tokens = snapshot.data!;
         return Text.rich(
           TextSpan(children: [for (final t in tokens) _tokenSpan(context, t)]),
+          textAlign: widget.textAlign,
         );
       },
     );
   }
 
+  /// The reading style in force: the explicit override when given,
+  /// otherwise the user's global setting.
+  String get _readingStyle =>
+      widget.readingStyle ?? widget.appState.readingStyle;
+
   InlineSpan _tokenSpan(BuildContext context, AnnotatedToken token) {
-    final style = TextStyle(
-      fontSize: widget.fontSize,
-      fontWeight: widget.weight,
-      color: AnnotatedLine.colorFor(context, token, widget.appState),
-    );
-    if (!AnnotatedLine.hasReadingFor(widget.appState.readingStyle, token)) {
+    final style =
+        widget.baseStyle ??
+        TextStyle(
+          fontSize: widget.fontSize,
+          fontWeight: widget.weight,
+          color: AnnotatedLine.colorFor(context, token, widget.appState),
+        );
+    if (!AnnotatedLine.hasReadingFor(
+      _readingStyle,
+      token,
+      isChinese: _isChinese,
+    )) {
       return TextSpan(text: token.text, style: style);
     }
     return WidgetSpan(

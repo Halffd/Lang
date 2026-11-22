@@ -1,0 +1,30 @@
+{
+  "id": "bfd5f1be3",
+  "name": "Linux debug build",
+  "command": "/tmp/build_debug.sh",
+  "description": "Build the Linux debug bundle offline with the current source",
+  "status": "failed",
+  "outputPath": ".pi/tasks/01a1f71d-15bf-7273-a9fa-05996fb34ce6-5168/bfd5f1be3.output",
+  "cwd": "/host/lang",
+  "startTime": 1795161703576,
+  "endTime": 1795161795528,
+  "exitCode": null,
+  "signal": "SIGTERM",
+  "pid": 147102,
+  "bytesWritten": 135,
+  "isAgent": false,
+  "surviveReload": false,
+  "error": "Timed out while preparing a background task after 30000ms",
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 10800,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

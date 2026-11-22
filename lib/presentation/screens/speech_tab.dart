@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -258,6 +259,7 @@ class _SpeechTabState extends State<SpeechTab> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
+                  contextMenuBuilder: AppContextMenu.editable,
                   controller: _langSearchCtrl,
                   onChanged: (v) => setSheet(() => _languageSearch = v),
                   decoration: const InputDecoration(
@@ -782,7 +784,10 @@ class _SpeechTabState extends State<SpeechTab> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Text(
-                _engine == null ? l10n.speechNoEngine : _error!,
+                // the error text is read into a local first: the field
+                // can be cleared by a rebuild between the guard and
+                // the read, and the assertion would crash the screen
+                _engine == null ? l10n.speechNoEngine : (_error ?? ''),
                 style: TextStyle(
                   fontSize: fs(context, 11),
                   color: theme.colorScheme.error,
@@ -828,6 +833,7 @@ class _SpeechTabState extends State<SpeechTab> {
                 // --- API fields
                 if (appState.sttType == 'api') ...[
                   TextField(
+                    contextMenuBuilder: AppContextMenu.editable,
                     controller: _apiUrlCtrl,
                     decoration: const InputDecoration(
                       labelText: 'API URL',
@@ -840,6 +846,7 @@ class _SpeechTabState extends State<SpeechTab> {
                   ),
                   const SizedBox(height: 8),
                   TextField(
+                    contextMenuBuilder: AppContextMenu.editable,
                     controller: _apiKeyCtrl,
                     obscureText: true,
                     decoration: const InputDecoration(
@@ -1197,6 +1204,7 @@ class _SpeechTabState extends State<SpeechTab> {
               Padding(
                 padding: const EdgeInsets.only(left: 48, top: 2),
                 child: SelectableText(
+                  contextMenuBuilder: AppContextMenu.editable,
                   seg.translation!,
                   style: TextStyle(
                     fontSize: fs(context, 12, 'translations'),
@@ -1230,6 +1238,7 @@ class _SpeechTabState extends State<SpeechTab> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(12),
                 child: SelectableText(
+                  contextMenuBuilder: AppContextMenu.editable,
                   left,
                   style: TextStyle(
                     fontSize: fs(context, 14, 'sentences') * scale,
@@ -1243,6 +1252,7 @@ class _SpeechTabState extends State<SpeechTab> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(12),
                 child: SelectableText(
+                  contextMenuBuilder: AppContextMenu.editable,
                   right,
                   style: TextStyle(
                     fontSize: fs(context, 12, 'translations') * scale,
@@ -1445,6 +1455,7 @@ class _SpeechTabState extends State<SpeechTab> {
     );
     if (style == 'off' || !hasCjk) {
       return SelectableText(
+        contextMenuBuilder: AppContextMenu.editable,
         seg.text,
         style: TextStyle(fontSize: base, height: 1.5),
       );
@@ -1745,6 +1756,7 @@ class _ImmersiveTranscriptScreenState
     );
     if (appState.readingStyle == 'off' || !hasCjk) {
       return SelectableText(
+        contextMenuBuilder: AppContextMenu.editable,
         seg.text,
         style: TextStyle(fontSize: base, height: 1.6),
       );

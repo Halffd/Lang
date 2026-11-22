@@ -75,7 +75,11 @@ class Tokenizer {
 
       final match = await db?.longestMatch(candidates);
       if (match != null) {
-        final termLen = match.term.length;
+        // The match covers [match.length] source characters: the term
+        // length for a term match, the kana length for a reading match
+        // (かいどく → 解読), where the kanji term is shorter/longer
+        // than the kana surface it matched.
+        final termLen = match.length;
         tokens.add(
           Token(
             surface: text.substring(cursor, cursor + termLen),
@@ -164,18 +168,21 @@ class Tokenizer {
         ];
         final match = await db!.longestMatch(candidates);
         if (match != null) {
+          // A reading match covers [match.length] source characters, not
+          // the term length — slice the surface from the source text.
+          final len = match.length;
           tokens.add(
             Token(
-              surface: match.term,
+              surface: text.substring(cursor, cursor + len),
               reading: match.reading,
               definition: match.definition,
               partOfSpeech: 'word',
               startIndex: cursor,
-              endIndex: cursor + match.term.length,
+              endIndex: cursor + len,
               tags: match.tags,
             ),
           );
-          cursor += match.term.length;
+          cursor += len;
           matched = true;
         }
       }

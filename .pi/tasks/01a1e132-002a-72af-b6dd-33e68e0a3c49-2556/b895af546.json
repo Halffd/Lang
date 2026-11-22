@@ -1,0 +1,29 @@
+{
+  "id": "b895af546",
+  "name": "flutter side pane tests 3",
+  "command": "cd /host/lang && timeout 900 flutter test test/player_side_pane_test.dart --reporter expanded 2>&1 | tail -30",
+  "description": "Run the player side pane tests with the database set up outside the fake-async zone",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1e132-002a-72af-b6dd-33e68e0a3c49-2556/b895af546.output",
+  "cwd": "/host/lang",
+  "startTime": 1794873245061,
+  "endTime": 1794873589204,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 984630,
+  "bytesWritten": 1905,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 1200,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

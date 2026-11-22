@@ -22,7 +22,7 @@ class WhisperSubsTab extends StatefulWidget {
 }
 
 class _WhisperSubsTabState extends State<WhisperSubsTab> {
-  static const _videoTabIndex = 4;
+
 
   int _section = 0; // 0 library, 1 channels, 2 live
   String? _channel; // drill-down channel in the channels section
@@ -149,7 +149,7 @@ class _WhisperSubsTabState extends State<WhisperSubsTab> {
   void _playInVideoTab(Map<String, dynamic> request, {String title = ''}) {
     final appState = context.read<AppState>();
     appState.videoLoadRequest.value = request;
-    appState.readerTabRequest.value = _videoTabIndex;
+    appState.videoNavRequest.value = true;
     if (title.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

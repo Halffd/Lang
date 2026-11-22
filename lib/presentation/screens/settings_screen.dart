@@ -24,11 +24,31 @@ import 'package:lang/presentation/providers/user_data_provider.dart';
 import 'package:lang/core/services/history_service.dart';
 import 'package:lang/utils/screen_size.dart';
 import 'package:lang/utils/font_scale.dart';
+import 'package:lang/presentation/nav_destinations.dart';
 import 'package:lang/presentation/widgets/clipboard_settings.dart';
+import 'package:lang/presentation/widgets/live_ocr_settings.dart';
+import 'package:lang/presentation/widgets/screenshot_path_settings.dart';
 import 'package:lang/presentation/widgets/popup_dictionary_settings.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
+
+  /// The global hotkeys, as (action, shortcut) pairs. These are
+  /// registered by [DesktopIPCService] on the desktop platforms.
+  static const List<(String, String)> _globalHotkeys = [
+    ('Show Study', 'Ctrl+Shift+S'),
+    ('Open Reader', 'Ctrl+Shift+B'),
+    ('Toggle window', 'Ctrl+Shift+L'),
+    ('Clipboard manager', 'Ctrl+Shift+V'),
+    ('OCR the last image', 'Ctrl+Shift+O'),
+    ('Screenshot: full screen', 'Ctrl+Shift+Print Screen'),
+    ('Screenshot: monitor', 'Ctrl+Print Screen'),
+    ('Screenshot: window', 'Shift+Print Screen'),
+    ('Screenshot: region', 'Alt+Print Screen'),
+    ('Screenshot: repeat last region', 'Alt+Shift+Print Screen'),
+    ('Toggle automatic screenshots', 'Ctrl+Alt+Print Screen'),
+  ];
 
   String _getLanguageName(BuildContext context, String code) {
     final localizations = AppLocalizations.of(context)!;
@@ -584,7 +604,8 @@ class SettingsScreen extends StatelessWidget {
                     child: DropdownButtonFormField<int>(
                       initialValue:
                           (appState.defaultScreenIndex >= 0 &&
-                              appState.defaultScreenIndex <= 8)
+                              appState.defaultScreenIndex <
+                                  navDestinations.length)
                           ? appState.defaultScreenIndex
                           : 0, // fallback to 0 if current value is invalid
                       decoration: const InputDecoration(
@@ -595,43 +616,15 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                       items: [
-                        DropdownMenuItem(
-                          value: 0,
-                          child: Text(AppLocalizations.of(context)!.analyze),
-                        ),
-                        DropdownMenuItem(
-                          value: 1,
-                          child: Text(AppLocalizations.of(context)!.search),
-                        ),
-                        DropdownMenuItem(
-                          value: 2,
-                          child: Text(AppLocalizations.of(context)!.reader),
-                        ),
-                        DropdownMenuItem(
-                          value: 3,
-                          child: Text(
-                            AppLocalizations.of(context)!.dictionaries,
+                        for (var i = 0; i < navDestinations.length; i++)
+                          DropdownMenuItem(
+                            value: i,
+                            child: Text(
+                              navDestinations[i].resolveLabel(
+                                AppLocalizations.of(context)!,
+                              ),
+                            ),
                           ),
-                        ),
-                        DropdownMenuItem(
-                          value: 4,
-                          child: Text(
-                            AppLocalizations.of(context)!.writerTitle,
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 5,
-                          child: Text(AppLocalizations.of(context)!.saved),
-                        ),
-                        DropdownMenuItem(
-                          value: 6,
-                          child: Text(AppLocalizations.of(context)!.history),
-                        ),
-                        const DropdownMenuItem(value: 7, child: Text('SRS')),
-                        DropdownMenuItem(
-                          value: 8,
-                          child: Text(AppLocalizations.of(context)!.ai),
-                        ),
                       ],
                       onChanged: (value) {
                         if (value != null) {
@@ -863,6 +856,7 @@ class SettingsScreen extends StatelessWidget {
                     trailing: SizedBox(
                       width: 100,
                       child: TextField(
+                        contextMenuBuilder: AppContextMenu.editable,
                         keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
@@ -918,6 +912,108 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   const PopupDictionarySettings(),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Live OCR settings
+          Card(
+            elevation: 1,
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)!.liveOcrSection,
+                    style: TextStyle(
+                      fontSize: fs(context, 15, 'headers'),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    AppLocalizations.of(context)!.liveOcrSectionSubtitle,
+                    style: TextStyle(
+                      fontSize: fs(context, 11, 'ui'),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const LiveOcrSettings(),
+                  const Divider(),
+                  const ScreenshotPathSettings(),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Global hotkeys section
+          Text(
+            AppLocalizations.of(context)!.globalHotkeys,
+            style: TextStyle(
+              fontSize: fs(context, 18, 'headers'),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            elevation: 1,
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)!.globalHotkeysSubtitle,
+                    style: TextStyle(
+                      fontSize: fs(context, 11, 'ui'),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  for (final entry in _globalHotkeys)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: Row(
+                        children: [
+                          Flexible(
+                            flex: 3,
+                            child: Text(
+                              entry.$1,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: fs(context, 12, 'ui'),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Flexible(
+                            flex: 2,
+                            child: Text(
+                              entry.$2,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.end,
+                              style: TextStyle(fontSize: fs(context, 12, 'ui')),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -1171,6 +1267,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     TextField(
+                      contextMenuBuilder: AppContextMenu.editable,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         hintText: 'http://127.0.0.1:8765',
@@ -1282,6 +1379,7 @@ class SettingsScreen extends StatelessWidget {
                       children: [
                         Expanded(
                           child: TextField(
+                            contextMenuBuilder: AppContextMenu.editable,
                             decoration: const InputDecoration(
                               border: OutlineInputBorder(),
                               hintText: 'Basic',
@@ -1389,6 +1487,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   TextField(
+                    contextMenuBuilder: AppContextMenu.editable,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       hintText: 'http://192.168.1.10:8000',
@@ -1407,6 +1506,7 @@ class SettingsScreen extends StatelessWidget {
                   Text('API key', style: TextStyle(fontSize: fs(context, 13))),
                   const SizedBox(height: 4),
                   TextField(
+                    contextMenuBuilder: AppContextMenu.editable,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       hintText: 'created on the server: POST /auth/api-keys',
@@ -1505,6 +1605,7 @@ class SettingsScreen extends StatelessWidget {
                               const Text('Forvo API Key'),
                               const SizedBox(height: 8),
                               TextField(
+                                contextMenuBuilder: AppContextMenu.editable,
                                 decoration: const InputDecoration(
                                   border: OutlineInputBorder(),
                                   hintText: 'Enter your Forvo API key',
@@ -1532,6 +1633,7 @@ class SettingsScreen extends StatelessWidget {
                               Expanded(
                                 flex: 4,
                                 child: TextField(
+                                  contextMenuBuilder: AppContextMenu.editable,
                                   decoration: const InputDecoration(
                                     border: OutlineInputBorder(),
                                     hintText: 'Enter your Forvo API key',
@@ -2064,7 +2166,16 @@ class _FontGroupSlider extends StatelessWidget {
 
 Widget _cloudSyncSection(BuildContext context) {
   final cloud = CloudSyncService();
-  if (!cloud.isAvailable) {
+  // the availability probe touches the Supabase client, which only
+  // exists when the app was built with credentials; a failure here must
+  // not take the whole settings screen down with it
+  bool available;
+  try {
+    available = cloud.isAvailable;
+  } catch (_) {
+    available = false;
+  }
+  if (!available) {
     return const Text(
       'Cloud sync: sign in to Supabase to sync across devices',
       style: TextStyle(fontSize: 12),

@@ -70,6 +70,29 @@ void main() {
     expect(flat, contains('sense two'));
   });
 
+  test('flatten separates structured gloss items', () {
+    final flat = StructuredDefinition.flatten(
+      '[{"tag": "ul", "content": [{"tag": "li", "content": "sense one"}, {"tag": "li", "content": "sense two"}]}]',
+    );
+    // the two senses must not run together into one blob
+    expect(flat, contains('sense one; sense two'));
+  });
+
+  test('flatten separates plain-text gloss lists', () {
+    final flat = StructuredDefinition.flatten(
+      '["sense one", "sense two", "sense three"]',
+    );
+    expect(flat, 'sense one; sense two; sense three');
+  });
+
+  test('flatten keeps inline spans concatenated', () {
+    // an inline run inside one sentence: no separator between spans
+    final flat = StructuredDefinition.flatten(
+      '[{"tag":"span","content":["dog",{"tag":"span","content":"house"}]}]',
+    );
+    expect(flat, 'doghouse');
+  });
+
   test('flatten passes plain text through', () {
     expect(StructuredDefinition.flatten('hello'), 'hello');
   });

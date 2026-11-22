@@ -1,0 +1,29 @@
+{
+  "id": "b3133e884",
+  "name": "flutter diag test",
+  "command": "cd /host/lang && timeout 600 flutter test test/tmp_diag_test.dart --reporter expanded 2>&1 | tail -40",
+  "description": "Diagnose the tokenizer output in the test environment",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1e132-002a-72af-b6dd-33e68e0a3c49-2556/b3133e884.output",
+  "cwd": "/host/lang",
+  "startTime": 1794874103756,
+  "endTime": 1794874704191,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 995914,
+  "bytesWritten": 1284,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 900,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

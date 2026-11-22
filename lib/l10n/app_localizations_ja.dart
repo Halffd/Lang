@@ -137,6 +137,33 @@ class AppLocalizationsJa extends AppLocalizations {
   String get columns => '列';
 
   @override
+  String get cardHeight => 'カードの高さ';
+
+  @override
+  String get cardHeightAuto => 'カードの高さ: 自動';
+
+  @override
+  String cardHeightPx(Object px) {
+    return 'カードの高さ: ${px}px';
+  }
+
+  @override
+  String contextLookUp(Object term) {
+    return '$term を調べる';
+  }
+
+  @override
+  String contextCopy(Object term) {
+    return '$term をコピー';
+  }
+
+  @override
+  String get contextCopySentence => '文をコピー';
+
+  @override
+  String get contextLookUpSelection => '調べる';
+
+  @override
   String get context => '文脈';
 
   @override
@@ -385,7 +412,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get collapse => '折りたたむ';
 
   @override
+  String get collapseSearchBar => '検索バーを折りたたむ';
+
+  @override
   String get expand => '展開';
+
+  @override
+  String get expandSearchBar => '検索バーを展開';
 
   @override
   String get filter => 'フィルター';
@@ -817,12 +850,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scriptConversionTitle => '入力時の文字変換';
 
   @override
-  String get screenshotTab => 'スクリーンショット';
-
-  @override
-  String get textTab => 'テキスト';
-
-  @override
   String get captureFullscreen => '全画面';
 
   @override
@@ -859,7 +886,73 @@ class AppLocalizationsJa extends AppLocalizations {
   String get ocrEngineAiUnavailable => 'unavailable here';
 
   @override
+  String get ocrEngineMlKitUnavailable => 'デスクトップでは利用できません';
+
+  @override
+  String get ocrBackendMlKit => 'ML Kit';
+
+  @override
+  String get ocrBackendMlKitDesc => 'オンデバイス認識。高速でオフライン（モバイルのみ）';
+
+  @override
+  String get ocrBackendTesseract => 'Tesseract';
+
+  @override
+  String get ocrBackendTesseractDesc => '画像前処理付きのローカルOCRバイナリ';
+
+  @override
+  String get ocrBackendEasyOcr => 'EasyOCR';
+
+  @override
+  String get ocrBackendEasyOcrDesc => 'ローカルPython OCR。印刷文字に強い';
+
+  @override
+  String get ocrBackendTransformers => 'Transformers';
+
+  @override
+  String get ocrBackendTransformersDesc => 'ローカルのHugging Faceモデル。重いが高精度';
+
+  @override
+  String get ocrBackendHuggingFace => 'Hugging Face';
+
+  @override
+  String get ocrBackendHuggingFaceDesc => 'リモートの推論API。アカウントが必要';
+
+  @override
+  String get ocrBackendAi => 'AIビジョン';
+
+  @override
+  String get ocrBackendAiDesc => '設定したAIプロバイダーが画像を読み取ります';
+
+  @override
+  String get ocrBackendApi => 'OCR API';
+
+  @override
+  String get ocrBackendApiDesc => 'リモートのHTTP OCRサービス。エンドポイントが必要';
+
+  @override
   String get copyOcrText => 'OCRテキストをクリップボードにコピー';
+
+  @override
+  String get liveOcrRunning => 'ライブOCRは実行中です';
+
+  @override
+  String get liveOcrStopped => 'ライブOCRは停止しています';
+
+  @override
+  String get liveOcrOpenSettings => 'OCR設定';
+
+  @override
+  String get searchScreenContent => '画面の内容を検索';
+
+  @override
+  String get searchScreenContentHint => '画面を撮影してOCRで読み取り、含まれる単語を検索します。';
+
+  @override
+  String get searchScreenContentFailed => '画面を読み取れませんでした';
+
+  @override
+  String get searchScreenContentEmpty => '画面内にテキストが見つかりませんでした';
 
   @override
   String get copyImage => '画像をクリップボードにコピー';
@@ -869,6 +962,39 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get screenshotAlbum => 'アルバム';
+
+  @override
+  String get screenshotPreview => '画面のプレビュー';
+
+  @override
+  String get screenshotPreviewRefresh => 'プレビューを更新';
+
+  @override
+  String get screenshotTranscriptions => '文字起こし';
+
+  @override
+  String get screenshotNoTranscriptions => 'まだ文字起こしはありません';
+
+  @override
+  String get screenshotTranscriptionEmpty => 'このスクリーンショットにテキストはありません';
+
+  @override
+  String get screenshotOcrDetails => 'OCRの詳細';
+
+  @override
+  String get screenshotOcrEngine => 'エンジン';
+
+  @override
+  String get screenshotOcrLanguage => '言語';
+
+  @override
+  String get screenshotOcrTime => '認識時刻';
+
+  @override
+  String get screenshotCopyOcrResult => 'OCRのテキストをコピー';
+
+  @override
+  String get screenshotShowOcrDetails => 'OCRの詳細を表示';
 
   @override
   String get noScreenshots => 'スクリーンショットはまだありません';
@@ -899,9 +1025,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get readerTabDocuments => 'ドキュメント';
-
-  @override
-  String get readerTabScreenshots => 'スクリーンショット';
 
   @override
   String get readerTabClipboard => 'クリップボード';
@@ -937,75 +1060,105 @@ class AppLocalizationsJa extends AppLocalizations {
   String get browserClose => 'Close browser';
 
   @override
-  String get videoNoMedia => 'Pick a video to play with a subtitle track.';
+  String get videoNoMedia => '字幕トラック付きで再生する動画を選択してください。';
 
   @override
-  String get videoLoading => 'Loading...';
+  String get videoLoading => '読み込み中...';
 
   @override
-  String get videoPickVideo => 'Pick video';
+  String get videoPickVideo => '動画を選択';
 
   @override
-  String get videoShowTranscript => 'Transcript';
+  String get videoShowTranscript => '文字起こし';
 
   @override
-  String get videoHideTranscript => 'Hide transcript';
+  String get videoHideTranscript => '文字起こしを隠す';
 
   @override
-  String get videoLoadSubs => 'Load subs';
+  String get videoLoadSubs => '字幕を読み込む';
 
   @override
-  String get videoNoSubs => 'No subtitle track loaded.';
+  String get videoNoSubs => '読み込まれた字幕トラックがありません。';
 
   @override
   String get videoYouTube => 'YouTube';
 
   @override
-  String get videoYouTubeHint => 'Paste a YouTube URL';
+  String get videoYouTubeHint => 'YouTube の URL を貼り付け';
 
   @override
-  String get videoLoad => 'Load';
+  String get videoLoad => '読み込む';
 
   @override
-  String get videoInvalidUrl => 'Not a YouTube video.';
+  String get videoInvalidUrl => 'YouTube の動画ではありません。';
 
   @override
-  String get videoCaptions => 'Captions';
+  String get videoCaptions => '字幕';
 
   @override
-  String get videoNoCaptions => 'No caption tracks available.';
+  String get videoNoCaptions => '利用可能な字幕トラックがありません。';
 
   @override
-  String get videoSpeed => 'Playback speed';
+  String get videoSpeed => '再生速度';
 
   @override
-  String get videoSubtitleSize => 'Subtitle size';
+  String get videoSubtitleSize => '字幕サイズ';
 
   @override
-  String get videoDelay => 'Subtitle delay';
+  String get videoDelay => '字幕の遅延';
 
   @override
-  String get videoRecent => 'Recent';
+  String get videoRecent => '最近';
 
   @override
-  String get videoNoRecent => 'Nothing watched yet.';
+  String get videoNoRecent => 'まだ何も視聴していません。';
 
   @override
   String videoWatchedFor(String duration) {
-    return '$duration watched';
+    return '$duration 視聴';
   }
 
   @override
-  String get videoPasteSubs => 'Paste subtitles';
+  String get videoPasteSubs => '字幕を貼り付け';
 
   @override
-  String get videoPastedSubs => 'Pasted subtitles';
+  String get videoPastedSubs => '貼り付けた字幕';
 
   @override
-  String get videoMissingFile => 'File no longer exists.';
+  String get videoMissingFile => 'ファイルはもう存在しません。';
 
   @override
-  String get videoPickSubtitleSource => 'Subtitle source';
+  String get videoPickSubtitleSource => '字幕ソース';
+
+  @override
+  String get videoDescription => '説明';
+
+  @override
+  String get videoChapters => 'チャプター';
+
+  @override
+  String get videoSettings => '設定';
+
+  @override
+  String get videoNoDescription => '説明はありません。';
+
+  @override
+  String get videoNoChapters => 'この動画にはチャプターがありません。';
+
+  @override
+  String get videoNoSettings => '利用できる設定がありません。';
+
+  @override
+  String get videoQuality => '画質';
+
+  @override
+  String get videoCurrentChapter => '現在のチャプター';
+
+  @override
+  String get videoShowPane => 'サイドパネルを表示';
+
+  @override
+  String get videoHidePane => 'サイドパネルを隠す';
 
   @override
   String get readerTabVideo => 'Video';
@@ -1060,9 +1213,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get activitySpeech => '音声書き起こし';
-
-  @override
-  String get speechTab => '音声';
 
   @override
   String get speechRecord => '録音';
@@ -1183,6 +1333,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get popupScreenSRS => 'SRS';
 
   @override
+  String get popupScreenVideo => '動画';
+
+  @override
   String get popupNone => 'なし';
 
   @override
@@ -1218,6 +1371,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get popupShowSentence => '文を表示';
 
   @override
+  String get popupReadingDisplay => '読みの表示';
+
+  @override
+  String get popupReadingKana => 'かな';
+
+  @override
+  String get popupReadingRomaji => 'ローマ字';
+
+  @override
+  String get popupShowKanaOnlyReading => 'かなのみの単語にも読みを表示';
+
+  @override
   String get popupProfileAlternation => 'プロファイル切替';
 
   @override
@@ -1234,4 +1399,215 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get analysisSection => '分析';
+
+  @override
+  String get liveOcrEnable => 'ライブOCRを有効にする';
+
+  @override
+  String get liveOcrSection => 'ライブOCR';
+
+  @override
+  String get liveOcrErrorPrefix => 'ライブOCR';
+
+  @override
+  String get liveOcrUnsupported => 'この環境ではスクリーンキャプチャが利用できないため、ライブOCRを実行できません。';
+
+  @override
+  String get copyFailed => 'コピーに失敗しました';
+
+  @override
+  String get copied => 'コピーしました';
+
+  @override
+  String get screenshotFolder => 'スクリーンショットフォルダ';
+
+  @override
+  String get screenshotFolderUnknown => '不明';
+
+  @override
+  String get screenshotChooseFolder => 'スクリーンショットフォルダを選択';
+
+  @override
+  String get screenshotResetFolder => '既定のフォルダを使用';
+
+  @override
+  String get screenshotSearch => 'スクリーンショットを検索';
+
+  @override
+  String get screenshotManager => 'マネージャー';
+
+  @override
+  String get globalHotkeys => 'グローバルショートカット';
+
+  @override
+  String get ocrScreenshotTitle => 'OCR / スクリーンショット';
+
+  @override
+  String get globalHotkeysSubtitle => '他のアプリがフォーカスを持っていても機能します。';
+
+  @override
+  String get screenshotNoMatches => '条件に一致するスクリーンショットがありません';
+
+  @override
+  String get screenshotFilter => 'フィルタ';
+
+  @override
+  String get screenshotSort => '並び替え';
+
+  @override
+  String get screenshotFilterAll => '表示中';
+
+  @override
+  String get screenshotFilterHidden => '非表示';
+
+  @override
+  String get screenshotFilterWithText => 'テキストあり';
+
+  @override
+  String get screenshotFilterWithoutText => 'テキストなし';
+
+  @override
+  String get screenshotSortNewest => '新しい順';
+
+  @override
+  String get screenshotSortOldest => '古い順';
+
+  @override
+  String get screenshotSortName => '名前順';
+
+  @override
+  String get screenshotHasText => 'テキストあり';
+
+  @override
+  String get screenshotCopied => 'コピーしました';
+
+  @override
+  String get screenshotNoRelativePath => 'スクリーンショットフォルダ内にありません';
+
+  @override
+  String get screenshotProperties => 'プロパティ';
+
+  @override
+  String get screenshotPropertyName => '名前';
+
+  @override
+  String get screenshotPropertyKind => '種類';
+
+  @override
+  String get screenshotPropertyTaken => '撮影日時';
+
+  @override
+  String get screenshotPropertyPath => 'パス';
+
+  @override
+  String get screenshotPropertySize => 'ファイルサイズ';
+
+  @override
+  String get screenshotPropertyText => '認識されたテキスト';
+
+  @override
+  String get screenshotRename => 'スクリーンショットの名前を変更';
+
+  @override
+  String get screenshotEditText => '認識テキストを編集';
+
+  @override
+  String get screenshotCrop => 'スクリーンショットをトリミング';
+
+  @override
+  String get screenshotCropLeft => '左';
+
+  @override
+  String get screenshotCropTop => '上';
+
+  @override
+  String get screenshotCropWidth => '幅';
+
+  @override
+  String get screenshotCropHeight => '高さ';
+
+  @override
+  String get screenshotCropped => 'トリミングしました';
+
+  @override
+  String get screenshotCropFailed => 'トリミングに失敗しました';
+
+  @override
+  String get liveOcrNotConfigured => 'ライブOCRが設定されていません';
+
+  @override
+  String get liveOcrCaptureFailed => 'スクリーンキャプチャに失敗しました';
+
+  @override
+  String get liveOcrOcrFailed => 'OCRに失敗しました';
+
+  @override
+  String get liveOcrSectionSubtitle => 'リアルタイム翻訳付きの連続スクリーンキャプチャ';
+
+  @override
+  String get liveOcrEnableSubtitle => '画面を常に読み取り、テキストとその翻訳をフローティングオーバーレイに表示します';
+
+  @override
+  String get liveOcrFullscreen => '画面全体を読む';
+
+  @override
+  String get liveOcrFullscreenSubtitle => 'オフの場合：領域キャプチャで最後に選択した領域のみを読み取ります';
+
+  @override
+  String get liveOcrShowTranslation => '翻訳を表示';
+
+  @override
+  String get liveOcrShowTranslationSubtitle => '原文の下に翻訳テキストを表示します';
+
+  @override
+  String get liveOcrCaptureInterval => 'キャプチャ間隔';
+
+  @override
+  String get liveOcrStableReads => '安定した読み取り回数';
+
+  @override
+  String get videoPopOutMiniPlayer => 'ミニプレイヤーをポップアウト';
+
+  @override
+  String get videoPictureInPicture => 'ピクチャーインピクチャー';
+
+  @override
+  String get videoPopupCaptions => 'ポップアップ字幕';
+
+  @override
+  String get videoLeaveListeningMode => 'リスニングモードを終了（動画に戻る）';
+
+  @override
+  String get videoListeningMode => 'リスニングモード（音声のみ、画面オフ）';
+
+  @override
+  String get videoSearchYouTube => 'YouTube を検索';
+
+  @override
+  String get videoSearchEllipsis => '検索…';
+
+  @override
+  String get videoPipUnavailable => 'この端末ではピクチャーインピクチャーを利用できません';
+
+  @override
+  String get videoCouldNotSwitchQuality => '画質を変更できませんでした。';
+
+  @override
+  String get videoWhisperSubsServerMissing =>
+      '先に設定で WhisperSubs のサーバー URL を設定してください。';
+
+  @override
+  String get videoWhisperSubs => 'WhisperSubs';
+
+  @override
+  String get screenshotCopyImageItem => '画像をコピー';
+
+  @override
+  String get screenshotCopyPathItem => 'パスをコピー';
+
+  @override
+  String get screenshotPreviousCapture => '前のキャプチャ';
+
+  @override
+  String get screenshotAlbumEmpty => 'アルバムは空です';
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/domain/entities/popup_dictionary_config.dart';
@@ -71,6 +72,7 @@ class _PopupDictionarySettingsState extends State<PopupDictionarySettings> {
     PopupScreenScope.history => l10n.popupScreenHistory,
     PopupScreenScope.ai => l10n.popupScreenAI,
     PopupScreenScope.srs => l10n.popupScreenSRS,
+    PopupScreenScope.video => l10n.popupScreenVideo,
     PopupScreenScope.custom => l10n.popupScreenAll,
   };
 
@@ -166,6 +168,7 @@ class _PopupDictionarySettingsState extends State<PopupDictionarySettings> {
 
         // regex gates
         TextField(
+          contextMenuBuilder: AppContextMenu.editable,
           controller: _requireRegexController,
           decoration: InputDecoration(
             labelText: l10n.popupRequireRegex,
@@ -176,6 +179,7 @@ class _PopupDictionarySettingsState extends State<PopupDictionarySettings> {
         ),
         const SizedBox(height: 8),
         TextField(
+          contextMenuBuilder: AppContextMenu.editable,
           controller: _excludeRegexController,
           decoration: InputDecoration(
             labelText: l10n.popupExcludeRegex,
@@ -222,6 +226,7 @@ class _PopupDictionarySettingsState extends State<PopupDictionarySettings> {
         ),
         if (config.autoAnki)
           TextField(
+            contextMenuBuilder: AppContextMenu.editable,
             controller: _ankiDeckController,
             decoration: InputDecoration(
               labelText: l10n.popupAnkiDeck,
@@ -309,6 +314,7 @@ class _PopupDictionarySettingsState extends State<PopupDictionarySettings> {
             },
           ),
           TextField(
+            contextMenuBuilder: AppContextMenu.editable,
             decoration: InputDecoration(
               labelText: l10n.popupAltProfileName,
               hintText: appState.currentProfile,
@@ -389,6 +395,40 @@ class _PopupDictionarySettingsState extends State<PopupDictionarySettings> {
           value: config.showReading,
           onChanged: (v) => _update(appState, (c) => c..showReading = v),
         ),
+        // reading display: kana or romaji. A kana-only word's reading
+        // is the word itself, so it is only shown when the reading is
+        // romaji (where it adds information) or when the user turns
+        // the option on explicitly.
+        if (config.showReading) ...[
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(l10n.popupReadingDisplay),
+            trailing: DropdownButton<String>(
+              value: config.readingDisplay,
+              items: [
+                DropdownMenuItem(
+                  value: 'kana',
+                  child: Text(l10n.popupReadingKana),
+                ),
+                DropdownMenuItem(
+                  value: 'romaji',
+                  child: Text(l10n.popupReadingRomaji),
+                ),
+              ],
+              onChanged: (v) {
+                if (v == null) return;
+                _update(appState, (c) => c..readingDisplay = v);
+              },
+            ),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(l10n.popupShowKanaOnlyReading),
+            value: config.showKanaOnlyReading,
+            onChanged: (v) =>
+                _update(appState, (c) => c..showKanaOnlyReading = v),
+          ),
+        ],
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           title: Text(l10n.popupShowSentence),

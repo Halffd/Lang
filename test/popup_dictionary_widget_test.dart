@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:lang/core/services/popup_dictionary_controller.dart';
 import 'package:lang/domain/entities/popup_dictionary_config.dart';
+import 'package:lang/utils/popup_scan_blocker.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -146,5 +147,68 @@ void main() {
 
     expect(controller.isPopupOpen, isFalse);
     expect(find.text('popup:日本語のテスト'), findsNothing);
+  });
+
+  testWidgets('chrome marked as not-scannable does not open the popup', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: PopupDictionaryScope(
+          child: Scaffold(
+            body: Column(
+              children: [
+                PopupScanBlocker(child: Text('分析')),
+                Expanded(child: Center(child: Text('日本語のテスト'))),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    controller.config = PopupDictionaryConfig(
+      trigger: PopupTrigger.click,
+      scanLength: 16,
+      scanDepth: 0,
+    );
+    controller.currentRouteName = 'analyze';
+
+    await tester.tap(find.text('分析'));
+    await tester.pumpAndSettle();
+
+    expect(controller.isPopupOpen, isFalse);
+    expect(find.text('popup:分析'), findsNothing);
+  });
+
+  testWidgets('scan still works on text outside blocked chrome', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: PopupDictionaryScope(
+          child: Scaffold(
+            body: Column(
+              children: [
+                PopupScanBlocker(child: Text('分析')),
+                Expanded(child: Center(child: Text('日本語のテスト'))),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    controller.config = PopupDictionaryConfig(
+      trigger: PopupTrigger.click,
+      scanLength: 16,
+      scanDepth: 0,
+    );
+    controller.currentRouteName = 'analyze';
+
+    await tester.tap(find.text('日本語のテスト'));
+    await tester.pumpAndSettle();
+
+    expect(controller.isPopupOpen, isTrue);
   });
 }

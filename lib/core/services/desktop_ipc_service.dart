@@ -223,7 +223,6 @@ class DesktopIPCService with TrayListener, WindowListener {
         hotkey,
         keyDownHandler: (hotKey) {
           callback();
-          _hotkeyCallbacks[keyId]?.call();
         },
       );
       _hotkeyCallbacks[keyId] = callback;
@@ -355,6 +354,24 @@ class DesktopIPCService with TrayListener, WindowListener {
         modifiers: [HotKeyModifier.control, HotKeyModifier.alt],
       ),
       () => onToggleAuto(),
+    );
+  }
+
+  /// Registers the OCR hotkey: Ctrl+Shift+O runs OCR on the clipboard
+  /// image (or the last screenshot) and puts the recognized text on the
+  /// clipboard.
+  Future<void> registerOcrHotkey({
+    required VoidCallback onOcr,
+  }) async {
+    if (!isSupported) return;
+
+    await registerHotkey(
+      'ocr',
+      HotKey(
+        key: PhysicalKeyboardKey.keyO,
+        modifiers: [HotKeyModifier.control, HotKeyModifier.shift],
+      ),
+      onOcr,
     );
   }
 

@@ -1,0 +1,29 @@
+{
+  "id": "b1514697f",
+  "name": "flutter geom diag 3",
+  "command": "cd /host/lang && timeout 600 flutter test test/tmp_geom_test.dart --reporter expanded 2>&1 | tail -40",
+  "description": "Inspect the render geometry of an annotated word",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1e132-002a-72af-b6dd-33e68e0a3c49-2556/b1514697f.output",
+  "cwd": "/host/lang",
+  "startTime": 1794878344353,
+  "endTime": 1794878734659,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 1051307,
+  "bytesWritten": 2240,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 900,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

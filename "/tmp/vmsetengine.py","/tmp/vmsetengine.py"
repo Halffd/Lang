@@ -1,0 +1,49 @@
+import json, sys
+sys.path.insert(0, '/tmp')
+from vmclient import rpc, get_isolate, get_class_id
+
+iso = get_isolate()
+
+
+def get_obj(oid):
+    resp = rpc('getObject', {'isolateId': iso, 'objectId': oid})
+    if 'error' in resp:
+        return {'ERROR': str(resp['error'])[:300]}
+    return resp['result']
+
+
+def field_value(obj, name):
+    for f in (obj.get('fields') or []):
+        if f.get('name') == name:
+            v = f.get('value')
+            if isinstance(v, dict):
+                return v.get('valueAsString')
+            return v
+    return '<not found>'
+
+
+iso2, lib, cls = get_class_id('domain/entities/app_state.dart', 'AppState')
+r = rpc('getInstances', {'isolateId': iso, 'objectId': cls, 'limit': 5})
+app_id = r['result']['instances'][0]['id']
+
+scope = get_obj(cls)
+setter = next(f for f in scope.get('functions', [])
+              if f.get('name') == 'setOcrEngine')
+print('setOcrEngine fn:', setter['id'])
+
+# Need a String instance with value 'mlKit'. Scan the heap.
+mlkit_ids = []
+r2 = rpc('getInstances', {'isolateId': iso, 'objectId': 'classes/94',
+                          'limit': 6000})
+print('scanned:', len(r2.get('result', {}).get('instances', [])))
+for i in r2.get('result', {}).get('instances', []):
+    oid = i.get('id')
+    if not oid:
+        continue
+    inst = get_obj(oid)
+    if inst.get('valueAsString') == 'mlKit':
+        mlkit_ids.append(oid)
+        break
+print('mlKit string ids:', mlkit_ids)
+json.dump(mlkit_ids, open('/tmp/mlkit_ids.json', 'w'))
+print('app id:', app_id)

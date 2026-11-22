@@ -300,6 +300,15 @@ class JsonHtmlRenderer {
       if (copy['data'] is Map) {
         copy['data'] = _stripColor(copy['data']);
       }
+      // the legacy form nests the style as a CSS-ish string under
+      // data.style; that string can carry its own color
+      if (copy['data'] is Map && (copy['data'] as Map)['style'] is String) {
+        final data = (copy['data'] as Map).map(
+          (k, v) => MapEntry(k.toString(), v),
+        );
+        data['style'] = _stripColor(data['style']);
+        copy['data'] = data;
+      }
       return copy;
     }
     if (style is String) {
@@ -340,6 +349,11 @@ class JsonHtmlRenderer {
     dynamic style,
   }) {
     final spans = <InlineSpan>[];
+    // respectContentColors=false: the style that enters this subtree
+    // is stripped once, up front. Every branch below parses the style
+    // it is handed, so a color left in the inherited style would
+    // repaint every letter of the block.
+    final rootStyle = options.respectContentColors ? style : _stripColor(style);
     void walk(dynamic node, dynamic style) {
       if (node is String) {
         spans.add(TextSpan(text: node, style: _parseStyle(style)));
@@ -398,10 +412,10 @@ class JsonHtmlRenderer {
 
     if (content is List) {
       for (final child in content) {
-        walk(child, style);
+        walk(child, rootStyle);
       }
     } else {
-      walk(content, style);
+      walk(content, rootStyle);
     }
     return spans;
   }

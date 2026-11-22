@@ -1,0 +1,29 @@
+{
+  "id": "ba534e111",
+  "name": "flutter analyzer final 2",
+  "command": "cd /host/lang && timeout 2400 flutter analyze lib/utils/cjk_text_extractor.dart lib/core/services/popup_dictionary_controller.dart lib/presentation/screens/reader/video_tab.dart lib/presentation/widgets/video/player_surface.dart lib/domain/entities/popup_dictionary_config.dart test/video_reading_hover_test.dart test/player_side_pane_test.dart 2>&1 | tail -30",
+  "description": "Final analyzer run over the changed files",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1e132-002a-72af-b6dd-33e68e0a3c49-2556/ba534e111.output",
+  "cwd": "/host/lang",
+  "startTime": 1794882153111,
+  "endTime": 1794882288450,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 1095601,
+  "bytesWritten": 98,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 2700,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

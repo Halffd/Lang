@@ -1,0 +1,29 @@
+{
+  "id": "b5f351e86",
+  "name": "flutter hover tests",
+  "command": "cd /host/lang && flutter test test/video_reading_hover_test.dart test/player_side_pane_test.dart --reporter expanded 2>&1",
+  "description": "Run the video reading hover and player side pane test suites",
+  "status": "completed",
+  "outputPath": ".pi/tasks/01a1e132-002a-72af-b6dd-33e68e0a3c49-2556/b5f351e86.output",
+  "cwd": "/host/lang",
+  "startTime": 1794860283203,
+  "endTime": 1794862439251,
+  "exitCode": 0,
+  "signal": null,
+  "pid": 834998,
+  "bytesWritten": 3437,
+  "isAgent": false,
+  "surviveReload": false,
+  "notified": true,
+  "notifyOnCompletion": true,
+  "triggerOnCompletion": true,
+  "timeoutSeconds": 2400,
+  "shellPolicy": {
+    "policy": "inherit",
+    "executable": "/bin/bash",
+    "argvPrefix": [
+      "-c"
+    ],
+    "dialect": "bash"
+  }
+}

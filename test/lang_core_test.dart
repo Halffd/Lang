@@ -96,6 +96,26 @@ void main() {
       expect(sentences.keys, contains('Helloworld.'));
       expect(sentences['Helloworld.'], 'Hello world.');
     });
+
+    test('kana compound matched by reading stays one token', () async {
+      final tokenizer = Tokenizer(db: _FakeDb());
+      // かいどく is only in the dictionary under its kanji form 解読;
+      // without reading matching it splits into かい + どく
+      final tokens = await tokenizer.tokenize('かいどく');
+      expect(tokens, hasLength(1));
+      expect(tokens.single.surface, 'かいどく');
+      expect(tokens.single.partOfSpeech, 'word');
+      expect(tokens.single.reading, 'かいどく');
+      expect(tokens.single.endIndex - tokens.single.startIndex, 4);
+    });
+
+    test('reading match keeps neighbouring tokens intact', () async {
+      final tokenizer = Tokenizer(db: _FakeDb());
+      final tokens = await tokenizer.tokenize('本かいどく');
+      final compound = tokens.firstWhere((t) => t.surface == 'かいどく');
+      expect(compound.endIndex - compound.startIndex, 4);
+      expect(compound.startIndex, 1);
+    });
   });
 
   group('SrsScheduler (lang_core)', () {
@@ -187,6 +207,13 @@ class _FakeDb implements DictionaryDb {
       definition: 'China',
       tags: ['noun'],
     ),
+    // kana surface only exists under the kanji term: かいどく
+    '解読': const DictMatch(
+      term: '解読',
+      reading: 'かいどく',
+      definition: 'reading and interpretation',
+      tags: ['noun'],
+    ),
   };
 
   @override
@@ -194,6 +221,21 @@ class _FakeDb implements DictionaryDb {
     for (final c in candidates) {
       // candidates arrive longest-first
       if (_entries.containsKey(c)) return _entries[c];
+    }
+    // no term hit: fall back to a reading match (かいどく → 解読),
+    // carrying the covered source length
+    for (final c in candidates) {
+      for (final entry in _entries.values) {
+        if (entry.reading == c) {
+          return DictMatch(
+            term: entry.term,
+            reading: entry.reading,
+            definition: entry.definition,
+            tags: entry.tags,
+            matchLength: c.length,
+          );
+        }
+      }
     }
     return null;
   }

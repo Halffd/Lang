@@ -354,6 +354,48 @@ abstract class AppLocalizations {
   /// **'Columns'**
   String get columns;
 
+  /// No description provided for @cardHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Card height'**
+  String get cardHeight;
+
+  /// No description provided for @cardHeightAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Card height: auto'**
+  String get cardHeightAuto;
+
+  /// No description provided for @cardHeightPx.
+  ///
+  /// In en, this message translates to:
+  /// **'Card height: {px}px'**
+  String cardHeightPx(Object px);
+
+  /// No description provided for @contextLookUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Look up {term}'**
+  String contextLookUp(Object term);
+
+  /// No description provided for @contextCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy {term}'**
+  String contextCopy(Object term);
+
+  /// No description provided for @contextCopySentence.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy sentence'**
+  String get contextCopySentence;
+
+  /// No description provided for @contextLookUpSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Look up'**
+  String get contextLookUpSelection;
+
   /// No description provided for @context.
   ///
   /// In en, this message translates to:
@@ -846,11 +888,23 @@ abstract class AppLocalizations {
   /// **'Collapse'**
   String get collapse;
 
+  /// No description provided for @collapseSearchBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse search bar'**
+  String get collapseSearchBar;
+
   /// No description provided for @expand.
   ///
   /// In en, this message translates to:
   /// **'Expand'**
   String get expand;
+
+  /// No description provided for @expandSearchBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand search bar'**
+  String get expandSearchBar;
 
   /// No description provided for @filter.
   ///
@@ -1668,18 +1722,6 @@ abstract class AppLocalizations {
   /// **'Script conversion while typing'**
   String get scriptConversionTitle;
 
-  /// No description provided for @screenshotTab.
-  ///
-  /// In en, this message translates to:
-  /// **'Screenshots'**
-  String get screenshotTab;
-
-  /// No description provided for @textTab.
-  ///
-  /// In en, this message translates to:
-  /// **'Text'**
-  String get textTab;
-
   /// No description provided for @captureFullscreen.
   ///
   /// In en, this message translates to:
@@ -1752,11 +1794,143 @@ abstract class AppLocalizations {
   /// **'unavailable here'**
   String get ocrEngineAiUnavailable;
 
+  /// No description provided for @ocrEngineMlKitUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'not available on desktop'**
+  String get ocrEngineMlKitUnavailable;
+
+  /// No description provided for @ocrBackendMlKit.
+  ///
+  /// In en, this message translates to:
+  /// **'ML Kit'**
+  String get ocrBackendMlKit;
+
+  /// No description provided for @ocrBackendMlKitDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'On-device recognizer, fast and offline (mobile only)'**
+  String get ocrBackendMlKitDesc;
+
+  /// No description provided for @ocrBackendTesseract.
+  ///
+  /// In en, this message translates to:
+  /// **'Tesseract'**
+  String get ocrBackendTesseract;
+
+  /// No description provided for @ocrBackendTesseractDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Local OCR binary with image preprocessing'**
+  String get ocrBackendTesseractDesc;
+
+  /// No description provided for @ocrBackendEasyOcr.
+  ///
+  /// In en, this message translates to:
+  /// **'EasyOCR'**
+  String get ocrBackendEasyOcr;
+
+  /// No description provided for @ocrBackendEasyOcrDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Python OCR, good with printed text'**
+  String get ocrBackendEasyOcrDesc;
+
+  /// No description provided for @ocrBackendTransformers.
+  ///
+  /// In en, this message translates to:
+  /// **'Transformers'**
+  String get ocrBackendTransformers;
+
+  /// No description provided for @ocrBackendTransformersDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Hugging Face model, heavy but accurate'**
+  String get ocrBackendTransformersDesc;
+
+  /// No description provided for @ocrBackendHuggingFace.
+  ///
+  /// In en, this message translates to:
+  /// **'Hugging Face'**
+  String get ocrBackendHuggingFace;
+
+  /// No description provided for @ocrBackendHuggingFaceDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote inference API, needs an account'**
+  String get ocrBackendHuggingFaceDesc;
+
+  /// No description provided for @ocrBackendAi.
+  ///
+  /// In en, this message translates to:
+  /// **'AI vision'**
+  String get ocrBackendAi;
+
+  /// No description provided for @ocrBackendAiDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'The configured AI provider reads the image'**
+  String get ocrBackendAiDesc;
+
+  /// No description provided for @ocrBackendApi.
+  ///
+  /// In en, this message translates to:
+  /// **'OCR API'**
+  String get ocrBackendApi;
+
+  /// No description provided for @ocrBackendApiDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote HTTP OCR service, needs an endpoint'**
+  String get ocrBackendApiDesc;
+
   /// No description provided for @copyOcrText.
   ///
   /// In en, this message translates to:
   /// **'Copy OCR text to clipboard'**
   String get copyOcrText;
+
+  /// No description provided for @liveOcrRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Live OCR is running'**
+  String get liveOcrRunning;
+
+  /// No description provided for @liveOcrStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Live OCR is off'**
+  String get liveOcrStopped;
+
+  /// No description provided for @liveOcrOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'OCR settings'**
+  String get liveOcrOpenSettings;
+
+  /// No description provided for @searchScreenContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Search screen content'**
+  String get searchScreenContent;
+
+  /// No description provided for @searchScreenContentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture the screen, read it with OCR and search the words it contains.'**
+  String get searchScreenContentHint;
+
+  /// No description provided for @searchScreenContentFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read the screen'**
+  String get searchScreenContentFailed;
+
+  /// No description provided for @searchScreenContentEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No text found on the screen'**
+  String get searchScreenContentEmpty;
 
   /// No description provided for @copyImage.
   ///
@@ -1775,6 +1949,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Album'**
   String get screenshotAlbum;
+
+  /// No description provided for @screenshotPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Screen preview'**
+  String get screenshotPreview;
+
+  /// No description provided for @screenshotPreviewRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh the preview'**
+  String get screenshotPreviewRefresh;
+
+  /// No description provided for @screenshotTranscriptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcriptions'**
+  String get screenshotTranscriptions;
+
+  /// No description provided for @screenshotNoTranscriptions.
+  ///
+  /// In en, this message translates to:
+  /// **'No transcriptions yet'**
+  String get screenshotNoTranscriptions;
+
+  /// No description provided for @screenshotTranscriptionEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The screenshot has no text'**
+  String get screenshotTranscriptionEmpty;
+
+  /// No description provided for @screenshotOcrDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'OCR details'**
+  String get screenshotOcrDetails;
+
+  /// No description provided for @screenshotOcrEngine.
+  ///
+  /// In en, this message translates to:
+  /// **'Engine'**
+  String get screenshotOcrEngine;
+
+  /// No description provided for @screenshotOcrLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get screenshotOcrLanguage;
+
+  /// No description provided for @screenshotOcrTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognized'**
+  String get screenshotOcrTime;
+
+  /// No description provided for @screenshotCopyOcrResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the OCR text'**
+  String get screenshotCopyOcrResult;
+
+  /// No description provided for @screenshotShowOcrDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the OCR details'**
+  String get screenshotShowOcrDetails;
 
   /// No description provided for @noScreenshots.
   ///
@@ -1829,12 +2069,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Documents'**
   String get readerTabDocuments;
-
-  /// No description provided for @readerTabScreenshots.
-  ///
-  /// In en, this message translates to:
-  /// **'Screenshots'**
-  String get readerTabScreenshots;
 
   /// No description provided for @readerTabClipboard.
   ///
@@ -2040,6 +2274,66 @@ abstract class AppLocalizations {
   /// **'Subtitle source'**
   String get videoPickSubtitleSource;
 
+  /// No description provided for @videoDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get videoDescription;
+
+  /// No description provided for @videoChapters.
+  ///
+  /// In en, this message translates to:
+  /// **'Chapters'**
+  String get videoChapters;
+
+  /// No description provided for @videoSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get videoSettings;
+
+  /// No description provided for @videoNoDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'No description available.'**
+  String get videoNoDescription;
+
+  /// No description provided for @videoNoChapters.
+  ///
+  /// In en, this message translates to:
+  /// **'No chapters in this video.'**
+  String get videoNoChapters;
+
+  /// No description provided for @videoNoSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'No settings available.'**
+  String get videoNoSettings;
+
+  /// No description provided for @videoQuality.
+  ///
+  /// In en, this message translates to:
+  /// **'Quality'**
+  String get videoQuality;
+
+  /// No description provided for @videoCurrentChapter.
+  ///
+  /// In en, this message translates to:
+  /// **'Current chapter'**
+  String get videoCurrentChapter;
+
+  /// No description provided for @videoShowPane.
+  ///
+  /// In en, this message translates to:
+  /// **'Show side panel'**
+  String get videoShowPane;
+
+  /// No description provided for @videoHidePane.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide side panel'**
+  String get videoHidePane;
+
   /// No description provided for @readerTabVideo.
   ///
   /// In en, this message translates to:
@@ -2147,12 +2441,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Speech transcription'**
   String get activitySpeech;
-
-  /// No description provided for @speechTab.
-  ///
-  /// In en, this message translates to:
-  /// **'Speech'**
-  String get speechTab;
 
   /// No description provided for @speechRecord.
   ///
@@ -2388,6 +2676,12 @@ abstract class AppLocalizations {
   /// **'SRS'**
   String get popupScreenSRS;
 
+  /// No description provided for @popupScreenVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Video'**
+  String get popupScreenVideo;
+
   /// No description provided for @popupNone.
   ///
   /// In en, this message translates to:
@@ -2454,6 +2748,30 @@ abstract class AppLocalizations {
   /// **'Show sentence'**
   String get popupShowSentence;
 
+  /// No description provided for @popupReadingDisplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading display'**
+  String get popupReadingDisplay;
+
+  /// No description provided for @popupReadingKana.
+  ///
+  /// In en, this message translates to:
+  /// **'Kana'**
+  String get popupReadingKana;
+
+  /// No description provided for @popupReadingRomaji.
+  ///
+  /// In en, this message translates to:
+  /// **'Romaji'**
+  String get popupReadingRomaji;
+
+  /// No description provided for @popupShowKanaOnlyReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Show reading for kana-only words'**
+  String get popupShowKanaOnlyReading;
+
   /// No description provided for @popupProfileAlternation.
   ///
   /// In en, this message translates to:
@@ -2489,6 +2807,426 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Analysis'**
   String get analysisSection;
+
+  /// No description provided for @liveOcrEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable live OCR'**
+  String get liveOcrEnable;
+
+  /// No description provided for @liveOcrSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Live OCR'**
+  String get liveOcrSection;
+
+  /// No description provided for @liveOcrErrorPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Live OCR'**
+  String get liveOcrErrorPrefix;
+
+  /// No description provided for @liveOcrUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Screen capture is not available on this machine, so live OCR cannot run here.'**
+  String get liveOcrUnsupported;
+
+  /// No description provided for @copyFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy failed'**
+  String get copyFailed;
+
+  /// No description provided for @copied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get copied;
+
+  /// No description provided for @screenshotFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshot folder'**
+  String get screenshotFolder;
+
+  /// No description provided for @screenshotFolderUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get screenshotFolderUnknown;
+
+  /// No description provided for @screenshotChooseFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose screenshot folder'**
+  String get screenshotChooseFolder;
+
+  /// No description provided for @screenshotResetFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the default folder'**
+  String get screenshotResetFolder;
+
+  /// No description provided for @screenshotSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search screenshots'**
+  String get screenshotSearch;
+
+  /// No description provided for @screenshotManager.
+  ///
+  /// In en, this message translates to:
+  /// **'Manager'**
+  String get screenshotManager;
+
+  /// No description provided for @globalHotkeys.
+  ///
+  /// In en, this message translates to:
+  /// **'Global hotkeys'**
+  String get globalHotkeys;
+
+  /// No description provided for @ocrScreenshotTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'OCR / Screenshot'**
+  String get ocrScreenshotTitle;
+
+  /// No description provided for @globalHotkeysSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'These shortcuts work while another application has the focus.'**
+  String get globalHotkeysSubtitle;
+
+  /// No description provided for @screenshotNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No screenshots match the filter'**
+  String get screenshotNoMatches;
+
+  /// No description provided for @screenshotFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get screenshotFilter;
+
+  /// No description provided for @screenshotSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get screenshotSort;
+
+  /// No description provided for @screenshotFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible'**
+  String get screenshotFilterAll;
+
+  /// No description provided for @screenshotFilterHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get screenshotFilterHidden;
+
+  /// No description provided for @screenshotFilterWithText.
+  ///
+  /// In en, this message translates to:
+  /// **'With text'**
+  String get screenshotFilterWithText;
+
+  /// No description provided for @screenshotFilterWithoutText.
+  ///
+  /// In en, this message translates to:
+  /// **'Without text'**
+  String get screenshotFilterWithoutText;
+
+  /// No description provided for @screenshotSortNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest first'**
+  String get screenshotSortNewest;
+
+  /// No description provided for @screenshotSortOldest.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest first'**
+  String get screenshotSortOldest;
+
+  /// No description provided for @screenshotSortName.
+  ///
+  /// In en, this message translates to:
+  /// **'By name'**
+  String get screenshotSortName;
+
+  /// No description provided for @screenshotHasText.
+  ///
+  /// In en, this message translates to:
+  /// **'has text'**
+  String get screenshotHasText;
+
+  /// No description provided for @screenshotCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get screenshotCopied;
+
+  /// No description provided for @screenshotNoRelativePath.
+  ///
+  /// In en, this message translates to:
+  /// **'The screenshot is not inside the screenshot folder'**
+  String get screenshotNoRelativePath;
+
+  /// No description provided for @screenshotProperties.
+  ///
+  /// In en, this message translates to:
+  /// **'Properties'**
+  String get screenshotProperties;
+
+  /// No description provided for @screenshotPropertyName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get screenshotPropertyName;
+
+  /// No description provided for @screenshotPropertyKind.
+  ///
+  /// In en, this message translates to:
+  /// **'Kind'**
+  String get screenshotPropertyKind;
+
+  /// No description provided for @screenshotPropertyTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken'**
+  String get screenshotPropertyTaken;
+
+  /// No description provided for @screenshotPropertyPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Path'**
+  String get screenshotPropertyPath;
+
+  /// No description provided for @screenshotPropertySize.
+  ///
+  /// In en, this message translates to:
+  /// **'File size'**
+  String get screenshotPropertySize;
+
+  /// No description provided for @screenshotPropertyText.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognized text'**
+  String get screenshotPropertyText;
+
+  /// No description provided for @screenshotRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename screenshot'**
+  String get screenshotRename;
+
+  /// No description provided for @screenshotEditText.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit recognized text'**
+  String get screenshotEditText;
+
+  /// No description provided for @screenshotCrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Crop screenshot'**
+  String get screenshotCrop;
+
+  /// No description provided for @screenshotCropLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get screenshotCropLeft;
+
+  /// No description provided for @screenshotCropTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Top'**
+  String get screenshotCropTop;
+
+  /// No description provided for @screenshotCropWidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Width'**
+  String get screenshotCropWidth;
+
+  /// No description provided for @screenshotCropHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Height'**
+  String get screenshotCropHeight;
+
+  /// No description provided for @screenshotCropped.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshot cropped'**
+  String get screenshotCropped;
+
+  /// No description provided for @screenshotCropFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The crop failed'**
+  String get screenshotCropFailed;
+
+  /// No description provided for @liveOcrNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Live OCR is not configured'**
+  String get liveOcrNotConfigured;
+
+  /// No description provided for @liveOcrCaptureFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Screen capture failed'**
+  String get liveOcrCaptureFailed;
+
+  /// No description provided for @liveOcrOcrFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'OCR failed'**
+  String get liveOcrOcrFailed;
+
+  /// No description provided for @liveOcrSectionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Continuous screen capture with live translation'**
+  String get liveOcrSectionSubtitle;
+
+  /// No description provided for @liveOcrEnableSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Continuously read the screen and show the text with its translation in a floating overlay'**
+  String get liveOcrEnableSubtitle;
+
+  /// No description provided for @liveOcrFullscreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Read the whole screen'**
+  String get liveOcrFullscreen;
+
+  /// No description provided for @liveOcrFullscreenSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Off: read only the region you last selected with the region capture'**
+  String get liveOcrFullscreenSubtitle;
+
+  /// No description provided for @liveOcrShowTranslation.
+  ///
+  /// In en, this message translates to:
+  /// **'Show translation'**
+  String get liveOcrShowTranslation;
+
+  /// No description provided for @liveOcrShowTranslationSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the translated text under the source'**
+  String get liveOcrShowTranslationSubtitle;
+
+  /// No description provided for @liveOcrCaptureInterval.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture interval'**
+  String get liveOcrCaptureInterval;
+
+  /// No description provided for @liveOcrStableReads.
+  ///
+  /// In en, this message translates to:
+  /// **'Stable reads'**
+  String get liveOcrStableReads;
+
+  /// No description provided for @videoPopOutMiniPlayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Pop out mini player'**
+  String get videoPopOutMiniPlayer;
+
+  /// No description provided for @videoPictureInPicture.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture-in-picture'**
+  String get videoPictureInPicture;
+
+  /// No description provided for @videoPopupCaptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Popup captions'**
+  String get videoPopupCaptions;
+
+  /// No description provided for @videoLeaveListeningMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave listening mode (back to video)'**
+  String get videoLeaveListeningMode;
+
+  /// No description provided for @videoListeningMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening mode (audio only, screen off)'**
+  String get videoListeningMode;
+
+  /// No description provided for @videoSearchYouTube.
+  ///
+  /// In en, this message translates to:
+  /// **'Search YouTube'**
+  String get videoSearchYouTube;
+
+  /// No description provided for @videoSearchEllipsis.
+  ///
+  /// In en, this message translates to:
+  /// **'Search…'**
+  String get videoSearchEllipsis;
+
+  /// No description provided for @videoPipUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'PiP unavailable on this device'**
+  String get videoPipUnavailable;
+
+  /// No description provided for @videoCouldNotSwitchQuality.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not switch quality.'**
+  String get videoCouldNotSwitchQuality;
+
+  /// No description provided for @videoWhisperSubsServerMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Set the WhisperSubs server URL in Settings first.'**
+  String get videoWhisperSubsServerMissing;
+
+  /// No description provided for @videoWhisperSubs.
+  ///
+  /// In en, this message translates to:
+  /// **'WhisperSubs'**
+  String get videoWhisperSubs;
+
+  /// No description provided for @screenshotCopyImageItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy image'**
+  String get screenshotCopyImageItem;
+
+  /// No description provided for @screenshotCopyPathItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy path'**
+  String get screenshotCopyPathItem;
+
+  /// No description provided for @screenshotPreviousCapture.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous capture'**
+  String get screenshotPreviousCapture;
+
+  /// No description provided for @screenshotAlbumEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The album is empty'**
+  String get screenshotAlbumEmpty;
 }
 
 class _AppLocalizationsDelegate

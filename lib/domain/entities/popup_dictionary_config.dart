@@ -57,6 +57,7 @@ enum PopupScreenScope {
   history,
   ai,
   srs,
+  video,
   custom,
 }
 
@@ -141,6 +142,22 @@ class PopupDictionaryConfig {
   /// Show the source sentence under the definition.
   bool showSentence;
 
+  /// How the popup header renders the reading.
+  ///
+  /// `kana` shows the reading as kana (the default), `romaji` shows it
+  /// in latin letters.
+  String readingDisplay;
+
+  /// Whether a kana-only term (hiragana/katakana with no kanji) shows
+  /// its reading at all.
+  ///
+  /// The reading of a kana-only term is the term itself, so the header
+  /// would repeat the word twice. It is only useful when the reading
+  /// is shown in romaji, where the kana and its romaji differ — so
+  /// this defaults to false and turns on automatically when
+  /// [readingDisplay] is `romaji`.
+  bool showKanaOnlyReading;
+
   /// OCR popup: after an OCR scan, automatically look up the selected text
   /// without a separate trigger tap.
   bool autoOcrPopup;
@@ -169,6 +186,8 @@ class PopupDictionaryConfig {
     this.fontScale = 1.0,
     this.showReading = true,
     this.showSentence = true,
+    this.readingDisplay = 'kana',
+    this.showKanaOnlyReading = false,
   });
 
   /// Effective trigger for the current SRS/profile name.
@@ -232,6 +251,8 @@ class PopupDictionaryConfig {
     'fontScale': fontScale,
     'showReading': showReading,
     'showSentence': showSentence,
+    'readingDisplay': readingDisplay,
+    'showKanaOnlyReading': showKanaOnlyReading,
   };
 
   static PopupDictionaryConfig fromJson(Map<String, dynamic> json) =>
@@ -270,6 +291,10 @@ class PopupDictionaryConfig {
         fontScale: (json['fontScale'] as num?)?.toDouble() ?? 1.0,
         showReading: json['showReading'] as bool? ?? true,
         showSentence: json['showSentence'] as bool? ?? true,
+        readingDisplay: json['readingDisplay'] == 'romaji'
+            ? 'romaji'
+            : 'kana',
+        showKanaOnlyReading: json['showKanaOnlyReading'] as bool? ?? false,
       );
 
   String serialize() => jsonEncode(toJson());

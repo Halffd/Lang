@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lang/presentation/widgets/app_context_menu.dart';
 
 import 'package:lang/core/services/clipboard_monitor_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
@@ -95,6 +96,7 @@ class _ClipboardSettingsState extends State<ClipboardSettings> {
                       ),
                       const SizedBox(height: 8),
                       TextField(
+                        contextMenuBuilder: AppContextMenu.editable,
                         controller: _regexController,
                         decoration: InputDecoration(
                           hintText: l10n.autoSearchRegexHint,
