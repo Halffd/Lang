@@ -97,10 +97,38 @@ class _SpeechTabState extends State<SpeechTab> {
     super.initState();
     _loadSessions();
     _resolveEngine();
+    // the capture device and the debug toggle live in AppState; apply
+    // them to the service so a session started elsewhere honours them
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final appState = context.read<AppState>();
+      _service
+        ..selectedDeviceId = appState.speechCaptureDevice.isEmpty
+            ? null
+            : appState.speechCaptureDevice
+        ..debugLogging = appState.speechDebugLogging;
+      _service.addListener(_onServiceChanged);
+      _refreshDevices();
+      _service.refreshAppStreams();
+      // a previous session may have left an application's audio
+      // stranded in the capture sink (crash, force-kill)
+      _service.recoverStaleCapture();
+    });
+  }
+
+  /// Rebuild when the service changes (device list, log entries).
+  void _onServiceChanged() {
+    if (mounted) setState(() {});
+  }
+
+  /// Re-enumerate the capture sources.
+  Future<void> _refreshDevices() async {
+    await _service.refreshCaptureDevices();
   }
 
   @override
   void dispose() {
+    _service.removeListener(_onServiceChanged);
     _apiUrlCtrl.dispose();
     _langSearchCtrl.dispose();
     _apiKeyCtrl.dispose();
@@ -133,7 +161,15 @@ class _SpeechTabState extends State<SpeechTab> {
         if (device.isNotEmpty) _activeDevice = device;
       });
     });
-    if (ok && mounted) setState(() => _meterActive = true);
+    if (!mounted) return;
+    if (ok) {
+      setState(() {
+        _meterActive = true;
+        _error = null;
+      });
+    } else {
+      setState(() => _error = 'no microphone found');
+    }
   }
 
   Future<void> _stopMeter() async {
@@ -309,22 +345,47 @@ class _SpeechTabState extends State<SpeechTab> {
     final preferred = appState.speechEngine == 'parakeet'
         ? SpeechEngine.parakeet
         : SpeechEngine.whisper;
-    final engine = await _service.detectEngine(preferred);
+    // Probing the engine and the model dir can throw (missing path
+    // provider plugin, no network, unreadable cache). An uncaught
+    // exception here leaves the screen blank with no explanation.
+    SpeechEngine? engine;
+    try {
+      engine = await _service.detectEngine(preferred);
+    } catch (e) {
+      if (mounted) setState(() => _error = 'engine lookup failed');
+      return;
+    }
     if (!mounted) return;
     setState(() => _engine = engine);
     if (engine == null) return;
 
     // model download happens lazily on first use; pre-warm so the
     // record button is instant when engine + network allow
-    _modelPath = await _service.ensureModel(
-      engine,
-      modelSize: appState.speechModelSize,
-    );
+    try {
+      _modelPath = await _service.ensureModel(
+        engine,
+        modelSize: appState.speechModelSize,
+      );
+    } catch (e) {
+      _modelPath = null;
+      if (mounted) setState(() => _error = 'model lookup failed');
+      return;
+    }
     if (mounted) setState(() {});
   }
 
   Future<void> _toggleRecord() async {
     final appState = context.read<AppState>();
+    try {
+      await _toggleRecordInner(appState);
+    } catch (e) {
+      // The record button must never be inert: any escaping exception
+      // becomes a visible error instead of a no-op.
+      if (mounted) setState(() => _error = 'recording failed');
+    }
+  }
+
+  Future<void> _toggleRecordInner(AppState appState) async {
     var engine = _engine;
     var model = _modelPath;
     if (engine == null || (model == null && appState.sttType != 'api')) {
@@ -347,8 +408,32 @@ class _SpeechTabState extends State<SpeechTab> {
             _onSegment(seg, translate: appState.speechAutoTranslate),
         apiUrl: appState.sttApiUrl,
         apiKey: appState.sttApiKey,
+        onError: (msg) {
+          if (!mounted) return;
+          setState(() => _error = msg);
+        },
       );
+      // an application's stream goes back to where it came from
+      if (_service.capturedAppIndex != null) {
+        await _service.stopAppCapture();
+        appState.setSpeechCaptureDevice('');
+        _service.selectedDeviceId = null;
+      }
       if (mounted) setState(() => _transcribing = false);
+      return;
+    }
+
+    // Refuse up front when the machine has no capture device at all.
+    // `record` on Linux always claims permission, so without this the
+    // recorder starts, captures nothing, and the screen stays empty.
+    // A monitor source is a valid capture source too, so this check
+    // only applies to the default (microphone) path.
+    final mic = await _service.micAvailable();
+    final usingMonitor = _service.captureDevices.any(
+      (d) => d.id == appState.speechCaptureDevice && d.isMonitor,
+    );
+    if (mic == false && !usingMonitor && mounted) {
+      setState(() => _error = 'no microphone found');
       return;
     }
 
@@ -360,6 +445,13 @@ class _SpeechTabState extends State<SpeechTab> {
           _onSegment(seg, translate: appState.speechAutoTranslate),
       apiUrl: appState.sttApiUrl,
       apiKey: appState.sttApiKey,
+      onError: (msg) {
+        if (!mounted) return;
+        setState(() => _error = msg);
+      },
+      deviceId: appState.speechCaptureDevice.isEmpty
+          ? null
+          : appState.speechCaptureDevice,
     );
     if (ok) _liveWallStartMs = DateTime.now().millisecondsSinceEpoch;
     if (!ok && mounted) {
@@ -374,15 +466,26 @@ class _SpeechTabState extends State<SpeechTab> {
       final preferred = appState.speechEngine == 'parakeet'
           ? SpeechEngine.parakeet
           : SpeechEngine.whisper;
-      final engine = await _service.detectEngine(preferred);
+      // Any failure here (no binary, no model dir, no network) must
+      // land in the error line; otherwise the button looks inert.
+      SpeechEngine? engine;
+      String? model;
+      try {
+        engine = await _service.detectEngine(preferred);
+        if (engine != null) {
+          model = await _service.ensureModel(
+            engine,
+            modelSize: appState.speechModelSize,
+          );
+        }
+      } catch (e) {
+        if (mounted) setState(() => _error = 'engine setup failed');
+        return;
+      }
       if (engine == null) {
         if (mounted) setState(() => _error = 'no engine');
         return;
       }
-      final model = await _service.ensureModel(
-        engine,
-        modelSize: appState.speechModelSize,
-      );
       if (model == null) {
         if (mounted) setState(() => _error = 'model download failed');
         return;
@@ -593,6 +696,178 @@ class _SpeechTabState extends State<SpeechTab> {
     );
   }
 
+  /// The capture-source picker.
+  ///
+  /// The first entry is the system default (the microphone PulseAudio
+  /// picks). The rest are the enumerated sources; a monitor source
+  /// captures what another application plays on that output device.
+  Widget _buildDeviceMenu(AppState appState) {
+    final devices = _service.captureDevices;
+    final apps = _service.appStreams;
+    final selected = appState.speechCaptureDevice;
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.mic_none, size: 18),
+      tooltip: 'Capture source',
+      // the default 256px menu truncates device names badly; a wider
+      // menu keeps them readable
+      constraints: const BoxConstraints(minWidth: 320, maxWidth: 480),
+      // the set of playing applications changes constantly
+      onOpened: () => _service.refreshAppStreams(),
+      onSelected: (value) {
+        if (value.startsWith('app:')) {
+          // capturing an application means routing its stream into a
+          // dedicated sink and recording that sink's monitor
+          final index = int.tryParse(value.substring(4));
+          if (index == null) return;
+          _startAppCapture(index, appState);
+          return;
+        }
+        appState.setSpeechCaptureDevice(value);
+        _service.selectedDeviceId = value.isEmpty ? null : value;
+      },
+      itemBuilder: (ctx) => [
+        PopupMenuItem(
+          value: '',
+          child: Row(
+            children: [
+              const Icon(Icons.mic, size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'System default (microphone)',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        if (devices.isEmpty)
+          const PopupMenuItem(
+            enabled: false,
+            child: Text('No capture sources found'),
+          )
+        else
+          for (final d in devices)
+            PopupMenuItem(
+              value: d.id,
+              child: Row(
+                children: [
+                  Icon(
+                    d.isMonitor ? Icons.speaker : Icons.mic,
+                    size: 16,
+                    color: d.isMonitor
+                        ? Theme.of(ctx).colorScheme.primary
+                        : null,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      d.isMonitor ? '${d.label} (app audio)' : d.label,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (selected == d.id) const Icon(Icons.check, size: 14),
+                ],
+              ),
+            ),
+        if (apps.isNotEmpty) ...[
+          const PopupMenuDivider(),
+          for (final a in apps)
+            PopupMenuItem(
+              value: 'app:${a.index}',
+              child: Row(
+                children: [
+                  const Icon(Icons.apps, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(a.name, overflow: TextOverflow.ellipsis),
+                  ),
+                  const Text('app', style: TextStyle(fontSize: 10)),
+                ],
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+
+  /// Capture one application's audio.
+  ///
+  /// The application's stream is moved into a dedicated capture sink and
+  /// its monitor becomes the recording source; the stream is moved back
+  /// when recording stops.
+  Future<void> _startAppCapture(int index, AppState appState) async {
+    setState(() => _modelLoading = true);
+    final monitor = await _service.startAppCapture(index);
+    if (!mounted) return;
+    if (monitor == null) {
+      setState(() {
+        _modelLoading = false;
+        _error = 'could not capture the application';
+      });
+      return;
+    }
+    // record from the capture sink's monitor
+    appState.setSpeechCaptureDevice(monitor);
+    _service.selectedDeviceId = monitor;
+    setState(() => _modelLoading = false);
+    await _toggleRecordInner(appState);
+  }
+
+  /// The debug log viewer: the capture + transcription pipeline, one
+  /// line per event, with the command lines and their stderr.
+  Future<void> _showDebugLog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Speech debug log'),
+        content: SizedBox(
+          width: 700,
+          height: 420,
+          child: ListView.builder(
+            itemCount: _service.logEntries.length,
+            itemBuilder: (ctx, i) {
+              final e = _service.logEntries[i];
+              final color = switch (e.level) {
+                'error' => Theme.of(ctx).colorScheme.error,
+                'warn' => Colors.orange.shade700,
+                _ => null,
+              };
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 1),
+                child: SelectableText(
+                  '${e.time.hour.toString().padLeft(2, '0')}:'
+                  '${e.time.minute.toString().padLeft(2, '0')}:'
+                  '${e.time.second.toString().padLeft(2, '0')} '
+                  '[${e.level}] ${e.message}',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 11,
+                    color: color,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              _service.clearLog();
+              Navigator.of(dialogCtx).pop();
+            },
+            child: const Text('Clear & close'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Transcript-only fullscreen view: every drop of vertical space goes
   /// to the text, at the user's chosen scale. Closes via the toolbar X
   /// or the system back gesture.
@@ -662,6 +937,11 @@ class _SpeechTabState extends State<SpeechTab> {
                   ),
                 ),
                 const Spacer(),
+                // capture device picker: "System default" is whatever
+                // PulseAudio picks (usually the microphone); the list
+                // also holds sink monitors, which capture another
+                // application's playback.
+                _buildDeviceMenu(appState),
                 IconButton(
                   icon: Icon(
                     appState.speechShowTimestamps
@@ -685,6 +965,23 @@ class _SpeechTabState extends State<SpeechTab> {
                   icon: const Icon(Icons.fullscreen, size: 18),
                   tooltip: 'Fullscreen transcript',
                   onPressed: _openImmersiveTranscript,
+                ),
+                IconButton(
+                  icon: Icon(
+                    appState.speechDebugLogging
+                        ? Icons.bug_report
+                        : Icons.bug_report_outlined,
+                    size: 18,
+                  ),
+                  tooltip: appState.speechDebugLogging
+                      ? 'Debug log on'
+                      : 'Debug log off',
+                  onPressed: () {
+                    final next = !appState.speechDebugLogging;
+                    appState.setSpeechDebugLogging(next);
+                    _service.debugLogging = next;
+                    if (next) _showDebugLog();
+                  },
                 ),
                 IconButton(
                   icon: const Icon(Icons.copy, size: 18),

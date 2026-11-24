@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:lang/core/services/speech_service.dart';
 import 'package:lang/l10n/app_localizations.dart';
 import 'package:lang/presentation/screens/screenshot_tab.dart';
 import 'package:lang/presentation/screens/speech_tab.dart';
@@ -26,10 +27,13 @@ class ScreenshotScreen extends StatelessWidget {
 /// furigana, word cards. Its own bottom-bar destination, mid-bar where
 /// capture screens belong.
 class SpeechScreen extends StatelessWidget {
-  const SpeechScreen({super.key});
+  const SpeechScreen({super.key, this.service});
+
+  /// Injectable for tests; the tab falls back to the shared instance.
+  final SpeechService? service;
 
   @override
   Widget build(BuildContext context) {
-    return SpeechTab();
+    return SpeechTab(service: service);
   }
 }

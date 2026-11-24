@@ -51,6 +51,85 @@ class SpeechSegment {
   );
 }
 
+/// One capture source the user can record from.
+///
+/// [id] is what `parecord --device=` expects. [isMonitor] marks the
+/// loopback sources (a sink's monitor) — recording those captures what
+/// another app is playing, which is the "capture app audio" case.
+/// [appName] is the application a monitor belongs to, when the source
+/// exposes one.
+class SpeechCaptureDevice {
+  final String id;
+  final String label;
+  final bool isMonitor;
+  final String? appName;
+
+  const SpeechCaptureDevice({
+    required this.id,
+    required this.label,
+    this.isMonitor = false,
+    this.appName,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      other is SpeechCaptureDevice &&
+      other.id == id &&
+      other.label == label &&
+      other.isMonitor == isMonitor &&
+      other.appName == appName;
+
+  @override
+  int get hashCode => Object.hash(id, label, isMonitor, appName);
+
+  @override
+  String toString() => 'SpeechCaptureDevice($id, $label)';
+}
+
+/// One entry in the speech debug log.
+class SpeechLogEntry {
+  final DateTime time;
+  final String level;
+  final String message;
+
+  const SpeechLogEntry({
+    required this.time,
+    required this.level,
+    required this.message,
+  });
+}
+
+/// An application that is currently playing audio.
+///
+/// Capturing one means routing its stream into a dedicated sink and
+/// recording that sink's monitor: PulseAudio has no per-application
+/// source, so the stream has to be moved.
+class SpeechAppStream {
+  /// PulseAudio sink-input index.
+  final int index;
+
+  /// The application's display name (e.g. "Firefox").
+  final String name;
+
+  /// The executable name, when the server reports one.
+  final String? binary;
+
+  const SpeechAppStream({required this.index, required this.name, this.binary});
+
+  @override
+  bool operator ==(Object other) =>
+      other is SpeechAppStream &&
+      other.index == index &&
+      other.name == name &&
+      other.binary == binary;
+
+  @override
+  int get hashCode => Object.hash(index, name, binary);
+
+  @override
+  String toString() => 'SpeechAppStream($index, $name)';
+}
+
 /// Injectable command execution for tests.
 typedef SpeechCommandRunner =
     Future<(int, String, String)> Function(
@@ -89,6 +168,571 @@ class SpeechService extends ChangeNotifier {
       result.stdout.toString(),
       result.stderr.toString(),
     );
+  }
+
+  /// Whether a capture device exists.
+  ///
+  /// `record`'s Linux implementation reports hasPermission() == true
+  /// unconditionally, so a machine with no microphone (a VM, a CI
+  /// runner, a container with only a null sink) looks perfectly
+  /// healthy until the recorder silently produces no audio. Probing
+  /// the actual source list lets the UI say "no microphone" instead
+  /// of doing nothing at all.
+  ///
+  /// Returns null when the probe cannot run (unknown), true/false when
+  /// the answer is known.
+  Future<bool?> micAvailable() async {
+    if (_isMobile) return null;
+    if (micProbeOverride != null) return micProbeOverride!();
+    try {
+      final devices = await _recorder.listInputDevices();
+      return devices.isNotEmpty;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Test hook for [micAvailable].
+  Future<bool?> Function()? micProbeOverride;
+
+  /// Enumerate the capture sources available to the recorder.
+  ///
+  /// `record`'s own listInputDevices() deliberately drops monitor
+  /// sources, but a monitor is exactly what "record another app"
+  /// needs: a sink's monitor carries that application's playback. So
+  /// this parses `pactl list sources` directly and keeps both kinds.
+  ///
+  /// Returns the list, or an empty list when the probe cannot run.
+  Future<List<SpeechCaptureDevice>> refreshCaptureDevices() async {
+    if (_isMobile) {
+      _captureDevices.clear();
+      notifyListeners();
+      return const [];
+    }
+    try {
+      final (code, stdout, stderr) = await runCommand('pactl', [
+        'list',
+        'sources',
+      ]);
+      if (code != 0) {
+        log('error', 'pactl list sources failed ($code): $stderr');
+        _captureDevices.clear();
+        notifyListeners();
+        return const [];
+      }
+      final devices = parsePactlSources(stdout);
+      _captureDevices
+        ..clear()
+        ..addAll(devices);
+      log(
+        'info',
+        'found ${devices.length} capture source(s): '
+            '${devices.map((d) => d.id).join(', ')}',
+      );
+      // the selected device may have disappeared (unplugged mic)
+      if (_selectedDeviceId != null &&
+          !devices.any((d) => d.id == _selectedDeviceId)) {
+        log('warn', 'selected device $_selectedDeviceId vanished');
+        _selectedDeviceId = null;
+      }
+      notifyListeners();
+      return List.unmodifiable(_captureDevices);
+    } catch (e) {
+      log('error', 'capture device enumeration failed: $e');
+      _captureDevices.clear();
+      notifyListeners();
+      return const [];
+    }
+  }
+
+  /// Parse `pactl list sources` output into capture devices.
+  ///
+  /// Exposed for tests: the format is stable PulseAudio/PipeWire
+  /// output, and the monitor-vs-device distinction matters.
+  ///
+  /// The id is the PulseAudio **source name** (`Name:`), not
+  /// `node.name`: `parecord --device=` wants the source name. For a
+  /// monitor they differ — a sink `auto_null` has `node.name =
+  /// auto_null` but the monitor source is `auto_null.monitor`, and
+  /// passing the node name captures silence.
+  @visibleForTesting
+  static List<SpeechCaptureDevice> parsePactlSources(String output) {
+    final devices = <SpeechCaptureDevice>[];
+    String? nodeName;
+    String? name;
+    String? description;
+    String? appName;
+    var isMonitor = false;
+
+    void flush() {
+      // Prefer the source name; fall back to node.name when the
+      // source has no Name: field.
+      final id = (name != null && name.isNotEmpty) ? name : nodeName;
+      if (id == null) return;
+      final label = description ?? name ?? id;
+      // A monitor is the loopback of a sink: recording it captures
+      // whatever plays on that sink, i.e. another application's audio.
+      final monitor =
+          isMonitor ||
+          (description?.startsWith('Monitor of') ?? false) ||
+          (name?.startsWith('Monitor of') ?? false);
+      devices.add(
+        SpeechCaptureDevice(
+          id: id,
+          label: label,
+          isMonitor: monitor,
+          appName: appName,
+        ),
+      );
+    }
+
+    for (final raw in output.split('\n')) {
+      final line = raw.trim();
+      if (line.startsWith('Source #')) {
+        flush();
+        nodeName = null;
+        name = null;
+        description = null;
+        appName = null;
+        isMonitor = false;
+        continue;
+      }
+      if (line.startsWith('Name:')) {
+        name = _afterColon(line);
+      } else if (line.startsWith('Description:')) {
+        description = _afterColon(line);
+      } else if (line.startsWith('node.name')) {
+        nodeName = _afterEquals(line);
+      } else if (line.startsWith('node.description')) {
+        // node.description is often better than Description:
+        final v = _afterEquals(line);
+        if (v.isNotEmpty) description = v;
+      } else if (line.startsWith('application.name')) {
+        appName = _afterEquals(line);
+      } else if (line.startsWith('application.process.binary')) {
+        // keep the app name but remember the binary for the UI
+        appName ??= _afterEquals(line);
+      } else if (line.startsWith('media.class')) {
+        final v = _afterEquals(line);
+        if (v == 'Audio/Source') {
+          isMonitor = false;
+        }
+      }
+    }
+    flush();
+    return devices;
+  }
+
+  static String _afterColon(String line) {
+    final i = line.indexOf(':');
+    if (i < 0) return '';
+    return line.substring(i + 1).trim();
+  }
+
+  static String _afterEquals(String line) {
+    final i = line.indexOf('=');
+    if (i < 0) return '';
+    return line.substring(i + 1).trim().replaceAll('"', '').replaceAll("'", '');
+  }
+
+  // ----------------------------------------------------------
+  // debug log
+  // ----------------------------------------------------------
+
+  /// When true, every step of the capture + transcription pipeline is
+  /// recorded in [logEntries] and echoed to the console. Off by
+  /// default: the log is verbose and the UI has a dedicated viewer.
+  bool debugLogging = false;
+
+  final List<SpeechLogEntry> _logEntries = [];
+
+  /// Ring buffer of debug entries, newest last.
+  List<SpeechLogEntry> get logEntries => List.unmodifiable(_logEntries);
+
+  /// Maximum number of retained log entries.
+  static const int maxLogEntries = 500;
+
+  /// Record a debug entry. No-op unless [debugLogging] is on.
+  void log(String level, String message) {
+    if (!debugLogging) return;
+    final entry = SpeechLogEntry(
+      time: DateTime.now(),
+      level: level,
+      message: message,
+    );
+    _logEntries.add(entry);
+    if (_logEntries.length > maxLogEntries) {
+      _logEntries.removeRange(0, _logEntries.length - maxLogEntries);
+    }
+    debugPrint('[speech:$level] $message');
+    notifyListeners();
+  }
+
+  /// Clear the debug log.
+  void clearLog() {
+    if (_logEntries.isEmpty) return;
+    _logEntries.clear();
+    notifyListeners();
+  }
+
+  /// Capture sources the user can record from.
+  final List<SpeechCaptureDevice> _captureDevices = [];
+
+  /// Enumerated capture sources, refreshed by [refreshCaptureDevices].
+  List<SpeechCaptureDevice> get captureDevices =>
+      List.unmodifiable(_captureDevices);
+
+  /// The capture source currently selected for recording.
+  String? _selectedDeviceId;
+
+  // ----------------------------------------------------------
+  // application capture
+  // ----------------------------------------------------------
+
+  /// The sink the captured application's audio is routed through.
+  static const String captureSinkName = 'lang_capture';
+
+  /// The monitor source of [captureSinkName].
+  static const String captureSinkMonitor = '$captureSinkName.monitor';
+
+  /// Applications currently playing audio.
+  final List<SpeechAppStream> _appStreams = [];
+
+  /// Applications currently playing audio, refreshed by
+  /// [refreshAppStreams].
+  List<SpeechAppStream> get appStreams => List.unmodifiable(_appStreams);
+
+  /// The application whose audio is being captured, if any.
+  int? _capturedAppIndex;
+
+  /// The sink the captured application's stream came from.
+  ///
+  /// The stream goes back to exactly this sink when capture stops,
+  /// rather than to a generic default: an app playing to a headset
+  /// must return to the headset.
+  String? _capturedAppOriginalSink;
+
+  /// The sink-input index routed into the capture sink, if any.
+  int? get capturedAppIndex => _capturedAppIndex;
+
+  /// Enumerate the applications that are currently playing audio.
+  Future<List<SpeechAppStream>> refreshAppStreams() async {
+    if (_isMobile) {
+      _appStreams.clear();
+      notifyListeners();
+      return const [];
+    }
+    try {
+      final (code, stdout, stderr) = await runCommand('pactl', [
+        'list',
+        'sink-inputs',
+      ]);
+      if (code != 0) {
+        log('error', 'pactl list sink-inputs failed ($code): $stderr');
+        _appStreams.clear();
+        notifyListeners();
+        return const [];
+      }
+      final streams = parsePactlSinkInputs(stdout);
+      _appStreams
+        ..clear()
+        ..addAll(streams);
+      log(
+        'info',
+        '${streams.length} app stream(s) playing: '
+            '${streams.map((s) => s.name).join(', ')}',
+      );
+      notifyListeners();
+      return List.unmodifiable(_appStreams);
+    } catch (e) {
+      log('error', 'app stream enumeration failed: $e');
+      _appStreams.clear();
+      notifyListeners();
+      return const [];
+    }
+  }
+
+  /// Parse `pactl list sink-inputs` output into playing applications.
+  @visibleForTesting
+  static List<SpeechAppStream> parsePactlSinkInputs(String output) {
+    final streams = <SpeechAppStream>[];
+    int? index;
+    String? name;
+    String? binary;
+
+    void flush() {
+      if (index == null) return;
+      // a stream without an application name is a system sound
+      // (module-stream-restore) rather than an app the user picked
+      streams.add(
+        SpeechAppStream(
+          index: index,
+          name: name ?? 'App $index',
+          binary: binary,
+        ),
+      );
+    }
+
+    for (final raw in output.split('\n')) {
+      final line = raw.trim();
+      if (line.startsWith('Sink Input #')) {
+        flush();
+        index = int.tryParse(line.substring('Sink Input #'.length).trim());
+        name = null;
+        binary = null;
+        continue;
+      }
+      if (line.startsWith('application.name')) {
+        name = _afterEquals(line);
+      } else if (line.startsWith('application.process.binary')) {
+        binary = _afterEquals(line);
+      } else if (line.startsWith('media.name')) {
+        // the stream's title: a better label than the app name when
+        // the app reports one
+        final v = _afterEquals(line);
+        if (v.isNotEmpty && name == null) name = v;
+      }
+    }
+    flush();
+    return streams;
+  }
+
+  /// Route the application at [sinkInputIndex] into the capture sink so
+  /// its audio can be recorded, and return the monitor source to record.
+  ///
+  /// PulseAudio offers no per-application source: the only way to
+  /// capture one app is to move its stream into a dedicated sink and
+  /// record that sink's monitor. The capture sink remaps the default
+  /// sink, so the application keeps playing normally. Returns null on
+  /// failure.
+  Future<String?> startAppCapture(int sinkInputIndex) async {
+    if (_isMobile) return null;
+    try {
+      // remember where the stream came from before moving it
+      final originalSink = await _sinkInputSink(sinkInputIndex);
+      // the sink may already exist from a previous session
+      await _ensureCaptureSink();
+      final (moveCode, _, moveErr) = await runCommand('pactl', [
+        'move-sink-input',
+        '$sinkInputIndex',
+        captureSinkName,
+      ]);
+      if (moveCode != 0) {
+        log('error', 'move-sink-input $sinkInputIndex failed: $moveErr');
+        return null;
+      }
+      _capturedAppIndex = sinkInputIndex;
+      _capturedAppOriginalSink = originalSink;
+      log(
+        'info',
+        'capturing app stream $sinkInputIndex via $captureSinkMonitor '
+            '(was on ${originalSink ?? 'an unknown sink'})',
+      );
+      notifyListeners();
+      return captureSinkMonitor;
+    } catch (e) {
+      log('error', 'startAppCapture failed: $e');
+      return null;
+    }
+  }
+
+  /// The sink the stream at [sinkInputIndex] is currently playing to.
+  ///
+  /// Returns null when it cannot be determined.
+  Future<String?> _sinkInputSink(int sinkInputIndex) async {
+    try {
+      final (code, stdout, _) = await runCommand('pactl', [
+        'list',
+        'sink-inputs',
+      ]);
+      if (code != 0) return null;
+      var inBlock = false;
+      for (final raw in stdout.split('\n')) {
+        final line = raw.trim();
+        if (line.startsWith('Sink Input #')) {
+          inBlock = line == 'Sink Input #$sinkInputIndex';
+          continue;
+        }
+        if (!inBlock) continue;
+        if (line.startsWith('Sink:')) {
+          final sink = _afterColon(line);
+          if (sink.isEmpty || sink == '4294967295') return null;
+          // the block reports the sink index; map it to its name
+          return await _sinkNameByIndex(sink);
+        }
+      }
+    } catch (e) {
+      log('warn', 'could not determine the sink of stream $sinkInputIndex: $e');
+    }
+    return null;
+  }
+
+  /// The name of the sink with the given index, e.g. "auto_null".
+  Future<String?> _sinkNameByIndex(String index) async {
+    try {
+      final (code, stdout, _) = await runCommand('pactl', [
+        'list',
+        'short',
+        'sinks',
+      ]);
+      if (code != 0) return null;
+      for (final line in stdout.split('\n')) {
+        final parts = line.trim().split('\t');
+        if (parts.length >= 2 && parts[0] == index) return parts[1];
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// Stop capturing the routed application and move its stream back.
+  Future<void> stopAppCapture() async {
+    final index = _capturedAppIndex;
+    final originalSink = _capturedAppOriginalSink;
+    _capturedAppIndex = null;
+    _capturedAppOriginalSink = null;
+    if (index == null) return;
+    try {
+      // move it back to where it came from, then drop the capture sink
+      final (code, _, stderr) = await runCommand('pactl', [
+        'move-sink-input',
+        '$index',
+        originalSink ?? '@DEFAULT_SINK@',
+      ]);
+      if (code != 0) {
+        log('warn', 'could not move app stream $index back: $stderr');
+      } else {
+        log(
+          'info',
+          'app stream $index moved back to '
+              '${originalSink ?? 'the default sink'}',
+        );
+      }
+    } catch (e) {
+      log('warn', 'stopAppCapture failed: $e');
+    }
+    await _unloadCaptureSink();
+    notifyListeners();
+  }
+
+  /// Move any stream still routed into the capture sink back out, and
+  /// remove the sink.
+  ///
+  /// A crash or a force-killed app leaves its stream in the capture
+  /// sink; this puts it back so the application is audible again.
+  Future<void> recoverStaleCapture() async {
+    try {
+      final (code, stdout, _) = await runCommand('pactl', [
+        'list',
+        'short',
+        'sinks',
+      ]);
+      if (code != 0) return;
+      // <index> <name> <driver> <format>
+      String? captureSinkIndex;
+      for (final line in stdout.split('\n')) {
+        final parts = line.trim().split('\t');
+        if (parts.length >= 2 && parts[1] == captureSinkName) {
+          captureSinkIndex = parts[0];
+          break;
+        }
+      }
+      if (captureSinkIndex == null) return;
+
+      log('warn', 'a stale capture sink was found; restoring its streams');
+      final (inputCode, inputs, _) = await runCommand('pactl', [
+        'list',
+        'short',
+        'sink-inputs',
+      ]);
+      if (inputCode == 0) {
+        for (final line in inputs.split('\n')) {
+          // `pactl list short sink-inputs` columns:
+          //   <index> <sink index> <client> <name> <format>
+          // The sink column holds the sink's *index*, which is what
+          // the capture sink was matched by.
+          final parts = line.trim().split('\t');
+          if (parts.length >= 2 && parts[1] == captureSinkIndex) {
+            await runCommand('pactl', [
+              'move-sink-input',
+              parts[0],
+              '@DEFAULT_SINK@',
+            ]);
+            log('info', 'restored stale stream ${parts[0]}');
+          }
+        }
+      }
+      await _unloadCaptureSink();
+    } catch (e) {
+      log('warn', 'could not recover the stale capture: $e');
+    }
+  }
+
+  /// Make sure the capture sink exists, loading it when needed.
+  ///
+  /// The sink is a **remap** sink whose master is the default sink, not
+  /// a null sink: the captured application's audio keeps playing through
+  /// the normal output while its monitor carries a copy for capture.
+  /// A null sink would swallow the audio, leaving the application mute.
+  Future<void> _ensureCaptureSink() async {
+    final (code, stdout, _) = await runCommand('pactl', [
+      'list',
+      'short',
+      'sinks',
+    ]);
+    if (code == 0 &&
+        stdout.split('\n').any((l) => l.contains(captureSinkName))) {
+      log('info', 'capture sink $captureSinkName already exists');
+      return;
+    }
+    final (loadCode, _, loadErr) = await runCommand('pactl', [
+      'load-module',
+      'module-remap-sink',
+      'sink_name=$captureSinkName',
+      'master=@DEFAULT_SINK@',
+      'sink_properties=device.description=LangCapture',
+    ]);
+    if (loadCode != 0) {
+      log('error', 'could not load the capture sink: $loadErr');
+      return;
+    }
+    log(
+      'info',
+      'capture sink $captureSinkName loaded (remap of the default sink)',
+    );
+  }
+
+  /// Unload the capture sink, if it is loaded.
+  Future<void> _unloadCaptureSink() async {
+    try {
+      final (code, stdout, _) = await runCommand('pactl', [
+        'list',
+        'short',
+        'modules',
+      ]);
+      if (code != 0) return;
+      for (final line in stdout.split('\n')) {
+        if (!line.contains(captureSinkName)) continue;
+        if (!line.contains('module-null-sink') &&
+            !line.contains('module-remap-sink')) {
+          continue;
+        }
+        final id = line.trim().split(' ').first;
+        await runCommand('pactl', ['unload-module', id]);
+        log('info', 'capture sink $captureSinkName unloaded');
+      }
+    } catch (e) {
+      log('warn', 'could not unload the capture sink: $e');
+    }
+  }
+
+  /// Selected capture source id, or null for the system default.
+  String? get selectedDeviceId => _selectedDeviceId;
+
+  set selectedDeviceId(String? value) {
+    if (_selectedDeviceId == value) return;
+    _selectedDeviceId = value;
+    log('info', 'capture device set to ${value ?? '<default>'}');
+    notifyListeners();
   }
 
   /// Override for tests (models dir without network).
@@ -145,9 +789,16 @@ class SpeechService extends ChangeNotifier {
       SpeechEngine.api => '',
     };
     try {
-      final (code, _, _) = await runCommand(binary, ['--version']);
+      final (code, out, err) = await runCommand(binary, ['--version']);
+      log(
+        'info',
+        'probe $binary --version -> exit=$code '
+            '${out.trim().split('\n').firstOrNull ?? err.trim().split('\n').firstOrNull ?? ''}',
+      );
       if (code == 0) return preferred;
-    } catch (_) {}
+    } catch (e) {
+      log('warn', 'probe $binary failed: $e');
+    }
     // fall back to the other engine when present
     final fallback = switch (preferred) {
       SpeechEngine.whisper => '/usr/bin/parakeet-cli',
@@ -155,13 +806,21 @@ class SpeechService extends ChangeNotifier {
       SpeechEngine.api => '',
     };
     try {
-      final (code, _, _) = await runCommand(fallback, ['--version']);
+      final (code, out, err) = await runCommand(fallback, ['--version']);
+      log(
+        'info',
+        'probe $fallback --version -> exit=$code '
+            '${out.trim().split('\n').firstOrNull ?? err.trim().split('\n').firstOrNull ?? ''}',
+      );
       if (code == 0) {
         return preferred == SpeechEngine.whisper
             ? SpeechEngine.parakeet
             : SpeechEngine.whisper;
       }
-    } catch (_) {}
+    } catch (e) {
+      log('warn', 'probe $fallback failed: $e');
+    }
+    log('error', 'no STT engine binary found');
     return null;
   }
 
@@ -214,9 +873,13 @@ class SpeechService extends ChangeNotifier {
         final dir = await modelsDirProvider();
         if (!dir.existsSync()) dir.createSync(recursive: true);
         final path = '${dir.path}/$file';
-        if (File(path).existsSync()) return path;
+        if (File(path).existsSync()) {
+          log('info', 'model present: $path');
+          return path;
+        }
         final url =
             'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/$file';
+        log('info', 'downloading model $file -> $path');
         try {
           final (code, _, stderr) = await runCommand('curl', [
             '-sL',
@@ -224,17 +887,26 @@ class SpeechService extends ChangeNotifier {
             path,
             url,
           ]);
-          if (code == 0 && File(path).existsSync()) return path;
-          debugPrint('speech model download failed: $stderr');
-        } catch (_) {}
+          if (code == 0 && File(path).existsSync()) {
+            log('info', 'model downloaded ($file)');
+            return path;
+          }
+          log('error', 'speech model download failed: $stderr');
+        } catch (e) {
+          log('error', 'speech model download threw: $e');
+        }
         return null;
       case SpeechEngine.parakeet:
         final dir = await modelsDirProvider();
         if (!dir.existsSync()) dir.createSync(recursive: true);
         final path = '${dir.path}/ggml-parakeet-tdt-0.6b-v3.bin';
-        if (File(path).existsSync()) return path;
+        if (File(path).existsSync()) {
+          log('info', 'model present: $path');
+          return path;
+        }
         const url =
             'https://huggingface.co/ggml-org/parakeet-tdt-0.6b-v3-ggml/resolve/main/ggml-parakeet-tdt-0.6b-v3-q8_0.bin';
+        log('info', 'downloading parakeet model -> $path');
         try {
           final (code, _, stderr) = await runCommand('curl', [
             '-sL',
@@ -242,9 +914,14 @@ class SpeechService extends ChangeNotifier {
             path,
             url,
           ]);
-          if (code == 0 && File(path).existsSync()) return path;
-          debugPrint('parakeet model download failed: $stderr');
-        } catch (_) {}
+          if (code == 0 && File(path).existsSync()) {
+            log('info', 'parakeet model downloaded');
+            return path;
+          }
+          log('error', 'parakeet model download failed: $stderr');
+        } catch (e) {
+          log('error', 'parakeet model download threw: $e');
+        }
         return null;
     }
   }
@@ -314,12 +991,59 @@ class SpeechService extends ChangeNotifier {
           ..add('--suppress-nst');
       }
     }
+    if (debugLogging) {
+      // --print-progress and --print-confidence make the CLI report what
+      // it is doing; without them a silent binary looks like a hang.
+      args.addAll(['--print-progress']);
+      if (engine == SpeechEngine.whisper) {
+        args.addAll(['--print-confidence']);
+      }
+    }
+    log('info', 'exec: $binary ${args.join(' ')}');
+    final stopwatch = Stopwatch()..start();
     final (code, stdout_, stderr) = await runCommand(binary, args);
+    stopwatch.stop();
+    log(
+      'info',
+      'exec done: exit=$code elapsed=${stopwatch.elapsedMilliseconds}ms '
+          'stdout=${stdout_.length}B stderr=${stderr.length}B',
+    );
+    if (stderr.isNotEmpty) {
+      // whisper.cpp writes its banner and timings to stderr; the tail
+      // carries the useful part.
+      final tail = stderr
+          .split('\n')
+          .where((l) => l.trim().isNotEmpty)
+          .toList();
+      final start = tail.length > 12 ? tail.length - 12 : 0;
+      for (final line in tail.sublist(start)) {
+        log('debug', 'stderr: $line');
+      }
+    }
     if (code != 0) {
+      log('error', 'transcription failed (exit $code)');
       throw Exception('transcription failed: $stderr');
     }
-    final text = _stripRepeatedLines(_parseWhisperOutput(stdout_));
+    final parsed = _parseWhisperOutput(stdout_);
+    final text = _stripRepeatedLines(parsed);
     var lang = language == 'auto' ? _detectLanguageTag(stdout_) : language;
+    log(
+      'info',
+      'parsed ${parsed.split('\n').where((l) => l.trim().isNotEmpty).length} '
+          'segment line(s), ${text.length} chars, lang=${lang ?? '?'}',
+    );
+    if (text.isEmpty) {
+      log(
+        'warn',
+        'no text produced — the audio may be silent, or the model found '
+            'no speech in it',
+      );
+    } else {
+      log(
+        'info',
+        'text: ${text.length > 300 ? '${text.substring(0, 300)}…' : text}',
+      );
+    }
     return (text, lang);
   }
 
@@ -438,6 +1162,10 @@ class SpeechService extends ChangeNotifier {
     void Function(double level, String device) onLevel,
   ) async {
     if (!await _recorder.hasPermission()) return false;
+    // No capture device: `record` would still "succeed" and leave the
+    // meter pinned at zero forever.
+    final mic = await micAvailable();
+    if (mic == false) return false;
     try {
       final dir = await modelsDirProvider();
       if (!dir.existsSync()) dir.createSync(recursive: true);
@@ -497,9 +1225,13 @@ class SpeechService extends ChangeNotifier {
     void Function(int chunkIndex)? onChunkRecorded,
     String? apiUrl,
     String? apiKey,
+    void Function(String message)? onError,
+    String? deviceId,
   }) async {
     if (_recording) return false;
     if (!await _recorder.hasPermission()) return false;
+
+    log('info', 'startLive: engine=$engine model=$modelPath lang=$language');
 
     _recording = true;
     _sessionStartMs = DateTime.now().millisecondsSinceEpoch;
@@ -511,14 +1243,14 @@ class SpeechService extends ChangeNotifier {
       if (!dir.existsSync()) dir.createSync(recursive: true);
       final chunk0 = '${dir.path}/live_chunk_0.wav';
       _currentChunkPath = chunk0;
-      await _recorder.start(
-        const RecordConfig(
-          encoder: AudioEncoder.wav,
-          sampleRate: 16000,
-          numChannels: 1,
-        ),
-        path: chunk0,
+      final config = _recordConfig(deviceId);
+      log(
+        'info',
+        'recorder config: device=${config.device?.id ?? '<default>'} '
+            'rate=${config.sampleRate} channels=${config.numChannels}',
       );
+      await _recorder.start(config, path: chunk0);
+      log('info', 'recorder started -> $chunk0');
 
       _chunkTimer = Timer.periodic(Duration(seconds: chunkSeconds), (_) async {
         if (!_recording) return;
@@ -535,21 +1267,22 @@ class SpeechService extends ChangeNotifier {
         final nextPath = '${dir.path}/live_chunk_$chunkIndex.wav';
         _currentChunkPath = nextPath;
         _chunkStartMs = DateTime.now().millisecondsSinceEpoch;
+        log('info', 'chunk $chunkIndex closed: $finishedPath');
         // stopLive() waits for this so it does not read the chunk path
         // while it is being swapped
         final rotation = Completer<void>();
         _rotationDone = rotation;
         try {
           await _recorder.stop();
+          final size = _fileSize(finishedPath);
+          log(
+            size == null ? 'warn' : 'info',
+            size == null
+                ? 'chunk $chunkIndex produced no file'
+                : 'chunk $chunkIndex size=$size bytes',
+          );
           if (_recording) {
-            await _recorder.start(
-              const RecordConfig(
-                encoder: AudioEncoder.wav,
-                sampleRate: 16000,
-                numChannels: 1,
-              ),
-              path: nextPath,
-            );
+            await _recorder.start(config, path: nextPath);
             onChunkRecorded?.call(chunkIndex - 1);
           }
         } finally {
@@ -565,13 +1298,41 @@ class SpeechService extends ChangeNotifier {
           apiUrl: apiUrl,
           apiKey: apiKey,
           onSegment: onSegment,
+          onError: onError,
         );
       });
       return true;
     } catch (e) {
       _recording = false;
-      debugPrint('live start failed: $e');
+      log('error', 'live start failed: $e');
+      onError?.call('microphone unavailable');
       return false;
+    }
+  }
+
+  /// The recorder configuration, honouring the selected capture device.
+  @visibleForTesting
+  RecordConfig recordConfigForTest([String? deviceId]) =>
+      _recordConfig(deviceId);
+
+  RecordConfig _recordConfig(String? deviceId) {
+    final id = deviceId ?? _selectedDeviceId;
+    return RecordConfig(
+      encoder: AudioEncoder.wav,
+      sampleRate: 16000,
+      numChannels: 1,
+      device: id == null || id.isEmpty ? null : InputDevice(id: id, label: id),
+    );
+  }
+
+  /// Size of [path] in bytes, or null when the file does not exist.
+  static int? _fileSize(String path) {
+    try {
+      final f = File(path);
+      if (!f.existsSync()) return null;
+      return f.lengthSync();
+    } catch (_) {
+      return null;
     }
   }
 
@@ -588,8 +1349,19 @@ class SpeechService extends ChangeNotifier {
     required String? apiUrl,
     required String? apiKey,
     required void Function(SpeechSegment segment) onSegment,
+    void Function(String message)? onError,
   }) async {
     try {
+      // A chunk file that was never written means the recorder captured
+      // nothing: there is no capture device, or the device was busy.
+      // Reporting that beats silently transcribing nothing.
+      if (!File(finishedPath).existsSync()) {
+        log('error', 'chunk file missing: $finishedPath');
+        onError?.call('no audio captured');
+        return;
+      }
+      final size = _fileSize(finishedPath);
+      log('info', 'transcribing chunk $finishedPath (${size ?? 0} bytes)');
       final (text, lang) = engine == SpeechEngine.api
           ? await transcribeApi(
               finishedPath,
@@ -607,6 +1379,7 @@ class SpeechService extends ChangeNotifier {
               suppressRepetition: true,
             );
       if (text.trim().isNotEmpty) {
+        log('info', 'chunk produced ${text.length} chars');
         onSegment(
           SpeechSegment(
             text: text.trim(),
@@ -615,9 +1388,12 @@ class SpeechService extends ChangeNotifier {
             endMs: DateTime.now().millisecondsSinceEpoch - _sessionStartMs,
           ),
         );
+      } else {
+        log('warn', 'chunk produced no text');
       }
     } catch (e) {
-      debugPrint('chunk transcription failed: $e');
+      log('error', 'chunk transcription failed: $e');
+      onError?.call('transcription failed');
     } finally {
       // keep only the current chunk file on disk
       try {
@@ -635,8 +1411,10 @@ class SpeechService extends ChangeNotifier {
     required void Function(SpeechSegment segment) onSegment,
     String? apiUrl,
     String? apiKey,
+    void Function(String message)? onError,
   }) async {
     if (!_recording) return;
+    log('info', 'stopLive');
     _chunkTimer?.cancel();
     _chunkTimer = null;
     _recording = false;
@@ -649,10 +1427,15 @@ class SpeechService extends ChangeNotifier {
     final startMs = _chunkStartMs - _sessionStartMs;
     try {
       await _recorder.stop();
-    } catch (_) {}
+      log('info', 'recorder stopped');
+    } catch (e) {
+      log('warn', 'recorder stop failed: $e');
+    }
     if (path == null) return;
     try {
-      if (File(path).existsSync()) {
+      final size = _fileSize(path);
+      if (size != null) {
+        log('info', 'transcribing trailing chunk $path ($size bytes)');
         final (text, lang) = await (engine == SpeechEngine.api
             ? transcribeApi(
                 path,
@@ -669,6 +1452,7 @@ class SpeechService extends ChangeNotifier {
                 suppressRepetition: true,
               ));
         if (text.trim().isNotEmpty) {
+          log('info', 'trailing chunk produced ${text.length} chars');
           onSegment(
             SpeechSegment(
               text: text.trim(),
@@ -677,10 +1461,18 @@ class SpeechService extends ChangeNotifier {
               endMs: DateTime.now().millisecondsSinceEpoch - _sessionStartMs,
             ),
           );
+        } else {
+          log('warn', 'trailing chunk produced no text');
         }
         File(path).deleteSync();
+      } else {
+        log('error', 'trailing chunk file missing: $path');
+        onError?.call('no audio captured');
       }
-    } catch (_) {}
+    } catch (e) {
+      log('error', 'trailing chunk transcription failed: $e');
+      onError?.call('transcription failed');
+    }
     _currentChunkPath = null;
   }
 
@@ -698,5 +1490,13 @@ class SpeechService extends ChangeNotifier {
     _recording = false;
     runCommand = _realRunner;
     modelsDirProvider = _defaultModelsDir;
+    micProbeOverride = null;
+    debugLogging = false;
+    _logEntries.clear();
+    _captureDevices.clear();
+    _selectedDeviceId = null;
+    _appStreams.clear();
+    _capturedAppIndex = null;
+    _capturedAppOriginalSink = null;
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -11,7 +12,7 @@ import 'package:lang/core/services/speech_service.dart';
 import 'package:lang/core/services/storage_service.dart';
 import 'package:lang/domain/entities/app_state.dart';
 import 'package:lang/l10n/app_localizations.dart';
-import 'package:lang/presentation/screens/reader_screen.dart';
+import 'package:lang/presentation/screens/capture_screens.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -197,6 +198,74 @@ main: detected language: JA
       expect(SpeechService.whisperModels['base'], 'ggml-base.bin');
       expect(SpeechService.whisperModels['large-v3'], 'ggml-large-v3.bin');
     });
+
+    test('micAvailable reports false when no capture device exists', () async {
+      final service = SpeechService();
+      service.micProbeOverride = () async => false;
+      expect(await service.micAvailable(), isFalse);
+    });
+
+    test('micAvailable reports true when a capture device exists', () async {
+      final service = SpeechService();
+      service.micProbeOverride = () async => true;
+      expect(await service.micAvailable(), isTrue);
+    });
+
+    test(
+      'startLive reports an error when the chunk file was never written',
+      () async {
+        // No capture device: `record` claims success, but no wav file is
+        // ever produced. The chunk transcription must say so instead of
+        // silently dropping the segment.
+        TestWidgetsFlutterBinding.ensureInitialized();
+        final messenger =
+            TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+        messenger.setMockMethodCallHandler(
+          const MethodChannel('com.llfbandit.record/messages'),
+          (call) async {
+            switch (call.method) {
+              case 'hasPermission':
+                return true;
+              case 'listInputDevices':
+                return <String>[];
+              case 'create':
+              case 'start':
+              case 'stop':
+                return null;
+              default:
+                return null;
+            }
+          },
+        );
+        addTearDown(
+          () => messenger.setMockMethodCallHandler(
+            const MethodChannel('com.llfbandit.record/messages'),
+            null,
+          ),
+        );
+
+        final service = SpeechService();
+        service.modelsDirProvider = () async => tempDir;
+        final errors = <String>[];
+        final started = await service.startLive(
+          engine: SpeechEngine.whisper,
+          modelPath: 'model.bin',
+          language: 'auto',
+          onSegment: (_) {},
+          onError: errors.add,
+        );
+        expect(started, isTrue);
+        // let the chunk timer fire once
+        await Future<void>.delayed(const Duration(seconds: 7));
+        await service.stopLive(
+          engine: SpeechEngine.whisper,
+          modelPath: 'model.bin',
+          language: 'auto',
+          onSegment: (_) {},
+        );
+        expect(errors, contains('no audio captured'));
+      },
+    );
   });
 
   group('AppState speech settings', () {
@@ -240,10 +309,34 @@ main: detected language: JA
       appState.setSpeechLanguage('');
       expect(appState.speechLanguage, 'auto');
     });
+
+    test('capture device and debug toggle persist', () async {
+      final storage = StorageService();
+      await storage.init();
+      final appState = AppState(storage);
+
+      // no device selected means "system default" (the microphone)
+      expect(appState.speechCaptureDevice, '');
+      expect(appState.speechDebugLogging, isFalse);
+
+      appState.setSpeechCaptureDevice('alsa_output.monitor');
+      appState.setSpeechDebugLogging(true);
+
+      final reloaded = AppState(storage);
+      expect(reloaded.speechCaptureDevice, 'alsa_output.monitor');
+      expect(reloaded.speechDebugLogging, isTrue);
+    });
   });
 
-  group('ReaderScreen speech tab', () {
-    testWidgets('shows four tabs including speech', (tester) async {
+  group('SpeechScreen', () {
+    testWidgets('renders the speech-to-text controls', (tester) async {
+      // The speech tab is hosted inside the app shell, which supplies
+      // the Scaffold and the height. Reproduce that here.
+      tester.view.physicalSize = const Size(1400, 2200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       final storage = StorageService();
       await storage.init();
       await tester.pumpWidget(
@@ -258,17 +351,231 @@ main: detected language: JA
               GlobalCupertinoLocalizations.delegate,
             ],
             supportedLocales: AppLocalizations.supportedLocales,
-            home: const ReaderScreen(),
+            home: const Scaffold(body: SpeechScreen()),
           ),
         ),
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.text('Documents'), findsOneWidget);
-      expect(find.text('Screenshots'), findsOneWidget);
-      expect(find.text('Clipboard'), findsOneWidget);
-      expect(find.text('Speech'), findsOneWidget);
+      // The record / pick-file controls and the model selector are the
+      // screen's entry points.
+      expect(find.byIcon(Icons.mic_off), findsOneWidget);
+      expect(find.byIcon(Icons.audio_file), findsOneWidget);
+      expect(find.text('Test mic'), findsOneWidget);
+    });
+
+    testWidgets('record button reports a missing microphone', (tester) async {
+      // The regression: on a machine with no capture device the record
+      // button used to start a recording that captured nothing, so the
+      // screen stayed empty with no explanation.
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      messenger.setMockMethodCallHandler(
+        const MethodChannel('com.llfbandit.record/messages'),
+        (call) async {
+          switch (call.method) {
+            case 'hasPermission':
+              return true;
+            case 'listInputDevices':
+              return <String>[];
+            default:
+              return null;
+          }
+        },
+      );
+      addTearDown(
+        () => messenger.setMockMethodCallHandler(
+          const MethodChannel('com.llfbandit.record/messages'),
+          null,
+        ),
+      );
+
+      tester.view.physicalSize = const Size(1400, 2200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final storage = StorageService();
+      await storage.init();
+      final service = SpeechService();
+      service.micProbeOverride = () async => false;
+      // keep the model lookup off the network and the real filesystem
+      service.modelsDirProvider = () async => tempDir;
+      service.runCommand = (executable, arguments) async {
+        if (executable == 'curl') {
+          final out = arguments[arguments.indexOf('-o') + 1];
+          File(out).writeAsBytesSync([1, 2, 3]);
+          return (0, '', '');
+        }
+        return (0, '', '');
+      };
+      await tester.pumpWidget(
+        ChangeNotifierProvider<AppState>(
+          create: (_) => AppState(storage),
+          child: MaterialApp(
+            locale: const Locale('en'),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: SpeechScreen(service: service)),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(find.byIcon(Icons.mic_off));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('no microphone found'), findsOneWidget);
+      // and nothing was recorded
+      expect(service.isRecording, isFalse);
+    });
+
+    testWidgets('capture source menu lists the enumerated devices', (
+      tester,
+    ) async {
+      // The regression: there was no way to pick a capture source, so
+      // the microphone was the only option and recording another
+      // application's audio was impossible.
+      tester.view.physicalSize = const Size(1400, 2200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final storage = StorageService();
+      await storage.init();
+      final service = SpeechService();
+      service.runCommand = (executable, arguments) async {
+        if (executable == 'pactl') {
+          return (
+            0,
+            'Source #0\n'
+                '\tName: alsa_input.mic\n'
+                '\tDescription: Built-in Microphone\n'
+                '\tProperties:\n'
+                '\t\tnode.name = "alsa_input.mic"\n'
+                '\t\tnode.description = "Built-in Microphone"\n'
+                '\t\tmedia.class = "Audio/Source"\n'
+                'Source #1\n'
+                '\tName: alsa_output.sink.monitor\n'
+                '\tDescription: Monitor of Built-in Output\n'
+                '\tProperties:\n'
+                '\t\tnode.name = "alsa_output.sink.monitor"\n'
+                '\t\tnode.description = "Monitor of Built-in Output"\n'
+                '\t\tmedia.class = "Stream/Input/Audio"\n',
+            '',
+          );
+        }
+        return (0, '', '');
+      };
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<AppState>(
+          create: (_) => AppState(storage),
+          child: MaterialApp(
+            locale: const Locale('en'),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: SpeechScreen(service: service)),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // the device menu is present
+      expect(find.byIcon(Icons.mic_none), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.mic_none));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // the system default entry plus both enumerated sources
+      expect(find.text('System default (microphone)'), findsOneWidget);
+      expect(find.text('Built-in Microphone'), findsOneWidget);
+      // the monitor is marked as app-audio capture
+      expect(
+        find.text('Monitor of Built-in Output (app audio)'),
+        findsOneWidget,
+      );
+
+      // picking a device persists it
+      await tester.tap(find.text('Monitor of Built-in Output (app audio)'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(service.selectedDeviceId, 'alsa_output.sink.monitor');
+      expect(
+        storage.getStringSync('speech_capture_device'),
+        'alsa_output.sink.monitor',
+      );
+    });
+
+    testWidgets('capture source menu lists the playing applications', (
+      tester,
+    ) async {
+      // The regression: there was no way to capture one application's
+      // audio - only whole output devices.
+      tester.view.physicalSize = const Size(1400, 2200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final storage = StorageService();
+      await storage.init();
+      final service = SpeechService();
+      service.runCommand = (executable, arguments) async {
+        if (executable == 'pactl' && arguments.contains('sink-inputs')) {
+          return (
+            0,
+            'Sink Input #3\n'
+                '\tProperties:\n'
+                '\t\tapplication.name = "Firefox"\n'
+                '\t\tapplication.process.binary = "firefox"\n',
+            '',
+          );
+        }
+        return (0, '', '');
+      };
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<AppState>(
+          create: (_) => AppState(storage),
+          child: MaterialApp(
+            locale: const Locale('en'),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: SpeechScreen(service: service)),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(find.byIcon(Icons.mic_none));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // the playing application is offered
+      expect(find.text('Firefox'), findsOneWidget);
+      expect(find.byIcon(Icons.apps), findsOneWidget);
     });
   });
 }

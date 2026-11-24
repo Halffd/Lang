@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:lang_core/lang_core.dart' show SentenceSplitOptions;
 import '../../core/services/storage_service.dart';
 import 'yomitan_options.dart';
 import 'anki_note_types.dart';
@@ -196,6 +197,8 @@ class AppState extends ChangeNotifier {
   double get speechTextScale => _speechTextScale;
   bool get speechImmersive => _speechImmersive;
   bool get speechShowTimestamps => _speechShowTimestamps;
+  String get speechCaptureDevice => _speechCaptureDevice;
+  bool get speechDebugLogging => _speechDebugLogging;
   PopupDictionaryConfig get popupDictionaryConfig =>
       _popupDictionaryConfig ??= PopupDictionaryConfig.deserialize(
         _storageService.getStringSync('popup_dictionary_config'),
@@ -273,6 +276,8 @@ class AppState extends ChangeNotifier {
   double _speechTextScale = 1.5; // transcript font multiplier (1..3)
   bool _speechImmersive = false; // transcript-only fullscreen view
   bool _speechShowTimestamps = true; // per-segment elapsed + uptime clock
+  String _speechCaptureDevice = ''; // pactl source id; empty = system default
+  bool _speechDebugLogging = false; // verbose speech pipeline log
   PopupDictionaryConfig? _popupDictionaryConfig;
   // screenshot settings (ocr screen screenshot tab)
   bool _screenshotAutoOcr = false;
@@ -339,6 +344,12 @@ class AppState extends ChangeNotifier {
   // follows the detected text language, or an explicit subdomain code
   // ('en', 'ru', 'el', ...).
   String _wiktionaryLanguage = 'auto';
+
+  // Analyse-tab sentence segmentation: whether the analyzer groups
+  // word cards under sentences at all, and which characters end a
+  // sentence. Disabled = one group with the whole text.
+  bool _sentenceSplitEnabled = true;
+  List<String> _sentenceTerminators = SentenceSplitOptions.defaultTerminators;
 
   // Analyse tab word-card display mode:
   // compact | normal | full | onlyWord | onlyReading | onlyWordReading |
@@ -802,6 +813,24 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// The capture source used for speech recording.
+  ///
+  /// Empty means "system default" (whatever `parecord` picks), which is
+  /// the microphone. A pactl source id selects a specific device or a
+  /// sink monitor, which captures another application's playback.
+  void setSpeechCaptureDevice(String value) {
+    _speechCaptureDevice = value;
+    _storageService.setString('speech_capture_device', value);
+    notifyListeners();
+  }
+
+  /// Verbose logging of the capture + transcription pipeline.
+  void setSpeechDebugLogging(bool value) {
+    _speechDebugLogging = value;
+    _storageService.setBool('speech_debug_logging', value);
+    notifyListeners();
+  }
+
   void setScreenshotAutoOcr(bool value) {
     _screenshotAutoOcr = value;
     _storageService.setBool('screenshot_auto_ocr', value);
@@ -964,6 +993,42 @@ class AppState extends ChangeNotifier {
 
   /// Wiktionary lookup language: 'auto' or an explicit subdomain code.
   String get wiktionaryLanguage => _wiktionaryLanguage;
+
+  /// Whether the analyze screen groups cards under sentences.
+  bool get sentenceSplitEnabled => _sentenceSplitEnabled;
+
+  /// Characters that end a sentence in the analyze screen.
+  List<String> get sentenceTerminators =>
+      List.unmodifiable(_sentenceTerminators);
+
+  /// The analyzer's segmentation options for the current settings.
+  SentenceSplitOptions get sentenceSplitOptions => SentenceSplitOptions(
+    terminators: _sentenceTerminators,
+    split: _sentenceSplitEnabled,
+  );
+
+  /// Toggle analyze-screen sentence grouping.
+  void setSentenceSplitEnabled(bool value) {
+    _sentenceSplitEnabled = value;
+    _storageService.setBool('sentence_split_enabled', value);
+    notifyListeners();
+  }
+
+  /// Replace the sentence terminator set (comma-joined storage).
+  void setSentenceTerminators(List<String> value) {
+    final cleaned = value
+        .map((c) => c.trim())
+        .where((c) => c.isNotEmpty)
+        .toList(growable: false);
+    _sentenceTerminators = cleaned.isEmpty
+        ? List.of(SentenceSplitOptions.defaultTerminators)
+        : cleaned;
+    _storageService.setString(
+      'sentence_terminators',
+      _sentenceTerminators.join(','),
+    );
+    notifyListeners();
+  }
 
   /// Word-card display mode (compact/normal/full/single-element modes).
   String get cardDisplayMode => _cardDisplayMode;
@@ -1428,6 +1493,10 @@ class AppState extends ChangeNotifier {
       _speechImmersive = _storageService.getBool('speech_immersive') ?? false;
       _speechShowTimestamps =
           _storageService.getBool('speech_show_timestamps') ?? true;
+      _speechCaptureDevice =
+          _storageService.getStringSync('speech_capture_device') ?? '';
+      _speechDebugLogging =
+          _storageService.getBool('speech_debug_logging') ?? false;
       _screenshotAutoOcr =
           _storageService.getBool('screenshot_auto_ocr') ?? false;
       _screenshotAutoTranslate =
@@ -1494,11 +1563,24 @@ class AppState extends ChangeNotifier {
             0.1,
             1.0,
           );
-      _storageBackend = _wiktionaryLanguage =
+      _wiktionaryLanguage =
           _storageService.getStringSync('wiktionary_language') ?? 'auto';
-      _storageService.getStringSync('storage_backend') == 'files'
+      _storageBackend =
+          _storageService.getStringSync('storage_backend') == 'files'
           ? 'files'
           : 'sqlite';
+      _sentenceSplitEnabled =
+          _storageService.getBool('sentence_split_enabled') ?? true;
+      final savedTerminators = _storageService.getStringSync(
+        'sentence_terminators',
+      );
+      if (savedTerminators != null && savedTerminators.trim().isNotEmpty) {
+        _sentenceTerminators = savedTerminators
+            .split(',')
+            .map((c) => c.trim())
+            .where((c) => c.isNotEmpty)
+            .toList(growable: false);
+      }
       _analysisPageLines =
           (_storageService.getInt('analysis_page_lines') ?? 100).clamp(
             0,
@@ -1608,6 +1690,8 @@ class AppState extends ChangeNotifier {
       _inputMaxHeightFraction = 0.5;
       _analysisPageLines = 100;
       _wiktionaryLanguage = 'auto';
+      _sentenceSplitEnabled = true;
+      _sentenceTerminators = List.of(SentenceSplitOptions.defaultTerminators);
       _cardDisplayMode = 'compact';
       _filterHideParticles = false;
       _filterHideKnownWords = false;
