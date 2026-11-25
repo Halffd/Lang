@@ -937,135 +937,165 @@ class _SpeechTabState extends State<SpeechTab> {
                   ),
                 ),
                 const Spacer(),
-                // capture device picker: "System default" is whatever
-                // PulseAudio picks (usually the microphone); the list
-                // also holds sink monitors, which capture another
-                // application's playback.
-                _buildDeviceMenu(appState),
-                IconButton(
-                  icon: Icon(
-                    appState.speechShowTimestamps
-                        ? Icons.schedule
-                        : Icons.schedule_outlined,
-                    size: 18,
-                  ),
-                  tooltip: appState.speechShowTimestamps
-                      ? 'Hide timestamps (elapsed + uptime)'
-                      : 'Show timestamps (elapsed + uptime)',
-                  onPressed: () => appState.setSpeechShowTimestamps(
-                    !appState.speechShowTimestamps,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.format_size, size: 18),
-                  tooltip: 'Transcript text size',
-                  onPressed: () => _showTextScaleDialog(appState),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.fullscreen, size: 18),
-                  tooltip: 'Fullscreen transcript',
-                  onPressed: _openImmersiveTranscript,
-                ),
-                IconButton(
-                  icon: Icon(
-                    appState.speechDebugLogging
-                        ? Icons.bug_report
-                        : Icons.bug_report_outlined,
-                    size: 18,
-                  ),
-                  tooltip: appState.speechDebugLogging
-                      ? 'Debug log on'
-                      : 'Debug log off',
-                  onPressed: () {
-                    final next = !appState.speechDebugLogging;
-                    appState.setSpeechDebugLogging(next);
-                    _service.debugLogging = next;
-                    if (next) _showDebugLog();
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.copy, size: 18),
-                  tooltip: '${l10n.speechCopyAll} (Ctrl+C)',
-                  onPressed: _segments.isEmpty ? null : _copyAll,
-                ),
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.folder_open, size: 18),
-                  tooltip: 'Sessions',
-                  onSelected: (v) {
-                    if (v == 'save') _saveSession();
-                    if (v == 'backup') _backupTranscript();
-                    if (v.startsWith('load:')) _loadSession(v.substring(5));
-                    if (v.startsWith('delete:')) {
-                      _deleteSession(v.substring(7));
-                    }
-                  },
-                  itemBuilder: (ctx) => [
-                    const PopupMenuItem(
-                      value: 'save',
-                      child: Text('Save session'),
-                    ),
-                    const PopupMenuItem(
-                      value: 'backup',
-                      child: Text('Backup transcript…'),
-                    ),
-                    const PopupMenuDivider(),
-                    if (_savedSessions.isEmpty)
-                      const PopupMenuItem(
-                        enabled: false,
-                        child: Text('No saved sessions'),
-                      ),
-                    for (final name in _savedSessions)
-                      PopupMenuItem(
-                        value: 'load:$name',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.folder, size: 16),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    LabelService.instance
-                                            .get(
-                                              LabelService.domainSpeechSession,
-                                              name,
-                                            )
-                                            ?.name ??
-                                        name,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  ItemLabelBadges(
-                                    domain: LabelService.domainSpeechSession,
-                                    id: name,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.label_outline, size: 16),
-                              tooltip: 'Bookmark / rename / tags',
-                              onPressed: () => showItemLabelSheet(
-                                context,
-                                LabelService.domainSpeechSession,
-                                name,
-                                defaultName: name,
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline, size: 16),
-                              onPressed: () => _deleteSession(name),
-                            ),
-                          ],
+                // trailing controls: a Wrap, not a plain Row-in-Row.
+                // On narrow surfaces the button group is wider than the
+                // space the primary record/file buttons leave behind,
+                // and the overflow stripe replaced the rightmost
+                // icons. Flexible + Wrap drops the icons onto a second
+                // line instead of clipping them.
+                Flexible(
+                  child: Wrap(
+                    alignment: WrapAlignment.end,
+                    spacing: 4,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      // capture device picker: "System default" is
+                      // whatever PulseAudio picks (usually the
+                      // microphone); the list also holds sink monitors,
+                      // which capture another application's playback.
+                      _buildDeviceMenu(appState),
+                      IconButton(
+                        icon: Icon(
+                          appState.speechShowTimestamps
+                              ? Icons.schedule
+                              : Icons.schedule_outlined,
+                          size: 18,
+                        ),
+                        tooltip: appState.speechShowTimestamps
+                            ? 'Hide timestamps (elapsed + uptime)'
+                            : 'Show timestamps (elapsed + uptime)',
+                        onPressed: () => appState.setSpeechShowTimestamps(
+                          !appState.speechShowTimestamps,
                         ),
                       ),
-                  ],
-                ),
-                IconButton(
-                  icon: const Icon(Icons.note_add, size: 18),
-                  tooltip: 'New session (clears current; auto-saves)',
-                  onPressed: _segments.isEmpty ? null : _clearForNewSession,
+                      IconButton(
+                        icon: const Icon(Icons.format_size, size: 18),
+                        tooltip: 'Transcript text size',
+                        onPressed: () => _showTextScaleDialog(appState),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.fullscreen, size: 18),
+                        tooltip: 'Fullscreen transcript',
+                        onPressed: _openImmersiveTranscript,
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          appState.speechDebugLogging
+                              ? Icons.bug_report
+                              : Icons.bug_report_outlined,
+                          size: 18,
+                        ),
+                        tooltip: appState.speechDebugLogging
+                            ? 'Debug log on'
+                            : 'Debug log off',
+                        onPressed: () {
+                          final next = !appState.speechDebugLogging;
+                          appState.setSpeechDebugLogging(next);
+                          _service.debugLogging = next;
+                          if (next) _showDebugLog();
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.copy, size: 18),
+                        tooltip: '${l10n.speechCopyAll} (Ctrl+C)',
+                        onPressed: _segments.isEmpty ? null : _copyAll,
+                      ),
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.folder_open, size: 18),
+                        tooltip: 'Sessions',
+                        onSelected: (v) {
+                          if (v == 'save') _saveSession();
+                          if (v == 'backup') _backupTranscript();
+                          if (v.startsWith('load:')) {
+                            _loadSession(v.substring(5));
+                          }
+                          if (v.startsWith('delete:')) {
+                            _deleteSession(v.substring(7));
+                          }
+                        },
+                        itemBuilder: (ctx) => [
+                          const PopupMenuItem(
+                            value: 'save',
+                            child: Text('Save session'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'backup',
+                            child: Text('Backup transcript…'),
+                          ),
+                          const PopupMenuDivider(),
+                          if (_savedSessions.isEmpty)
+                            const PopupMenuItem(
+                              enabled: false,
+                              child: Text('No saved sessions'),
+                            )
+                          else
+                            for (final name in _savedSessions)
+                              PopupMenuItem(
+                                value: 'load:$name',
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.folder, size: 16),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            LabelService.instance
+                                                    .get(
+                                                      LabelService
+                                                          .domainSpeechSession,
+                                                      name,
+                                                    )
+                                                    ?.name ??
+                                                name,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          ItemLabelBadges(
+                                            domain: LabelService
+                                                .domainSpeechSession,
+                                            id: name,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.label_outline,
+                                        size: 16,
+                                      ),
+                                      tooltip: 'Bookmark / rename / tags',
+                                      onPressed: () => showItemLabelSheet(
+                                        context,
+                                        LabelService.domainSpeechSession,
+                                        name,
+                                        defaultName: name,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete_outline,
+                                        size: 16,
+                                      ),
+                                      onPressed: () => _deleteSession(name),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.note_add, size: 18),
+                        tooltip: 'New session (clears current; auto-saves)',
+                        onPressed: _segments.isEmpty
+                            ? null
+                            : _clearForNewSession,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -1099,29 +1129,32 @@ class _SpeechTabState extends State<SpeechTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // --- STT engine type
-                Row(
+                // Wrap, not Row: on narrow surfaces the "Engine:" label
+                // plus the two-segment SegmentedButton do not fit on one
+                // line, and a Row renders the overflow stripe.
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 12,
+                  runSpacing: 8,
                   children: [
                     Text(
                       '${l10n.speechEngine}:',
                       style: TextStyle(fontSize: fs(context, 12)),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: SegmentedButton<String>(
-                        segments: const [
-                          ButtonSegment(value: 'local', label: Text('Local')),
-                          ButtonSegment(value: 'api', label: Text('STT API')),
-                        ],
-                        selected: {appState.sttType},
-                        onSelectionChanged: (sel) {
-                          appState.setSttType(sel.first);
-                          setState(() {
-                            _engine = null;
-                            _modelPath = null;
-                          });
-                          _resolveEngine();
-                        },
-                      ),
+                    SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(value: 'local', label: Text('Local')),
+                        ButtonSegment(value: 'api', label: Text('STT API')),
+                      ],
+                      selected: {appState.sttType},
+                      onSelectionChanged: (sel) {
+                        appState.setSttType(sel.first);
+                        setState(() {
+                          _engine = null;
+                          _modelPath = null;
+                        });
+                        _resolveEngine();
+                      },
                     ),
                   ],
                 ),
@@ -1408,7 +1441,7 @@ class _SpeechTabState extends State<SpeechTab> {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('copied \${_cards[index].word}'),
+                                content: Text('copied ${_cards[index].word}'),
                                 duration: const Duration(milliseconds: 700),
                               ),
                             );
@@ -1723,7 +1756,9 @@ class _SpeechTabState extends State<SpeechTab> {
   Future<void> _clearForNewSession() async {
     if (_segments.isNotEmpty) await _saveSession();
     if (!mounted) return;
-    _fadeTimers.values.forEach((t) => t.cancel());
+    for (final t in _fadeTimers.values) {
+      t.cancel();
+    }
     _fadeTimers.clear();
     setState(() {
       _segments.clear();

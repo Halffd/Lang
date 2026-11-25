@@ -117,7 +117,6 @@ class _BrowserTabState extends State<BrowserTab> {
     super.initState();
     _loadRecents();
     _loadScraperConfig();
-    _probeAvailability();
   }
 
   @override
@@ -308,6 +307,12 @@ class _BrowserTabState extends State<BrowserTab> {
   /// Settings sheet: method availability + headers/retry/proxy/
   /// max-size/format/filters (issue 1+3).
   void _showScraperSettings() {
+    // Probe on demand: the availability results only feed this sheet.
+    // Probing in initState spawned four subprocesses just to build the
+    // launcher, and their runtime timeout timers outlived the widget
+    // tree ("A Timer is still pending even after the widget tree was
+    // disposed" in flutter_test).
+    _probeAvailability();
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
